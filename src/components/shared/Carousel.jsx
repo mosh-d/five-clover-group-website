@@ -18,6 +18,9 @@ import Cordis2 from "@/assets/home/cordis/cordis-2.jpg";
 import Cordis3 from "@/assets/home/cordis/cordis-3.jpg";
 import Cordis4 from "@/assets/home/cordis/cordis-4.jpg";
 
+//Icons
+import { CgArrowLongLeft, CgArrowLongRight } from "react-icons/cg";
+
 const FIVECLOVER_IMAGES = [
   {
     src: FiveClover1,
@@ -103,42 +106,50 @@ export default function Carousel({ brand }) {
     CORDIS_IMAGES,
   };
 
-  // Get the actual images array from the brand name
-  const images = brandMap[brand] || FIVECLOVER_IMAGES; // Default to Five Clover
+  const images = brandMap[brand] || FIVECLOVER_IMAGES;
 
-  // ✅ useState INSIDE the component, with proper destructuring
   const [index, setIndex] = useState({ main: 0, left: 1, right: 2 });
 
-  // ✅ handleNext INSIDE the component so it can access 'images'
   const handleNext = () => {
     setIndex((prevIndex) => {
       const newMain = prevIndex.right;
       const newRight =
         prevIndex.right === images.length - 1 ? 0 : prevIndex.right + 1;
-      const newLeft = newMain;
+      const newLeft = prevIndex.main;
+
+      return { main: newMain, left: newLeft, right: newRight };
+    });
+  };
+
+  const handlePrevious = () => {
+    setIndex((prevIndex) => {
+      const newMain = prevIndex.left;
+      const newRight = prevIndex.main;
+      const newLeft =
+        prevIndex.left === images.length - 1 ? 0 : prevIndex.left + 1;
 
       return { main: newMain, left: newLeft, right: newRight };
     });
   };
 
   return (
-    <div className="flex flex-col gap-[2rem] min-h-[0rem] items-center w-[60%] shrink-0">
-      <div className="relative flex w-full aspect-video items-center bg-red-500">
-        <div className="absolute left-[50%] translate-x-[-50%] z-20 w-[50%] aspect-square">
+    <div className="flex flex-col gap-[4rem] items-center w-[65%] shrink-0">
+      <div className="relative flex w-full aspect-video items-center">
+        <div className="absolute left-[50%] translate-x-[-50%] z-20 w-[60%] aspect-square shadow-[0_0_5rem_0_rgba(0,0,0,.1)]">
           <img
             src={images[index.main].src.src}
             alt={images[index.main].alt}
             className="w-full h-full object-cover"
           />
         </div>
-        <div className="absolute left-0 z-10 w-[40%] aspect-square">
+        <div className="absolute left-0 z-10 w-[40%] aspect-square opacity-[.7]">
           <img
             src={images[index.left].src.src}
             alt={images[index.left].alt}
             className="w-full h-full object-cover"
           />
         </div>
-        <div className="absolute right-0 z-10 w-[40%] aspect-square">
+        <div className="absolute right-0 z-10 w-[40%] aspect-square opacity-[.7]">
           <img
             src={images[index.right].src.src}
             alt={images[index.right].alt}
@@ -146,9 +157,15 @@ export default function Carousel({ brand }) {
           />
         </div>
       </div>
-      <div className="flex w-[40%] justify-between">
-        <button onClick={handleNext}>Previous</button>
-        <button onClick={handleNext}>Next</button>
+      <div className="flex w-[40%] z-30 justify-between">
+        <button onClick={handlePrevious} className="flex items-center gap-[1rem]">
+          <CgArrowLongLeft size="3rem" />
+          <p className="text-[1.4rem]">Previous</p>
+        </button>
+        <button onClick={handleNext} className="flex items-center gap-[1rem]">
+          <p className="text-[1.4rem]">Next</p>
+          <CgArrowLongRight size="3rem" />
+        </button>
       </div>
     </div>
   );

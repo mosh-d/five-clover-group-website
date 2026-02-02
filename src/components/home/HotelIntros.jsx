@@ -57,7 +57,7 @@ export default function HotelIntros() {
         <div className="flex flex-col gap-[4.8rem] justify-center items-start w-[35%] px-[12rem]">
           <div className="flex flex-col gap-[1.8rem]">
             <h3 className={`${FONTS.context}`}>Cordis Hotels</h3>
-            <h4 className={`${FONTS.heading}`}>Our 4-star King in Ikeja</h4>
+            <h4 className={`${FONTS.heading}`}>Our 4-star king in Ikeja</h4>
             <p className={`${FONTS.body}`}>
               Cordis Hotels—where every stay is a journey of comfort and
               sophistication, offering a unique blend of elegance and

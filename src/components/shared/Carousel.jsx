@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import FiveClover1 from "@/assets/home/five-clover/five-clover-1.jpg";
 import FiveClover2 from "@/assets/home/five-clover/five-clover-2.jpg";
 import FiveClover3 from "@/assets/home/five-clover/five-clover-3.jpg";
@@ -97,6 +98,20 @@ const CORDIS_IMAGES = [
   },
 ];
 
+// Helper function to get position class based on role
+const getPositionStyles = (position) => {
+  switch (position) {
+    case "left":
+      return "absolute left-0 z-10 w-[40%]";
+    case "main":
+      return "absolute left-[50%] translate-x-[-50%] z-20 w-[60%]";
+    case "right":
+      return "absolute right-0 z-10 w-[40%]";
+    default:
+      return "";
+  }
+};
+
 export default function Carousel({ brand }) {
   // Map brand name string to actual image array
   const brandMap = {
@@ -109,6 +124,14 @@ export default function Carousel({ brand }) {
   const images = brandMap[brand] || FIVECLOVER_IMAGES;
 
   const [index, setIndex] = useState({ main: 0, left: 1, right: 2 });
+
+  // Track which position each image index is currently in
+  const getPosition = (imgIndex) => {
+    if (imgIndex === index.main) return "main";
+    if (imgIndex === index.left) return "left";
+    if (imgIndex === index.right) return "right";
+    return null;
+  };
 
   const handleNext = () => {
     setIndex((prevIndex) => {
@@ -126,7 +149,7 @@ export default function Carousel({ brand }) {
       const newMain = prevIndex.left;
       const newRight = prevIndex.main;
       const newLeft =
-        prevIndex.left === images.length - 1 ? 0 : prevIndex.left + 1;
+        prevIndex.left === 0 ? images.length - 1 : prevIndex.left - 1;
 
       return { main: newMain, left: newLeft, right: newRight };
     });
@@ -134,37 +157,67 @@ export default function Carousel({ brand }) {
 
   return (
     <div className="flex flex-col gap-[4rem] items-center w-[65%] shrink-0">
-      <div className="relative flex w-full aspect-video items-center">
-        <div className="absolute left-[50%] translate-x-[-50%] z-20 w-[60%] aspect-square shadow-[0_0_5rem_0_rgba(0,0,0,.1)]">
-          <img
-            src={images[index.main].src.src}
-            alt={images[index.main].alt}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="absolute left-0 z-10 w-[40%] aspect-square opacity-[.7]">
-          <img
-            src={images[index.left].src.src}
-            alt={images[index.left].alt}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="absolute right-0 z-10 w-[40%] aspect-square opacity-[.7]">
-          <img
-            src={images[index.right].src.src}
-            alt={images[index.right].alt}
-            className="w-full h-full object-cover"
-          />
-        </div>
+      <div className="relative flex w-full aspect-video items-center overflow-hidden">
+        <AnimatePresence mode="popLayout">
+          {images.map((image, imgIndex) => {
+            const position = getPosition(imgIndex);
+            if (!position) return null;
+
+            return (
+              <motion.div
+                key={imgIndex}
+                layout
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: position === "main" ? 1 : 0.7,
+                }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  layout: { duration: 0.5, ease: "easeInOut" },
+                  opacity: { duration: 0.3 },
+                }}
+                className={`${getPositionStyles(position)} aspect-square ${
+                  position === "main"
+                    ? "shadow-[0_0_5rem_0_rgba(0,0,0,.1)]"
+                    : ""
+                }`}
+              >
+                <img
+                  src={image.src.src}
+                  alt={image.alt}
+                  className="w-full h-full object-cover"
+                />
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
       <div className="flex w-[40%] z-30 justify-between">
-        <button onClick={handlePrevious} className="flex items-center gap-[1rem]">
-          <CgArrowLongLeft size="3rem" />
-          <p className="text-[1.4rem]">Previous</p>
+        <button
+          onClick={handlePrevious}
+          className="flex items-center gap-[1rem] cursor-pointer"
+        >
+          <motion.div
+            animate={{ x: 0 }}
+            whileTap={{ x: "-1rem" }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
+            <CgArrowLongLeft size="3rem" />
+          </motion.div>
+          <p className="text-[1.4rem] mt-[.4rem]">Previous</p>
         </button>
-        <button onClick={handleNext} className="flex items-center gap-[1rem]">
-          <p className="text-[1.4rem]">Next</p>
-          <CgArrowLongRight size="3rem" />
+        <button
+          onClick={handleNext}
+          className="flex items-center gap-[1rem] cursor-pointer"
+        >
+          <p className="text-[1.4rem] mt-[.4rem]">Next</p>
+          <motion.div
+            animate={{ x: 0 }}
+            whileTap={{ x: "1rem" }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
+            <CgArrowLongRight size="3rem" />
+          </motion.div>
         </button>
       </div>
     </div>

@@ -59,6 +59,46 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ===================================
+   CUSTOM SCROLLBAR
+   =================================== */
+
+/* Custom scrollbar for gallery */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 0.6rem; /* Thin scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--light-gray);
+  border-radius: 10rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--text-color);
+  border-radius: 10rem;
+  transition: background 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--black);
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-color) var(--light-gray);
+}
+
+/* Hide native scrollbar utility */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 #root {
   width: 100%;
   min-width: 0;

@@ -1,3 +1,5 @@
+import FONTS from "@/utils/fonts";
+
 import gallery1 from "@/assets/home/gallery/gallery-1.jpg";
 import gallery2 from "@/assets/home/gallery/gallery-2.jpg";
 import gallery3 from "@/assets/home/gallery/gallery-3.jpg";
@@ -39,10 +41,70 @@ import gallery38 from "@/assets/home/gallery/gallery-38.jpg";
 import gallery39 from "@/assets/home/gallery/gallery-39.jpg";
 import gallery40 from "@/assets/home/gallery/gallery-40.jpg";
 
+const galleryImages = [
+  gallery1,
+  gallery2,
+  gallery3,
+  gallery4,
+  gallery5,
+  gallery6,
+  gallery7,
+  gallery8,
+  gallery9,
+  gallery10,
+  gallery11,
+  gallery12,
+  gallery13,
+  gallery14,
+  gallery15,
+  gallery16,
+  gallery17,
+  gallery18,
+  gallery19,
+  gallery20,
+  gallery21,
+  gallery22,
+  gallery23,
+  gallery24,
+  gallery25,
+  gallery26,
+  gallery27,
+  gallery28,
+  gallery29,
+  gallery30,
+  gallery31,
+  gallery32,
+  gallery33,
+  gallery34,
+  gallery35,
+  gallery36,
+  gallery37,
+  gallery38,
+  gallery39,
+  gallery40,
+];
+
 export default function Gallery() {
-    return (
-        <div>
-            <h1>Gallery</h1>
-        </div>
-    )
+  return (
+    <div className="p-[12rem] flex gap-[6rem]">
+      <div className="w-[30%] flex flex-col gap-[1.8rem]">
+        <h1 className={`${FONTS.heading}`}>Check Our Hotels Gallery</h1>
+        <p className={`${FONTS.body} text-[var(--light-gray)]`}>
+          We are the people’s choice for those who seek more from their journey.
+          Nestled in the heart of Lagos, our hotels redefine hospitality,
+          offering a symphony of comfort, luxury, and unmatched service.
+        </p>
+      </div>
+      <div className="w-[70%] flex flex-nowrap gap-[2.4rem] overflow-auto">
+        {galleryImages.map((image, index) => (
+          <img
+            key={index}
+            src={image.src}
+            alt="gallery"
+            className="w-[30rem] h-[37.5rem] object-cover"
+          />
+        ))}
+      </div>
+    </div>
+  );
 }

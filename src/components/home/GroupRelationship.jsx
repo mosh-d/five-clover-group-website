@@ -9,7 +9,7 @@ export default function GroupRelationship() {
           Managed by Five Clover Hotels Group,
         </h4>
         <p className={`${FONTS.body} text-[2.2rem]`}>
-          each of our 9 properties delivers on a promise of excellence—distinct
+          each of our 12 properties delivers on a promise of excellence—distinct
           in style, unified in quality.
         </p>
       </div>

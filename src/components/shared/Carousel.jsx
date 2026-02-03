@@ -124,6 +124,7 @@ export default function Carousel({ brand }) {
   const images = brandMap[brand] || FIVECLOVER_IMAGES;
 
   const [index, setIndex] = useState({ main: 0, left: 1, right: 2 });
+  const [clickAnimation, setClickAnimation] = useState(null);
 
   // Track which position each image index is currently in
   const getPosition = (imgIndex) => {
@@ -134,6 +135,8 @@ export default function Carousel({ brand }) {
   };
 
   const handleNext = () => {
+    setClickAnimation("next");
+    setTimeout(() => setClickAnimation(null), 300);
     setIndex((prevIndex) => {
       const newMain = prevIndex.right;
       const newRight =
@@ -145,6 +148,8 @@ export default function Carousel({ brand }) {
   };
 
   const handlePrevious = () => {
+    setClickAnimation("prev");
+    setTimeout(() => setClickAnimation(null), 300);
     setIndex((prevIndex) => {
       const newMain = prevIndex.left;
       const newRight = prevIndex.main;
@@ -173,8 +178,8 @@ export default function Carousel({ brand }) {
                 }}
                 exit={{ opacity: 0 }}
                 transition={{
-                  layout: { duration: 0.5, ease: "easeInOut" },
-                  opacity: { duration: 0.3 },
+                  layout: { duration: 0.6, ease: "backOut" },
+                  opacity: { duration: 0.1 },
                 }}
                 className={`${getPositionStyles(position)} aspect-square ${
                   position === "main"
@@ -195,25 +200,23 @@ export default function Carousel({ brand }) {
       <div className="flex w-[40%] z-30 justify-between">
         <button
           onClick={handlePrevious}
-          className="flex items-center gap-[1rem] cursor-pointer"
+          className="flex items-center gap-[1rem] cursor-pointer px-[2rem] py-[.5rem] hover:border-[1px] hover:border-[var(--text-color)]"
         >
           <motion.div
-            animate={{ x: 0 }}
-            whileTap={{ x: "-1rem" }}
+            animate={{ x: clickAnimation === "prev" ? "-1rem" : 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
             <CgArrowLongLeft size="3rem" />
           </motion.div>
-          <p className="text-[1.4rem] mt-[.4rem]">Previous</p>
+          <p className="text-[1.4rem] mt-[.4rem]">Prev</p>
         </button>
         <button
           onClick={handleNext}
-          className="flex items-center gap-[1rem] cursor-pointer"
+          className="flex items-center gap-[1rem] cursor-pointer px-[2rem] py-[.5rem] hover:border-[1px] hover:border-[var(--text-color)]"
         >
           <p className="text-[1.4rem] mt-[.4rem]">Next</p>
           <motion.div
-            animate={{ x: 0 }}
-            whileTap={{ x: "1rem" }}
+            animate={{ x: clickAnimation === "next" ? "1rem" : 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
             <CgArrowLongRight size="3rem" />

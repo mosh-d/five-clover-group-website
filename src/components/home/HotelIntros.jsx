@@ -24,7 +24,7 @@ export default function HotelIntros() {
       <div className="flex items-stretch w-full">
         <div className="flex flex-col gap-[4.8rem] justify-center items-start w-[35%] px-[12rem]">
           <div className="flex flex-col gap-[1.8rem]">
-            <h3 className={`${FONTS.context}`}>RingRuby Hotels</h3>
+            <h3 className={`${FONTS.context}`}>Ringruby Hotels</h3>
             <h4 className={`${FONTS.heading}`}>
               Discover vibrant boutique stays
             </h4>

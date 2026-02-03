@@ -4,7 +4,7 @@ import GroupRelationship from "@/components/home/GroupRelationship";
 import Reservation from "@/components/home/Reservation";
 import MiniAbout from "@/components/home/MiniAbout";
 import Gallery from "@/components/home/Gallery";
-import Footer from "@/components/home/Footer";
+import Footer from "@/components/shared/Footer";
 
 export default function Home() {
   return (
@@ -18,4 +18,4 @@ export default function Home() {
       <Footer />
     </div>
   );
-} 
+}

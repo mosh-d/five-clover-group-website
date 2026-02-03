@@ -1,6 +1,8 @@
-import Logo from "@/assets/five-clover-logo.png"
-import CustomInput from "../shared/CustomInput";
-import Button from "../shared/Button";
+import Image from "next/image";
+import Link from "next/link";
+import Logo from "@/assets/five-clover-logo.png";
+import CustomInput from "./CustomInput";
+import Button from "./Button";
 import {
   RiTiktokLine,
   RiFacebookLine,
@@ -18,7 +20,9 @@ export default function Footer() {
         data-component="Footer"
         className="text-[color:var(--footer-text-color)] bg-[color:var(--accent-2)] px-24 md:px-12 lg:px-[12rem] py-12 md:py-[6rem] flex flex-col gap-[6rem] md:gap-[6rem] justify-center items-center"
       >
-        <Logo />
+        <div className="size-[10rem] absolute top-[1.2rem] left-1/2 translate-x-[-50%]">
+          <Image src={Logo} alt="Five Clover Logo" />
+        </div>
         <div
           data-component="TopSection"
           className="flex flex-col md:flex-row w-full justify-center gap-[8rem] md:gap-[8rem] items-center md:items-start"
@@ -143,15 +147,13 @@ export default function Footer() {
             >
               <li data-component="NavigationItem" className="text-xl">
                 {" "}
-                <NavLink to="/" end>
-                  HOME
-                </NavLink>
+                <Link href="/">HOME</Link>
               </li>
               <li data-component="NavigationItem" className="text-xl">
-                <NavLink to="/about">ABOUT</NavLink>
+                <Link href="/about">ABOUT</Link>
               </li>
               <li data-component="NavigationItem" className="text-xl">
-                <NavLink to="/contact">CONTACT</NavLink>
+                <Link href="/contact">CONTACT</Link>
               </li>
             </ul>
           </div>

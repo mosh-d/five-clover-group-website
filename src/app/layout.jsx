@@ -1,5 +1,6 @@
 import "./globals.css";
 
+import Footer from "@/components/shared/Footer";
 import TopBar from "@/components/shared/TopBar";
 
 export const metadata = {
@@ -13,6 +14,7 @@ export default function RootLayout({ children }) {
       <body>
         <TopBar />
         {children}
+        <Footer />
       </body>
     </html>
   );

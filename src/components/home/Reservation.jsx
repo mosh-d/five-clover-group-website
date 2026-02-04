@@ -1,5 +1,7 @@
 "use client";
 
+import { TfiMapAlt } from "react-icons/tfi";
+
 import { useState } from "react";
 import FONTS from "@/utils/fonts";
 
@@ -59,22 +61,25 @@ export default function Reservation() {
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Monastery Road
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Abijo, GRA
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Ilupeju
                   </a>
                 </div>
@@ -114,29 +119,33 @@ export default function Reservation() {
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Igbobi
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Ilasan
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Lekki, Phase 1
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Yaba
                   </a>
                 </div>
@@ -176,29 +185,33 @@ export default function Reservation() {
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Sangotedo
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Eso close, ikeja GRA
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Oduduwa way, ikeja GRA
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Value County
                   </a>
                 </div>
@@ -209,7 +222,7 @@ export default function Reservation() {
 
         {/* Cordis Card */}
         <div className="flex flex-col items-center gap-[3rem]">
-          <h2 className="text-[2.7rem]">Cordis</h2>
+          <h2 className="text-[2.7rem]">The Cordis</h2>
           <div
             className="perspective-1000 h-[60rem] aspect-[9/16]"
             onMouseEnter={() => setFlippedCard("cordis")}
@@ -238,8 +251,9 @@ export default function Reservation() {
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
                     href=""
-                    className="p-[2rem] w-full text-center text-[1.2rem]"
+                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
+                    <TfiMapAlt size="2rem" />
                     Ikeja
                   </a>
                 </div>

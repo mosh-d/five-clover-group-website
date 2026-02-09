@@ -297,7 +297,7 @@ export default function Footer() {
                 Oduduwa way, ikeja GRA
               </a>
               <a
-                href="https://ringrubyhoteloduduwaikejagra.com/"
+                href="https://ringrubyvaluecounty.fivecloverhotels.com/"
                 target="_blank"
                 className="text-2xl"
               >

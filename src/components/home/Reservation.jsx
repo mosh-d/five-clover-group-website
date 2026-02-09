@@ -60,24 +60,27 @@ export default function Reservation() {
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://fivecloverhotelmonastery.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:bg-black/70 hover:text-[var(--emphasis)] hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Monastery Road
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://fivecloverhotelabijo.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:bg-black/70 hover:text-[var(--emphasis)] hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Abijo, GRA
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://fivecloverilupeju.fivecloverhotels.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:bg-black/70 hover:text-[var(--emphasis)] hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Ilupeju
@@ -118,32 +121,36 @@ export default function Reservation() {
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://www.caritasinnigbobihotel.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Igbobi
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://www.caritasinnilasanhotel.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Ilasan
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://www.caritasinnlekkihotel.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Lekki, Phase 1
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://www.caritasinnyabahotel.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Yaba
@@ -184,32 +191,36 @@ export default function Reservation() {
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://ringrubyhotelsangotedo.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Sangotedo
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://ringrubyhotelesoikejagra.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Eso close, ikeja GRA
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://ringrubyhoteloduduwaikejagra.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Oduduwa way, ikeja GRA
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://ringrubyvaluecounty.fivecloverhotels.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Value County
@@ -250,8 +261,9 @@ export default function Reservation() {
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
-                    href=""
-                    className="p-[2rem] flex items-start hover:bg-black/50 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                    href="https://www.thecordishotelikeja.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--cordis)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
                     Ikeja

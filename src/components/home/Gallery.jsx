@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import FONTS from "@/utils/fonts";
 
 import gallery1 from "@/assets/home/gallery/gallery-1.jpg";
@@ -103,22 +103,26 @@ export default function Gallery() {
     }
   };
 
-  const handleThumbDrag = (e) => {
-    if (!isDragging || !scrollContainerRef.current || !trackRef.current) return;
+  const handleThumbDrag = useCallback(
+    (e) => {
+      if (!isDragging || !scrollContainerRef.current || !trackRef.current)
+        return;
 
-    const trackRect = trackRef.current.getBoundingClientRect();
-    const trackWidth = trackRect.width;
-    const thumbWidth = trackWidth * 0.5; // 50% thumb width
-    const maxThumbPosition = trackWidth - thumbWidth;
+      const trackRect = trackRef.current.getBoundingClientRect();
+      const trackWidth = trackRect.width;
+      const thumbWidth = trackWidth * 0.5; // 50% thumb width
+      const maxThumbPosition = trackWidth - thumbWidth;
 
-    let newPosition = e.clientX - trackRect.left - thumbWidth / 2;
-    newPosition = Math.max(0, Math.min(newPosition, maxThumbPosition));
+      let newPosition = e.clientX - trackRect.left - thumbWidth / 2;
+      newPosition = Math.max(0, Math.min(newPosition, maxThumbPosition));
 
-    const percentage = (newPosition / maxThumbPosition) * 100;
-    const { scrollWidth, clientWidth } = scrollContainerRef.current;
-    const maxScroll = scrollWidth - clientWidth;
-    scrollContainerRef.current.scrollLeft = (percentage / 100) * maxScroll;
-  };
+      const percentage = (newPosition / maxThumbPosition) * 100;
+      const { scrollWidth, clientWidth } = scrollContainerRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      scrollContainerRef.current.scrollLeft = (percentage / 100) * maxScroll;
+    },
+    [isDragging]
+  );
 
   useEffect(() => {
     const handleMouseMove = (e) => handleThumbDrag(e);
@@ -133,7 +137,7 @@ export default function Gallery() {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDragging]);
+  }, [handleThumbDrag, isDragging]);
 
   return (
     <div className="p-[12rem] flex gap-[6rem]">

@@ -11,24 +11,9 @@ export default function BlogSection() {
 
   useEffect(() => {
     async function fetchHashnodeBlogs() {
-      const query = `
-        query {
-          publication(host: "cordiis.hashnode.dev") {
-            posts(first: 10) {
-              edges {
-                node {
-                  title
-                  brief
-                  slug
-                  coverImage {
-                    url
-                  }
-                }
-              }
-            }
-          }
-        }
-      `;
+      const query = `query { publication(host: "fivecloverhotels.hashnode.dev") { title posts(first: 10) { totalDocuments edges { node { title brief slug publishedAt coverImage { url } } } } } }`;
+
+      console.log("Sending query:", query);
 
       try {
         const res = await fetch("https://gql.hashnode.com", {
@@ -38,13 +23,35 @@ export default function BlogSection() {
         });
 
         const json = await res.json();
-        const fetchedBlogs = json.data.publication.posts.edges.map(({ node }) => ({
-          title: node.title,
-          caption: node.brief,
-          image: node.coverImage?.url,
-          slug: node.slug,
-        }));
+        console.log("Hashnode API Response:", json);
 
+        if (json.errors) {
+          console.error("GraphQL Errors:", json.errors);
+          setBlogs([]);
+          return;
+        }
+
+        if (!json.data?.publication?.posts?.edges) {
+          console.error("No publication or posts found. Response:", json);
+          setBlogs([]);
+          return;
+        }
+
+        const fetchedBlogs = json.data.publication.posts.edges.map(
+          ({ node }) => ({
+            title: node.title,
+            caption: node.brief,
+            image: node.coverImage?.url,
+            slug: node.slug,
+            publishedAt: node.publishedAt,
+          })
+        );
+
+        console.log("Fetched blogs:", fetchedBlogs);
+        console.log(
+          "Total documents:",
+          json.data.publication.posts.totalDocuments
+        );
         setBlogs(fetchedBlogs);
       } catch (error) {
         console.error("Error fetching Hashnode blogs:", error);
@@ -56,11 +63,12 @@ export default function BlogSection() {
     fetchHashnodeBlogs();
   }, []);
 
-  if (loading) return <p className="p-[2rem]">Loading blogs...</p>;
-  if (blogs.length === 0) return <p className="p-[2rem]">No blogs found.</p>;
+  if (loading) return <p className="p-[12rem] mt-[12rem]">Loading blogs...</p>;
+  if (blogs.length === 0)
+    return <p className="p-[12rem] mt-[12rem]">No blogs found.</p>;
 
   return (
-    <div className="flex p-[12rem] lg:p-[6rem] md:flex-col md:p-[4rem] md:gap-[12rem] gap-[6rem] w-full items-center bg-[var(--background-color)]">
+    <div className="flex p-[12rem] mt-[11rem] bg-[var(--emphasis)] md:gap-[12rem] gap-[6rem] w-full items-center bg-[var(--background-color)]">
       <div className="flex flex-col bg-[var(--white)] w-full items-center gap-[4.8rem] shadow-xl pb-[1.8rem] md:w-full">
         <div id="main">
           <BlogPost

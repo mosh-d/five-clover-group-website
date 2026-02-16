@@ -45,7 +45,7 @@ export default function FullBlogPage({ params }) {
             query,
             variables: {
               slug,
-              host: "cordiis.hashnode.dev",
+              host: "fivecloverhotels.hashnode.dev",
             },
           }),
         });

@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     rules: {
       // Allow apostrophes and quotes in JSX text
       "react/no-unescaped-entities": "off",
+      // Allow regular img tags (we're using imported images which are already optimized)
+      "@next/next/no-img-element": "off",
     },
   },
 ]);

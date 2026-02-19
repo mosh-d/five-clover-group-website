@@ -46,21 +46,6 @@ export default function Hero() {
             with its own unique character.
           </p>
         </div>
-        <div>
-          <h2 className="text-[var(--white)] font-secondary text-[5.3rem] font-medium text-center">
-            Our Brands
-          </h2>
-          <div className="flex gap-[8rem] items-center justify-center">
-            {LOGOS.map((logo) => (
-              <div key={logo.name} className="flex flex-col gap-[.1rem] items-center justify-center">
-                <img src={logo.logo.src} alt={logo.name} className="size-[10rem] object-contain" />
-                {/* <h3 className="text-[var(--white)] text-[1.4rem] font-medium text-center">
-                  {logo.name}
-                </h3> */}
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

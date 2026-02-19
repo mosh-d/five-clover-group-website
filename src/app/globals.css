@@ -83,6 +83,10 @@ body {
   background: var(--black);
 }
 
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none; /* Hide scroll buttons */
+}
+
 /* Firefox scrollbar */
 .custom-scrollbar {
   scrollbar-width: thin;

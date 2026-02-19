@@ -25,7 +25,7 @@ export default function MiniBlogPost({
       onClick={handleClick}
       className="flex flex-col gap-[1.8rem] w-[40%] flex-shrink-0 relative transition-all duration-300 ease-in-out hover:cursor-pointer hover:bg-[var(--text-color)] active:bg-[var(--black)] group"
     >
-      <div className="w-full h-[15rem] overflow-hidden relative">
+      <div className="w-full h-[25rem] overflow-hidden relative">
         <div
           className="absolute top-0 left-0 w-full h-full bg-cover bg-center bg-no-repeat transition-transform duration-300 group-hover:scale-110"
           style={{ backgroundImage: `url(${image})` }}
@@ -33,7 +33,7 @@ export default function MiniBlogPost({
       </div>
       <div className="flex flex-col px-[2.4rem] md:px-[1.2rem] gap-[1.8rem]">
         <div className="line-clamp-1">
-          <h2 className="font-bold text-[1.4rem] text-[var(--black)] group-hover:text-[var(--white)]">
+          <h2 className="font-bold font-secondary text-[3.4rem] text-[var(--black)] group-hover:text-[var(--white)]">
             {title}
           </h2>
         </div>

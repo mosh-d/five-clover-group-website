@@ -69,7 +69,7 @@ export default function BlogSection() {
 
   return (
     <div className="flex p-[12rem] mt-[11rem] bg-[var(--emphasis)] md:gap-[12rem] gap-[6rem] w-full items-center bg-[var(--background-color)]">
-      <div className="flex flex-col bg-[var(--white)] w-full items-center gap-[4.8rem] shadow-xl pb-[1.8rem] md:w-full">
+      <div className="flex flex-col bg-[var(--white)] w-full items-center gap-[8rem] shadow-xl pb-[1.8rem] md:w-full">
         <div id="main">
           <BlogPost
             image={blogs[activeBlog].image}
@@ -78,7 +78,7 @@ export default function BlogSection() {
             slug={blogs[activeBlog].slug}
           />
         </div>
-        <div className="flex gap-[1.8rem] w-[98%] overflow-auto pb-[4.8rem] custom-scrollbar">
+        <div className="flex gap-[1.8rem] w-[98%] overflow-x-auto pb-[4.8rem] custom-scrollbar">
           {blogs.map((blog, index) => (
             <MiniBlogPost
               key={index}

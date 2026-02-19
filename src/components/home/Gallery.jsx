@@ -142,7 +142,7 @@ export default function Gallery() {
   return (
     <div className="p-[12rem] flex gap-[6rem]">
       <div className="w-[30%] flex flex-col gap-[1.8rem]">
-        <h1 className={`${FONTS.heading}`}>Check Our Hotels Gallery</h1>
+        <h1 className={`${FONTS.heading}`}>Check Our Hotels' Gallery</h1>
         <p className={`${FONTS.body} text-[var(--light-gray)]`}>
           We are the people's choice for those who seek more from their journey.
           Nestled in the heart of Lagos, our hotels redefine hospitality,

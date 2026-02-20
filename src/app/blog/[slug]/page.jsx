@@ -68,9 +68,9 @@ export default function FullBlogPage({ params }) {
   if (!blog) return <p className="p-[4rem]">Blog not found.</p>;
 
   return (
-    <div className="p-[4rem] max-w-[120rem] mx-auto">
+    <div className="p-[4rem] mt-[12rem] mb-[4rem] max-w-[120rem] mx-auto">
       <Link href="/blog">
-        <button className="mb-[2rem] hover:scale-110 transition-transform">
+        <button className="mb-[2rem] cursor-pointer hover:scale-110 transition-transform">
           <RiArrowLeftLine color="var(--black)" size="3rem" />
         </button>
       </Link>
@@ -83,7 +83,7 @@ export default function FullBlogPage({ params }) {
         />
       )}
       <div
-        className="mt-[2rem] font-secondary text-[1.8rem] leading-relaxed"
+        className="mt-[2rem] font-secondary text-[1.8rem] font-bold leading-relaxed"
         dangerouslySetInnerHTML={{ __html: blog.content.html }}
       />
     </div>

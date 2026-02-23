@@ -39,7 +39,7 @@ export default function HotelIntros() {
         <h2 className="text-[var(--text-color)] font-secondary text-[5.3rem] font-bold text-center">
           Our Brands
         </h2>
-        <div className="flex max-sm:flex-wrap max-sm:px-[4rem] gap-[8rem] max-md:gap-[4rem] items-center justify-center">
+        <div className="flex max-sm:px-[2rem] gap-[8rem] max-md:gap-[4rem] max-sm:gap-[2.4rem] items-center justify-center">
           {LOGOS.map((logo) => (
             <div
               key={logo.name}
@@ -69,7 +69,7 @@ export default function HotelIntros() {
 
       <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="fc">
         <Carousel brand="FIVECLOVER_IMAGES" />
-        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem]">
+        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem] max-sm:px-[1rem]">
           <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
             <h3 className={`${FONTS.context} max-lg:text-center`}>Five Clover Hotels</h3>
             <h4 className={`${FONTS.heading} max-lg:text-center`}>Our flagship properties</h4>
@@ -85,7 +85,7 @@ export default function HotelIntros() {
 
       <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="rr">
         <Carousel brand="RINGRUBY_IMAGES" className="lg:hidden" />
-        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem]">
+        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem]">
           <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
             <h3 className={`${FONTS.context} max-lg:text-center`}>Ringruby Hotels</h3>
             <h4 className={`${FONTS.heading} max-lg:text-center`}>
@@ -103,7 +103,7 @@ export default function HotelIntros() {
 
       <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="ci">
         <Carousel brand="CARITAS_IMAGES" />
-        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem]">
+        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem]">
           <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
             <h3 className={`${FONTS.context} max-lg:text-center`}>Caritas Inns</h3>
             <h4 className={`${FONTS.heading} max-lg:text-center`}>From Lekki to Yaba</h4>
@@ -118,7 +118,7 @@ export default function HotelIntros() {
 
       <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="tc">
         <Carousel brand="CORDIS_IMAGES" className="lg:hidden" />
-        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem]">
+        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem]">
           <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
             <h3 className={`${FONTS.context} max-lg:text-center`}>The Cordis Hotels</h3>
             <h4 className={`${FONTS.heading} max-lg:text-center`}>Our 4-star king in Ikeja</h4>

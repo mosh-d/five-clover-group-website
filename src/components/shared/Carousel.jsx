@@ -102,11 +102,11 @@ const CORDIS_IMAGES = [
 const getPositionStyles = (position) => {
   switch (position) {
     case "left":
-      return "absolute left-0 z-10 w-[40%]";
+      return "absolute left-0 z-10 w-[40%] max-sm:w-[30%]";
     case "main":
-      return "absolute left-[50%] translate-x-[-50%] z-20 w-[60%]";
+      return "absolute left-[50%] translate-x-[-50%] z-20 w-[60%] max-sm:w-[80%]";
     case "right":
-      return "absolute right-0 z-10 w-[40%]";
+      return "absolute right-0 z-10 w-[40%] max-sm:w-[30%]";
     default:
       return "";
   }
@@ -161,7 +161,7 @@ export default function Carousel({ brand, className }) {
   };
 
   return (
-    <div className={`flex flex-col gap-[4rem] max-lg:gap-[1.8rem] items-center w-[65%] max-lg:w-full max-lg:px-[4.8rem] shrink-0 ${className}`}>
+    <div className={`flex flex-col gap-[4rem] max-lg:gap-[1.8rem] items-center w-[65%] max-lg:w-full max-lg:px-[4.8rem] max-sm:px-0 shrink-0 ${className}`}>
       <div className="relative flex w-full aspect-video items-center overflow-hidden">
         <AnimatePresence mode="popLayout">
           {images.map((image, imgIndex) => {
@@ -197,7 +197,7 @@ export default function Carousel({ brand, className }) {
           })}
         </AnimatePresence>
       </div>
-      <div className="flex w-[40%] z-30 justify-between">
+      <div className="flex w-[40%] max-sm:w-[70%] z-30 justify-between">
         <button
           onClick={handlePrevious}
           className="flex items-center gap-[1rem] cursor-pointer px-[2rem] py-[.5rem] hover:border-[1px] hover:border-[var(--text-color)]"

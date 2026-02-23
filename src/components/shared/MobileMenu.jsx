@@ -21,7 +21,7 @@ export default function MobileMenu({ isOpen, onClose }) {
   }, [isOpen]);
 
   const linkClass = (href) =>
-    `block py-2 cursor-pointer text-[3rem] font-secondary transition-colors ${
+    `block py-2 cursor-pointer text-[3rem] transition-colors ${
       pathname === href
         ? "text-[color:var(--emphasis)] font-bold"
         : "text-gray-800"

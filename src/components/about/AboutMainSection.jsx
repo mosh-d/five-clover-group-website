@@ -10,7 +10,7 @@ export default function AboutMainSection() {
       >
         <div
           data-component="Block1"
-          className="bg-[color:var(--text-color)] p-[6rem] flex flex-col gap-[1.8rem] text-[var(--white)] font-secondary"
+          className="bg-[color:var(--text-color)] p-[6rem] max-sm:p-[2rem] flex flex-col gap-[1.8rem] text-[var(--white)] font-secondary"
         >
           <h1 className="text-6xl font-secondary font-bold">
             We Always Care About Your Experience
@@ -93,7 +93,7 @@ export default function AboutMainSection() {
         </div>
         <div
           data-component="Block3"
-          className="bg-[color:var(--text-color)] p-[6rem] flex max-sm:flex-col gap-[6rem] text-[var(--white)] font-secondary"
+          className="bg-[color:var(--text-color)] p-[6rem] max-sm:p-[2rem] flex max-sm:flex-col gap-[6rem] text-[var(--white)] font-secondary"
         >
           <div className="flex flex-col gap-[1.8rem]">
             <h1 className="text-6xl font-secondary font-bold">Our Vision</h1>

@@ -67,22 +67,22 @@ export default function Explore() {
 
   return (
     <>
-      <div className="p-[12rem] flex gap-[6rem]">
-        <div className="w-[30%] flex flex-col gap-[1.8rem]">
+      <div className="p-[12rem] max-lg:px-[6rem] max-md:px-[2rem] flex max-md:flex-col gap-[6rem]">
+        <div className="w-[30%] max-md:w-full flex flex-col gap-[1.8rem]">
           <h1 className={`${FONTS.heading}`}>Explore Our Hotels</h1>
           <p className={`${FONTS.body} text-[var(--light-gray)]`}>
             With nine strategically located branches, Five Clover Hotels offers
             a variety of experiences tailored to meet the needs of our guests.
           </p>
         </div>
-        <div className="w-[70%] flex flex-col">
+        <div className="w-[70%] max-md:w-full flex flex-col">
           {/* Images container with hidden scrollbar */}
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
             className="flex flex-nowrap gap-[2.4rem] h-auto overflow-x-auto overflow-y-hidden hide-scrollbar"
           >
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] max-sm:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={fiveCloverIlupeju.src}
                 alt="gallery"
@@ -98,7 +98,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={fiveCloverMonastery.src}
                 alt="gallery"
@@ -114,7 +114,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={fiveCloverAbijo.src}
                 alt="gallery"
@@ -129,7 +129,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={ringRubyValueCounty.src}
                 alt="gallery"
@@ -145,7 +145,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={ringRubyEso.src}
                 alt="gallery"
@@ -161,7 +161,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={ringRubyOduduwa.src}
                 alt="gallery"
@@ -176,7 +176,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={ringRubySangotedo.src}
                 alt="gallery"
@@ -192,7 +192,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={caritasLekki.src}
                 alt="gallery"
@@ -208,7 +208,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={caritasIlasan.src}
                 alt="gallery"
@@ -224,7 +224,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={caritasIgbobi.src}
                 alt="gallery"
@@ -240,7 +240,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={caritasYaba.src}
                 alt="gallery"
@@ -255,7 +255,7 @@ export default function Explore() {
                 </p>
               </div>
             </div>
-            <div className="h-full w-[30rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+            <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
               <img
                 src={cordisIkeja.src}
                 alt="gallery"

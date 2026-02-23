@@ -6,7 +6,7 @@ export default function BlogPost({ image, title, content, slug }) {
   return (
     <div className="flex flex-col gap-[1.8rem] items-start w-full">
       <div
-        className="w-full h-[65rem] bg-cover bg-center bg-no-repeat"
+        className="w-full h-[65rem] max-sm:h-[40rem] bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${image})` }}
       ></div>
       <div className="flex flex-col items-start px-[2.4rem] max-md:px-[1.2rem] gap-[2.4rem]">

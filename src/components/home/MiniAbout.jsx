@@ -5,18 +5,18 @@ import miniabout from "@/assets/home/mini-about.jpg";
 
 export default function MiniAbout() {
   return (
-    <div className="w-full p-[12rem] max-lg:px-[4rem] flex">
+    <div className="w-full p-[12rem] max-lg:px-[4rem] flex max-md:flex-col">
       <img
         src={miniabout.src}
         alt="Image about Five Clover Hotel"
-        className="w-[40%] aspect-square object-cover"
+        className="w-[40%] max-md:w-full aspect-square max-md:aspect-video object-cover"
       />
-      <div className="flex flex-col justify-between gap-[4.8rem] w-[60%] bg-[var(--accent-2)] p-[12rem] max-lg:px-[4rem]">
+      <div className="flex flex-col justify-between max-md:items-center gap-[4.8rem] w-[60%] max-md:w-full bg-[var(--accent-2)] p-[12rem] max-lg:px-[4rem]">
         <div className="flex flex-col gap-[1.8rem]">
-          <h1 className={`${FONTS.heading} text-[var(--black)]`}>
+          <h1 className={`${FONTS.heading} text-[var(--black)] max-md:text-center`}>
             We Are Not Just a Group of Hotels
           </h1>
-          <p className={`${FONTS.body} text-[var(--light-gray)]`}>
+          <p className={`${FONTS.body} text-[var(--light-gray)] max-md:text-center`}>
             We are the people’s choice for those who seek more from their
             journey. Nestled in the heart of Lagos, our hotels redefine
             hospitality, offering a symphony of comfort, luxury, and unmatched

@@ -17,7 +17,7 @@ export default function ContactMainSection() {
         className="flex flex-col bg-[color:var(--accent-2)] text-[var(--text-color)] font-secondary p-[12rem] max-md:px-[6rem] max-sm:py-[6rem] max-sm:px-[2rem] gap-[1.8rem]"
       >
         <h1 className="text-6xl font-bold">Get In Touch</h1>
-        <p className="text-2xl font-semibold">
+        <p className="text-3xl font-semibold">
           Have any questions or need assistance? The team at Five Clover is
           always ready to ensure your stay is flawless. Don’t hesitate to reach
           out—we’re here to help with anything you need.
@@ -35,7 +35,7 @@ export default function ContactMainSection() {
             <h1 className="text-6xl font-bold font-secondary">
               Contact Information
             </h1>
-            <p className="text-2xl font-secondary font-semibold">
+            <p className="text-3xl font-secondary font-semibold">
               Get in touch with us through our contact details below and follow
               our social media pages
             </p>

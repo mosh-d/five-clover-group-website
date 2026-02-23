@@ -32,7 +32,7 @@ export default function Hero() {
         backgroundImage: `linear-gradient(rgba(0, 0, 0, .95), rgba(0, 0, 0, .6)), url(${FiveClover.src})`,
       }}
     >
-      <div className="flex flex-col gap-[1rem] px-[12rem] py-[18rem] h-full items-center justify-around">
+      <div className="flex flex-col gap-[1rem] px-[12rem] py-[18rem] max-md:px-[6rem] max-sm:px-[2rem] h-full items-center justify-around">
         <div className="flex flex-col gap-[2.4rem] items-center justify-center">
           <h1 className="text-[var(--white)] font-secondary text-[3.4rem] text-center">
             Experience The Art of Hospitality—Multiplied

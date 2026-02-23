@@ -34,12 +34,12 @@ const LOGOS = [
 
 export default function HotelIntros() {
   return (
-    <div className="py-[12rem] gap-[24rem] flex flex-col w-full">
+    <div className="py-[12rem] gap-[24rem] max-sm:gap-[16rem] flex flex-col w-full">
       <div>
         <h2 className="text-[var(--text-color)] font-secondary text-[5.3rem] font-bold text-center">
           Our Brands
         </h2>
-        <div className="flex gap-[8rem] items-center justify-center">
+        <div className="flex max-sm:flex-wrap max-sm:px-[4rem] gap-[8rem] max-md:gap-[4rem] items-center justify-center">
           {LOGOS.map((logo) => (
             <div
               key={logo.name}

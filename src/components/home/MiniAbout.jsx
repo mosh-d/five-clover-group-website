@@ -5,7 +5,7 @@ import miniabout from "@/assets/home/mini-about.jpg";
 
 export default function MiniAbout() {
   return (
-    <div className="w-full p-[12rem] flex">
+    <div className="w-full p-[12rem] max-lg:px-[4rem] flex">
       <img
         src={miniabout.src}
         alt="Image about Five Clover Hotel"

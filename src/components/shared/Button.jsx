@@ -5,10 +5,14 @@ export default function Button({
   children,
   href,
   borderColor = "var(--emphasis)",
+  className,
 }) {
   return (
     <Link href={href}>
-      <button className="border-[2px] px-[2rem] py-[.5rem] pt-[1rem] font-medium hover:cursor-pointer" style={{ borderColor }}>
+      <button
+        className={`border-[2px] px-[2rem] py-[.5rem] pt-[1rem] font-medium hover:cursor-pointer ${className}`}
+        style={{ borderColor }}
+      >
         {children}
       </button>
     </Link>

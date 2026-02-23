@@ -140,7 +140,7 @@ export default function Gallery() {
   }, [handleThumbDrag, isDragging]);
 
   return (
-    <div className="p-[12rem] flex gap-[6rem]">
+    <div className="p-[12rem] max-lg:px-[4rem] flex gap-[6rem] max-lg:gap-[2.4rem]">
       <div className="w-[30%] flex flex-col gap-[1.8rem]">
         <h1 className={`${FONTS.heading}`}>Check Our Hotels' Gallery</h1>
         <p className={`${FONTS.body} text-[var(--light-gray)]`}>

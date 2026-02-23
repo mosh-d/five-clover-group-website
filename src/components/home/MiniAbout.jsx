@@ -11,7 +11,7 @@ export default function MiniAbout() {
         alt="Image about Five Clover Hotel"
         className="w-[40%] aspect-square object-cover"
       />
-      <div className="flex flex-col justify-between gap-[4.8rem] w-[60%] bg-[var(--accent-2)] p-[12rem]">
+      <div className="flex flex-col justify-between gap-[4.8rem] w-[60%] bg-[var(--accent-2)] p-[12rem] max-lg:px-[4rem]">
         <div className="flex flex-col gap-[1.8rem]">
           <h1 className={`${FONTS.heading} text-[var(--black)]`}>
             We Are Not Just a Group of Hotels

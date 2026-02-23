@@ -69,12 +69,12 @@ export default function TopBar() {
           </button>
 
           {/* Logo — centered absolutely */}
-          <div className="size-[10rem] absolute top-[1.2rem] left-1/2 translate-x-[-50%]">
+          <div className="size-[10rem] absolute top-[1.2rem] left-1/2 translate-x-[-50%] max-sm:left-[100%] max-sm:translate-x-[-150%]">
             <Image src={Logo} alt="Five Clover Logo" />
           </div>
 
           {/* Reserve button — hidden on max-lg */}
-          <Button href="/" className="max-lg:hidden">
+          <Button href="/" className="max-md:hidden max-sm:none">
             <p className="text-[1.8rem] text-[var(--emphasis)]">RESERVE</p>
           </Button>
         </div>

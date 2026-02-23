@@ -15,7 +15,7 @@ export default function AboutMainSection() {
           <h1 className="text-6xl font-secondary font-bold">
             We Always Care About Your Experience
           </h1>
-          <p className="text-2xl">
+          <p className="text-3xl">
             Welcome to Five Clover Hotels, a group of hotels where we redefine
             hospitality with a touch of elegance and unparalleled service. As a
             premier hotel brand with several distinguished branches across
@@ -39,10 +39,10 @@ export default function AboutMainSection() {
             </div>
             <div
               data-component="Block2Text"
-              className="flex flex-col gap-[1.8rem] font-secondary bg-[color:var(--accent-2)] w-[100%] p-[12rem] max-md:p-[6rem] max-sm:p-[2rem]"
+              className="flex flex-col gap-[1.8rem] font-secondary bg-[color:var(--accent-2)] w-[100%] p-[12rem] max-lg:p-[6rem] max-md:p-[4rem] max-sm:p-[2rem]"
             >
               <h1 className="text-6xl font-bold">Luxury and Comfort</h1>
-              <p className="text-2xl">
+              <p className="text-2xl font-bold">
                 Five Clover Hotels, the top choice for luxury and relaxation in
                 Lagos, boasts several branches, each offering a distinctive
                 combination of luxury, comfort, and convenience for both
@@ -60,12 +60,12 @@ export default function AboutMainSection() {
           <div className="flex max-sm:flex-col">
             <div
               data-component="Block2Text"
-              className="flex flex-col gap-[1.8rem] font-secondary bg-[color:var(--accent-2)] w-[100%] p-[12rem] max-md:p-[6rem] max-sm:p-[2rem]"
+              className="flex flex-col gap-[1.8rem] font-secondary bg-[color:var(--accent-2)] w-[100%] p-[12rem] max-lg:p-[6rem] max-md:p-[4rem] max-sm:p-[2rem]"
             >
               <h1 className="text-6xl font-bold">
                 Experience African Hospitality
               </h1>
-              <p className="text-2xl">
+              <p className="text-2xl font-bold  ">
                 Embark on a gastronomic journey with our menu inspired by the
                 diverse landscapes of Africa, and immerse yourself in our lively
                 atmosphere where traditional recipes merge with modern culinary

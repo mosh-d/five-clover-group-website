@@ -34,9 +34,12 @@ export default function Reservation() {
         <div className="flex flex-col items-center gap-[3rem]">
           <h2 className="text-[2.7rem]">Five Clover</h2>
           <div
-            className="perspective-1000 h-[60rem] aspect-[9/16]"
+            className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
             onMouseEnter={() => setFlippedCard("fiveclover")}
             onMouseLeave={() => setFlippedCard(null)}
+            onClick={() =>
+              setFlippedCard(flippedCard === "fiveclover" ? null : "fiveclover")
+            }
           >
             <div
               className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "fiveclover" ? "rotate-y-180" : ""}`}
@@ -95,9 +98,12 @@ export default function Reservation() {
         <div className="flex flex-col items-center gap-[3rem]">
           <h2 className="text-[2.7rem]">Ringruby</h2>
           <div
-            className="perspective-1000 h-[60rem] aspect-[9/16]"
+            className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
             onMouseEnter={() => setFlippedCard("ringruby")}
             onMouseLeave={() => setFlippedCard(null)}
+            onClick={() =>
+              setFlippedCard(flippedCard === "ringruby" ? null : "ringruby")
+            }
           >
             <div
               className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "ringruby" ? "rotate-y-180" : ""}`}
@@ -160,14 +166,17 @@ export default function Reservation() {
             </div>
           </div>
         </div>
-        
+
         {/* Caritas Card */}
         <div className="flex flex-col items-center gap-[3rem]">
           <h2 className="text-[2.7rem]">Caritas</h2>
           <div
-            className="perspective-1000 h-[60rem] aspect-[9/16]"
+            className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
             onMouseEnter={() => setFlippedCard("caritas")}
             onMouseLeave={() => setFlippedCard(null)}
+            onClick={() =>
+              setFlippedCard(flippedCard === "caritas" ? null : "caritas")
+            }
           >
             <div
               className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "caritas" ? "rotate-y-180" : ""}`}
@@ -235,9 +244,12 @@ export default function Reservation() {
         <div className="flex flex-col items-center gap-[3rem]">
           <h2 className="text-[2.7rem]">The Cordis</h2>
           <div
-            className="perspective-1000 h-[60rem] aspect-[9/16]"
+            className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
             onMouseEnter={() => setFlippedCard("cordis")}
             onMouseLeave={() => setFlippedCard(null)}
+            onClick={() =>
+              setFlippedCard(flippedCard === "cordis" ? null : "cordis")
+            }
           >
             <div
               className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "cordis" ? "rotate-y-180" : ""}`}

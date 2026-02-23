@@ -29,7 +29,7 @@ export default function Reservation() {
           Make a selection based on your brand or location choice.
         </p>
       </div>
-      <div className="flex gap-[6rem] flex-wrap w-full justify-center">
+      <div className="flex gap-[6rem] max-lg:gap-[12rem] flex-wrap w-full justify-center">
         {/* Five Clover Card */}
         <div className="flex flex-col items-center gap-[3rem]">
           <h2 className="text-[2.7rem]">Five Clover</h2>
@@ -84,76 +84,6 @@ export default function Reservation() {
                   >
                     <TfiMapAlt size="2rem" />
                     Ilupeju
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Caritas Card */}
-        <div className="flex flex-col items-center gap-[3rem]">
-          <h2 className="text-[2.7rem]">Caritas</h2>
-          <div
-            className="perspective-1000 h-[60rem] aspect-[9/16]"
-            onMouseEnter={() => setFlippedCard("caritas")}
-            onMouseLeave={() => setFlippedCard(null)}
-          >
-            <div
-              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "caritas" ? "rotate-y-180" : ""}`}
-            >
-              <div
-                className="absolute inset-0 backface-hidden flex items-center justify-center bg-cover text-white shadow-xl"
-                style={{
-                  backgroundImage: `linear-gradient(hsla(24, 93%, 45%, .4), hsla(24, 93%, 45%, .4)), url(${caritas.src})`,
-                  backgroundBlendMode: "soft-light",
-                }}
-              ></div>
-              <div
-                className="absolute inset-0 backface-hidden rotate-y-180 flex flex-col items-center justify-center bg-cover text-white shadow-xl"
-                style={{
-                  backgroundImage: `linear-gradient(hsla(24, 93%, 10%, 1), hsla(24, 93%, 30%, 1)), url(${caritas.src})`,
-                  backgroundBlendMode: "multiply",
-                }}
-              >
-                <div className="w-[12rem] absolute top-0 m-auto">
-                  <img src={caritaslogo.src} alt="" />
-                </div>
-                <div className="w-full px-[4rem] flex flex-col items-center">
-                  <a
-                    href="https://www.caritasinnigbobihotel.com/"
-                    target="_blank"
-                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
-                  >
-                    <TfiMapAlt size="2rem" />
-                    Igbobi
-                  </a>
-                  <hr className="w-full opacity-40" />
-                  <a
-                    href="https://www.caritasinnilasanhotel.com/"
-                    target="_blank"
-                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
-                  >
-                    <TfiMapAlt size="2rem" />
-                    Ilasan
-                  </a>
-                  <hr className="w-full opacity-40" />
-                  <a
-                    href="https://www.caritasinnlekkihotel.com/"
-                    target="_blank"
-                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
-                  >
-                    <TfiMapAlt size="2rem" />
-                    Lekki, Phase 1
-                  </a>
-                  <hr className="w-full opacity-40" />
-                  <a
-                    href="https://www.caritasinnyabahotel.com/"
-                    target="_blank"
-                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
-                  >
-                    <TfiMapAlt size="2rem" />
-                    Yaba
                   </a>
                 </div>
               </div>
@@ -224,6 +154,76 @@ export default function Reservation() {
                   >
                     <TfiMapAlt size="2rem" />
                     Value County
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Caritas Card */}
+        <div className="flex flex-col items-center gap-[3rem]">
+          <h2 className="text-[2.7rem]">Caritas</h2>
+          <div
+            className="perspective-1000 h-[60rem] aspect-[9/16]"
+            onMouseEnter={() => setFlippedCard("caritas")}
+            onMouseLeave={() => setFlippedCard(null)}
+          >
+            <div
+              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "caritas" ? "rotate-y-180" : ""}`}
+            >
+              <div
+                className="absolute inset-0 backface-hidden flex items-center justify-center bg-cover text-white shadow-xl"
+                style={{
+                  backgroundImage: `linear-gradient(hsla(24, 93%, 45%, .4), hsla(24, 93%, 45%, .4)), url(${caritas.src})`,
+                  backgroundBlendMode: "soft-light",
+                }}
+              ></div>
+              <div
+                className="absolute inset-0 backface-hidden rotate-y-180 flex flex-col items-center justify-center bg-cover text-white shadow-xl"
+                style={{
+                  backgroundImage: `linear-gradient(hsla(24, 93%, 10%, 1), hsla(24, 93%, 30%, 1)), url(${caritas.src})`,
+                  backgroundBlendMode: "multiply",
+                }}
+              >
+                <div className="w-[12rem] absolute top-0 m-auto">
+                  <img src={caritaslogo.src} alt="" />
+                </div>
+                <div className="w-full px-[4rem] flex flex-col items-center">
+                  <a
+                    href="https://www.caritasinnigbobihotel.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                  >
+                    <TfiMapAlt size="2rem" />
+                    Igbobi
+                  </a>
+                  <hr className="w-full opacity-40" />
+                  <a
+                    href="https://www.caritasinnilasanhotel.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                  >
+                    <TfiMapAlt size="2rem" />
+                    Ilasan
+                  </a>
+                  <hr className="w-full opacity-40" />
+                  <a
+                    href="https://www.caritasinnlekkihotel.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                  >
+                    <TfiMapAlt size="2rem" />
+                    Lekki, Phase 1
+                  </a>
+                  <hr className="w-full opacity-40" />
+                  <a
+                    href="https://www.caritasinnyabahotel.com/"
+                    target="_blank"
+                    className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                  >
+                    <TfiMapAlt size="2rem" />
+                    Yaba
                   </a>
                 </div>
               </div>

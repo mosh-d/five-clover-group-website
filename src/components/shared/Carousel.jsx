@@ -112,7 +112,7 @@ const getPositionStyles = (position) => {
   }
 };
 
-export default function Carousel({ brand }) {
+export default function Carousel({ brand, className }) {
   // Map brand name string to actual image array
   const brandMap = {
     FIVECLOVER_IMAGES,
@@ -161,7 +161,7 @@ export default function Carousel({ brand }) {
   };
 
   return (
-    <div className="flex flex-col gap-[4rem] items-center w-[65%] shrink-0">
+    <div className={`flex flex-col gap-[4rem] max-lg:gap-[1.8rem] items-center w-[65%] max-lg:w-full max-lg:px-[4.8rem] shrink-0 ${className}`}>
       <div className="relative flex w-full aspect-video items-center overflow-hidden">
         <AnimatePresence mode="popLayout">
           {images.map((image, imgIndex) => {

@@ -67,13 +67,13 @@ export default function HotelIntros() {
         </div>
       </div>
 
-      <div className="flex items-stretch w-full" id="fc">
+      <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="fc">
         <Carousel brand="FIVECLOVER_IMAGES" />
-        <div className="flex flex-col gap-[4.8rem] justify-center items-start w-[35%] px-[12rem]">
-          <div className="flex flex-col gap-[1.8rem]">
-            <h3 className={`${FONTS.context}`}>Five Clover Hotels</h3>
-            <h4 className={`${FONTS.heading}`}>Our flagship properties</h4>
-            <p className={`${FONTS.body}`}>
+        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem]">
+          <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
+            <h3 className={`${FONTS.context} max-lg:text-center`}>Five Clover Hotels</h3>
+            <h4 className={`${FONTS.heading} max-lg:text-center`}>Our flagship properties</h4>
+            <p className={`${FONTS.body} max-lg:text-center`}>
               At Monastery Road and Abijo GRA—embody the art of refined
               hospitality, welcoming you home with contemporary design and
               seamless service.
@@ -83,30 +83,31 @@ export default function HotelIntros() {
         </div>
       </div>
 
-      <div className="flex items-stretch w-full" id="rr">
-        <div className="flex flex-col gap-[4.8rem] justify-center items-start w-[35%] px-[12rem]">
-          <div className="flex flex-col gap-[1.8rem]">
-            <h3 className={`${FONTS.context}`}>Ringruby Hotels</h3>
-            <h4 className={`${FONTS.heading}`}>
+      <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="rr">
+        <Carousel brand="RINGRUBY_IMAGES" className="lg:hidden" />
+        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem]">
+          <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
+            <h3 className={`${FONTS.context} max-lg:text-center`}>Ringruby Hotels</h3>
+            <h4 className={`${FONTS.heading} max-lg:text-center`}>
               Discover vibrant boutique stays
             </h4>
-            <p className={`${FONTS.body}`}>
+            <p className={`${FONTS.body} max-lg:text-center`}>
               at Sangotedo, Eso Close, and Oduduwa—where each room tells a story
               of local culture and modern flair.
             </p>
           </div>
           <UnderlinedButton>Reserve</UnderlinedButton>
         </div>
-        <Carousel brand="RINGRUBY_IMAGES" />
+        <Carousel brand="RINGRUBY_IMAGES" className="max-lg:hidden" />
       </div>
 
-      <div className="flex items-stretch w-full" id="ci">
+      <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="ci">
         <Carousel brand="CARITAS_IMAGES" />
-        <div className="flex flex-col gap-[4.8rem] justify-center items-start w-[35%] px-[12rem]">
-          <div className="flex flex-col gap-[1.8rem]">
-            <h3 className={`${FONTS.context}`}>Caritas Inns</h3>
-            <h4 className={`${FONTS.heading}`}>From Lekki to Yaba</h4>
-            <p className={`${FONTS.body}`}>
+        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem]">
+          <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
+            <h3 className={`${FONTS.context} max-lg:text-center`}>Caritas Inns</h3>
+            <h4 className={`${FONTS.heading} max-lg:text-center`}>From Lekki to Yaba</h4>
+            <p className={`${FONTS.body} max-lg:text-center`}>
               Caritas Inns blend heartfelt service with thoughtful
               amenities—your cozy retreat in Nigeria’s bustling neighborhoods.
             </p>
@@ -115,12 +116,13 @@ export default function HotelIntros() {
         </div>
       </div>
 
-      <div className="flex items-stretch w-full" id="tc">
-        <div className="flex flex-col gap-[4.8rem] justify-center items-start w-[35%] px-[12rem]">
-          <div className="flex flex-col gap-[1.8rem]">
-            <h3 className={`${FONTS.context}`}>The Cordis Hotels</h3>
-            <h4 className={`${FONTS.heading}`}>Our 4-star king in Ikeja</h4>
-            <p className={`${FONTS.body}`}>
+      <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="tc">
+        <Carousel brand="CORDIS_IMAGES" className="lg:hidden" />
+        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem]">
+          <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
+            <h3 className={`${FONTS.context} max-lg:text-center`}>The Cordis Hotels</h3>
+            <h4 className={`${FONTS.heading} max-lg:text-center`}>Our 4-star king in Ikeja</h4>
+            <p className={`${FONTS.body} max-lg:text-center`}>
               Cordis Hotels—where every stay is a journey of comfort and
               sophistication, offering a unique blend of elegance and modern
               convenience.
@@ -128,7 +130,7 @@ export default function HotelIntros() {
           </div>
           <UnderlinedButton>Reserve</UnderlinedButton>
         </div>
-        <Carousel brand="CORDIS_IMAGES" />
+        <Carousel brand="CORDIS_IMAGES" className="max-lg:hidden" />
       </div>
     </div>
   );

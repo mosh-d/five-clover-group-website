@@ -140,8 +140,8 @@ export default function Gallery() {
   }, [handleThumbDrag, isDragging]);
 
   return (
-    <div className="p-[12rem] max-lg:px-[4rem] flex gap-[6rem] max-lg:gap-[2.4rem]">
-      <div className="w-[30%] flex flex-col gap-[1.8rem]">
+    <div className="p-[12rem] max-lg:px-[4rem] max-sm:px-[2rem] flex max-md:flex-col gap-[6rem] max-md:-gap-[6rem]">
+      <div className="w-[30%] max-md:w-full flex flex-col gap-[1.8rem]">
         <h1 className={`${FONTS.heading}`}>Check Our Hotels' Gallery</h1>
         <p className={`${FONTS.body} text-[var(--light-gray)]`}>
           We are the people's choice for those who seek more from their journey.
@@ -149,19 +149,19 @@ export default function Gallery() {
           offering a symphony of comfort, luxury, and unmatched service.
         </p>
       </div>
-      <div className="w-[70%] flex flex-col">
+      <div className="w-[70%] max-md:w-full flex flex-col">
         {/* Images container with hidden scrollbar */}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex flex-nowrap gap-[2.4rem] overflow-x-auto overflow-y-hidden hide-scrollbar"
+          className="flex flex-nowrap gap-[2.4rem] max-sm:gap-[1.2rem] overflow-x-auto overflow-y-hidden hide-scrollbar"
         >
           {galleryImages.map((image, index) => (
             <img
               key={index}
               src={image.src}
               alt="gallery"
-              className="w-[30rem] h-[37.5rem] object-cover flex-shrink-0"
+              className="w-[30rem] max-sm:w-[22rem] h-[37.5rem] max-sm:h-[26rem] object-cover flex-shrink-0"
             />
           ))}
         </div>

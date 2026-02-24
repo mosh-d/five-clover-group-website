@@ -58,7 +58,7 @@ export default function BlogSection({ blogs }) {
   }
 
   return (
-    <section className="flex p-[12rem] mt-[11rem] md:gap-[12rem] gap-[6rem] w-full items-center bg-[var(--background-color)]">
+    <section className="flex p-[12rem] max-md:px-[6rem] max-sm:px-[2rem] mt-[11rem] md:gap-[12rem] gap-[6rem] w-full items-center bg-[var(--background-color)]">
       <div className="flex flex-col bg-[var(--white)] w-full items-center gap-[8rem] shadow-xl pb-[1.8rem]">
         <div id="main">
           <BlogPost

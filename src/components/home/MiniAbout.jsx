@@ -23,7 +23,7 @@ export default function MiniAbout() {
             service.
           </p>
         </div>
-        <Button href="" borderColor="var(--text-color)"><p className="text-[1.2rem]">Read More</p></Button>
+        <Button href="/about" borderColor="var(--text-color)"><p className="text-[1.2rem]">Read More</p></Button>
       </div>
     </div>
   );

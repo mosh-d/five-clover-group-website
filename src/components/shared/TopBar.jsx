@@ -19,13 +19,31 @@ export default function TopBar() {
     <>
       <header className="absolute top-0 w-full flex justify-between items-center h-[10rem] py-[1.2rem] px-[9rem] max-lg:px-[4.8rem] z-10">
         <div className="border-b-[1px] w-full h-[12rem] border-[var(--emphasis)]/50 flex justify-between items-end pb-[.7rem]">
+          {/* Hamburger — visible on max-lg only */}
+          <button
+            className="hidden max-lg:flex items-center justify-center cursor-pointer"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open menu"
+          >
+            <FiMenu
+              size="3.2rem"
+              className={
+                isHomePage ? "text-white" : "text-[color:var(--text-color)]"
+              }
+            />
+          </button>
+
           {/* Desktop nav — hidden on max-lg */}
           <nav aria-label="Main navigation">
             <ul className="flex gap-[3.2rem] max-lg:hidden">
               <li>
                 <NavLink
                   href="/"
-                  className={isHomePage ? "text-[var(--white)] border-[var(--emphasis)]" : ""}
+                  className={
+                    isHomePage
+                      ? "text-[var(--white)] border-[var(--emphasis)]"
+                      : ""
+                  }
                 >
                   HOME
                 </NavLink>
@@ -57,20 +75,6 @@ export default function TopBar() {
             </ul>
           </nav>
 
-          {/* Hamburger — visible on max-lg only */}
-          <button
-            className="hidden max-lg:flex items-center justify-center cursor-pointer"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-          >
-            <FiMenu
-              size="3.2rem"
-              className={
-                isHomePage ? "text-white" : "text-[color:var(--text-color)]"
-              }
-            />
-          </button>
-
           {/* Logo — centered absolutely */}
           <Link
             href="/"
@@ -100,13 +104,13 @@ export default function TopBar() {
             </Button>
           )}
         </div>
+        <MobileMenu
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+        />
       </header>
 
       {/* Mobile menu overlay */}
-      <MobileMenu
-        isOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-      />
     </>
   );
 }

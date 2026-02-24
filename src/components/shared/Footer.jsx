@@ -18,13 +18,13 @@ export default function Footer() {
       data-component="Footer"
       className="text-[color:var(--footer-text-color)] bg-[color:var(--accent-2)] px-24 md:px-12 lg:px-[12rem] py-12 md:py-[6rem] flex flex-col gap-[6rem] md:gap-[6rem] justify-center items-center"
     >
-      <div className="w-[12rem] top-[1.2rem] left-1/2">
+      <Link href="/" className="w-[12rem] top-[1.2rem] left-1/2 cursor-pointer">
         <img
           src={Logo.src}
           alt="Five Clover Logo"
           className="w-full h-full object-cover"
         />
-      </div>
+      </Link>
       <div
         data-component="TopSection"
         className="flex flex-col md:flex-row w-full justify-center gap-[8rem] md:gap-[8rem] items-center md:items-start"

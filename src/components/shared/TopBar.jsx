@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/assets/five-clover-logo.png";
 import Image from "next/image";
@@ -69,9 +70,12 @@ export default function TopBar() {
           </button>
 
           {/* Logo — centered absolutely */}
-          <div className="size-[10rem] absolute top-[1.2rem] left-1/2 translate-x-[-50%] max-sm:left-[100%] max-sm:translate-x-[-150%]">
+          <Link
+            href="/"
+            className="size-[10rem] absolute top-[1.2rem] left-1/2 translate-x-[-50%] max-sm:left-[100%] max-sm:translate-x-[-150%] cursor-pointer"
+          >
             <Image src={Logo} alt="Five Clover Logo" />
-          </div>
+          </Link>
 
           {/* Reserve button — hidden on max-lg */}
           <Button href="/" className="max-md:hidden max-sm:none">

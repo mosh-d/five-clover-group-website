@@ -46,10 +46,10 @@ export default function ContactMainSection() {
           >
             <RiPhoneLine size="3rem" />
             <a
-              href="tel:+2349111871249"
+              href="tel:+2349115638526"
               className="border-b border-[color:var(--text-color)]/30 text-xl"
             >
-              +234 911 187 1249
+              +234 911 563 8526
             </a>
           </div>
           <div
@@ -70,12 +70,12 @@ export default function ContactMainSection() {
           >
             <RiFacebookLine size="3rem" />
             <a
-              href="https://www.facebook.com/RingrubyHotel?_rdc=1&_rdr#"
+              href="https://www.facebook.com/Fivecloverhotel1/"
               className="border-b border-[color:var(--text-color)]/30 text-xl"
               target="_blank"
               rel="noopener noreferrer"
             >
-              RingrubyHotel
+              Five Clover Hotel
             </a>
           </div>
           <div
@@ -84,12 +84,12 @@ export default function ContactMainSection() {
           >
             <RiInstagramLine size="3rem" />
             <a
-              href="https://www.instagram.com/ringruby_hotel/"
+              href="https://www.instagram.com/fivecloverhotel_/"
               className="border-b border-[color:var(--text-color)]/30 text-xl"
               target="_blank"
               rel="noopener noreferrer"
             >
-              @ringruby_hotel
+              @fivecloverhotel_
             </a>
           </div>
           <div
@@ -98,12 +98,12 @@ export default function ContactMainSection() {
           >
             <RiTiktokLine size="3rem" />
             <a
-              href="https://www.tiktok.com/@ringrubyhotels"
+              href="https://www.tiktok.com/@fiveclover_hotel"
               className="border-b border-[color:var(--text-color)]/30 text-xl"
               target="_blank"
               rel="noopener noreferrer"
             >
-              @ringrubyhotels
+              @fiveclover_hotel
             </a>
           </div>
         </div>

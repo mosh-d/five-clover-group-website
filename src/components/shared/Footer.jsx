@@ -213,7 +213,7 @@ export default function Footer() {
                 Abijo, GRA
               </a>
               <a
-                href="https://fivecloverilupeju.fivecloverhotels.com/"
+                href="https://ilupeju.fivecloverhotels.com/"
                 target="_blank"
                 className="text-2xl"
               >

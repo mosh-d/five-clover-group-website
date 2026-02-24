@@ -83,7 +83,7 @@ export default function Explore() {
             className="flex flex-nowrap gap-[2.4rem] h-auto overflow-x-auto overflow-y-hidden hide-scrollbar"
           >
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://ilupeju.fivecloverhotels.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -127,7 +127,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://abijogra.fivecloverhotels.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -148,7 +148,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://ringrubyvaluecounty.fivecloverhotels.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -170,7 +170,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://ringrubyhotelesoikejagra.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -192,7 +192,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://ringrubyhoteloduduwaikejagra.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -213,7 +213,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://ringrubyhotelsangotedo.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -235,7 +235,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://www.caritasinnlekkihotel.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -257,7 +257,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://www.caritasinnilasanhotel.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -279,7 +279,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://www.caritasinnigbobihotel.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -301,7 +301,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://www.caritasinnyabahotel.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >
@@ -322,7 +322,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://monastery.fivecloverhotels.com/"
+              href="https://www.thecordishotelikeja.com/"
               target="blank"
               className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
             >

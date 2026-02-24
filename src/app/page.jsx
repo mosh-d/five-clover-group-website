@@ -1,9 +1,4 @@
-import Hero from "@/components/home/Hero";
-import HotelIntros from "@/components/home/HotelIntros";
-import GroupRelationship from "@/components/home/GroupRelationship";
-import Reservation from "@/components/home/Reservation";
-import MiniAbout from "@/components/home/MiniAbout";
-import Gallery from "@/components/home/Gallery";
+import HomePageWrapper from "@/components/home/HomePageWrapper";
 import StructuredData from "@/components/seo/StructuredData";
 import { generateAllHotelsSchema, generateBreadcrumbSchema } from "@/lib/seo/structured-data";
 import { SITE_CONFIG, SEO_KEYWORDS, DEFAULT_OG_IMAGE } from "@/lib/seo/constants";
@@ -49,12 +44,7 @@ export default function Home() {
   return (
     <main>
       <StructuredData data={[...hotelsSchema, breadcrumbSchema]} />
-      <Hero />
-      <HotelIntros />
-      <GroupRelationship />
-      <Reservation />
-      <MiniAbout />
-      <Gallery />
+      <HomePageWrapper />
     </main>
   );
 }

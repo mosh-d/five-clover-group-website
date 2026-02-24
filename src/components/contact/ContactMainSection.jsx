@@ -11,7 +11,7 @@ import {
 
 export default function ContactMainSection() {
   return (
-    <div className="mt-[11rem]">
+    <section className="mt-[11rem]">
       <div
         data-component="TopSection"
         className="flex flex-col bg-[color:var(--accent-2)] text-[var(--text-color)] font-secondary p-[12rem] max-md:px-[6rem] max-sm:py-[6rem] max-sm:px-[2rem] gap-[1.8rem]"
@@ -32,9 +32,9 @@ export default function ContactMainSection() {
           className="w-[50%] max-md:w-[100%] max-md:max-w-[100%] gap-[1.2rem] flex flex-col"
         >
           <div className="flex flex-col gap-[1.8rem] mb-[.6rem]">
-            <h1 className="text-6xl font-bold font-secondary">
+            <h2 className="text-6xl font-bold font-secondary">
               Contact Information
-            </h1>
+            </h2>
             <p className="text-3xl font-secondary font-semibold">
               Get in touch with us through our contact details below and follow
               our social media pages
@@ -156,6 +156,6 @@ export default function ContactMainSection() {
           </Button>
         </div> */}
       </div>
-    </div>
+    </section>
   );
 }

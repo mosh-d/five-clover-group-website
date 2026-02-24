@@ -14,7 +14,7 @@ import {
 
 export default function Footer() {
   return (
-    <div
+    <footer
       data-component="Footer"
       className="text-[color:var(--footer-text-color)] bg-[color:var(--accent-2)] px-24 md:px-12 lg:px-[12rem] py-12 md:py-[6rem] flex flex-col gap-[6rem] md:gap-[6rem] justify-center items-center"
     >
@@ -133,33 +133,35 @@ export default function Footer() {
           className="flex gap-[4rem] w-full items-center"
         >
           <div className="h-[0.1rem] flex-1 bg-[color:var(--footer-text-color)]/50 min-w-[2rem] max-md:hidden"></div>
-          <h1 className="text-5xl font-bold font-secondary max-md:m-auto">
+          <h2 className="text-5xl font-bold font-secondary max-md:m-auto">
             Navigation
-          </h1>
+          </h2>
           <div className="h-[0.1rem] flex-1 bg-[color:var(--footer-text-color)]/50 min-w-[2rem] max-md:hidden"></div>
         </div>
         <div
           data-component="NavigationItemsContainer"
           className="flex justify-center w-full"
         >
-          <ul
-            data-component="NavigationItems"
-            className="flex flex-col md:flex-row gap-4 md:gap-[8rem] items-center"
-          >
-            <li data-component="NavigationItem" className="text-xl">
-              {" "}
-              <Link href="/">HOME</Link>
-            </li>
-            <li data-component="NavigationItem" className="text-xl">
-              <Link href="/about">ABOUT</Link>
-            </li>
-            <li data-component="NavigationItem" className="text-xl">
-              <Link href="/contact">CONTACT</Link>
-            </li>
-            <li data-component="NavigationItem" className="text-xl">
-              <Link href="/blog">BLOG</Link>
-            </li>
-          </ul>
+          <nav aria-label="Footer navigation">
+            <ul
+              data-component="NavigationItems"
+              className="flex flex-col md:flex-row gap-4 md:gap-[8rem] items-center"
+            >
+              <li data-component="NavigationItem" className="text-xl">
+                {" "}
+                <Link href="/">HOME</Link>
+              </li>
+              <li data-component="NavigationItem" className="text-xl">
+                <Link href="/about">ABOUT</Link>
+              </li>
+              <li data-component="NavigationItem" className="text-xl">
+                <Link href="/contact">CONTACT</Link>
+              </li>
+              <li data-component="NavigationItem" className="text-xl">
+                <Link href="/blog">BLOG</Link>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
       {/* Mobile-only horizontal rule */}
@@ -173,9 +175,9 @@ export default function Footer() {
           className="flex gap-[4rem] w-full items-center"
         >
           <div className="h-[0.1rem] flex-1 bg-[color:var(--footer-text-color)]/50 min-w-[2rem] max-md:hidden"></div>
-          <h1 className="text-5xl font-bold font-secondary max-md:m-auto">
+          <h2 className="text-5xl font-bold font-secondary max-md:m-auto">
             Hotels
-          </h1>
+          </h2>
           <div className="h-[0.1rem] flex-1 bg-[color:var(--footer-text-color)]/50 min-w-[2rem] max-md:hidden"></div>
         </div>
         <div
@@ -190,7 +192,7 @@ export default function Footer() {
               data-component="Heading"
               className="text-4xl font-secondary font-bold"
             >
-              Five Clover
+              <h3>Five Clover</h3>
             </div>
             <div
               data-component="HotelLinks"
@@ -227,7 +229,7 @@ export default function Footer() {
               data-component="Heading"
               className="text-4xl font-secondary font-bold"
             >
-              Caritas Inn
+              <h3>Caritas Inn</h3>
             </div>
             <div
               data-component="HotelLinks"
@@ -271,7 +273,7 @@ export default function Footer() {
               data-component="Heading"
               className="text-4xl font-secondary font-bold"
             >
-              Ring Ruby
+              <h3>Ring Ruby</h3>
             </div>
             <div
               data-component="HotelLinks"
@@ -315,7 +317,7 @@ export default function Footer() {
               data-component="Heading"
               className="text-4xl font-secondary font-bold"
             >
-              Cordis
+              <h3>Cordis</h3>
             </div>
             <div
               data-component="HotelLinks"
@@ -340,6 +342,6 @@ export default function Footer() {
         Copyright &copy; {new Date().getFullYear()} Five Clover Hotel Groups. All rights
         reserved.
       </div>
-    </div>
+    </footer>
   );
 }

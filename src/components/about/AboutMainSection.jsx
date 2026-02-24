@@ -4,7 +4,7 @@ import About2 from "@/assets/about/about-2.jpg";
 export default function AboutMainSection() {
   return (
     <>
-      <div
+      <section
         data-component="AboutMainSection"
         className="p-[12rem] pt-[18rem] max-md:px-[6rem] max-sm:px-[2rem] w-full flex flex-col gap-[4.8rem]"
       >
@@ -33,7 +33,7 @@ export default function AboutMainSection() {
             >
               <img
                 src={About1.src}
-                alt=""
+                alt="Five Clover Hotels Group - Luxury hotel interior showcasing elegant design and premium guest amenities"
                 className="w-full h-full object-cover object-center"
               />
             </div>
@@ -41,7 +41,7 @@ export default function AboutMainSection() {
               data-component="Block2Text"
               className="flex flex-col gap-[1.8rem] font-secondary bg-[color:var(--accent-2)] w-[100%] p-[12rem] max-lg:p-[6rem] max-md:p-[4rem] max-sm:p-[2rem]"
             >
-              <h1 className="text-6xl font-bold">Luxury and Comfort</h1>
+              <h2 className="text-6xl font-bold">Luxury and Comfort</h2>
               <p className="text-2xl font-bold">
                 Five Clover Hotels, the top choice for luxury and relaxation in
                 Lagos, boasts several branches, each offering a distinctive
@@ -62,9 +62,9 @@ export default function AboutMainSection() {
               data-component="Block2Text"
               className="flex flex-col gap-[1.8rem] font-secondary bg-[color:var(--accent-2)] w-[100%] p-[12rem] max-lg:p-[6rem] max-md:p-[4rem] max-sm:p-[2rem]"
             >
-              <h1 className="text-6xl font-bold">
+              <h2 className="text-6xl font-bold">
                 Experience African Hospitality
-              </h1>
+              </h2>
               <p className="text-2xl font-bold  ">
                 Embark on a gastronomic journey with our menu inspired by the
                 diverse landscapes of Africa, and immerse yourself in our lively
@@ -85,7 +85,7 @@ export default function AboutMainSection() {
             >
               <img
                 src={About2.src}
-                alt=""
+                alt="Five Clover Hotels Group - African-inspired dining experience with modern culinary techniques"
                 className="w-full h-full object-cover object-center"
               />
             </div>
@@ -96,7 +96,7 @@ export default function AboutMainSection() {
           className="bg-[color:var(--text-color)] p-[6rem] max-sm:p-[2rem] flex max-sm:flex-col gap-[6rem] text-[var(--white)] font-secondary"
         >
           <div className="flex flex-col gap-[1.8rem]">
-            <h1 className="text-6xl font-secondary font-bold">Our Vision</h1>
+            <h2 className="text-6xl font-secondary font-bold">Our Vision</h2>
             <p className="text-2xl">
               To be an organically developed global hotel management company
               that excels in its core components of place, service,
@@ -104,14 +104,14 @@ export default function AboutMainSection() {
             </p>
           </div>
           <div className="flex flex-col gap-[1.8rem]">
-            <h1 className="text-6xl font-secondary font-bold">Our Mission</h1>
+            <h2 className="text-6xl font-secondary font-bold">Our Mission</h2>
             <p className="text-2xl">
               Our mission is to be the most hospitable company in the world by
               creating world-class experiences for guests.
             </p>
           </div>
         </div>
-      </div>
+      </section>
     </>
   );
 }

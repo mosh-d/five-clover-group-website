@@ -25,76 +25,76 @@ import { CgArrowLongLeft, CgArrowLongRight } from "react-icons/cg";
 const FIVECLOVER_IMAGES = [
   {
     src: FiveClover1,
-    alt: "Five Clover 1",
+    alt: "Five Clover Hotel - Luxury hotel room with modern amenities and elegant design",
   },
   {
     src: FiveClover2,
-    alt: "Five Clover 2",
+    alt: "Five Clover Hotel - Premium hotel lobby and reception area",
   },
   {
     src: FiveClover3,
-    alt: "Five Clover 3",
+    alt: "Five Clover Hotel - Spacious hotel suite with contemporary furnishings",
   },
   {
     src: FiveClover4,
-    alt: "Five Clover 4",
+    alt: "Five Clover Hotel - Hotel facilities and guest amenities",
   },
 ];
 
 const CARITAS_IMAGES = [
   {
     src: Caritas1,
-    alt: "Caritas 1",
+    alt: "Caritas Inn - Comfortable hotel room with modern facilities",
   },
   {
     src: Caritas2,
-    alt: "Caritas 2",
+    alt: "Caritas Inn - Welcoming hotel entrance and reception",
   },
   {
     src: Caritas3,
-    alt: "Caritas 3",
+    alt: "Caritas Inn - Cozy guest room with thoughtful amenities",
   },
   {
     src: Caritas4,
-    alt: "Caritas 4",
+    alt: "Caritas Inn - Hotel common areas and facilities",
   },
 ];
 
 const RINGRUBY_IMAGES = [
   {
     src: RingRuby1,
-    alt: "RingRuby 1",
+    alt: "Ring Ruby Hotel - Boutique hotel room with vibrant local design",
   },
   {
     src: RingRuby2,
-    alt: "RingRuby 2",
+    alt: "Ring Ruby Hotel - Stylish hotel interior with contemporary flair",
   },
   {
     src: RingRuby3,
-    alt: "RingRuby 3",
+    alt: "Ring Ruby Hotel - Elegant guest room with modern amenities",
   },
   {
     src: RingRuby4,
-    alt: "RingRuby 4",
+    alt: "Ring Ruby Hotel - Hotel facilities and guest services",
   },
 ];
 
 const CORDIS_IMAGES = [
   {
     src: Cordis1,
-    alt: "Cordis 1",
+    alt: "The Cordis Hotel - 4-star hotel room with sophisticated design",
   },
   {
     src: Cordis2,
-    alt: "Cordis 2",
+    alt: "The Cordis Hotel - Premium hotel lobby in Ikeja, Lagos",
   },
   {
     src: Cordis3,
-    alt: "Cordis 3",
+    alt: "The Cordis Hotel - Luxurious guest suite with modern conveniences",
   },
   {
     src: Cordis4,
-    alt: "Cordis 4",
+    alt: "The Cordis Hotel - Hotel amenities and business facilities",
   },
 ];
 

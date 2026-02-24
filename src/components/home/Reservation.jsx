@@ -59,7 +59,7 @@ export default function Reservation() {
                 }}
               >
                 <div className="w-[12rem] absolute top-0 m-auto">
-                  <img src={fivecloverlogo.src} alt="" />
+                  <img src={fivecloverlogo.src} alt="Five Clover Hotel logo" />
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
@@ -123,7 +123,7 @@ export default function Reservation() {
                 }}
               >
                 <div className="w-[12rem] absolute top-0 m-auto">
-                  <img src={ringrubylogo.src} alt="" />
+                  <img src={ringrubylogo.src} alt="Ring Ruby Hotel logo" />
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
@@ -196,7 +196,7 @@ export default function Reservation() {
                 }}
               >
                 <div className="w-[12rem] absolute top-0 m-auto">
-                  <img src={caritaslogo.src} alt="" />
+                  <img src={caritaslogo.src} alt="Caritas Inn logo" />
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
@@ -269,7 +269,7 @@ export default function Reservation() {
                 }}
               >
                 <div className="w-[12rem] absolute top-0 m-auto">
-                  <img src={cordislogo.src} alt="" />
+                  <img src={cordislogo.src} alt="The Cordis Hotel logo" />
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a

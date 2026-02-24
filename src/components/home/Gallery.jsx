@@ -160,7 +160,7 @@ export default function Gallery() {
             <img
               key={index}
               src={image.src}
-              alt="gallery"
+              alt={`Five Clover Hotels Group gallery image ${index + 1} - Luxury hotel rooms and amenities in Lagos, Nigeria`}
               className="w-[30rem] max-sm:w-[22rem] h-[37.5rem] max-sm:h-[26rem] object-cover flex-shrink-0"
             />
           ))}

@@ -4,13 +4,14 @@ import { LuExternalLink } from "react-icons/lu";
 
 export default function BlogPost({ image, title, content, slug }) {
   return (
-    <div className="flex flex-col gap-[1.8rem] items-start w-full">
-      <div
-        className="w-full h-[65rem] max-sm:h-[40rem] bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${image})` }}
-      ></div>
+    <article className="flex flex-col gap-[1.8rem] items-start w-full">
+      <img
+        src={image}
+        alt={title}
+        className="w-full h-[65rem] max-sm:h-[40rem] object-cover"
+      />
       <div className="flex flex-col items-start px-[2.4rem] max-md:px-[1.2rem] gap-[2.4rem]">
-        <h1 className={`${FONTS.heading}`}>{title}</h1>
+        <h2 className={`${FONTS.heading}`}>{title}</h2>
         <div>
           <p className="font-secondary tracking-[.01em] font-bold text-[1.8rem] text-justify">
             {content}
@@ -25,6 +26,6 @@ export default function BlogPost({ image, title, content, slug }) {
           </button>
         </Link>
       </div>
-    </div>
+    </article>
   );
 }

@@ -56,7 +56,7 @@ export default function HotelIntros() {
             >
               <img
                 src={logo.logo.src}
-                alt={logo.name}
+                alt={`${logo.name} Hotel logo - Premium hospitality in Lagos, Nigeria`}
                 className="size-[10rem] object-contain"
               />
               {/* <h3 className="text-[var(--white)] text-[1.4rem] font-medium text-center">

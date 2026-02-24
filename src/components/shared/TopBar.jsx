@@ -17,43 +17,45 @@ export default function TopBar() {
 
   return (
     <>
-      <div className="absolute top-0 w-full flex justify-between items-center h-[10rem] py-[1.2rem] px-[9rem] max-lg:px-[4.8rem] z-10">
+      <header className="absolute top-0 w-full flex justify-between items-center h-[10rem] py-[1.2rem] px-[9rem] max-lg:px-[4.8rem] z-10">
         <div className="border-b-[1px] w-full h-[12rem] border-[var(--emphasis)]/50 flex justify-between items-end pb-[.7rem]">
           {/* Desktop nav — hidden on max-lg */}
-          <ul className="flex gap-[3.2rem] max-lg:hidden">
-            <li>
-              <NavLink
-                href="/"
-                className={isHomePage ? "text-[var(--white)] border-[var(--emphasis)]" : ""}
-              >
-                HOME
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                href="/about"
-                className={isHomePage ? "text-[var(--white)]" : ""}
-              >
-                ABOUT
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                href="/contact"
-                className={isHomePage ? "text-[var(--white)]" : ""}
-              >
-                CONTACT
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                href="/blog"
-                className={isHomePage ? "text-[var(--white)]" : ""}
-              >
-                BLOG
-              </NavLink>
-            </li>
-          </ul>
+          <nav aria-label="Main navigation">
+            <ul className="flex gap-[3.2rem] max-lg:hidden">
+              <li>
+                <NavLink
+                  href="/"
+                  className={isHomePage ? "text-[var(--white)] border-[var(--emphasis)]" : ""}
+                >
+                  HOME
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  href="/about"
+                  className={isHomePage ? "text-[var(--white)]" : ""}
+                >
+                  ABOUT
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  href="/contact"
+                  className={isHomePage ? "text-[var(--white)]" : ""}
+                >
+                  CONTACT
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  href="/blog"
+                  className={isHomePage ? "text-[var(--white)]" : ""}
+                >
+                  BLOG
+                </NavLink>
+              </li>
+            </ul>
+          </nav>
 
           {/* Hamburger — visible on max-lg only */}
           <button
@@ -98,7 +100,7 @@ export default function TopBar() {
             </Button>
           )}
         </div>
-      </div>
+      </header>
 
       {/* Mobile menu overlay */}
       <MobileMenu

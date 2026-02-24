@@ -86,10 +86,12 @@ export default function Footer() {
           >
             <RiPhoneLine size="3rem" />
             <a
-              href="tel:+2349111846283"
+              href="tel:+2349115638526"
+              target="blank"
+              rel="noopener noreferrer"
               className="border-b border-[color:var(--text-color)]/30 text-xl"
             >
-              +234 911 184 6283
+              +234 911 563 8526
             </a>
           </div>
           <div
@@ -98,12 +100,12 @@ export default function Footer() {
           >
             <RiWhatsappLine size="3rem" />
             <a
-              href="https://wa.me/2349111846282"
+              href="https://wa.me/2349115638526?text=Hello%20there,%20I%20would%20like%20to%20know%20more%20about%20your%20hotel(s)."
               target="_blank"
               rel="noopener noreferrer"
               className="border-b border-[color:var(--text-color)]/30 text-xl"
             >
-              +234 911 184 6282
+              +234 911 563 8526
             </a>
           </div>
           <div
@@ -335,7 +337,7 @@ export default function Footer() {
         data-component="Copyright"
         className="text-[color:var(--footer-text-color)]/50 text-2xl font-bold text-center"
       >
-        &copy; {new Date().getFullYear()} Five Clover Hotel Groups. All rights
+        Copyright &copy; {new Date().getFullYear()} Five Clover Hotel Groups. All rights
         reserved.
       </div>
     </div>

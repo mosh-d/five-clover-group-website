@@ -78,9 +78,25 @@ export default function TopBar() {
           </Link>
 
           {/* Reserve button — hidden on max-lg */}
-          <Button href="/" className="max-md:hidden max-sm:none">
-            <p className="text-[1.8rem] text-[var(--emphasis)]">RESERVE</p>
-          </Button>
+          {isHomePage ? (
+            <a
+              href="#reservation"
+              className="border-[2px] px-[2rem] py-[.5rem] pt-[1rem] font-medium hover:cursor-pointer text-[var(--emphasis)] hover:bg-[var(--emphasis)] hover:text-[var(--white)] transition-all duration-300 max-md:hidden"
+              style={{ borderColor: "var(--emphasis)" }}
+              onClick={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById("reservation")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              <p className="text-[1.8rem]">RESERVE</p>
+            </a>
+          ) : (
+            <Button href="/#reservation" className="max-md:hidden">
+              <p className="text-[1.8rem]">RESERVE</p>
+            </Button>
+          )}
         </div>
       </div>
 

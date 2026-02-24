@@ -20,7 +20,7 @@ export default function Reservation() {
   const [flippedCard, setFlippedCard] = useState(null);
 
   return (
-    <div className="p-[12rem] max-sm:px-[1rem] flex flex-col items-center gap-[6rem]">
+    <div id="reservation" className="p-[12rem] max-sm:px-[1rem] flex flex-col items-center gap-[6rem]">
       <div className="flex flex-col items-center gap-[1.8rem]">
         <h1 className="font-secondary text-[5.3rem] font-bold text-center">
           Make a Reservation

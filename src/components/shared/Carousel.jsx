@@ -202,7 +202,7 @@ export default function Carousel({ brand, className }) {
       <div className="flex w-[40%] max-sm:w-[70%] h-[4rem] z-30 justify-between">
         <button
           onClick={handlePrevious}
-          className="flex items-center gap-[1rem] cursor-pointer px-[2rem] py-[.5rem] border-[1px] border-transparent hover:border-[var(--text-color)] transition-all duration-300 ease-in-out"
+          className="flex items-center gap-[1rem] cursor-pointer px-[2rem] py-[.5rem] border-[1px] border-transparent hover:border-[var(--text-color)] active:border-[var(--text-color)]/30 transition-all duration-300 ease-in-out"
         >
           <motion.div
             animate={{ x: clickAnimation === "prev" ? "-1rem" : 0 }}
@@ -214,7 +214,7 @@ export default function Carousel({ brand, className }) {
         </button>
         <button
           onClick={handleNext}
-          className="flex items-center gap-[1rem] cursor-pointer px-[2rem] py-[.5rem] border-[1px] border-transparent  hover:border-[var(--text-color)] transition-all duration-300 ease-in-out"
+          className="flex items-center gap-[1rem] cursor-pointer px-[2rem] py-[.5rem] border-[1px] border-transparent  hover:border-[var(--text-color)] active:border-[var(--text-color)]/30 transition-all duration-300 ease-in-out"
         >
           <p className="text-[1.4rem] mt-[.4rem]">Next</p>
           <motion.div

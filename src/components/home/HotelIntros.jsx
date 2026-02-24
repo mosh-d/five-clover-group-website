@@ -67,27 +67,50 @@ export default function HotelIntros() {
         </div>
       </div>
 
-      <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="fc">
+      <div
+        className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full"
+        id="fc"
+      >
         <Carousel brand="FIVECLOVER_IMAGES" />
         <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem] max-sm:py-[6rem]">
           <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
-            <h3 className={`${FONTS.context} max-lg:text-center`}>Five Clover Hotels</h3>
-            <h4 className={`${FONTS.heading} max-lg:text-center`}>Our flagship properties</h4>
+            <h3 className={`${FONTS.context} max-lg:text-center`}>
+              Five Clover Hotels
+            </h3>
+            <h4 className={`${FONTS.heading} max-lg:text-center`}>
+              Our flagship properties
+            </h4>
             <p className={`${FONTS.body} max-lg:text-center`}>
               At Monastery Road and Abijo GRA—embody the art of refined
               hospitality, welcoming you home with contemporary design and
               seamless service.
             </p>
           </div>
-          <UnderlinedButton>Reserve</UnderlinedButton>
+          <a
+            href="#reservation"
+            style={{ borderColor: "var(--emphasis)" }}
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .getElementById("reservation")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            <UnderlinedButton>Reserve</UnderlinedButton>
+          </a>
         </div>
       </div>
 
-      <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="rr">
+      <div
+        className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full"
+        id="rr"
+      >
         <Carousel brand="RINGRUBY_IMAGES" className="lg:hidden" />
         <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem]">
           <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
-            <h3 className={`${FONTS.context} max-lg:text-center`}>Ringruby Hotels</h3>
+            <h3 className={`${FONTS.context} max-lg:text-center`}>
+              Ringruby Hotels
+            </h3>
             <h4 className={`${FONTS.heading} max-lg:text-center`}>
               Discover vibrant boutique stays
             </h4>
@@ -96,39 +119,86 @@ export default function HotelIntros() {
               of local culture and modern flair.
             </p>
           </div>
-          <UnderlinedButton>Reserve</UnderlinedButton>
+          <a
+            href="#reservation"
+            style={{ borderColor: "var(--emphasis)" }}
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .getElementById("reservation")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            <UnderlinedButton>Reserve</UnderlinedButton>
+          </a>
         </div>
         <Carousel brand="RINGRUBY_IMAGES" className="max-lg:hidden" />
       </div>
 
-      <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="ci">
+      <div
+        className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full"
+        id="ci"
+      >
         <Carousel brand="CARITAS_IMAGES" />
         <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem]">
           <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
-            <h3 className={`${FONTS.context} max-lg:text-center`}>Caritas Inns</h3>
-            <h4 className={`${FONTS.heading} max-lg:text-center`}>From Lekki to Yaba</h4>
+            <h3 className={`${FONTS.context} max-lg:text-center`}>
+              Caritas Inns
+            </h3>
+            <h4 className={`${FONTS.heading} max-lg:text-center`}>
+              From Lekki to Yaba
+            </h4>
             <p className={`${FONTS.body} max-lg:text-center`}>
               Caritas Inns blend heartfelt service with thoughtful
               amenities—your cozy retreat in Nigeria’s bustling neighborhoods.
             </p>
           </div>
-          <UnderlinedButton>Reserve</UnderlinedButton>
+          <a
+            href="#reservation"
+            style={{ borderColor: "var(--emphasis)" }}
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .getElementById("reservation")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            <UnderlinedButton>Reserve</UnderlinedButton>
+          </a>
         </div>
       </div>
 
-      <div className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full" id="tc">
+      <div
+        className="flex max-lg:flex-col max-lg:gap-[4.8rem] items-stretch w-full"
+        id="tc"
+      >
         <Carousel brand="CORDIS_IMAGES" className="lg:hidden" />
         <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem]">
           <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
-            <h3 className={`${FONTS.context} max-lg:text-center`}>The Cordis Hotels</h3>
-            <h4 className={`${FONTS.heading} max-lg:text-center`}>Our 4-star king in Ikeja</h4>
+            <h3 className={`${FONTS.context} max-lg:text-center`}>
+              The Cordis Hotels
+            </h3>
+            <h4 className={`${FONTS.heading} max-lg:text-center`}>
+              Our 4-star king in Ikeja
+            </h4>
             <p className={`${FONTS.body} max-lg:text-center`}>
               Cordis Hotels—where every stay is a journey of comfort and
               sophistication, offering a unique blend of elegance and modern
               convenience.
             </p>
           </div>
-          <UnderlinedButton>Reserve</UnderlinedButton>
+          <a
+            href="#reservation"
+            style={{ borderColor: "var(--emphasis)" }}
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .getElementById("reservation")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            <UnderlinedButton>Reserve</UnderlinedButton>
+          </a>
         </div>
         <Carousel brand="CORDIS_IMAGES" className="max-lg:hidden" />
       </div>

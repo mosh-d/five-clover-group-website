@@ -152,7 +152,7 @@ export default function LoadingScreen({ children }) {
 
           {/* Brand Name */}
           <h1
-            className={`${FONTS.heading} text-[var(--emphasis)] text-[3.6rem] max-sm:text-[2.4rem] text-center`}
+            className={`${FONTS.heading} text-[var(--text-color)] text-[3.6rem] max-sm:text-[2.4rem] text-center`}
           >
             Five Clover Hotels Group
           </h1>

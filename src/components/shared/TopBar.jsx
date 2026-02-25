@@ -21,7 +21,7 @@ export default function TopBar() {
       <button
         className={`${
           mobileMenuOpen && "max-lg:hidden"
-        } hidden max-lg:flex items-center justify-center cursor-pointer fixed m-[3rem] bg-[var(--emphasis)] p-[.6rem] rounded-xl z-40 shadow-[0_5px_20px_rgba(70,58,19,0.5)] active:shadow-none active:size-0.7`}
+        } hidden max-lg:flex items-center justify-center cursor-pointer fixed m-[3rem] bg-[var(--emphasis)] p-[.6rem] rounded-xl z-40 shadow-[0_5px_20px_rgba(83,65,4,0.5)] active:shadow-none active:size-0.7`}
         onClick={() => setMobileMenuOpen(true)}
         aria-label="Open menu"
       >

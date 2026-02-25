@@ -27,6 +27,7 @@ export default function TopBar() {
       >
         <FiMenu
           size="2.8rem"
+          color="white"
           className={`${
             isHomePage ? "text-white" : "text-[color:var(--text-color)]"
           } `}

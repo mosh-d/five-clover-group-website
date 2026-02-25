@@ -11,10 +11,10 @@ import {
 
 export default function ContactMainSection() {
   return (
-    <section className="mt-[11rem]">
+    <section>
       <div
         data-component="TopSection"
-        className="flex flex-col bg-[color:var(--accent-2)] text-[var(--text-color)] font-secondary p-[12rem] max-md:px-[6rem] max-sm:py-[6rem] max-sm:px-[2rem] gap-[1.8rem]"
+        className="flex mt-[1rem] flex-col bg-[color:var(--accent-2)] text-[var(--text-color)] font-secondary p-[12rem] max-md:px-[6rem] max-sm:py-[6rem] max-sm:px-[2rem] gap-[1.8rem]"
       >
         <h1 className="text-6xl font-bold">Get In Touch</h1>
         <p className="text-3xl font-semibold">

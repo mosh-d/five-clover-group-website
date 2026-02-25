@@ -33,7 +33,7 @@ export default function TopBar() {
           } `}
         />
       </button>
-      <header className="absolute top-0 w-full flex justify-between items-center h-[10rem] py-[1.2rem] px-[9rem] max-lg:px-[4.8rem] max-sm:px-[2.4rem] z-30">
+      <header className={`${isHomePage && "absolute top-0"} w-full flex justify-between items-center h-[10rem] py-[1.2rem] px-[9rem] max-lg:px-[4.8rem] max-sm:px-[2.4rem] z-30`}>
         <div className="border-b-[1px] w-full h-[12rem] border-[var(--emphasis)]/50 flex justify-between items-end pb-[.7rem]">
           {/* Desktop nav — hidden on max-lg */}
           <nav aria-label="Main navigation">

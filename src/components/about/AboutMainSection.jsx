@@ -6,7 +6,7 @@ export default function AboutMainSection() {
     <>
       <section
         data-component="AboutMainSection"
-        className="p-[12rem] pt-[18rem] max-md:px-[6rem] max-sm:px-[2rem] w-full flex flex-col gap-[4.8rem]"
+        className="p-[12rem] max-md:px-[6rem] max-sm:px-[2rem] w-full flex flex-col gap-[4.8rem]"
       >
         <div
           data-component="Block1"

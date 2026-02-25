@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import FONTS from "@/utils/fonts";
 
 // Images
@@ -33,26 +33,27 @@ export default function Explore() {
     }
   };
 
-  const handleThumbDrag = (e) => {
-    if (!isDragging || !scrollContainerRef.current || !trackRef.current) return;
-
-    const trackRect = trackRef.current.getBoundingClientRect();
-    const trackWidth = trackRect.width;
-    const thumbWidth = trackWidth * 0.5; // 50% thumb width
-    const maxThumbPosition = trackWidth - thumbWidth;
-
-    let newPosition = e.clientX - trackRect.left - thumbWidth / 2;
-    newPosition = Math.max(0, Math.min(newPosition, maxThumbPosition));
-
-    const percentage = (newPosition / maxThumbPosition) * 100;
-    const { scrollWidth, clientWidth } = scrollContainerRef.current;
-    const maxScroll = scrollWidth - clientWidth;
-    scrollContainerRef.current.scrollLeft = (percentage / 100) * maxScroll;
-  };
-
   useEffect(() => {
-    const handleMouseMove = (e) => handleThumbDrag(e);
-    const handleMouseUp = () => setIsDragging(false);
+    const handleMouseMove = (e) => {
+      if (!isDragging || !scrollContainerRef.current || !trackRef.current) return;
+
+      const trackRect = trackRef.current.getBoundingClientRect();
+      const trackWidth = trackRect.width;
+      const thumbWidth = trackWidth * 0.5;
+      const maxThumbPosition = trackWidth - thumbWidth;
+
+      let newPosition = e.clientX - trackRect.left - thumbWidth / 2;
+      newPosition = Math.max(0, Math.min(newPosition, maxThumbPosition));
+
+      const percentage = (newPosition / maxThumbPosition) * 100;
+      const { scrollWidth, clientWidth } = scrollContainerRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      scrollContainerRef.current.scrollLeft = (percentage / 100) * maxScroll;
+    };
+    
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
 
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove);
@@ -63,7 +64,14 @@ export default function Explore() {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [handleThumbDrag, isDragging]);
+  }, [isDragging]);
+
+  // Reset dragging state when component unmounts
+  useEffect(() => {
+    return () => {
+      setIsDragging(false);
+    };
+  }, []);
 
   return (
     <>

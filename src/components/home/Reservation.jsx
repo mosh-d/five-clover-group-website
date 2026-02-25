@@ -20,7 +20,10 @@ export default function Reservation() {
   const [flippedCard, setFlippedCard] = useState(null);
 
   return (
-    <div id="reservation" className="p-[12rem] max-sm:px-[1rem] flex flex-col items-center gap-[6rem]">
+    <div
+      id="reservation"
+      className="p-[12rem] max-sm:px-[1rem] flex flex-col items-center gap-[6rem]"
+    >
       <div className="flex flex-col items-center gap-[1.8rem]">
         <h1 className="font-secondary text-[5.3rem] font-bold text-center">
           Make a Reservation
@@ -31,7 +34,10 @@ export default function Reservation() {
       </div>
       <div className="flex gap-[6rem] max-lg:gap-[12rem] flex-wrap w-full justify-center">
         {/* Five Clover Card */}
-        <div id="fc-reservation" className="flex flex-col items-center gap-[3rem]">
+        <div
+          id="fc-reservation"
+          className="flex flex-col items-center gap-[3rem]"
+        >
           <h2 className="text-[2.7rem]">Five Clover</h2>
           <div
             className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
@@ -42,7 +48,9 @@ export default function Reservation() {
             }
           >
             <div
-              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "fiveclover" ? "rotate-y-180" : ""}`}
+              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${
+                flippedCard === "fiveclover" ? "rotate-y-180" : ""
+              }`}
             >
               <div
                 className="absolute inset-0 backface-hidden flex items-center justify-center bg-cover text-white shadow-xl"
@@ -50,7 +58,18 @@ export default function Reservation() {
                   backgroundImage: `linear-gradient(hsla(38, 49%, 51%, .6), hsla(38, 49%, 51%, .4)), url(${fiveclover.src})`,
                   backgroundBlendMode: "soft-light",
                 }}
-              ></div>
+              >
+                <p
+                  className="text-[1.6rem] hidden max-md:block self-end p-[1.6rem] w-full text-center"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, hsla(38, 49%, 15%, .7)",
+                    backgroundBlendMode: "multiply",
+                  }}
+                >
+                  Tap to view locations
+                </p>
+              </div>
               <div
                 className="absolute inset-0 backface-hidden rotate-y-180 flex flex-col items-center justify-center bg-cover text-white shadow-xl"
                 style={{
@@ -89,13 +108,26 @@ export default function Reservation() {
                     Ilupeju
                   </a>
                 </div>
+                <p
+                  className="text-[1.6rem] hidden max-md:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, hsla(38, 49%, 15%, .7)",
+                    backgroundBlendMode: "multiply",
+                  }}
+                >
+                  Tap to flip back
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* RingRuby Card */}
-        <div id="rr-reservation" className="flex flex-col items-center gap-[3rem]">
+        <div
+          id="rr-reservation"
+          className="flex flex-col items-center gap-[3rem]"
+        >
           <h2 className="text-[2.7rem]">Ringruby</h2>
           <div
             className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
@@ -106,7 +138,9 @@ export default function Reservation() {
             }
           >
             <div
-              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "ringruby" ? "rotate-y-180" : ""}`}
+              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${
+                flippedCard === "ringruby" ? "rotate-y-180" : ""
+              }`}
             >
               <div
                 className="absolute inset-0 backface-hidden flex items-center justify-center bg-cover text-white shadow-xl"
@@ -114,7 +148,18 @@ export default function Reservation() {
                   backgroundImage: `linear-gradient(hsla(359, 78%, 51%, .6), hsla(359, 78%, 51%, .6)), url(${ringruby.src})`,
                   backgroundBlendMode: "soft-light",
                 }}
-              ></div>
+              >
+                <p
+                  className="text-[1.6rem] hidden max-md:block self-end p-[1.6rem] w-full text-center"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, hsla(359, 50%, 10%, .7)",
+                    backgroundBlendMode: "multiply",
+                  }}
+                >
+                  Tap to view locations
+                </p>
+              </div>
               <div
                 className="absolute inset-0 backface-hidden rotate-y-180 flex flex-col items-center justify-center bg-cover text-white shadow-xl"
                 style={{
@@ -162,13 +207,26 @@ export default function Reservation() {
                     Value County
                   </a>
                 </div>
+                <p
+                  className="text-[1.6rem] hidden max-md:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, hsla(359, 50%, 10%, .7)",
+                    backgroundBlendMode: "multiply",
+                  }}
+                >
+                  Tap to flip back
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Caritas Card */}
-        <div id="ci-reservation" className="flex flex-col items-center gap-[3rem]">
+        <div
+          id="ci-reservation"
+          className="flex flex-col items-center gap-[3rem]"
+        >
           <h2 className="text-[2.7rem]">Caritas</h2>
           <div
             className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
@@ -179,7 +237,9 @@ export default function Reservation() {
             }
           >
             <div
-              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "caritas" ? "rotate-y-180" : ""}`}
+              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${
+                flippedCard === "caritas" ? "rotate-y-180" : ""
+              }`}
             >
               <div
                 className="absolute inset-0 backface-hidden flex items-center justify-center bg-cover text-white shadow-xl"
@@ -187,7 +247,18 @@ export default function Reservation() {
                   backgroundImage: `linear-gradient(hsla(24, 93%, 45%, .4), hsla(24, 93%, 45%, .4)), url(${caritas.src})`,
                   backgroundBlendMode: "soft-light",
                 }}
-              ></div>
+              >
+                <p
+                  className="text-[1.6rem] hidden max-md:block self-end p-[1.6rem] w-full text-center"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, hsla(24, 70%, 10%, .7)",
+                    backgroundBlendMode: "multiply",
+                  }}
+                >
+                  Tap to view locations
+                </p>
+              </div>
               <div
                 className="absolute inset-0 backface-hidden rotate-y-180 flex flex-col items-center justify-center bg-cover text-white shadow-xl"
                 style={{
@@ -235,13 +306,26 @@ export default function Reservation() {
                     Yaba
                   </a>
                 </div>
+                <p
+                  className="text-[1.6rem] hidden max-md:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, hsla(24, 70%, 10%, .7)",
+                    backgroundBlendMode: "multiply",
+                  }}
+                >
+                  Tap to flip back
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Cordis Card */}
-        <div id="tc-reservation" className="flex flex-col items-center gap-[3rem]">
+        <div
+          id="tc-reservation"
+          className="flex flex-col items-center gap-[3rem]"
+        >
           <h2 className="text-[2.7rem]">The Cordis</h2>
           <div
             className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
@@ -252,7 +336,9 @@ export default function Reservation() {
             }
           >
             <div
-              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${flippedCard === "cordis" ? "rotate-y-180" : ""}`}
+              className={`relative w-full h-full transition-transform duration-700 preserve-3d ${
+                flippedCard === "cordis" ? "rotate-y-180" : ""
+              }`}
             >
               <div
                 className="absolute inset-0 backface-hidden flex items-center justify-center bg-cover text-white shadow-xl"
@@ -260,7 +346,18 @@ export default function Reservation() {
                   backgroundImage: `linear-gradient(hsla(47, 70%, 50%, .6), hsla(47, 70%, 50%, .6)), url(${cordis.src})`,
                   backgroundBlendMode: "soft-light",
                 }}
-              ></div>
+              >
+                <p
+                  className="text-[1.6rem] hidden max-md:block self-end p-[1.6rem] w-full text-center"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, hsla(47, 60%, 10%, .7)",
+                    backgroundBlendMode: "multiply",
+                  }}
+                >
+                  Tap to view locations
+                </p>
+              </div>
               <div
                 className="absolute inset-0 backface-hidden rotate-y-180 flex flex-col items-center justify-center bg-cover text-white shadow-xl"
                 style={{
@@ -281,6 +378,16 @@ export default function Reservation() {
                     Ikeja
                   </a>
                 </div>
+                <p
+                  className="text-[1.6rem] hidden max-md:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent, hsla(47, 60%, 10%, .7)",
+                    backgroundBlendMode: "multiply",
+                  }}
+                >
+                  Tap to flip back
+                </p>
               </div>
             </div>
           </div>

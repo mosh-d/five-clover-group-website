@@ -51,10 +51,11 @@ export default function Explore() {
           >
             <a
               href="https://ilupeju.fivecloverhotels.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] max-sm:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] max-sm:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={fiveCloverIlupeju.src}
                   alt="Five Clover Hotel Ilupeju - Luxury hotel in Ilupeju, Lagos with easy access to business districts"
@@ -73,10 +74,11 @@ export default function Explore() {
             </a>
             <a
               href="https://monastery.fivecloverhotels.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={fiveCloverMonastery.src}
                   alt="Five Clover Hotel Monastery - Lavishly furnished hotel in secure serene environment, Lagos"
@@ -95,10 +97,11 @@ export default function Explore() {
             </a>
             <a
               href="https://abijogra.fivecloverhotels.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={fiveCloverAbijo.src}
                   alt="Five Clover Hotel Abijo GRA - Premium hotel with exceptional service in Abijo, Lagos"
@@ -116,10 +119,11 @@ export default function Explore() {
             </a>
             <a
               href="https://ringrubyvaluecounty.fivecloverhotels.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={ringRubyValueCounty.src}
                   alt="Ring Ruby Hotel Value County - Serene boutique hotel in Value County Estate, Lagos"
@@ -138,10 +142,11 @@ export default function Explore() {
             </a>
             <a
               href="https://ringrubyhotelesoikejagra.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={ringRubyEso.src}
                   alt="Ring Ruby Hotel Eso Close - Contemporary boutique hotel in Ikeja GRA with West African hospitality"
@@ -160,10 +165,11 @@ export default function Explore() {
             </a>
             <a
               href="https://ringrubyhoteloduduwaikejagra.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={ringRubyOduduwa.src}
                   alt="Ring Ruby Hotel Oduduwa Way - Serene boutique hotel in Ikeja GRA, Lagos"
@@ -181,10 +187,11 @@ export default function Explore() {
             </a>
             <a
               href="https://ringrubyhotelsangotedo.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={ringRubySangotedo.src}
                   alt="Ring Ruby Hotel Sangotedo - Tranquil boutique hotel in United Estate, Sangotedo, Lagos"
@@ -203,10 +210,11 @@ export default function Explore() {
             </a>
             <a
               href="https://www.caritasinnlekkihotel.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={caritasLekki.src}
                   alt="Caritas Inn Lekki - Comfortable hotel in Lekki Phase 1, Lagos near Adiba Supermarket"
@@ -225,10 +233,11 @@ export default function Explore() {
             </a>
             <a
               href="https://www.caritasinnilasanhotel.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={caritasIlasan.src}
                   alt="Caritas Inn Ilasan - Luxury hospitality haven in Ilasan, Lekki, Lagos"
@@ -247,10 +256,11 @@ export default function Explore() {
             </a>
             <a
               href="https://www.caritasinnigbobihotel.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={caritasIgbobi.src}
                   alt="Caritas Inn Igbobi - Peaceful and relaxing hotel with exceptional hospitality in Igbobi, Lagos"
@@ -269,10 +279,11 @@ export default function Explore() {
             </a>
             <a
               href="https://www.caritasinnyabahotel.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={caritasYaba.src}
                   alt="Caritas Inn Yaba - Convenient hotel on Herbert Macaulay Way, Yaba, Lagos"
@@ -290,10 +301,11 @@ export default function Explore() {
             </a>
             <a
               href="https://www.thecordishotelikeja.com/"
-              target="blank"
-              className="hover:bg-[var(--text-color)]/20 transition-all duration-500 ease-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block touch-manipulation"
             >
-              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem]">
+              <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
                 <img
                   src={cordisIkeja.src}
                   alt="The Cordis Hotel Ikeja - 4-star hotel in Ikeja, Lagos near corporate offices and shopping centers"

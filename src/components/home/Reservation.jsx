@@ -60,7 +60,7 @@ export default function Reservation() {
                 }}
               >
                 <p
-                  className="text-[1.6rem] hidden max-md:block self-end p-[1.6rem] w-full text-center"
+                  className="text-[1.6rem] hidden max-lg:block self-end p-[1.6rem] w-full text-center"
                   style={{
                     background:
                       "linear-gradient(to bottom, transparent, hsla(38, 49%, 15%, .7)",
@@ -109,7 +109,7 @@ export default function Reservation() {
                   </a>
                 </div>
                 <p
-                  className="text-[1.6rem] hidden max-md:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
+                  className="text-[1.6rem] hidden max-lg:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
                   style={{
                     background:
                       "linear-gradient(to bottom, transparent, hsla(38, 49%, 15%, .7)",
@@ -150,7 +150,7 @@ export default function Reservation() {
                 }}
               >
                 <p
-                  className="text-[1.6rem] hidden max-md:block self-end p-[1.6rem] w-full text-center"
+                  className="text-[1.6rem] hidden max-lg:block self-end p-[1.6rem] w-full text-center"
                   style={{
                     background:
                       "linear-gradient(to bottom, transparent, hsla(359, 50%, 10%, .7)",
@@ -208,7 +208,7 @@ export default function Reservation() {
                   </a>
                 </div>
                 <p
-                  className="text-[1.6rem] hidden max-md:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
+                  className="text-[1.6rem] hidden max-lg:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
                   style={{
                     background:
                       "linear-gradient(to bottom, transparent, hsla(359, 50%, 10%, .7)",
@@ -249,7 +249,7 @@ export default function Reservation() {
                 }}
               >
                 <p
-                  className="text-[1.6rem] hidden max-md:block self-end p-[1.6rem] w-full text-center"
+                  className="text-[1.6rem] hidden max-lg:block self-end p-[1.6rem] w-full text-center"
                   style={{
                     background:
                       "linear-gradient(to bottom, transparent, hsla(24, 70%, 10%, .7)",
@@ -307,7 +307,7 @@ export default function Reservation() {
                   </a>
                 </div>
                 <p
-                  className="text-[1.6rem] hidden max-md:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
+                  className="text-[1.6rem] hidden max-lg:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
                   style={{
                     background:
                       "linear-gradient(to bottom, transparent, hsla(24, 70%, 10%, .7)",
@@ -348,7 +348,7 @@ export default function Reservation() {
                 }}
               >
                 <p
-                  className="text-[1.6rem] hidden max-md:block self-end p-[1.6rem] w-full text-center"
+                  className="text-[1.6rem] hidden max-lg:block self-end p-[1.6rem] w-full text-center"
                   style={{
                     background:
                       "linear-gradient(to bottom, transparent, hsla(47, 60%, 10%, .7)",
@@ -379,7 +379,7 @@ export default function Reservation() {
                   </a>
                 </div>
                 <p
-                  className="text-[1.6rem] hidden max-md:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
+                  className="text-[1.6rem] hidden max-lg:block absolute bottom-0 self-end p-[1.6rem] w-full text-center"
                   style={{
                     background:
                       "linear-gradient(to bottom, transparent, hsla(47, 60%, 10%, .7)",

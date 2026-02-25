@@ -74,7 +74,7 @@ export default async function FullBlogPage({ params }) {
   return (
     <>
       <StructuredData data={[articleSchema, breadcrumbSchema]} />
-      <main className="p-[4rem] mt-[12rem] mb-[4rem] max-w-[120rem] mx-auto">
+      <main className="p-[4rem] mb-[4rem] max-w-[120rem] mx-auto">
         <Link href="/blog">
           <button className="mb-[2rem] cursor-pointer hover:scale-110 transition-transform">
             <RiArrowLeftLine color="var(--black)" size="3rem" />

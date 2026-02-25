@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState } from "react";
 import FONTS from "@/utils/fonts";
 
 // Images
@@ -21,7 +21,6 @@ export default function Explore() {
   const scrollContainerRef = useRef(null);
   const trackRef = useRef(null);
   const [scrollPercentage, setScrollPercentage] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -32,46 +31,6 @@ export default function Explore() {
       setScrollPercentage(percentage);
     }
   };
-
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!isDragging || !scrollContainerRef.current || !trackRef.current) return;
-
-      const trackRect = trackRef.current.getBoundingClientRect();
-      const trackWidth = trackRect.width;
-      const thumbWidth = trackWidth * 0.5;
-      const maxThumbPosition = trackWidth - thumbWidth;
-
-      let newPosition = e.clientX - trackRect.left - thumbWidth / 2;
-      newPosition = Math.max(0, Math.min(newPosition, maxThumbPosition));
-
-      const percentage = (newPosition / maxThumbPosition) * 100;
-      const { scrollWidth, clientWidth } = scrollContainerRef.current;
-      const maxScroll = scrollWidth - clientWidth;
-      scrollContainerRef.current.scrollLeft = (percentage / 100) * maxScroll;
-    };
-    
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging]);
-
-  // Reset dragging state when component unmounts
-  useEffect(() => {
-    return () => {
-      setIsDragging(false);
-    };
-  }, []);
 
   return (
     <>
@@ -357,16 +316,15 @@ export default function Explore() {
           <div className="relative w-full mt-[2.4rem]">
             <div
               ref={trackRef}
-              className="w-1/2 h-[0.4rem] bg-[var(--accent-2)] relative cursor-pointer"
+              className="w-1/2 h-[0.4rem] bg-[var(--accent-2)] relative"
             >
               {/* Scrollbar thumb */}
               <div
-                className="absolute top-0 h-full bg-[var(--text-color)] transition-colors hover:bg-[var(--black)] cursor-grab active:cursor-grabbing"
+                className="absolute top-0 h-full bg-[var(--text-color)] transition-colors hover:bg-[var(--black)] pointer-events-none"
                 style={{
                   width: "50%",
                   left: `${scrollPercentage * 0.5}%`,
                 }}
-                onMouseDown={() => setIsDragging(true)}
               />
             </div>
           </div>

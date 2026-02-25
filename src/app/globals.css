@@ -226,3 +226,12 @@ select:focus {
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* Custom extra dark shadow */
+.shadow-3xl {
+  box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.5);
+}
+
+.shadow-4xl {
+  box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.6);
+}

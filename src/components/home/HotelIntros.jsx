@@ -91,9 +91,11 @@ export default function HotelIntros() {
             style={{ borderColor: "var(--emphasis)" }}
             onClick={(e) => {
               e.preventDefault();
-              document
-                .getElementById("fc-reservation")
-                ?.scrollIntoView({ behavior: "smooth" });
+              setTimeout(() => {
+                document
+                  .getElementById("fc-reservation")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }, 300);
             }}
           >
             <UnderlinedButton>Reserve</UnderlinedButton>
@@ -124,9 +126,11 @@ export default function HotelIntros() {
             style={{ borderColor: "var(--emphasis)" }}
             onClick={(e) => {
               e.preventDefault();
-              document
-                .getElementById("rr-reservation")
-                ?.scrollIntoView({ behavior: "smooth" });
+              setTimeout(() => {
+                document
+                  .getElementById("rr-reservation")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }, 300);
             }}
           >
             <UnderlinedButton>Reserve</UnderlinedButton>
@@ -158,9 +162,11 @@ export default function HotelIntros() {
             style={{ borderColor: "var(--emphasis)" }}
             onClick={(e) => {
               e.preventDefault();
-              document
-                .getElementById("ci-reservation")
-                ?.scrollIntoView({ behavior: "smooth" });
+              setTimeout(() => {
+                document
+                  .getElementById("ci-reservation")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }, 300);
             }}
           >
             <UnderlinedButton>Reserve</UnderlinedButton>
@@ -188,13 +194,14 @@ export default function HotelIntros() {
             </p>
           </div>
           <a
-            href="#reservation"
             style={{ borderColor: "var(--emphasis)" }}
             onClick={(e) => {
               e.preventDefault();
-              document
-                .getElementById("tc-reservation")
-                ?.scrollIntoView({ behavior: "smooth" });
+              setTimeout(() => {
+                document
+                  .getElementById("tc-reservation")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }, 300);
             }}
           >
             <UnderlinedButton>Reserve</UnderlinedButton>

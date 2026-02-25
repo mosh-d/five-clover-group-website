@@ -199,7 +199,7 @@ export default function Carousel({ brand, className }) {
           })}
         </AnimatePresence>
       </div>
-      <div className="flex w-[40%] max-sm:w-[70%] h-[4rem] z-30 justify-between">
+      <div className="flex w-[40%] max-sm:w-[70%] h-[4rem] z-0 justify-between">
         <button
           onClick={handlePrevious}
           className="flex items-center gap-[1rem] cursor-pointer px-[2rem] py-[.5rem] border-[1px] border-transparent hover:border-[var(--text-color)] active:border-[var(--text-color)]/30 transition-all duration-300 ease-in-out"

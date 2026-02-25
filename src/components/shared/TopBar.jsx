@@ -17,22 +17,23 @@ export default function TopBar() {
 
   return (
     <>
-      <header className="absolute top-0 w-full flex justify-between items-center h-[10rem] py-[1.2rem] px-[9rem] max-lg:px-[4.8rem] z-10">
+      {/* Hamburger — visible on max-lg only */}
+      <button
+        className={`${
+          mobileMenuOpen && "max-lg:hidden"
+        } hidden max-lg:flex items-center justify-center cursor-pointer fixed m-[3rem] bg-[var(--emphasis)] p-[.6rem] rounded-xl z-40 shadow-[0_5px_20px_rgba(0,0,0,0.4)] active:shadow-none active:size-0.7`}
+        onClick={() => setMobileMenuOpen(true)}
+        aria-label="Open menu"
+      >
+        <FiMenu
+          size="2.8rem"
+          className={`${
+            isHomePage ? "text-white" : "text-[color:var(--text-color)]"
+          } `}
+        />
+      </button>
+      <header className="absolute top-0 w-full flex justify-between items-center h-[10rem] py-[1.2rem] px-[9rem] max-lg:px-[4.8rem] max-sm:px-[2.4rem] z-30">
         <div className="border-b-[1px] w-full h-[12rem] border-[var(--emphasis)]/50 flex justify-between items-end pb-[.7rem]">
-          {/* Hamburger — visible on max-lg only */}
-          <button
-            className="hidden max-lg:flex items-center justify-center cursor-pointer"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-          >
-            <FiMenu
-              size="3.2rem"
-              className={
-                isHomePage ? "text-white" : "text-[color:var(--text-color)]"
-              }
-            />
-          </button>
-
           {/* Desktop nav — hidden on max-lg */}
           <nav aria-label="Main navigation">
             <ul className="flex gap-[3.2rem] max-lg:hidden">

@@ -31,7 +31,7 @@ export default function Reservation() {
       </div>
       <div className="flex gap-[6rem] max-lg:gap-[12rem] flex-wrap w-full justify-center">
         {/* Five Clover Card */}
-        <div className="flex flex-col items-center gap-[3rem]">
+        <div id="fc-reservation" className="flex flex-col items-center gap-[3rem]">
           <h2 className="text-[2.7rem]">Five Clover</h2>
           <div
             className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
@@ -95,7 +95,7 @@ export default function Reservation() {
         </div>
 
         {/* RingRuby Card */}
-        <div className="flex flex-col items-center gap-[3rem]">
+        <div id="rr-reservation" className="flex flex-col items-center gap-[3rem]">
           <h2 className="text-[2.7rem]">Ringruby</h2>
           <div
             className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
@@ -168,7 +168,7 @@ export default function Reservation() {
         </div>
 
         {/* Caritas Card */}
-        <div className="flex flex-col items-center gap-[3rem]">
+        <div id="ci-reservation" className="flex flex-col items-center gap-[3rem]">
           <h2 className="text-[2.7rem]">Caritas</h2>
           <div
             className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"
@@ -241,7 +241,7 @@ export default function Reservation() {
         </div>
 
         {/* Cordis Card */}
-        <div className="flex flex-col items-center gap-[3rem]">
+        <div id="tc-reservation" className="flex flex-col items-center gap-[3rem]">
           <h2 className="text-[2.7rem]">The Cordis</h2>
           <div
             className="perspective-1000 h-[60rem] aspect-[9/16] cursor-pointer"

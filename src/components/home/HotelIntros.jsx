@@ -81,7 +81,7 @@ export default function HotelIntros() {
               Our flagship properties
             </h4>
             <p className={`${FONTS.body} max-lg:text-center`}>
-              At Monastery Road and Abijo GRA—embody the art of refined
+              At Monastery Road, Ilupeju and Abijo GRA—embody the art of refined
               hospitality, welcoming you home with contemporary design and
               seamless service.
             </p>
@@ -92,7 +92,7 @@ export default function HotelIntros() {
             onClick={(e) => {
               e.preventDefault();
               document
-                .getElementById("reservation")
+                .getElementById("fc-reservation")
                 ?.scrollIntoView({ behavior: "smooth" });
             }}
           >
@@ -125,7 +125,7 @@ export default function HotelIntros() {
             onClick={(e) => {
               e.preventDefault();
               document
-                .getElementById("reservation")
+                .getElementById("rr-reservation")
                 ?.scrollIntoView({ behavior: "smooth" });
             }}
           >
@@ -159,7 +159,7 @@ export default function HotelIntros() {
             onClick={(e) => {
               e.preventDefault();
               document
-                .getElementById("reservation")
+                .getElementById("ci-reservation")
                 ?.scrollIntoView({ behavior: "smooth" });
             }}
           >
@@ -193,7 +193,7 @@ export default function HotelIntros() {
             onClick={(e) => {
               e.preventDefault();
               document
-                .getElementById("reservation")
+                .getElementById("tc-reservation")
                 ?.scrollIntoView({ behavior: "smooth" });
             }}
           >

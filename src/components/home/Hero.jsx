@@ -40,8 +40,8 @@ export default function Hero() {
           <p className="font-secondary text-[var(--white)] text-[2rem] text-center">
             Welcome to Five Clover Hotels, the premier hotel management company
             behind four distinct brands: Five Clover Hotels, Caritas Inns,
-            RingRuby, and Cordis Hotels. Together, our 3 Five Clover properties, 4 Caritas
-            locations, and 4 RingRuby curated experiences across Lagos deliver a
+            RingRuby Hotels, and The Cordis Hotels. Together, our 3 Five Clover properties, 4 Caritas
+            locations, 4 RingRuby Hotels, and 1 Cordis Hotel curated experiences across Lagos deliver a
             unified promise of elegance, comfort, and personalized service—each
             with its own unique character.
           </p>

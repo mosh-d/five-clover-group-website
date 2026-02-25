@@ -4,13 +4,47 @@ import { useState, useEffect } from "react";
 import FONTS from "@/utils/fonts";
 import FiveCloverLogo from "@/assets/five-clover-logo.png";
 
-// Import all critical images that need to be preloaded
+// Home page images
 import FiveClover from "@/assets/home/hero/five-clover.jpg";
 import FiveCloverLogoHero from "@/assets/home/hero/logos/five-clover-logo.png";
 import CaritasLogo from "@/assets/home/hero/logos/caritas-logo.png";
 import RingRubyLogo from "@/assets/home/hero/logos/ring-ruby-logo.png";
 import CordisLogo from "@/assets/home/hero/logos/cordis-logo.png";
 import miniabout from "@/assets/home/mini-about.jpg";
+
+// Carousel images
+import FiveClover1 from "@/assets/home/five-clover/five-clover-1.jpg";
+import FiveClover2 from "@/assets/home/five-clover/five-clover-2.jpg";
+import FiveClover3 from "@/assets/home/five-clover/five-clover-3.jpg";
+import FiveClover4 from "@/assets/home/five-clover/five-clover-4.jpg";
+import Caritas1 from "@/assets/home/caritas/caritas-1.jpg";
+import Caritas2 from "@/assets/home/caritas/caritas-2.jpg";
+import Caritas3 from "@/assets/home/caritas/caritas-3.jpg";
+import Caritas4 from "@/assets/home/caritas/caritas-4.jpg";
+import RingRuby1 from "@/assets/home/ring-ruby/ring-ruby-1.jpg";
+import RingRuby2 from "@/assets/home/ring-ruby/ring-ruby-2.jpg";
+import RingRuby3 from "@/assets/home/ring-ruby/ring-ruby-3.jpg";
+import RingRuby4 from "@/assets/home/ring-ruby/ring-ruby-4.jpg";
+import Cordis1 from "@/assets/home/cordis/cordis-1.jpg";
+import Cordis2 from "@/assets/home/cordis/cordis-2.jpg";
+import Cordis3 from "@/assets/home/cordis/cordis-3.jpg";
+import Cordis4 from "@/assets/home/cordis/cordis-4.jpg";
+
+// About page images
+import About1 from "@/assets/about/about-1.jpg";
+import About2 from "@/assets/about/about-2.jpg";
+import fiveCloverIlupeju from "@/assets/about/explore/five-clover/ilupeju.jpg";
+import fiveCloverMonastery from "@/assets/about/explore/five-clover/monastery.jpg";
+import fiveCloverAbijo from "@/assets/about/explore/five-clover/abijo.jpg";
+import ringRubyValueCounty from "@/assets/about/explore/ring-ruby/value-county.jpg";
+import ringRubyOduduwa from "@/assets/about/explore/ring-ruby/oduduwa.jpg";
+import ringRubyEso from "@/assets/about/explore/ring-ruby/eso.jpg";
+import ringRubySangotedo from "@/assets/about/explore/ring-ruby/sangotedo.jpg";
+import caritasLekki from "@/assets/about/explore/caritas/lekki.jpg";
+import caritasIlasan from "@/assets/about/explore/caritas/ilasan.jpg";
+import caritasIgbobi from "@/assets/about/explore/caritas/igbobi.jpg";
+import caritasYaba from "@/assets/about/explore/caritas/yaba.jpg";
+import cordisIkeja from "@/assets/about/explore/cordis/ikeja.jpg";
 
 // Gallery images
 import gallery1 from "@/assets/home/gallery/gallery-1.jpg";
@@ -55,12 +89,46 @@ import gallery39 from "@/assets/home/gallery/gallery-39.jpg";
 import gallery40 from "@/assets/home/gallery/gallery-40.jpg";
 
 const IMAGES_TO_PRELOAD = [
+  FiveCloverLogo.src,
   FiveClover.src,
   FiveCloverLogoHero.src,
   CaritasLogo.src,
   RingRubyLogo.src,
   CordisLogo.src,
   miniabout.src,
+  // Carousel images
+  FiveClover1.src,
+  FiveClover2.src,
+  FiveClover3.src,
+  FiveClover4.src,
+  Caritas1.src,
+  Caritas2.src,
+  Caritas3.src,
+  Caritas4.src,
+  RingRuby1.src,
+  RingRuby2.src,
+  RingRuby3.src,
+  RingRuby4.src,
+  Cordis1.src,
+  Cordis2.src,
+  Cordis3.src,
+  Cordis4.src,
+  // About page images
+  About1.src,
+  About2.src,
+  fiveCloverIlupeju.src,
+  fiveCloverMonastery.src,
+  fiveCloverAbijo.src,
+  ringRubyValueCounty.src,
+  ringRubyOduduwa.src,
+  ringRubyEso.src,
+  ringRubySangotedo.src,
+  caritasLekki.src,
+  caritasIlasan.src,
+  caritasIgbobi.src,
+  caritasYaba.src,
+  cordisIkeja.src,
+  // Gallery images
   gallery1.src,
   gallery2.src,
   gallery3.src,
@@ -108,11 +176,20 @@ export default function LoadingScreen({ children }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    // Check if assets have already been loaded in this session
+    const assetsLoaded = sessionStorage.getItem("assetsLoaded");
+
+    if (assetsLoaded === "true") {
+      // Assets already loaded, skip loading screen
+      setLoading(false);
+      return;
+    }
+
     let loadedCount = 0;
     const totalImages = IMAGES_TO_PRELOAD.length;
 
     const preloadImage = (src) => {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
           loadedCount++;
@@ -130,6 +207,8 @@ export default function LoadingScreen({ children }) {
 
     const loadAllImages = async () => {
       await Promise.all(IMAGES_TO_PRELOAD.map(preloadImage));
+      // Mark assets as loaded in sessionStorage
+      sessionStorage.setItem("assetsLoaded", "true");
       // Add a small delay for smooth transition
       setTimeout(() => {
         setLoading(false);

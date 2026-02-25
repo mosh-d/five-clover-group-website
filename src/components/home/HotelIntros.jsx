@@ -68,11 +68,11 @@ export default function HotelIntros() {
       </div>
 
       <div
-        className="flex max-lg:flex-col max-lg:gap-[4.8rem] max-sm:gap-0 items-stretch w-full"
+        className="flex max-lg:flex-col max-lg:gap-[4.8rem] max-sm:gap-[2rem] items-stretch w-full"
         id="fc"
       >
         <Carousel brand="FIVECLOVER_IMAGES" />
-        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem] max-sm:py-[6rem] max-sm:pt-[2rem]">
+        <div className="flex flex-col gap-[4.8rem] justify-center items-start max-lg:items-center w-[35%] max-lg:w-full px-[6rem] max-sm:px-[1rem] max-sm:py-0">
           <div className="flex flex-col gap-[1.8rem] max-lg:items-center">
             <h3 className={`${FONTS.context} max-lg:text-center`}>
               Five Clover Hotels

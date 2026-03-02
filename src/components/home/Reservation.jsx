@@ -25,7 +25,7 @@ export default function Reservation() {
       className="p-[12rem] max-sm:px-[1rem] flex flex-col items-center gap-[6rem]"
     >
       <div className="flex flex-col items-center gap-[1.8rem]">
-        <h1 className="font-secondary text-[5.3rem] font-bold text-center">
+        <h1 className="font-accent text-[5.3rem] font-bold text-center">
           Make a Reservation
         </h1>
         <p className={`${FONTS.body} text-[2.2rem] text-center`}>

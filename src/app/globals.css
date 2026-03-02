@@ -125,11 +125,11 @@ body {
   --ringruby: hsla(359, 78%, 51%, 1);
   --cordis: hsla(47, 100%, 56%, 1);
 
-
   /* Typography */
   --font-family-primary:
     "Cambay", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-family-secondary: "Cormorant", serif;
+  --font-family-secondary: Georgia, "Times New Roman", Times, serif;
+  --font-family-accent: "Cormorant", serif;
 
   .font-secondary {
     font-family: var(--font-family-secondary);
@@ -139,6 +139,10 @@ body {
 
   .font-primary {
     font-family: var(--font-family-primary);
+  }
+
+  .font-accent {
+    font-family: var(--font-family-accent);
   }
 }
 

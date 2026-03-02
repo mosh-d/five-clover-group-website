@@ -13,7 +13,7 @@ export default function BlogPost({ image, title, content, slug }) {
       <div className="flex flex-col items-start px-[2.4rem] max-md:px-[1.2rem] gap-[2.4rem]">
         <h2 className={`${FONTS.heading}`}>{title}</h2>
         <div>
-          <p className="font-secondary tracking-[.01em] font-bold text-[1.8rem] text-justify">
+          <p className="font-secondary tracking-[.01em] text-[1.8rem] text-justify">
             {content}
           </p>
         </div>

@@ -36,7 +36,7 @@ export default function HotelIntros() {
   return (
     <div className="py-[12rem] gap-[24rem] max-sm:gap-[16rem] flex flex-col w-full">
       <div>
-        <h2 className="text-[var(--text-color)] font-secondary text-[5.3rem] font-bold text-center">
+        <h2 className="text-[var(--text-color)] font-accent text-[5.3rem] font-bold text-center">
           Our Brands
         </h2>
         <div className="flex max-sm:px-[2rem] gap-[8rem] max-md:gap-[4rem] max-sm:gap-[2.4rem] items-center justify-center">

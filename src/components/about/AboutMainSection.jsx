@@ -12,10 +12,10 @@ export default function AboutMainSection() {
           data-component="Block1"
           className="bg-[color:var(--text-color)] p-[6rem] max-sm:p-[2rem] flex flex-col gap-[1.8rem] text-[var(--white)] font-secondary"
         >
-          <h1 className="text-6xl font-secondary font-bold">
+          <h1 className="text-6xl font-accent font-bold">
             We Always Care About Your Experience
           </h1>
-          <p className="text-3xl">
+          <p className="text-2xl">
             Welcome to Five Clover Hotels, a group of hotels where we redefine
             hospitality with a touch of elegance and unparalleled service. As a
             premier hotel brand with several distinguished branches across
@@ -41,8 +41,8 @@ export default function AboutMainSection() {
               data-component="Block2Text"
               className="flex flex-col gap-[1.8rem] font-secondary bg-[color:var(--accent-2)] w-[100%] p-[12rem] max-lg:p-[6rem] max-md:p-[4rem] max-sm:p-[2rem]"
             >
-              <h2 className="text-6xl font-bold">Luxury and Comfort</h2>
-              <p className="text-2xl font-bold">
+              <h2 className="text-6xl font-accent font-bold">Luxury and Comfort</h2>
+              <p className="text-2xl">
                 Five Clover Hotels, the top choice for luxury and relaxation in
                 Lagos, boasts several branches, each offering a distinctive
                 combination of luxury, comfort, and convenience for both
@@ -62,10 +62,10 @@ export default function AboutMainSection() {
               data-component="Block2Text"
               className="flex flex-col gap-[1.8rem] font-secondary bg-[color:var(--accent-2)] w-[100%] p-[12rem] max-lg:p-[6rem] max-md:p-[4rem] max-sm:p-[2rem]"
             >
-              <h2 className="text-6xl font-bold">
+              <h2 className="text-6xl font-accent font-bold">
                 Experience African Hospitality
               </h2>
-              <p className="text-2xl font-bold  ">
+              <p className="text-2xl">
                 Embark on a gastronomic journey with our menu inspired by the
                 diverse landscapes of Africa, and immerse yourself in our lively
                 atmosphere where traditional recipes merge with modern culinary
@@ -96,7 +96,7 @@ export default function AboutMainSection() {
           className="bg-[color:var(--text-color)] p-[6rem] max-sm:p-[2rem] flex max-sm:flex-col gap-[6rem] text-[var(--white)] font-secondary"
         >
           <div className="flex flex-col gap-[1.8rem]">
-            <h2 className="text-6xl font-secondary font-bold">Our Vision</h2>
+            <h2 className="text-6xl font-accent font-bold">Our Vision</h2>
             <p className="text-2xl">
               To be an organically developed global hotel management company
               that excels in its core components of place, service,
@@ -104,7 +104,7 @@ export default function AboutMainSection() {
             </p>
           </div>
           <div className="flex flex-col gap-[1.8rem]">
-            <h2 className="text-6xl font-secondary font-bold">Our Mission</h2>
+            <h2 className="text-6xl font-accent font-bold">Our Mission</h2>
             <p className="text-2xl">
               Our mission is to be the most hospitable company in the world by
               creating world-class experiences for guests.

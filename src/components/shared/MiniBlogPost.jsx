@@ -34,12 +34,12 @@ export default function MiniBlogPost({
       </div>
       <div className="flex flex-col px-[2.4rem] max-sm:px-0 md:px-[1.2rem] gap-[1.8rem]">
         <div className="line-clamp-2">
-          <h2 className="font-bold font-secondary text-[3.4rem] max-sm:text-[2rem] text-[var(--black)] group-hover:text-[var(--white)] group-active:text-[var(--white)]">
+          <h2 className="font-bold font-accent text-[3.4rem] max-sm:text-[2rem] text-[var(--black)] group-hover:text-[var(--white)] group-active:text-[var(--white)]">
             {title}
           </h2>
         </div>
         <div className="line-clamp-2">
-          <p className="font-secondary font-bold text-[1.8rem] max-sm:text-[1.4rem] tracking-[.01em] text-[var(--text-color)] group-hover:text-[var(--white)] group-active:text-[var(--white)]">
+          <p className="font-secondary text-[1.8rem] max-sm:text-[1.4rem] tracking-[.01em] text-[var(--text-color)] group-hover:text-[var(--white)] group-active:text-[var(--white)]">
             {caption}
           </p>
         </div>

@@ -133,7 +133,7 @@ export default function Footer() {
           className="flex gap-[4rem] w-full items-center"
         >
           <div className="h-[0.1rem] flex-1 bg-[color:var(--footer-text-color)]/50 min-w-[2rem] max-md:hidden"></div>
-          <h2 className="text-5xl font-bold font-secondary max-md:m-auto">
+          <h2 className="text-5xl font-bold font-accent max-md:m-auto">
             Navigation
           </h2>
           <div className="h-[0.1rem] flex-1 bg-[color:var(--footer-text-color)]/50 min-w-[2rem] max-md:hidden"></div>
@@ -175,7 +175,7 @@ export default function Footer() {
           className="flex gap-[4rem] w-full items-center"
         >
           <div className="h-[0.1rem] flex-1 bg-[color:var(--footer-text-color)]/50 min-w-[2rem] max-md:hidden"></div>
-          <h2 className="text-5xl font-bold font-secondary max-md:m-auto">
+          <h2 className="text-5xl font-bold font-accent max-md:m-auto">
             Hotels
           </h2>
           <div className="h-[0.1rem] flex-1 bg-[color:var(--footer-text-color)]/50 min-w-[2rem] max-md:hidden"></div>
@@ -192,7 +192,7 @@ export default function Footer() {
               data-component="Heading"
               className="text-4xl font-secondary font-bold"
             >
-              <h3>Five Clover</h3>
+              <h3 className="font-accent font-black">Five Clover</h3>
             </div>
             <div
               data-component="HotelLinks"
@@ -229,7 +229,7 @@ export default function Footer() {
               data-component="Heading"
               className="text-4xl font-secondary font-bold"
             >
-              <h3>Caritas Inn</h3>
+              <h3 className="font-accent font-black">Caritas Inn</h3>
             </div>
             <div
               data-component="HotelLinks"
@@ -240,7 +240,7 @@ export default function Footer() {
                 target="_blank"
                 className="text-2xl"
               >
-                Igbobo
+                Igbobi
               </a>
               <a
                 href="https://www.caritasinnilasanhotel.com/"
@@ -273,7 +273,7 @@ export default function Footer() {
               data-component="Heading"
               className="text-4xl font-secondary font-bold"
             >
-              <h3>Ring Ruby</h3>
+              <h3 className="font-accent font-black">Ring Ruby</h3>
             </div>
             <div
               data-component="HotelLinks"
@@ -317,7 +317,7 @@ export default function Footer() {
               data-component="Heading"
               className="text-4xl font-secondary font-bold"
             >
-              <h3>Cordis</h3>
+              <h3 className="font-accent font-black">Cordis</h3>
             </div>
             <div
               data-component="HotelLinks"

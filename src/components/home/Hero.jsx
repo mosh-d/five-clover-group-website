@@ -34,7 +34,7 @@ export default function Hero() {
     >
       <div className="flex flex-col gap-[1rem] px-[12rem] py-[18rem] max-md:px-[6rem] max-sm:px-[2rem] h-full items-center justify-around">
         <div className="flex flex-col gap-[2.4rem] items-center justify-center">
-          <h1 className="text-[var(--white)] font-secondary text-[3.4rem] text-center">
+          <h1 className="text-[var(--white)] font-accent text-[3.4rem] text-center">
             Experience The Art of Hospitality—Multiplied
           </h1>
           <p className="font-secondary text-[var(--white)] text-[1.8rem] text-center">

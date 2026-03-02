@@ -6,23 +6,23 @@ import RingRubyLogo from "@/assets/home/hero/logos/ring-ruby-logo.png";
 import CordisLogo from "@/assets/home/hero/logos/cordis-logo.png";
 
 const LOGOS = [
-    {
-        name: "Five Clover",
-        logo: FiveCloverLogo,
-    },
-    {
-        name: "Caritas",
-        logo: CaritasLogo,
-    },
-    {
-        name: "RingRuby",
-        logo: RingRubyLogo,
-    },
-    {
-        name: "Cordis",
-        logo: CordisLogo,
-    },
-]
+  {
+    name: "Five Clover",
+    logo: FiveCloverLogo,
+  },
+  {
+    name: "Caritas",
+    logo: CaritasLogo,
+  },
+  {
+    name: "RingRuby",
+    logo: RingRubyLogo,
+  },
+  {
+    name: "Cordis",
+    logo: CordisLogo,
+  },
+];
 
 export default function Hero() {
   return (
@@ -39,10 +39,11 @@ export default function Hero() {
           </h1>
           <p className="font-secondary text-[var(--white)] text-[1.8rem] text-center">
             Welcome to Five Clover Hotels, the premier hotel management company
-            behind four distinct brands: Five Clover Hotels, Caritas Inns,
-            RingRuby Hotels, and The Cordis Hotels. Together, our 3 Five Clover properties, 4 Caritas
-            locations, 4 RingRuby Hotels, and 1 Cordis Hotel curated experiences across Lagos deliver a
-            unified promise of elegance, comfort, and personalized service—each
+            behind four distinct brands: Five Clover Hotel, Caritas Inn,
+            RingRuby Hotel, and The Cordis Hotel. Together, our 3 Five Clover
+            properties, 4 Caritas Inn locations, 4 Ringruby Hotels, and 1 Cordis
+            Hotel curate exceptional experiences across Lagos, delivering a
+            unified promise of elegance, comfort, and personalized service, each
             with its own unique character.
           </p>
         </div>

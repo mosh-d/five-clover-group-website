@@ -144,9 +144,7 @@ export default function Gallery() {
       <div className="w-[30%] max-md:w-full flex flex-col gap-[1.8rem]">
         <h1 className={`${FONTS.heading}`}>Check Our Hotels' Gallery</h1>
         <p className={`${FONTS.body} text-[var(--light-gray)]`}>
-          We are the people's choice for those who seek more from their journey.
-          Nestled in the heart of Lagos, our hotels redefine hospitality,
-          offering a symphony of comfort, luxury, and unmatched service.
+          Check out our hotel gallery to see the luxury and comfort that awaits you. From rooms, to restaurants and bars, to pools and gyms. etc.
         </p>
       </div>
       <div className="w-[70%] max-md:w-full flex flex-col">

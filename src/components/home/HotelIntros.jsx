@@ -117,8 +117,9 @@ export default function HotelIntros() {
               Discover vibrant boutique stays
             </h4>
             <p className={`${FONTS.body} max-lg:text-center`}>
-              at Sangotedo, Eso Close, and Oduduwa—where each room tells a story
-              of local culture and modern flair.
+              at Sangotedo, Eso Close, Ikeja or GRA, Oduduwa Way, Ikeja GRA, and
+              Value County—where each room tells a story of local culture and
+              modern flair.
             </p>
           </div>
           <a

@@ -90,8 +90,7 @@ export default function HotelIntros() {
             </p>
           </div>
           <a
-            href="#reservation"
-            style={{ borderColor: "var(--emphasis)" }}
+            href="#fc-reservation"
             onClick={(e) => {
               e.preventDefault();
               setTimeout(() => {
@@ -126,8 +125,7 @@ export default function HotelIntros() {
             </p>
           </div>
           <a
-            href="#reservation"
-            style={{ borderColor: "var(--emphasis)" }}
+            href="#rr-reservation"
             onClick={(e) => {
               e.preventDefault();
               setTimeout(() => {
@@ -162,8 +160,7 @@ export default function HotelIntros() {
             </p>
           </div>
           <a
-            href="#reservation"
-            style={{ borderColor: "var(--emphasis)" }}
+            href="#ci-reservation"
             onClick={(e) => {
               e.preventDefault();
               setTimeout(() => {
@@ -198,7 +195,7 @@ export default function HotelIntros() {
             </p>
           </div>
           <a
-            style={{ borderColor: "var(--emphasis)" }}
+            href="#tc-reservation"
             onClick={(e) => {
               e.preventDefault();
               setTimeout(() => {

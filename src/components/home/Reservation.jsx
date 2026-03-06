@@ -91,6 +91,7 @@ export default function Reservation() {
                   <a
                     href="https://fivecloverhotelmonastery.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:bg-black/70 hover:text-[var(--emphasis)] hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -100,6 +101,7 @@ export default function Reservation() {
                   <a
                     href="https://fivecloverhotelabijo.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:bg-black/70 hover:text-[var(--emphasis)] hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -109,6 +111,7 @@ export default function Reservation() {
                   <a
                     href="https://fivecloverilupeju.fivecloverhotels.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:bg-black/70 hover:text-[var(--emphasis)] hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -187,6 +190,7 @@ export default function Reservation() {
                   <a
                     href="https://ringrubyhotelsangotedo.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -196,6 +200,7 @@ export default function Reservation() {
                   <a
                     href="https://ringrubyhotelesoikejagra.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -205,6 +210,7 @@ export default function Reservation() {
                   <a
                     href="https://ringrubyhoteloduduwaikejagra.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -214,6 +220,7 @@ export default function Reservation() {
                   <a
                     href="https://ringrubyvaluecounty.fivecloverhotels.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -292,6 +299,7 @@ export default function Reservation() {
                   <a
                     href="https://www.caritasinnigbobihotel.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -301,6 +309,7 @@ export default function Reservation() {
                   <a
                     href="https://www.caritasinnilasanhotel.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -310,6 +319,7 @@ export default function Reservation() {
                   <a
                     href="https://www.caritasinnlekkihotel.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -319,6 +329,7 @@ export default function Reservation() {
                   <a
                     href="https://www.caritasinnyabahotel.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
@@ -397,6 +408,7 @@ export default function Reservation() {
                   <a
                     href="https://www.thecordishotelikeja.com/"
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--cordis)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />

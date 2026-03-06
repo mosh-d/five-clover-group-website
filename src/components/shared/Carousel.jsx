@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FiveClover1 from "@/assets/home/five-clover/five-clover-1.jpg";
 import FiveClover2 from "@/assets/home/five-clover/five-clover-2.jpg";
@@ -125,6 +125,11 @@ export default function Carousel({ brand, className }) {
 
   const [index, setIndex] = useState({ main: 0, left: 1, right: 2 });
   const [clickAnimation, setClickAnimation] = useState(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  // Minimum swipe distance (in pixels)
+  const minSwipeDistance = 50;
 
   // Track which position each image index is currently in
   const getPosition = (imgIndex) => {
@@ -160,11 +165,43 @@ export default function Carousel({ brand, className }) {
     });
   };
 
+  // Touch event handlers for swipe detection
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        // Swiped left - go to next
+        handleNext();
+      } else {
+        // Swiped right - go to previous
+        handlePrevious();
+      }
+    }
+    
+    // Reset values
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
+
   return (
     <div
       className={`flex flex-col gap-[4rem] max-lg:gap-[1.8rem] items-center w-[65%] max-lg:w-full max-lg:px-[4.8rem] max-sm:px-0 shrink-0 ${className}`}
     >
-      <div className="relative flex w-full aspect-video items-center overflow-hidden">
+      <div 
+        className="relative flex w-full aspect-video items-center overflow-hidden touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <AnimatePresence mode="popLayout">
           {images.map((image, imgIndex) => {
             const position = getPosition(imgIndex);

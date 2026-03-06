@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Cambay, Cormorant } from "next/font/google";
 
 import Footer from "@/components/shared/Footer";
 import TopBar from "@/components/shared/TopBar";
@@ -6,6 +7,20 @@ import StructuredData from "@/components/seo/StructuredData";
 import GoogleAnalytics from "@/components/seo/GoogleAnalytics";
 import { generateOrganizationSchema } from "@/lib/seo/structured-data";
 import { SITE_CONFIG, SEO_KEYWORDS, DEFAULT_OG_IMAGE } from "@/lib/seo/constants";
+
+const cambay = Cambay({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-cambay',
+});
+
+const cormorant = Cormorant({
+  weight: ['300', '400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-cormorant',
+});
 
 export const metadata = {
   metadataBase: new URL(SITE_CONFIG.url),
@@ -77,8 +92,8 @@ export default function RootLayout({ children }) {
   const organizationSchema = generateOrganizationSchema();
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
+    <html lang="en" suppressHydrationWarning className={`${cambay.variable} ${cormorant.variable}`}>
+      <body className={cambay.className}>
         <GoogleAnalytics />
         <StructuredData data={organizationSchema} />
         <TopBar />

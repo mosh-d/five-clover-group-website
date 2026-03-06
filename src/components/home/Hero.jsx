@@ -1,3 +1,4 @@
+import Image from "next/image";
 import FiveClover from "@/assets/home/hero/five-clover.webp";
 
 import FiveCloverLogo from "@/assets/home/hero/logos/five-clover-logo.webp";
@@ -26,13 +27,22 @@ const LOGOS = [
 
 export default function Hero() {
   return (
-    <div
-      className="bg-cover bg-center h-[100vh] min-h-[80rem] w-full flex flex-col justify-center items-center"
-      style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, .95), rgba(0, 0, 0, .6)), url(${FiveClover.src})`,
-      }}
-    >
-      <div className="flex flex-col gap-[1rem] px-[12rem] py-[18rem] max-md:px-[6rem] max-sm:px-[2rem] h-full items-center justify-around">
+    <div className="relative bg-cover bg-center h-[100vh] min-h-[80rem] w-full flex flex-col justify-center items-center overflow-hidden">
+      {/* Background Image with Next.js Image */}
+      <Image
+        src={FiveClover}
+        alt="Five Clover Hotels Group - Luxury hotel experience in Lagos, Nigeria"
+        fill
+        priority
+        quality={90}
+        sizes="100vw"
+        className="object-cover -z-10"
+        placeholder="blur"
+      />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/95 to-black/60 -z-5" />
+      
+      <div className="relative z-10 flex flex-col gap-[1rem] px-[12rem] py-[18rem] max-md:px-[6rem] max-sm:px-[2rem] h-full items-center justify-around">
         <div className="flex flex-col gap-[2.4rem] items-center justify-center">
           <h1 className="text-[var(--white)] font-accent text-[3.4rem] text-center">
             Experience The Art of Hospitality—Multiplied

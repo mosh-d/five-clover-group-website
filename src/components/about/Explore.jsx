@@ -1,21 +1,22 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import FONTS from "@/utils/fonts";
 
 // Images
-import fiveCloverIlupeju from "@/assets/about/explore/five-clover/ilupeju.jpg";
-import fiveCloverMonastery from "@/assets/about/explore/five-clover/monastery.jpg";
-import fiveCloverAbijo from "@/assets/about/explore/five-clover/abijo.jpg";
-import ringRubyValueCounty from "@/assets/about/explore/ring-ruby/value-county.jpg";
-import ringRubyOduduwa from "@/assets/about/explore/ring-ruby/oduduwa.jpg";
-import ringRubyEso from "@/assets/about/explore/ring-ruby/eso.jpg";
-import ringRubySangotedo from "@/assets/about/explore/ring-ruby/sangotedo.jpg";
-import caritasLekki from "@/assets/about/explore/caritas/lekki.jpg";
-import caritasIlasan from "@/assets/about/explore/caritas/ilasan.jpg";
-import caritasIgbobi from "@/assets/about/explore/caritas/igbobi.jpg";
-import caritasYaba from "@/assets/about/explore/caritas/yaba.jpg";
-import cordisIkeja from "@/assets/about/explore/cordis/ikeja.jpg";
+import fiveCloverIlupeju from "@/assets/about/explore/five-clover/ilupeju.webp";
+import fiveCloverMonastery from "@/assets/about/explore/five-clover/monastery.webp";
+import fiveCloverAbijo from "@/assets/about/explore/five-clover/abijo.webp";
+import ringRubyValueCounty from "@/assets/about/explore/ring-ruby/value-county.webp";
+import ringRubyOduduwa from "@/assets/about/explore/ring-ruby/oduduwa.webp";
+import ringRubyEso from "@/assets/about/explore/ring-ruby/eso.webp";
+import ringRubySangotedo from "@/assets/about/explore/ring-ruby/sangotedo.webp";
+import caritasLekki from "@/assets/about/explore/caritas/lekki.webp";
+import caritasIlasan from "@/assets/about/explore/caritas/ilasan.webp";
+import caritasIgbobi from "@/assets/about/explore/caritas/igbobi.webp";
+import caritasYaba from "@/assets/about/explore/caritas/yaba.webp";
+import cordisIkeja from "@/assets/about/explore/cordis/ikeja.webp";
 
 export default function Explore() {
   const scrollContainerRef = useRef(null);
@@ -93,11 +94,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] max-sm:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={fiveCloverIlupeju.src}
-                  alt="Five Clover Hotel Ilupeju - Luxury hotel in Ilupeju, Lagos with easy access to business districts"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={fiveCloverIlupeju}
+                    alt="Five Clover Hotel Ilupeju - Luxury hotel in Ilupeju, Lagos with easy access to business districts"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Five Clover Hotel</h3>
                   <h4 className={`${FONTS.heading}`}>Ilupeju</h4>
@@ -116,11 +123,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={fiveCloverMonastery.src}
-                  alt="Five Clover Hotel Monastery - Lavishly furnished hotel in secure serene environment, Lagos"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={fiveCloverMonastery}
+                    alt="Five Clover Hotel Monastery - Lavishly furnished hotel in secure serene environment, Lagos"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Five Clover Hotel</h3>
                   <h4 className={`${FONTS.heading}`}>Monastery</h4>
@@ -139,11 +152,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={fiveCloverAbijo.src}
-                  alt="Five Clover Hotel Abijo GRA - Premium hotel with exceptional service in Abijo, Lagos"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={fiveCloverAbijo}
+                    alt="Five Clover Hotel Abijo GRA - Premium hotel with exceptional service in Abijo, Lagos"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Five Clover Hotel</h3>
                   <h4 className={`${FONTS.heading}`}>Abijo</h4>
@@ -161,11 +180,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={ringRubyValueCounty.src}
-                  alt="Ring Ruby Hotel Value County - Serene boutique hotel in Value County Estate, Lagos"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={ringRubyValueCounty}
+                    alt="Ring Ruby Hotel Value County - Serene boutique hotel in Value County Estate, Lagos"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Ringruby Hotel</h3>
                   <h4 className={`${FONTS.heading}`}>Value County</h4>
@@ -184,11 +209,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={ringRubyEso.src}
-                  alt="Ring Ruby Hotel Eso Close - Contemporary boutique hotel in Ikeja GRA with West African hospitality"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={ringRubyEso}
+                    alt="Ring Ruby Hotel Eso Close - Contemporary boutique hotel in Ikeja GRA with West African hospitality"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Ringruby Hotel</h3>
                   <h4 className={`${FONTS.heading}`}>Eso Close</h4>
@@ -207,11 +238,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={ringRubyOduduwa.src}
-                  alt="Ring Ruby Hotel Oduduwa Way - Serene boutique hotel in Ikeja GRA, Lagos"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={ringRubyOduduwa}
+                    alt="Ring Ruby Hotel Oduduwa Way - Serene boutique hotel in Ikeja GRA, Lagos"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Ringruby Hotel</h3>
                   <h4 className={`${FONTS.heading}`}>Oduduwa Way</h4>
@@ -229,11 +266,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={ringRubySangotedo.src}
-                  alt="Ring Ruby Hotel Sangotedo - Tranquil boutique hotel in United Estate, Sangotedo, Lagos"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={ringRubySangotedo}
+                    alt="Ring Ruby Hotel Sangotedo - Tranquil boutique hotel in United Estate, Sangotedo, Lagos"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Ringruby Hotel</h3>
                   <h4 className={`${FONTS.heading}`}>Sangotedo</h4>
@@ -252,11 +295,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={caritasLekki.src}
-                  alt="Caritas Inn Lekki - Comfortable hotel in Lekki Phase 1, Lagos near Adiba Supermarket"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={caritasLekki}
+                    alt="Caritas Inn Lekki - Comfortable hotel in Lekki Phase 1, Lagos near Adiba Supermarket"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Caritas Inn</h3>
                   <h4 className={`${FONTS.heading}`}>Lekki</h4>
@@ -275,11 +324,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={caritasIlasan.src}
-                  alt="Caritas Inn Ilasan - Luxury hospitality haven in Ilasan, Lekki, Lagos"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={caritasIlasan}
+                    alt="Caritas Inn Ilasan - Luxury hospitality haven in Ilasan, Lekki, Lagos"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Caritas Inn</h3>
                   <h4 className={`${FONTS.heading}`}>Ilasan</h4>
@@ -298,11 +353,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={caritasIgbobi.src}
-                  alt="Caritas Inn Igbobi - Peaceful and relaxing hotel with exceptional hospitality in Igbobi, Lagos"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={caritasIgbobi}
+                    alt="Caritas Inn Igbobi - Peaceful and relaxing hotel with exceptional hospitality in Igbobi, Lagos"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Caritas Inn</h3>
                   <h4 className={`${FONTS.heading}`}>Igbobi</h4>
@@ -321,11 +382,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={caritasYaba.src}
-                  alt="Caritas Inn Yaba - Convenient hotel on Herbert Macaulay Way, Yaba, Lagos"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={caritasYaba}
+                    alt="Caritas Inn Yaba - Convenient hotel on Herbert Macaulay Way, Yaba, Lagos"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Caritas Inn</h3>
                   <h4 className={`${FONTS.heading}`}>Yaba</h4>
@@ -343,11 +410,17 @@ export default function Explore() {
               className="block touch-manipulation"
             >
               <div className="h-full w-[30rem] max-lg:w-[20rem] flex-shrink-0 flex flex-col gap-[2.4rem] hover:bg-[var(--text-color)]/20 transition-colors duration-300">
-                <img
-                  src={cordisIkeja.src}
-                  alt="The Cordis Hotel Ikeja - 4-star hotel in Ikeja, Lagos near corporate offices and shopping centers"
-                  className="w-full aspect-square object-cover flex-shrink-0"
-                />
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={cordisIkeja}
+                    alt="The Cordis Hotel Ikeja - 4-star hotel in Ikeja, Lagos near corporate offices and shopping centers"
+                    fill
+                    sizes="(max-width: 640px) 20rem, (max-width: 1024px) 20rem, 30rem"
+                    className="object-cover"
+                    loading="lazy"
+                    quality={85}
+                  />
+                </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>The Cordis Hotel</h3>
                   <h4 className={`${FONTS.heading}`}>Ikeja</h4>

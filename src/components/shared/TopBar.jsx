@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Logo from "@/assets/five-clover-logo.png";
+import Logo from "@/assets/five-clover-logo.webp";
 import Image from "next/image";
 import Button from "./Button";
 import NavLink from "./NavLink";

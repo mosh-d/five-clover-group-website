@@ -1,48 +1,49 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import FONTS from "@/utils/fonts";
 
-import gallery1 from "@/assets/home/gallery/gallery-1.jpg";
-import gallery2 from "@/assets/home/gallery/gallery-2.jpg";
-import gallery3 from "@/assets/home/gallery/gallery-3.jpg";
-import gallery4 from "@/assets/home/gallery/gallery-4.jpg";
-import gallery5 from "@/assets/home/gallery/gallery-5.jpg";
-import gallery6 from "@/assets/home/gallery/gallery-6.jpg";
-import gallery7 from "@/assets/home/gallery/gallery-7.jpg";
-import gallery8 from "@/assets/home/gallery/gallery-8.jpg";
-import gallery9 from "@/assets/home/gallery/gallery-9.jpg";
-import gallery10 from "@/assets/home/gallery/gallery-10.jpg";
-import gallery11 from "@/assets/home/gallery/gallery-11.jpg";
-import gallery12 from "@/assets/home/gallery/gallery-12.jpg";
-import gallery13 from "@/assets/home/gallery/gallery-13.jpg";
-import gallery14 from "@/assets/home/gallery/gallery-14.jpg";
-import gallery15 from "@/assets/home/gallery/gallery-15.jpg";
-import gallery16 from "@/assets/home/gallery/gallery-16.jpg";
-import gallery17 from "@/assets/home/gallery/gallery-17.jpg";
-import gallery18 from "@/assets/home/gallery/gallery-18.jpg";
-import gallery19 from "@/assets/home/gallery/gallery-19.jpg";
-import gallery20 from "@/assets/home/gallery/gallery-20.jpg";
-import gallery21 from "@/assets/home/gallery/gallery-21.jpg";
-import gallery22 from "@/assets/home/gallery/gallery-22.jpg";
-import gallery23 from "@/assets/home/gallery/gallery-23.jpg";
-import gallery24 from "@/assets/home/gallery/gallery-24.jpg";
-import gallery25 from "@/assets/home/gallery/gallery-25.jpg";
-import gallery26 from "@/assets/home/gallery/gallery-26.jpg";
-import gallery27 from "@/assets/home/gallery/gallery-27.jpg";
-import gallery28 from "@/assets/home/gallery/gallery-28.jpg";
-import gallery29 from "@/assets/home/gallery/gallery-29.jpg";
-import gallery30 from "@/assets/home/gallery/gallery-30.jpg";
-import gallery31 from "@/assets/home/gallery/gallery-31.jpg";
-import gallery32 from "@/assets/home/gallery/gallery-32.jpg";
-import gallery33 from "@/assets/home/gallery/gallery-33.jpg";
-import gallery34 from "@/assets/home/gallery/gallery-34.jpg";
-import gallery35 from "@/assets/home/gallery/gallery-35.jpg";
-import gallery36 from "@/assets/home/gallery/gallery-36.jpg";
-import gallery37 from "@/assets/home/gallery/gallery-37.jpg";
-import gallery38 from "@/assets/home/gallery/gallery-38.jpg";
-import gallery39 from "@/assets/home/gallery/gallery-39.jpg";
-import gallery40 from "@/assets/home/gallery/gallery-40.jpg";
+import gallery1 from "@/assets/home/gallery/gallery-1.webp";
+import gallery2 from "@/assets/home/gallery/gallery-2.webp";
+import gallery3 from "@/assets/home/gallery/gallery-3.webp";
+import gallery4 from "@/assets/home/gallery/gallery-4.webp";
+import gallery5 from "@/assets/home/gallery/gallery-5.webp";
+import gallery6 from "@/assets/home/gallery/gallery-6.webp";
+import gallery7 from "@/assets/home/gallery/gallery-7.webp";
+import gallery8 from "@/assets/home/gallery/gallery-8.webp";
+import gallery9 from "@/assets/home/gallery/gallery-9.webp";
+import gallery10 from "@/assets/home/gallery/gallery-10.webp";
+import gallery11 from "@/assets/home/gallery/gallery-11.webp";
+import gallery12 from "@/assets/home/gallery/gallery-12.webp";
+import gallery13 from "@/assets/home/gallery/gallery-13.webp";
+import gallery14 from "@/assets/home/gallery/gallery-14.webp";
+import gallery15 from "@/assets/home/gallery/gallery-15.webp";
+import gallery16 from "@/assets/home/gallery/gallery-16.webp";
+import gallery17 from "@/assets/home/gallery/gallery-17.webp";
+import gallery18 from "@/assets/home/gallery/gallery-18.webp";
+import gallery19 from "@/assets/home/gallery/gallery-19.webp";
+import gallery20 from "@/assets/home/gallery/gallery-20.webp";
+import gallery21 from "@/assets/home/gallery/gallery-21.webp";
+import gallery22 from "@/assets/home/gallery/gallery-22.webp";
+import gallery23 from "@/assets/home/gallery/gallery-23.webp";
+import gallery24 from "@/assets/home/gallery/gallery-24.webp";
+import gallery25 from "@/assets/home/gallery/gallery-25.webp";
+import gallery26 from "@/assets/home/gallery/gallery-26.webp";
+import gallery27 from "@/assets/home/gallery/gallery-27.webp";
+import gallery28 from "@/assets/home/gallery/gallery-28.webp";
+import gallery29 from "@/assets/home/gallery/gallery-29.webp";
+import gallery30 from "@/assets/home/gallery/gallery-30.webp";
+import gallery31 from "@/assets/home/gallery/gallery-31.webp";
+import gallery32 from "@/assets/home/gallery/gallery-32.webp";
+import gallery33 from "@/assets/home/gallery/gallery-33.webp";
+import gallery34 from "@/assets/home/gallery/gallery-34.webp";
+import gallery35 from "@/assets/home/gallery/gallery-35.webp";
+import gallery36 from "@/assets/home/gallery/gallery-36.webp";
+import gallery37 from "@/assets/home/gallery/gallery-37.webp";
+import gallery38 from "@/assets/home/gallery/gallery-38.webp";
+import gallery39 from "@/assets/home/gallery/gallery-39.webp";
+import gallery40 from "@/assets/home/gallery/gallery-40.webp";
 
 const galleryImages = [
   gallery1,
@@ -155,12 +156,20 @@ export default function Gallery() {
           className="flex flex-nowrap gap-[2.4rem] max-sm:gap-[1.2rem] overflow-x-auto overflow-y-hidden hide-scrollbar"
         >
           {galleryImages.map((image, index) => (
-            <img
+            <div
               key={index}
-              src={image.src}
-              alt={`Five Clover Hotels Group gallery image ${index + 1} - Luxury hotel rooms and amenities in Lagos, Nigeria`}
-              className="w-[30rem] max-sm:w-[22rem] h-[37.5rem] max-sm:h-[26rem] object-cover flex-shrink-0"
-            />
+              className="relative w-[30rem] max-sm:w-[22rem] h-[37.5rem] max-sm:h-[26rem] flex-shrink-0"
+            >
+              <Image
+                src={image}
+                alt={`Five Clover Hotels Group gallery image ${index + 1} - Luxury hotel rooms and amenities in Lagos, Nigeria`}
+                fill
+                sizes="(max-width: 640px) 22rem, 30rem"
+                className="object-cover"
+                loading="lazy"
+                quality={85}
+              />
+            </div>
           ))}
         </div>
 

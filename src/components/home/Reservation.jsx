@@ -1,20 +1,21 @@
 "use client";
 
+import Image from "next/image";
 import { TfiMapAlt } from "react-icons/tfi";
 
 import { useState } from "react";
 import FONTS from "@/utils/fonts";
 
-import fiveclover from "@/assets/home/reservation/fiveclover.jpg";
-import ringruby from "@/assets/home/reservation/ringruby.jpg";
-import caritas from "@/assets/home/reservation/caritas.jpg";
-import cordis from "@/assets/home/reservation/cordis.jpg";
+import fiveclover from "@/assets/home/reservation/fiveclover.webp";
+import ringruby from "@/assets/home/reservation/ringruby.webp";
+import caritas from "@/assets/home/reservation/caritas.webp";
+import cordis from "@/assets/home/reservation/cordis.webp";
 
 //Logos
-import fivecloverlogo from "@/assets/home/reservation/logos/five-clover-logo.png";
-import ringrubylogo from "@/assets/home/reservation/logos/ring-ruby-logo.png";
-import caritaslogo from "@/assets/home/reservation/logos/caritas-logo.png";
-import cordislogo from "@/assets/home/reservation/logos/cordis-logo.png";
+import fivecloverlogo from "@/assets/home/reservation/logos/five-clover-logo.webp";
+import ringrubylogo from "@/assets/home/reservation/logos/ring-ruby-logo.webp";
+import caritaslogo from "@/assets/home/reservation/logos/caritas-logo.webp";
+import cordislogo from "@/assets/home/reservation/logos/cordis-logo.webp";
 
 export default function Reservation() {
   const [flippedCard, setFlippedCard] = useState(null);
@@ -77,8 +78,14 @@ export default function Reservation() {
                   backgroundBlendMode: "multiply",
                 }}
               >
-                <div className="w-[12rem] absolute top-0 m-auto">
-                  <img src={fivecloverlogo.src} alt="Five Clover Hotel logo" />
+                <div className="w-[12rem] h-[12rem] absolute top-0 m-auto">
+                  <Image
+                    src={fivecloverlogo}
+                    alt="Five Clover Hotel logo"
+                    fill
+                    sizes="12rem"
+                    className="object-contain"
+                  />
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
@@ -167,8 +174,14 @@ export default function Reservation() {
                   backgroundBlendMode: "multiply",
                 }}
               >
-                <div className="w-[12rem] absolute top-0 m-auto">
-                  <img src={ringrubylogo.src} alt="Ring Ruby Hotel logo" />
+                <div className="w-[12rem] h-[12rem] absolute top-0 m-auto">
+                  <Image
+                    src={ringrubylogo}
+                    alt="Ring Ruby Hotel logo"
+                    fill
+                    sizes="12rem"
+                    className="object-contain"
+                  />
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
@@ -266,8 +279,14 @@ export default function Reservation() {
                   backgroundBlendMode: "multiply",
                 }}
               >
-                <div className="w-[12rem] absolute top-0 m-auto">
-                  <img src={caritaslogo.src} alt="Caritas Inn logo" />
+                <div className="w-[12rem] h-[12rem] absolute top-0 m-auto">
+                  <Image
+                    src={caritaslogo}
+                    alt="Caritas Inn logo"
+                    fill
+                    sizes="12rem"
+                    className="object-contain"
+                  />
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
@@ -365,8 +384,14 @@ export default function Reservation() {
                   backgroundBlendMode: "multiply",
                 }}
               >
-                <div className="w-[12rem] absolute top-0 m-auto">
-                  <img src={cordislogo.src} alt="The Cordis Hotel logo" />
+                <div className="w-[12rem] h-[12rem] absolute top-0 m-auto">
+                  <Image
+                    src={cordislogo}
+                    alt="The Cordis Hotel logo"
+                    fill
+                    sizes="12rem"
+                    className="object-contain"
+                  />
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a

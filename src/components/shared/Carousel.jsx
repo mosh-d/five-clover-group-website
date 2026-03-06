@@ -1,23 +1,24 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import FiveClover1 from "@/assets/home/five-clover/five-clover-1.jpg";
-import FiveClover2 from "@/assets/home/five-clover/five-clover-2.jpg";
-import FiveClover3 from "@/assets/home/five-clover/five-clover-3.jpg";
-import FiveClover4 from "@/assets/home/five-clover/five-clover-4.jpg";
-import Caritas1 from "@/assets/home/caritas/caritas-1.jpg";
-import Caritas2 from "@/assets/home/caritas/caritas-2.jpg";
-import Caritas3 from "@/assets/home/caritas/caritas-3.jpg";
-import Caritas4 from "@/assets/home/caritas/caritas-4.jpg";
-import RingRuby1 from "@/assets/home/ring-ruby/ring-ruby-1.jpg";
-import RingRuby2 from "@/assets/home/ring-ruby/ring-ruby-2.jpg";
-import RingRuby3 from "@/assets/home/ring-ruby/ring-ruby-3.jpg";
-import RingRuby4 from "@/assets/home/ring-ruby/ring-ruby-4.jpg";
-import Cordis1 from "@/assets/home/cordis/cordis-1.jpg";
-import Cordis2 from "@/assets/home/cordis/cordis-2.jpg";
-import Cordis3 from "@/assets/home/cordis/cordis-3.jpg";
-import Cordis4 from "@/assets/home/cordis/cordis-4.jpg";
+import FiveClover1 from "@/assets/home/five-clover/five-clover-1.webp";
+import FiveClover2 from "@/assets/home/five-clover/five-clover-2.webp";
+import FiveClover3 from "@/assets/home/five-clover/five-clover-3.webp";
+import FiveClover4 from "@/assets/home/five-clover/five-clover-4.webp";
+import Caritas1 from "@/assets/home/caritas/caritas-1.webp";
+import Caritas2 from "@/assets/home/caritas/caritas-2.webp";
+import Caritas3 from "@/assets/home/caritas/caritas-3.webp";
+import Caritas4 from "@/assets/home/caritas/caritas-4.webp";
+import RingRuby1 from "@/assets/home/ring-ruby/ring-ruby-1.webp";
+import RingRuby2 from "@/assets/home/ring-ruby/ring-ruby-2.webp";
+import RingRuby3 from "@/assets/home/ring-ruby/ring-ruby-3.webp";
+import RingRuby4 from "@/assets/home/ring-ruby/ring-ruby-4.webp";
+import Cordis1 from "@/assets/home/cordis/cordis-1.webp";
+import Cordis2 from "@/assets/home/cordis/cordis-2.webp";
+import Cordis3 from "@/assets/home/cordis/cordis-3.webp";
+import Cordis4 from "@/assets/home/cordis/cordis-4.webp";
 
 //Icons
 import { CgArrowLongLeft, CgArrowLongRight } from "react-icons/cg";
@@ -226,10 +227,14 @@ export default function Carousel({ brand, className }) {
                     : ""
                 }`}
               >
-                <img
-                  src={image.src.src}
+                <Image
+                  src={image.src}
                   alt={image.alt}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 640px) 80vw, (max-width: 1024px) 60vw, 40vw"
+                  className="object-cover"
+                  priority={position === "main" && imgIndex === 0}
+                  quality={90}
                 />
               </motion.div>
             );

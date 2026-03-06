@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Logo from "@/assets/five-clover-logo.png";
+import Logo from "@/assets/five-clover-logo.webp";
 import CustomInput from "./CustomInput";
 import Button from "./Button";
 import {

@@ -1,9 +1,9 @@
-import FiveClover from "@/assets/home/hero/five-clover.jpg";
+import FiveClover from "@/assets/home/hero/five-clover.webp";
 
-import FiveCloverLogo from "@/assets/home/hero/logos/five-clover-logo.png";
-import CaritasLogo from "@/assets/home/hero/logos/caritas-logo.png";
-import RingRubyLogo from "@/assets/home/hero/logos/ring-ruby-logo.png";
-import CordisLogo from "@/assets/home/hero/logos/cordis-logo.png";
+import FiveCloverLogo from "@/assets/home/hero/logos/five-clover-logo.webp";
+import CaritasLogo from "@/assets/home/hero/logos/caritas-logo.webp";
+import RingRubyLogo from "@/assets/home/hero/logos/ring-ruby-logo.webp";
+import CordisLogo from "@/assets/home/hero/logos/cordis-logo.webp";
 
 const LOGOS = [
   {

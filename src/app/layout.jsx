@@ -2,7 +2,6 @@ import "./globals.css";
 
 import Footer from "@/components/shared/Footer";
 import TopBar from "@/components/shared/TopBar";
-import LoadingScreen from "@/components/shared/LoadingScreen";
 import StructuredData from "@/components/seo/StructuredData";
 import GoogleAnalytics from "@/components/seo/GoogleAnalytics";
 import { generateOrganizationSchema } from "@/lib/seo/structured-data";
@@ -82,11 +81,9 @@ export default function RootLayout({ children }) {
       <body>
         <GoogleAnalytics />
         <StructuredData data={organizationSchema} />
-        <LoadingScreen>
-          <TopBar />
-          {children}
-          <Footer />
-        </LoadingScreen>
+        <TopBar />
+        {children}
+        <Footer />
       </body>
     </html>
   );

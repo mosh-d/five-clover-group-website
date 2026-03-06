@@ -1,13 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import Carousel from "@/components/shared/Carousel";
 import FONTS from "@/utils/fonts";
 import UnderlinedButton from "@/components/shared/UnderlinedButton";
 
-import FiveCloverLogo from "@/assets/home/hero/logos/five-clover-logo.png";
-import CaritasLogo from "@/assets/home/hero/logos/caritas-logo.png";
-import RingRubyLogo from "@/assets/home/hero/logos/ring-ruby-logo.png";
-import CordisLogo from "@/assets/home/hero/logos/cordis-logo.png";
+import FiveCloverLogo from "@/assets/home/hero/logos/five-clover-logo.webp";
+import CaritasLogo from "@/assets/home/hero/logos/caritas-logo.webp";
+import RingRubyLogo from "@/assets/home/hero/logos/ring-ruby-logo.webp";
+import CordisLogo from "@/assets/home/hero/logos/cordis-logo.webp";
 
 const LOGOS = [
   {
@@ -43,7 +44,7 @@ export default function HotelIntros() {
           {LOGOS.map((logo) => (
             <div
               key={logo.name}
-              className="flex flex-col gap-[.1rem] items-center justify-center hover:cursor-pointer hover:scale-110 active:scale-100 transition-all duration-250"
+              className="flex flex-col gap-[.1rem] items-end justify-center hover:cursor-pointer hover:scale-110 active:scale-100 transition-all duration-250"
               onClick={() => {
                 const element = document.getElementById(logo.id);
                 if (element) {
@@ -54,14 +55,16 @@ export default function HotelIntros() {
                 }
               }}
             >
-              <img
-                src={logo.logo.src}
-                alt={`${logo.name} Hotel logo - Premium hospitality in Lagos, Nigeria`}
-                className="size-[10rem] object-contain"
-              />
-              {/* <h3 className="text-[var(--white)] text-[1.4rem] font-medium text-center">
-                  {logo.name}
-                </h3> */}
+              <div className="relative size-[10rem]">
+                <Image
+                  src={logo.logo}
+                  alt={`${logo.name} Hotel logo - Premium hospitality in Lagos, Nigeria`}
+                  fill
+                  sizes="10rem"
+                  className="object-contain h-auto absolute bottom-0"
+                  priority
+                />
+              </div>
             </div>
           ))}
         </div>

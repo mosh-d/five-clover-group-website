@@ -1,5 +1,6 @@
-import About1 from "@/assets/about/about-1.jpg";
-import About2 from "@/assets/about/about-2.jpg";
+import Image from "next/image";
+import About1 from "@/assets/about/about-1.webp";
+import About2 from "@/assets/about/about-2.webp";
 
 export default function AboutMainSection() {
   return (
@@ -29,12 +30,16 @@ export default function AboutMainSection() {
           <div className="flex max-sm:flex-col">
             <div
               data-component="Block2Image"
-              className="w-[60%] max-sm:w-[100%] max-w-[40rem] max-sm:max-w-[100%] max-sm:h-[25rem]"
+              className="relative w-[60%] max-sm:w-[100%] max-w-[40rem] max-sm:max-w-[100%] max-sm:h-[25rem] h-auto aspect-square"
             >
-              <img
-                src={About1.src}
+              <Image
+                src={About1}
                 alt="Five Clover Hotels Group - Luxury hotel interior showcasing elegant design and premium guest amenities"
-                className="w-full h-full object-cover object-center"
+                fill
+                sizes="(max-width: 640px) 100vw, 40rem"
+                className="object-cover object-center"
+                priority
+                quality={90}
               />
             </div>
             <div
@@ -81,12 +86,15 @@ export default function AboutMainSection() {
             </div>
             <div
               data-component="Block2Image"
-              className="w-[60%] max-w-[40rem] max-sm:w-[100%] max-sm:max-w-[100%] max-sm:h-[25rem]"
+              className="relative w-[60%] max-w-[40rem] max-sm:w-[100%] max-sm:max-w-[100%] max-sm:h-[25rem] h-auto aspect-square"
             >
-              <img
-                src={About2.src}
+              <Image
+                src={About2}
                 alt="Five Clover Hotels Group - African-inspired dining experience with modern culinary techniques"
-                className="w-full h-full object-cover object-center"
+                fill
+                sizes="(max-width: 640px) 100vw, 40rem"
+                className="object-cover object-center"
+                quality={90}
               />
             </div>
           </div>

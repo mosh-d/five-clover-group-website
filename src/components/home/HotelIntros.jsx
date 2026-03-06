@@ -55,7 +55,7 @@ export default function HotelIntros() {
                 }
               }}
             >
-              <div className="relative size-[10rem]">
+              <div className="relative size-[10rem] max-sm:size-[7rem]">
                 <Image
                   src={logo.logo}
                   alt={`${logo.name} Hotel logo - Premium hospitality in Lagos, Nigeria`}

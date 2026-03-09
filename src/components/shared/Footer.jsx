@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import Logo from "@/assets/five-clover-logo.webp";
 import CustomInput from "./CustomInput";
 import Button from "./Button";
@@ -18,11 +19,14 @@ export default function Footer() {
       data-component="Footer"
       className="text-[color:var(--footer-text-color)] bg-[color:var(--accent-2)] px-24 md:px-12 lg:px-[12rem] py-12 md:py-[6rem] flex flex-col gap-[6rem] md:gap-[6rem] justify-center items-center"
     >
-      <Link href="/" className="w-[12rem] top-[1.2rem] left-1/2 cursor-pointer">
-        <img
-          src={Logo.src}
+      <Link href="/" className="cursor-pointer">
+        <Image
+          src={Logo}
           alt="Five Clover Logo"
-          className="w-full h-full object-cover"
+          width={100}
+          height={85}
+          className="object-contain"
+          loading="lazy"
         />
       </Link>
       <div

@@ -1,9 +1,18 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
-import Carousel from "@/components/shared/Carousel";
 import FONTS from "@/utils/fonts";
 import UnderlinedButton from "@/components/shared/UnderlinedButton";
+
+// Lazy-load Carousel — defers Framer Motion JS off the critical path, reducing TBT
+const Carousel = dynamic(() => import("@/components/shared/Carousel"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-[65%] max-lg:w-full aspect-video bg-[var(--accent-2)] animate-pulse" />
+  ),
+});
+
 
 import FiveCloverLogo from "@/assets/home/hero/logos/five-clover-logo.webp";
 import CaritasLogo from "@/assets/home/hero/logos/caritas-logo.webp";

@@ -62,7 +62,7 @@ export default function HotelIntros() {
                   fill
                   sizes="10rem"
                   className="object-contain h-auto absolute bottom-0"
-                  priority
+                  loading="lazy"
                 />
               </div>
             </div>

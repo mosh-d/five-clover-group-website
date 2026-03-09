@@ -14,8 +14,8 @@ export default function MiniAbout() {
           fill
           sizes="(max-width: 768px) 100vw, 40vw"
           className="object-cover"
-          priority
-          quality={90}
+          loading="lazy"
+          quality={85}
         />
       </div>
       <div className="flex flex-col justify-between max-md:items-center gap-[4.8rem] w-[60%] max-md:w-full bg-[var(--accent-2)] p-[12rem] max-lg:px-[4rem] max-sm:p-[2rem] max-sm:py-[6rem]">

@@ -89,7 +89,7 @@ export default function Reservation() {
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
-                    href="https://fivecloverhotelmonastery.com/"
+                    href="https://www.monastery.fivecloverhotels.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:bg-black/70 hover:text-[var(--emphasis)] hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
@@ -99,7 +99,7 @@ export default function Reservation() {
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href="https://fivecloverhotelabijo.com/"
+                    href="https://www.abijo.fivecloverhotels.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:bg-black/70 hover:text-[var(--emphasis)] hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
@@ -109,7 +109,7 @@ export default function Reservation() {
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href="https://fivecloverilupeju.fivecloverhotels.com/"
+                    href="https://www.ilupeju.fivecloverhotels.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:bg-black/70 hover:text-[var(--emphasis)] hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
@@ -188,17 +188,26 @@ export default function Reservation() {
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
-                    href="https://ringrubyhotelsangotedo.com/"
+                    href="https://www.bateye.ringrubyhotel.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
                   >
                     <TfiMapAlt size="2rem" />
-                    Sangotedo
+                    Bateye
+                  </a>
+                  <a
+                    href="https://www.unitedestate.ringrubyhotel.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
+                  >
+                    <TfiMapAlt size="2rem" />
+                    United Estate
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href="https://ringrubyhotelesoikejagra.com/"
+                    href="https://www.eso.ringrubyhotel.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
@@ -208,7 +217,7 @@ export default function Reservation() {
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href="https://ringrubyhoteloduduwaikejagra.com/"
+                    href="https://www.oduduwa.ringrubyhotel.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
@@ -218,7 +227,7 @@ export default function Reservation() {
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href="https://ringrubyvaluecounty.fivecloverhotels.com/"
+                    href="https://www.valuecounty.ringrubyhotel.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--ringruby)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
@@ -297,7 +306,7 @@ export default function Reservation() {
                 </div>
                 <div className="w-full px-[4rem] flex flex-col items-center">
                   <a
-                    href="https://www.caritasinnigbobihotel.com/"
+                    href="https://www.igbobi.caritasinn.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
@@ -307,7 +316,7 @@ export default function Reservation() {
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href="https://www.caritasinnilasanhotel.com/"
+                    href="https://www.ilasan.caritasinn.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
@@ -317,7 +326,7 @@ export default function Reservation() {
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href="https://www.caritasinnlekkihotel.com/"
+                    href="https://www.lekki.caritasinn.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"
@@ -327,7 +336,7 @@ export default function Reservation() {
                   </a>
                   <hr className="w-full opacity-40" />
                   <a
-                    href="https://www.caritasinnyabahotel.com/"
+                    href="https://www.yaba.caritasinn.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-[2rem] flex items-start hover:text-[var(--caritas)] hover:bg-black/70 hover:transition-all hover:animate-[pulse_1s_infinite] gap-[1rem] justify-center w-full text-center text-[1.2rem]"

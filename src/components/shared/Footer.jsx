@@ -203,14 +203,14 @@ export default function Footer() {
               className="flex flex-col gap-[1rem] max-md:text-center"
             >
               <a
-                href="https://fivecloverhotelmonastery.com/"
+                href="https://www.monastery.fivecloverhotels.com/"
                 target="_blank"
                 className="text-2xl"
               >
                 Monastry Road
               </a>
               <a
-                href="https://fivecloverhotelabijo.com/"
+                href="https://www.abijo.fivecloverhotels.com/"
                 target="_blank"
                 className="text-2xl"
               >
@@ -240,28 +240,28 @@ export default function Footer() {
               className="flex flex-col gap-[1rem] max-md:text-center"
             >
               <a
-                href="https://www.caritasinnigbobihotel.com/"
+                href="https://www.igbobi.caritasinn.com/"
                 target="_blank"
                 className="text-2xl"
               >
                 Igbobi
               </a>
               <a
-                href="https://www.caritasinnilasanhotel.com/"
+                href="https://www.ilasan.caritasinn.com/"
                 target="_blank"
                 className="text-2xl"
               >
                 Ilasan
               </a>
               <a
-                href="https://www.caritasinnlekkihotel.com/"
+                href="https://www.lekki.caritasinn.com/"
                 target="_blank"
                 className="text-2xl"
               >
                 Lekki, Phase 1
               </a>
               <a
-                href="https://www.caritasinnyabahotel.com/"
+                href="https://www.yaba.caritasinn.com/"
                 target="_blank"
                 className="text-2xl"
               >
@@ -284,28 +284,35 @@ export default function Footer() {
               className="flex flex-col gap-[1rem] max-md:text-center"
             >
               <a
-                href="https://ringrubyhotelsangotedo.com/"
+                href="https://www.bateye.ringrubyhotel.com/"
                 target="_blank"
                 className="text-2xl"
               >
-                Sangotedo
+                Bateye
               </a>
               <a
-                href="https://ringrubyhotelesoikejagra.com/"
+                href="https://www.unitedestate.ringrubyhotel.com/"
+                target="_blank"
+                className="text-2xl"
+              >
+                United Estate
+              </a>
+              <a
+                href="https://www.eso.ringrubyhotel.com/"
                 target="_blank"
                 className="text-2xl"
               >
                 Eso close, ikeja GRA
               </a>
               <a
-                href="https://ringrubyhoteloduduwaikejagra.com/"
+                href="https://www.oduduwa.ringrubyhotel.com/"
                 target="_blank"
                 className="text-2xl"
               >
                 Oduduwa way, ikeja GRA
               </a>
               <a
-                href="https://ringrubyvaluecounty.fivecloverhotels.com/"
+                href="https://www.valuecounty.ringrubyhotel.com/"
                 target="_blank"
                 className="text-2xl"
               >

@@ -196,6 +196,7 @@ export default function Reservation() {
                     <TfiMapAlt size="2rem" />
                     Bateye
                   </a>
+                  <hr className="w-full opacity-40" />
                   <a
                     href="https://www.unitedestate.ringrubyhotel.com/"
                     target="_blank"

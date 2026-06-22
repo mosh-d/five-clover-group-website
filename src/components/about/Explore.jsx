@@ -195,7 +195,7 @@ export default function Explore() {
                   <h3 className={`${FONTS.context}`}>Ringruby Hotel</h3>
                   <h4 className={`${FONTS.heading}`}>Value County</h4>
                   <p className={`${FONTS.body}`}>
-                    Ring Ruby Hotel Value County is situated within the serene
+                    Ringruby Hotel Value County is situated within the serene
                     and secure Value County Estate, providing a calm and private
                     stay experience.
                   </p>

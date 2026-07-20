@@ -13,10 +13,21 @@ vi.mock('next/script', () => ({
 }));
 
 describe('GoogleAnalytics', () => {
-  const originalEnv = process.env.NEXT_PUBLIC_GA_ID;
+  const originalGaEnv = process.env.NEXT_PUBLIC_GA_ID;
+  const originalGtmEnv = process.env.NEXT_PUBLIC_GTM_ID;
 
   afterEach(() => {
-    process.env.NEXT_PUBLIC_GA_ID = originalEnv;
+    if (originalGaEnv === undefined) {
+      delete process.env.NEXT_PUBLIC_GA_ID;
+    } else {
+      process.env.NEXT_PUBLIC_GA_ID = originalGaEnv;
+    }
+
+    if (originalGtmEnv === undefined) {
+      delete process.env.NEXT_PUBLIC_GTM_ID;
+    } else {
+      process.env.NEXT_PUBLIC_GTM_ID = originalGtmEnv;
+    }
   });
 
   it('should not render when GA ID is not configured', () => {
@@ -68,5 +79,18 @@ describe('GoogleAnalytics', () => {
     
     expect(gaScript.getAttribute('data-strategy')).toBe('afterInteractive');
     expect(inlineScript.getAttribute('data-strategy')).toBe('afterInteractive');
+  });
+
+  it('should render GTM head script and body noscript when GTM ID is configured', () => {
+    delete process.env.NEXT_PUBLIC_GA_ID;
+    process.env.NEXT_PUBLIC_GTM_ID = 'GTM-TEST123';
+
+    const { container, getByTestId } = render(<GoogleAnalytics />);
+
+    const gtmScript = getByTestId('ga-inline-script');
+    const noscript = container.querySelector('noscript');
+
+    expect(gtmScript.textContent).toContain('GTM-TEST123');
+    expect(noscript).not.toBeNull();
   });
 });

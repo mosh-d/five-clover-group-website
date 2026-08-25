@@ -29,10 +29,10 @@ function formatDate(d) {
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl p-8 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-lg bg-white rounded-2xl p-8 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold" style={{ color: "var(--text-color)" }}>{title}</h2>
-          <button onClick={onClose} className="text-2xl leading-none" style={{ color: "var(--text-color)", opacity: 0.5 }}>
+          <h2 className="text-3xl font-bold" style={{ color: "var(--text-color)" }}>{title}</h2>
+          <button onClick={onClose} className="text-4xl leading-none" style={{ color: "var(--text-color)", opacity: 0.5 }}>
             &times;
           </button>
         </div>
@@ -42,13 +42,13 @@ function Modal({ title, onClose, children }) {
   );
 }
 
-const inputClass = "border rounded-lg px-4 py-2.5 text-base w-full";
+const inputClass = "border rounded-lg px-4 py-3 text-xl w-full";
 const inputStyle = { borderColor: "var(--accent-2)" };
-const labelClass = "text-sm font-semibold uppercase tracking-wide";
+const labelClass = "text-lg font-semibold uppercase tracking-wide";
 const labelStyle = { color: "var(--text-color)", opacity: 0.68 };
-const primaryBtnClass = "rounded-lg px-4 py-2.5 text-base font-semibold text-white disabled:opacity-50";
+const primaryBtnClass = "rounded-lg px-4 py-3 text-xl font-semibold text-white disabled:opacity-50";
 const primaryBtnStyle = { background: "var(--emphasis)" };
-const secondaryBtnClass = "rounded-lg px-4 py-2.5 text-base font-semibold border";
+const secondaryBtnClass = "rounded-lg px-4 py-3 text-xl font-semibold border";
 const secondaryBtnStyle = { borderColor: "var(--accent-2)", color: "var(--text-color)" };
 
 export default function AdminStaffPage() {
@@ -214,9 +214,9 @@ export default function AdminStaffPage() {
     <div className="px-6 py-10 max-w-5xl mx-auto flex flex-col gap-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--text-color)" }}>Staff Accounts</h1>
+          <h1 className="text-4xl font-bold" style={{ color: "var(--text-color)" }}>Staff Accounts</h1>
           {hqUser && (
-            <p className="text-sm" style={{ color: "var(--text-color)", opacity: 0.68 }}>
+            <p className="text-lg" style={{ color: "var(--text-color)", opacity: 0.68 }}>
               Signed in as {hqUser.display_name}
             </p>
           )}
@@ -255,7 +255,7 @@ export default function AdminStaffPage() {
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>}
+      {error && <p className="text-lg text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>}
 
       {!selectedBranchId ? (
         <p style={{ color: "var(--text-color)", opacity: 0.68 }}>Select a branch to see its staff accounts.</p>
@@ -265,7 +265,7 @@ export default function AdminStaffPage() {
         <p style={{ color: "var(--text-color)", opacity: 0.68 }}>No staff accounts at this branch yet.</p>
       ) : (
         <div className="overflow-x-auto rounded-2xl bg-white">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-lg">
             <thead>
               <tr style={{ color: "var(--text-color)", opacity: 0.68 }} className="border-b">
                 <th className="px-5 py-3 font-semibold">Username</th>
@@ -284,7 +284,7 @@ export default function AdminStaffPage() {
                   <td className="px-5 py-3 capitalize">{account.role}</td>
                   <td className="px-5 py-3">
                     <span
-                      className="text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded-full"
+                      className="text-base font-semibold uppercase tracking-wide px-2 py-1 rounded-full"
                       style={
                         account.is_active
                           ? { background: "#dcfce7", color: "#15803d" }
@@ -323,7 +323,7 @@ export default function AdminStaffPage() {
       {isCreateOpen && (
         <Modal title="Add Staff Account" onClose={() => setIsCreateOpen(false)}>
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
-            {createError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{createError}</p>}
+            {createError && <p className="text-lg text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{createError}</p>}
             <div className="flex flex-col gap-2">
               <label className={labelClass} style={labelStyle}>Username</label>
               <input
@@ -383,7 +383,7 @@ export default function AdminStaffPage() {
       {editTarget && (
         <Modal title={`Edit "${editTarget.username}"`} onClose={() => setEditTarget(null)}>
           <form onSubmit={handleEdit} className="flex flex-col gap-4">
-            {editError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{editError}</p>}
+            {editError && <p className="text-lg text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{editError}</p>}
             <div className="flex flex-col gap-2">
               <label className={labelClass} style={labelStyle}>Display Name</label>
               <input
@@ -428,7 +428,7 @@ export default function AdminStaffPage() {
       {transferTarget && (
         <Modal title={`Transfer "${transferTarget.username}"`} onClose={() => setTransferTarget(null)}>
           <form onSubmit={handleTransfer} className="flex flex-col gap-4">
-            {transferError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{transferError}</p>}
+            {transferError && <p className="text-lg text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{transferError}</p>}
             <p style={{ color: "var(--text-color)", opacity: 0.68 }}>
               Moves this account to a different branch. Role, username, and password stay the same.
             </p>

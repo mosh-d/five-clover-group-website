@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 flex items-center px-4"
+              className="absolute inset-y-0 right-0 flex items-center px-4 cursor-pointer"
               style={{ color: "var(--text-color)", opacity: 0.6 }}
             >
               <EyeIcon open={showPassword} />
@@ -110,7 +110,7 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={submitting || !username.trim() || !password}
-          className="rounded-lg px-4 py-4 text-xl font-semibold text-white disabled:opacity-50"
+          className="rounded-lg px-4 py-4 text-xl font-semibold text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
           style={{ background: "var(--emphasis)" }}
         >
           {submitting ? "Signing in..." : "Sign in"}

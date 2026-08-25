@@ -215,6 +215,26 @@ select:focus {
 }
 
 /* ===================================
+   CLICKABLE CURSOR
+   =================================== */
+
+/* Tailwind's preflight resets buttons to cursor: default; anything a user
+   would click should show a pointer instead. */
+button:not(:disabled),
+a[href],
+select,
+label[for],
+[role="button"]:not([aria-disabled="true"]),
+[onclick] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* ===================================
    ADDITIONAL STYLES
    =================================== */
 .perspective-1000 {

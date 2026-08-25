@@ -32,7 +32,7 @@ function Modal({ title, onClose, children }) {
       <div className="w-full max-w-lg bg-white rounded-2xl p-8 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold" style={{ color: "var(--text-color)" }}>{title}</h2>
-          <button onClick={onClose} className="text-4xl leading-none" style={{ color: "var(--text-color)", opacity: 0.5 }}>
+          <button onClick={onClose} className="text-4xl leading-none cursor-pointer" style={{ color: "var(--text-color)", opacity: 0.5 }}>
             &times;
           </button>
         </div>
@@ -46,9 +46,9 @@ const inputClass = "border rounded-lg px-4 py-3 text-xl w-full";
 const inputStyle = { borderColor: "var(--accent-2)" };
 const labelClass = "text-lg font-semibold uppercase tracking-wide";
 const labelStyle = { color: "var(--text-color)", opacity: 0.68 };
-const primaryBtnClass = "rounded-lg px-4 py-3 text-xl font-semibold text-white disabled:opacity-50";
+const primaryBtnClass = "rounded-lg px-4 py-3 text-xl font-semibold text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
 const primaryBtnStyle = { background: "var(--emphasis)" };
-const secondaryBtnClass = "rounded-lg px-4 py-3 text-xl font-semibold border";
+const secondaryBtnClass = "rounded-lg px-4 py-3 text-xl font-semibold border cursor-pointer";
 const secondaryBtnStyle = { borderColor: "var(--accent-2)", color: "var(--text-color)" };
 
 export default function AdminStaffPage() {
@@ -297,16 +297,16 @@ export default function AdminStaffPage() {
                   <td className="px-5 py-3">{formatDate(account.last_login_at)}</td>
                   <td className="px-5 py-3">
                     <div className="flex flex-wrap gap-3">
-                      <button onClick={() => openEdit(account)} className="font-semibold underline" style={{ color: "var(--text-color)" }}>
+                      <button onClick={() => openEdit(account)} className="font-semibold underline cursor-pointer" style={{ color: "var(--text-color)" }}>
                         Edit
                       </button>
-                      <button onClick={() => openTransfer(account)} className="font-semibold underline" style={{ color: "var(--text-color)" }}>
+                      <button onClick={() => openTransfer(account)} className="font-semibold underline cursor-pointer" style={{ color: "var(--text-color)" }}>
                         Transfer
                       </button>
                       <button
                         onClick={() => handleToggleActive(account)}
                         disabled={actionLoadingId === account.id}
-                        className="font-semibold underline disabled:opacity-50"
+                        className="font-semibold underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                         style={{ color: account.is_active ? "#b91c1c" : "#15803d" }}
                       >
                         {actionLoadingId === account.id ? "..." : account.is_active ? "Deactivate" : "Reactivate"}

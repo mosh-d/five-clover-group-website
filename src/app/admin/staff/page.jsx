@@ -13,6 +13,7 @@ import {
   HqApiError,
 } from "@/lib/hq-api";
 import PageHeading from "@/components/admin/PageHeading";
+import StatusBadge from "@/components/admin/StatusBadge";
 import {
   textColorStyle,
   mutedTextStyle,
@@ -23,6 +24,23 @@ import {
   primaryButtonClass,
   primaryButtonStyle,
   errorBoxClass,
+  tableCardClass,
+  tableCardStyle,
+  tableScrollClass,
+  tableClass,
+  tableHeadRowClass,
+  tableHeadRowStyle,
+  tableThClass,
+  tableRowClass,
+  tableRowStyle,
+  tableTdClass,
+  tableActionsClass,
+  rowButtonPrimaryClass,
+  rowButtonPrimaryStyle,
+  rowButtonSecondaryClass,
+  rowButtonSecondaryStyle,
+  rowButtonDangerClass,
+  rowButtonSuccessClass,
 } from "@/components/admin/adminStyles";
 
 const ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron"];
@@ -243,59 +261,51 @@ export default function AdminStaffPage() {
       ) : staff.length === 0 ? (
         <p className={bodyText} style={mutedTextStyle}>No staff accounts at this branch yet.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl bg-white">
-          <table className="w-full text-left text-xl">
-            <thead>
-              <tr style={mutedTextStyle} className="border-b">
-                <th className="px-5 py-3 font-semibold">Username</th>
-                <th className="px-5 py-3 font-semibold">Display Name</th>
-                <th className="px-5 py-3 font-semibold">Role</th>
-                <th className="px-5 py-3 font-semibold">Status</th>
-                <th className="px-5 py-3 font-semibold">Last Login</th>
-                <th className="px-5 py-3 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {staff.map((account) => (
-                <tr key={account.id} className="border-b last:border-0" style={textColorStyle}>
-                  <td className="px-5 py-3">{account.username}</td>
-                  <td className="px-5 py-3">{account.display_name}</td>
-                  <td className="px-5 py-3 capitalize">{account.role}</td>
-                  <td className="px-5 py-3">
-                    <span
-                      className="text-lg font-semibold uppercase tracking-wide px-2 py-1 rounded-full"
-                      style={
-                        account.is_active
-                          ? { background: "#dcfce7", color: "#15803d" }
-                          : { background: "#f3f4f6", color: "#4b5563" }
-                      }
-                    >
-                      {account.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">{formatDate(account.last_login_at)}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex flex-wrap gap-3">
-                      <button onClick={() => openEdit(account)} className="font-semibold underline cursor-pointer" style={textColorStyle}>
-                        Edit
-                      </button>
-                      <button onClick={() => openTransfer(account)} className="font-semibold underline cursor-pointer" style={textColorStyle}>
-                        Transfer
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(account)}
-                        disabled={actionLoadingId === account.id}
-                        className="font-semibold underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                        style={{ color: account.is_active ? "#b91c1c" : "#15803d" }}
-                      >
-                        {actionLoadingId === account.id ? "..." : account.is_active ? "Deactivate" : "Reactivate"}
-                      </button>
-                    </div>
-                  </td>
+        <div className={tableCardClass} style={tableCardStyle}>
+          <div className={tableScrollClass}>
+            <table className={tableClass}>
+              <thead>
+                <tr className={tableHeadRowClass} style={tableHeadRowStyle}>
+                  <th className={tableThClass}>Username</th>
+                  <th className={tableThClass}>Display Name</th>
+                  <th className={tableThClass}>Role</th>
+                  <th className={tableThClass}>Status</th>
+                  <th className={tableThClass}>Last Login</th>
+                  <th className={tableThClass}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {staff.map((account) => (
+                  <tr key={account.id} className={tableRowClass} style={tableRowStyle}>
+                    <td className={tableTdClass}>{account.username}</td>
+                    <td className={tableTdClass}>{account.display_name}</td>
+                    <td className={`${tableTdClass} capitalize`}>{account.role}</td>
+                    <td className={tableTdClass}>
+                      <StatusBadge status={account.is_active ? "active" : "inactive"} />
+                    </td>
+                    <td className={tableTdClass}>{formatDate(account.last_login_at)}</td>
+                    <td className={tableTdClass}>
+                      <div className={tableActionsClass}>
+                        <button onClick={() => openEdit(account)} className={rowButtonPrimaryClass} style={rowButtonPrimaryStyle}>
+                          Edit
+                        </button>
+                        <button onClick={() => openTransfer(account)} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
+                          Transfer
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(account)}
+                          disabled={actionLoadingId === account.id}
+                          className={account.is_active ? rowButtonDangerClass : rowButtonSuccessClass}
+                        >
+                          {actionLoadingId === account.id ? "..." : account.is_active ? "Deactivate" : "Reactivate"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

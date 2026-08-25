@@ -113,4 +113,16 @@ export async function hqChangePassword(currentPassword, newPassword) {
   });
 }
 
+export async function fetchHqAuditLogs(branchId, params = {}) {
+  const query = new URLSearchParams({ branch_id: branchId });
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") query.set(key, value);
+  });
+  return hqRequest(`/api/hq/audit-logs?${query.toString()}`);
+}
+
+export async function fetchHqAuditStaffOptions(branchId) {
+  return hqRequest(`/api/hq/audit-logs/staff?branch_id=${branchId}`);
+}
+
 export { HqApiError };

@@ -14,8 +14,8 @@ import {
 } from "@/lib/hq-api";
 import PageHeading from "@/components/admin/PageHeading";
 import StatusBadge from "@/components/admin/StatusBadge";
+import Modal from "@/components/admin/Modal";
 import {
-  textColorStyle,
   mutedTextStyle,
   bodyText,
   labelText,
@@ -23,6 +23,9 @@ import {
   inputStyle,
   primaryButtonClass,
   primaryButtonStyle,
+  secondaryButtonClass,
+  secondaryButtonStyle,
+  dangerButtonClass,
   errorBoxClass,
   tableCardClass,
   tableCardStyle,
@@ -53,24 +56,6 @@ function formatDate(d) {
   return new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
-// Small self-contained modal — this page is the only consumer, so it isn't
-// pulled out into a shared component.
-function Modal({ title, onClose, children }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl p-8 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between">
-          <h2 className="text-4xl font-bold" style={textColorStyle}>{title}</h2>
-          <button onClick={onClose} className="text-4xl leading-none cursor-pointer" style={{ ...textColorStyle, opacity: 0.5 }}>
-            &times;
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export default function AdminStaffPage() {
   const [branches, setBranches] = useState([]);
   const [selectedBranchId, setSelectedBranchId] = useState("");
@@ -98,11 +83,12 @@ export default function AdminStaffPage() {
   const [transferError, setTransferError] = useState(null);
 
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [deactivateTarget, setDeactivateTarget] = useState(null);
 
   useEffect(() => {
     fetchBranches()
       .then((data) => setBranches(data || []))
-      .catch(() => setError("Failed to load branches."))
+      .catch(() => setError("Could not reach the server to load branches. Check your connection and try again."))
       .finally(() => setLoadingBranches(false));
   }, []);
 
@@ -114,7 +100,13 @@ export default function AdminStaffPage() {
       const data = await fetchHqStaff(branchId);
       setStaff(data || []);
     } catch (err) {
-      setError(err instanceof HqApiError ? err.message : "Failed to load staff.");
+      // A branch with zero staff is not an error — the backend returns an
+      // empty array for that (see the "No staff accounts..." empty state
+      // below). Reaching this catch means the request itself failed:
+      // HqApiError carries the backend's real reason (e.g. "Branch not
+      // found"); anything else is a network-level failure (offline, CORS,
+      // or the backend waking up from being idle), not a staff problem.
+      setError(err instanceof HqApiError ? err.message : "Could not reach the server to load staff. Check your connection and try again.");
       setStaff([]);
     } finally {
       setLoadingStaff(false);
@@ -148,7 +140,7 @@ export default function AdminStaffPage() {
       setIsCreateOpen(false);
       loadStaff(selectedBranchId);
     } catch (err) {
-      setCreateError(err instanceof HqApiError ? err.message : "Failed to create account.");
+      setCreateError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
     } finally {
       setCreating(false);
     }
@@ -173,21 +165,43 @@ export default function AdminStaffPage() {
       setEditTarget(null);
       loadStaff(selectedBranchId);
     } catch (err) {
-      setEditError(err instanceof HqApiError ? err.message : "Failed to save changes.");
+      setEditError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
     } finally {
       setSaving(false);
     }
   };
 
+  // Reactivate is immediate — nothing destructive about turning an account
+  // back on. Deactivate goes through confirmDeactivate below instead,
+  // since it revokes the account's active sessions immediately.
   const handleToggleActive = async (account) => {
+    if (account.is_active) {
+      setDeactivateTarget(account);
+      return;
+    }
     try {
       setActionLoadingId(account.id);
       setError(null);
-      if (account.is_active) await deactivateHqStaff(account.id);
-      else await reactivateHqStaff(account.id);
+      await reactivateHqStaff(account.id);
       loadStaff(selectedBranchId);
     } catch (err) {
-      setError(err instanceof HqApiError ? err.message : "Failed to update account status.");
+      setError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const confirmDeactivate = async () => {
+    if (!deactivateTarget) return;
+    const account = deactivateTarget;
+    try {
+      setActionLoadingId(account.id);
+      setError(null);
+      await deactivateHqStaff(account.id);
+      setDeactivateTarget(null);
+      loadStaff(selectedBranchId);
+    } catch (err) {
+      setError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
     } finally {
       setActionLoadingId(null);
     }
@@ -209,7 +223,7 @@ export default function AdminStaffPage() {
       setTransferTarget(null);
       loadStaff(selectedBranchId);
     } catch (err) {
-      setTransferError(err instanceof HqApiError ? err.message : "Failed to transfer account.");
+      setTransferError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
     } finally {
       setTransferring(false);
     }
@@ -444,6 +458,27 @@ export default function AdminStaffPage() {
               {transferring ? "Transferring..." : "Transfer"}
             </button>
           </form>
+        </Modal>
+      )}
+
+      {deactivateTarget && (
+        <Modal title={`Deactivate "${deactivateTarget.username}"?`} onClose={() => setDeactivateTarget(null)}>
+          <p className={bodyText} style={mutedTextStyle}>
+            This immediately signs them out everywhere and blocks further logins. You can reactivate the
+            account later — nothing is deleted.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={() => setDeactivateTarget(null)} className={secondaryButtonClass} style={secondaryButtonStyle}>
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeactivate}
+              disabled={actionLoadingId === deactivateTarget.id}
+              className={dangerButtonClass}
+            >
+              {actionLoadingId === deactivateTarget.id ? "Deactivating..." : "Yes, Deactivate"}
+            </button>
+          </div>
         </Modal>
       )}
     </div>

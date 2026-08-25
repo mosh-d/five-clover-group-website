@@ -25,6 +25,11 @@ export const secondaryButtonClass =
   "rounded-lg px-4 py-3 text-2xl font-semibold border cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
 export const secondaryButtonStyle = { borderColor: "var(--accent-2)", color: "var(--text-color)" };
 
+// Full-size destructive action (deactivate/delete confirmations) — same
+// footprint as primaryButtonClass, red instead of brand-emphasis.
+export const dangerButtonClass =
+  "rounded-lg px-4 py-3 text-2xl font-semibold text-white bg-red-600 hover:bg-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 transition-colors";
+
 export const errorBoxClass = `${bodyText} text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3`;
 
 // Slightly lighter than --background-color (hsla(38, 38%, 94%, 1)) — same

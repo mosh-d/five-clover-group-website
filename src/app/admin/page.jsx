@@ -54,20 +54,20 @@ export default function AdminLoginPage() {
         className="w-full max-w-lg flex flex-col gap-7 bg-white rounded-2xl p-12 shadow-sm"
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-5xl font-bold" style={{ color: "var(--text-color)" }}>
+          <h1 className="text-6xl font-bold" style={{ color: "var(--text-color)" }}>
             Five Clover HQ
           </h1>
-          <p className="text-xl" style={{ color: "var(--text-color)", opacity: 0.68 }}>
+          <p className="text-2xl" style={{ color: "var(--text-color)", opacity: 0.68 }}>
             Sign in to manage staff across every branch.
           </p>
         </div>
 
         {error && (
-          <p className="text-lg text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>
+          <p className="text-xl text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>
         )}
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="username" className="text-lg font-semibold uppercase tracking-wide" style={{ color: "var(--text-color)", opacity: 0.68 }}>
+          <label htmlFor="username" className="text-xl font-semibold uppercase tracking-wide" style={{ color: "var(--text-color)", opacity: 0.68 }}>
             Username
           </label>
           <input
@@ -76,13 +76,13 @@ export default function AdminLoginPage() {
             autoComplete="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="border rounded-lg px-4 py-4 text-xl"
+            className="border rounded-lg px-4 py-4 text-2xl"
             style={{ borderColor: "var(--accent-2)" }}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="password" className="text-lg font-semibold uppercase tracking-wide" style={{ color: "var(--text-color)", opacity: 0.68 }}>
+          <label htmlFor="password" className="text-xl font-semibold uppercase tracking-wide" style={{ color: "var(--text-color)", opacity: 0.68 }}>
             Password
           </label>
           <div className="relative">
@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="border rounded-lg px-4 py-4 pr-14 text-xl w-full"
+              className="border rounded-lg px-4 py-4 pr-14 text-2xl w-full"
               style={{ borderColor: "var(--accent-2)" }}
             />
             <button
@@ -110,7 +110,7 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={submitting || !username.trim() || !password}
-          className="rounded-lg px-4 py-4 text-xl font-semibold text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg px-4 py-4 text-2xl font-semibold text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
           style={{ background: "var(--emphasis)" }}
         >
           {submitting ? "Signing in..." : "Sign in"}

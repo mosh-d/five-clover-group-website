@@ -215,6 +215,20 @@ select:focus {
 }
 
 /* ===================================
+   HQ ADMIN OVERRIDES
+   =================================== */
+
+/* The marketing site's body styling (letter-spacing: 0.3em, line-height:
+   1.6) is tuned for sparse display type — headings, hero copy. Applied to
+   dense admin UI (tables, form labels, small text) it reads as broken,
+   overly spaced-out text. Scope it back to normal inside the admin shell
+   rather than touching the shared body rule the marketing pages rely on. */
+.admin-root {
+  letter-spacing: normal;
+  line-height: 1.5;
+}
+
+/* ===================================
    CLICKABLE CURSOR
    =================================== */
 

@@ -106,4 +106,11 @@ export async function transferHqStaff(id, newBranchId) {
   return hqRequest(`/api/hq/staff/${id}/transfer`, { method: "POST", body: { new_branch_id: newBranchId } });
 }
 
+export async function hqChangePassword(currentPassword, newPassword) {
+  return hqRequest("/api/users/hq-change-password", {
+    method: "PATCH",
+    body: { current_password: currentPassword, new_password: newPassword },
+  });
+}
+
 export { HqApiError };

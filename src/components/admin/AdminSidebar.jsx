@@ -62,7 +62,7 @@ export default function AdminSidebar() {
 
       {isMobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="w-72 bg-white h-full p-6 flex flex-col gap-6 shadow-xl">
+          <div className="w-xl max-w-full bg-white h-full p-6 flex flex-col gap-6 shadow-xl">
             <button
               onClick={() => setIsMobileOpen(false)}
               className="self-end cursor-pointer"

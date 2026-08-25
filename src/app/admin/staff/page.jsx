@@ -79,6 +79,7 @@ export default function AdminStaffPage() {
   const [staff, setStaff] = useState([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [error, setError] = useState(null);
+  const [showDeactivated, setShowDeactivated] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState(emptyCreateForm);
@@ -121,6 +122,7 @@ export default function AdminStaffPage() {
   }, []);
 
   useEffect(() => {
+    setShowDeactivated(false);
     if (selectedBranchId) loadStaff(selectedBranchId);
     else setStaff([]);
   }, [selectedBranchId, loadStaff]);
@@ -214,6 +216,9 @@ export default function AdminStaffPage() {
     }
   };
 
+  const deactivatedCount = staff.filter((a) => !a.is_active).length;
+  const visibleStaff = showDeactivated ? staff : staff.filter((a) => a.is_active);
+
   return (
     <div className="w-full flex flex-col gap-8">
       <div>
@@ -254,12 +259,28 @@ export default function AdminStaffPage() {
 
       {error && <p className={errorBoxClass}>{error}</p>}
 
+      {selectedBranchId && !loadingStaff && staff.length > 0 && (
+        <label className={`${bodyText} flex items-center gap-2 cursor-pointer w-fit`} style={mutedTextStyle}>
+          <input
+            type="checkbox"
+            checked={showDeactivated}
+            onChange={(e) => setShowDeactivated(e.target.checked)}
+            className="cursor-pointer"
+          />
+          View deactivated accounts{deactivatedCount > 0 ? ` (${deactivatedCount})` : ""}
+        </label>
+      )}
+
       {!selectedBranchId ? (
         <p className={bodyText} style={mutedTextStyle}>Select a branch to see its staff accounts.</p>
       ) : loadingStaff ? (
         <p className={bodyText} style={mutedTextStyle}>Loading staff...</p>
       ) : staff.length === 0 ? (
         <p className={bodyText} style={mutedTextStyle}>No staff accounts at this branch yet.</p>
+      ) : visibleStaff.length === 0 ? (
+        <p className={bodyText} style={mutedTextStyle}>
+          All staff accounts at this branch are deactivated. Check &quot;View deactivated accounts&quot; above to see them.
+        </p>
       ) : (
         <div className={tableCardClass} style={tableCardStyle}>
           <div className={tableScrollClass}>
@@ -275,7 +296,7 @@ export default function AdminStaffPage() {
                 </tr>
               </thead>
               <tbody>
-                {staff.map((account) => (
+                {visibleStaff.map((account) => (
                   <tr key={account.id} className={tableRowClass} style={tableRowStyle}>
                     <td className={tableTdClass}>{account.username}</td>
                     <td className={tableTdClass}>{account.display_name}</td>

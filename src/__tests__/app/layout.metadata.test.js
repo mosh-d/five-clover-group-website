@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { metadata } from '@/app/layout';
+import { metadata } from '@/app/(marketing)/layout';
 
-describe('Root Layout Metadata', () => {
+describe('Marketing Layout Metadata', () => {
   it('should have verification object in metadata', () => {
     expect(metadata.verification).toBeDefined();
     expect(typeof metadata.verification).toBe('object');

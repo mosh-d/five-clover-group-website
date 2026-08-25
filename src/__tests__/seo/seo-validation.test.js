@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { metadata as layoutMetadata } from '@/app/layout';
-import { metadata as homeMetadata } from '@/app/page';
+import { metadata as layoutMetadata } from '@/app/(marketing)/layout';
+import { metadata as homeMetadata } from '@/app/(marketing)/page';
 import sitemap from '@/app/sitemap';
 import robots from '@/app/robots';
 import { generateOrganizationSchema, generateAllHotelsSchema } from '@/lib/seo/structured-data';

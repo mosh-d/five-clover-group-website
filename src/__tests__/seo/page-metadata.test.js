@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { metadata as homeMetadata } from '@/app/page';
-import { metadata as layoutMetadata, viewport } from '@/app/layout';
+import { metadata as homeMetadata } from '@/app/(marketing)/page';
+import { metadata as layoutMetadata, viewport } from '@/app/(marketing)/layout';
 
 describe('Page Metadata Validation', () => {
   describe('Homepage Metadata', () => {
@@ -65,7 +65,7 @@ describe('Page Metadata Validation', () => {
     });
   });
 
-  describe('Root Layout Metadata', () => {
+  describe('Marketing Layout Metadata', () => {
     it('should have metadataBase configured', () => {
       expect(layoutMetadata.metadataBase).toBeDefined();
       expect(layoutMetadata.metadataBase.toString()).toMatch(/^https:\/\//);

@@ -19,11 +19,11 @@ export default function AdminTopBar() {
 
   return (
     <header
-      className="w-full flex items-center justify-between px-6 py-4 shadow-sm shrink-0"
+      className="w-full flex items-center justify-between pl-6 pr-30 md:pr-6 py-4 shadow-sm shrink-0"
       style={{ background: "var(--text-color)" }}
     >
-      <Link href="/admin/staff" className="flex items-center gap-3 shrink-0">
-        <div className="relative w-12 h-12">
+      <Link href="/admin/staff" className="flex flex-col items-center gap-3 shrink-0">
+        <div className="relative size-36">
           <Image src={Logo} alt="Five Clover" fill className="object-contain" />
         </div>
         <span className="hidden sm:block text-xl font-bold text-white">Five Clover HQ</span>

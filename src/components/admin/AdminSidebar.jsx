@@ -42,7 +42,7 @@ export default function AdminSidebar() {
     <>
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="md:hidden fixed top-5 right-5 z-40 p-3 rounded-lg shadow-lg cursor-pointer"
+        className="md:hidden fixed top-5 right-5 mt-13 mr-2 z-40 p-3 rounded-lg shadow-lg cursor-pointer"
         style={{ background: "var(--emphasis)", color: "white" }}
         aria-label="Open menu"
       >

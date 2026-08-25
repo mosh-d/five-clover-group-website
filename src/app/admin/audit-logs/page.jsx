@@ -193,7 +193,7 @@ export default function AdminAuditLogsPage() {
   return (
     <div className="w-full flex flex-col gap-8">
       <div>
-        <PageHeading icon={IoDocumentTextOutline}>Audit Logs</PageHeading>
+        <PageHeading icon={IoDocumentTextOutline}>Audit Trail</PageHeading>
         <p className={`${bodyText} mt-2`} style={mutedTextStyle}>
           A record of actions taken by staff, per branch.
         </p>

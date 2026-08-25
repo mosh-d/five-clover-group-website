@@ -7,6 +7,6 @@ import { IoPeopleOutline, IoKeyOutline, IoDocumentTextOutline } from "react-icon
 // pages here as they ship.
 export const ADMIN_NAV_ITEMS = [
   { href: "/admin/staff", label: "STAFF ACCOUNTS", icon: IoPeopleOutline },
-  { href: "/admin/audit-logs", label: "AUDIT LOGS", icon: IoDocumentTextOutline },
+  { href: "/admin/audit-logs", label: "AUDIT TRAIL", icon: IoDocumentTextOutline },
   { href: "/admin/account", label: "ACCOUNT", icon: IoKeyOutline },
 ];

@@ -4,6 +4,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { hqLogin, HqApiError } from "@/lib/hq-api";
 import { isHqAuthenticated } from "@/utils/hq-auth";
+import {
+  textColorStyle,
+  mutedTextStyle,
+  labelText,
+  inputClass,
+  inputStyle,
+  primaryButtonClass,
+  primaryButtonStyle,
+  errorBoxClass,
+} from "@/components/admin/adminStyles";
 
 function EyeIcon({ open }) {
   return open ? (
@@ -54,20 +64,18 @@ export default function AdminLoginPage() {
         className="w-full max-w-lg flex flex-col gap-7 bg-white rounded-2xl p-12 shadow-sm"
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-6xl font-bold" style={{ color: "var(--text-color)" }}>
+          <h1 className="text-6xl font-bold" style={textColorStyle}>
             Five Clover HQ
           </h1>
-          <p className="text-2xl" style={{ color: "var(--text-color)", opacity: 0.68 }}>
+          <p className="text-2xl" style={mutedTextStyle}>
             Sign in to manage staff across every branch.
           </p>
         </div>
 
-        {error && (
-          <p className="text-xl text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>
-        )}
+        {error && <p className={errorBoxClass}>{error}</p>}
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="username" className="text-xl font-semibold uppercase tracking-wide" style={{ color: "var(--text-color)", opacity: 0.68 }}>
+          <label htmlFor="username" className={labelText} style={mutedTextStyle}>
             Username
           </label>
           <input
@@ -76,13 +84,13 @@ export default function AdminLoginPage() {
             autoComplete="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="border rounded-lg px-4 py-4 text-2xl"
-            style={{ borderColor: "var(--accent-2)" }}
+            className={inputClass}
+            style={inputStyle}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="password" className="text-xl font-semibold uppercase tracking-wide" style={{ color: "var(--text-color)", opacity: 0.68 }}>
+          <label htmlFor="password" className={labelText} style={mutedTextStyle}>
             Password
           </label>
           <div className="relative">
@@ -92,15 +100,15 @@ export default function AdminLoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="border rounded-lg px-4 py-4 pr-14 text-2xl w-full"
-              style={{ borderColor: "var(--accent-2)" }}
+              className={`${inputClass} pr-14`}
+              style={inputStyle}
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute inset-y-0 right-0 flex items-center px-4 cursor-pointer"
-              style={{ color: "var(--text-color)", opacity: 0.6 }}
+              style={{ ...textColorStyle, opacity: 0.6 }}
             >
               <EyeIcon open={showPassword} />
             </button>
@@ -110,8 +118,8 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={submitting || !username.trim() || !password}
-          className="rounded-lg px-4 py-4 text-2xl font-semibold text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ background: "var(--emphasis)" }}
+          className={primaryButtonClass}
+          style={primaryButtonStyle}
         >
           {submitting ? "Signing in..." : "Sign in"}
         </button>

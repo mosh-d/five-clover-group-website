@@ -13,6 +13,17 @@ import {
   HqApiError,
 } from "@/lib/hq-api";
 import PageHeading from "@/components/admin/PageHeading";
+import {
+  textColorStyle,
+  mutedTextStyle,
+  bodyText,
+  labelText,
+  inputClass,
+  inputStyle,
+  primaryButtonClass,
+  primaryButtonStyle,
+  errorBoxClass,
+} from "@/components/admin/adminStyles";
 
 const ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron"];
 
@@ -31,8 +42,8 @@ function Modal({ title, onClose, children }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-lg bg-white rounded-2xl p-8 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="text-4xl font-bold" style={{ color: "var(--text-color)" }}>{title}</h2>
-          <button onClick={onClose} className="text-4xl leading-none cursor-pointer" style={{ color: "var(--text-color)", opacity: 0.5 }}>
+          <h2 className="text-4xl font-bold" style={textColorStyle}>{title}</h2>
+          <button onClick={onClose} className="text-4xl leading-none cursor-pointer" style={{ ...textColorStyle, opacity: 0.5 }}>
             &times;
           </button>
         </div>
@@ -41,13 +52,6 @@ function Modal({ title, onClose, children }) {
     </div>
   );
 }
-
-const inputClass = "border rounded-lg px-4 py-3 text-2xl w-full";
-const inputStyle = { borderColor: "var(--accent-2)" };
-const labelClass = "text-xl font-semibold uppercase tracking-wide";
-const labelStyle = { color: "var(--text-color)", opacity: 0.68 };
-const primaryBtnClass = "rounded-lg px-4 py-3 text-2xl font-semibold text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
-const primaryBtnStyle = { background: "var(--emphasis)" };
 
 export default function AdminStaffPage() {
   const [branches, setBranches] = useState([]);
@@ -196,16 +200,16 @@ export default function AdminStaffPage() {
     <div className="max-w-5xl mx-auto flex flex-col gap-8">
       <div>
         <PageHeading icon={IoPeopleOutline}>Staff Accounts</PageHeading>
-        <p className="text-xl mt-2" style={{ color: "var(--text-color)", opacity: 0.68 }}>
+        <p className={`${bodyText} mt-2`} style={mutedTextStyle}>
           Manage staff across every branch.
         </p>
       </div>
 
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2 flex-1 min-w-[16rem]">
-          <label className={labelClass} style={labelStyle}>Branch</label>
+          <label className={labelText} style={mutedTextStyle}>Branch</label>
           {loadingBranches ? (
-            <p style={{ color: "var(--text-color)", opacity: 0.68 }}>Loading branches...</p>
+            <p className={bodyText} style={mutedTextStyle}>Loading branches...</p>
           ) : (
             <select
               value={selectedBranchId}
@@ -223,26 +227,26 @@ export default function AdminStaffPage() {
         <button
           onClick={openCreate}
           disabled={!selectedBranchId}
-          className={primaryBtnClass}
-          style={primaryBtnStyle}
+          className={primaryButtonClass}
+          style={primaryButtonStyle}
         >
           + Add Staff
         </button>
       </div>
 
-      {error && <p className="text-xl text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>}
+      {error && <p className={errorBoxClass}>{error}</p>}
 
       {!selectedBranchId ? (
-        <p style={{ color: "var(--text-color)", opacity: 0.68 }}>Select a branch to see its staff accounts.</p>
+        <p className={bodyText} style={mutedTextStyle}>Select a branch to see its staff accounts.</p>
       ) : loadingStaff ? (
-        <p style={{ color: "var(--text-color)", opacity: 0.68 }}>Loading staff...</p>
+        <p className={bodyText} style={mutedTextStyle}>Loading staff...</p>
       ) : staff.length === 0 ? (
-        <p style={{ color: "var(--text-color)", opacity: 0.68 }}>No staff accounts at this branch yet.</p>
+        <p className={bodyText} style={mutedTextStyle}>No staff accounts at this branch yet.</p>
       ) : (
         <div className="overflow-x-auto rounded-2xl bg-white">
           <table className="w-full text-left text-xl">
             <thead>
-              <tr style={{ color: "var(--text-color)", opacity: 0.68 }} className="border-b">
+              <tr style={mutedTextStyle} className="border-b">
                 <th className="px-5 py-3 font-semibold">Username</th>
                 <th className="px-5 py-3 font-semibold">Display Name</th>
                 <th className="px-5 py-3 font-semibold">Role</th>
@@ -253,7 +257,7 @@ export default function AdminStaffPage() {
             </thead>
             <tbody>
               {staff.map((account) => (
-                <tr key={account.id} className="border-b last:border-0" style={{ color: "var(--text-color)" }}>
+                <tr key={account.id} className="border-b last:border-0" style={textColorStyle}>
                   <td className="px-5 py-3">{account.username}</td>
                   <td className="px-5 py-3">{account.display_name}</td>
                   <td className="px-5 py-3 capitalize">{account.role}</td>
@@ -272,10 +276,10 @@ export default function AdminStaffPage() {
                   <td className="px-5 py-3">{formatDate(account.last_login_at)}</td>
                   <td className="px-5 py-3">
                     <div className="flex flex-wrap gap-3">
-                      <button onClick={() => openEdit(account)} className="font-semibold underline cursor-pointer" style={{ color: "var(--text-color)" }}>
+                      <button onClick={() => openEdit(account)} className="font-semibold underline cursor-pointer" style={textColorStyle}>
                         Edit
                       </button>
-                      <button onClick={() => openTransfer(account)} className="font-semibold underline cursor-pointer" style={{ color: "var(--text-color)" }}>
+                      <button onClick={() => openTransfer(account)} className="font-semibold underline cursor-pointer" style={textColorStyle}>
                         Transfer
                       </button>
                       <button
@@ -298,9 +302,9 @@ export default function AdminStaffPage() {
       {isCreateOpen && (
         <Modal title="Add Staff Account" onClose={() => setIsCreateOpen(false)}>
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
-            {createError && <p className="text-xl text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{createError}</p>}
+            {createError && <p className={errorBoxClass}>{createError}</p>}
             <div className="flex flex-col gap-2">
-              <label className={labelClass} style={labelStyle}>Username</label>
+              <label className={labelText} style={mutedTextStyle}>Username</label>
               <input
                 type="text"
                 value={createForm.username}
@@ -310,7 +314,7 @@ export default function AdminStaffPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className={labelClass} style={labelStyle}>Display Name (optional)</label>
+              <label className={labelText} style={mutedTextStyle}>Display Name (optional)</label>
               <input
                 type="text"
                 value={createForm.display_name}
@@ -320,7 +324,7 @@ export default function AdminStaffPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className={labelClass} style={labelStyle}>Role</label>
+              <label className={labelText} style={mutedTextStyle}>Role</label>
               <select
                 value={createForm.role}
                 onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
@@ -333,7 +337,7 @@ export default function AdminStaffPage() {
               </select>
             </div>
             <div className="flex flex-col gap-2">
-              <label className={labelClass} style={labelStyle}>Initial Password</label>
+              <label className={labelText} style={mutedTextStyle}>Initial Password</label>
               <input
                 type="text"
                 value={createForm.password}
@@ -346,8 +350,8 @@ export default function AdminStaffPage() {
             <button
               type="submit"
               disabled={creating || !createForm.username.trim() || !createForm.password}
-              className={primaryBtnClass}
-              style={primaryBtnStyle}
+              className={primaryButtonClass}
+              style={primaryButtonStyle}
             >
               {creating ? "Creating..." : "Create Account"}
             </button>
@@ -358,9 +362,9 @@ export default function AdminStaffPage() {
       {editTarget && (
         <Modal title={`Edit "${editTarget.username}"`} onClose={() => setEditTarget(null)}>
           <form onSubmit={handleEdit} className="flex flex-col gap-4">
-            {editError && <p className="text-xl text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{editError}</p>}
+            {editError && <p className={errorBoxClass}>{editError}</p>}
             <div className="flex flex-col gap-2">
-              <label className={labelClass} style={labelStyle}>Display Name</label>
+              <label className={labelText} style={mutedTextStyle}>Display Name</label>
               <input
                 type="text"
                 value={editForm.display_name}
@@ -370,7 +374,7 @@ export default function AdminStaffPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className={labelClass} style={labelStyle}>Role</label>
+              <label className={labelText} style={mutedTextStyle}>Role</label>
               <select
                 value={editForm.role}
                 onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
@@ -383,7 +387,7 @@ export default function AdminStaffPage() {
               </select>
             </div>
             <div className="flex flex-col gap-2">
-              <label className={labelClass} style={labelStyle}>Reset Password (optional)</label>
+              <label className={labelText} style={mutedTextStyle}>Reset Password (optional)</label>
               <input
                 type="text"
                 value={editPassword}
@@ -393,7 +397,7 @@ export default function AdminStaffPage() {
                 placeholder="Leave blank to keep the current password"
               />
             </div>
-            <button type="submit" disabled={saving} className={primaryBtnClass} style={primaryBtnStyle}>
+            <button type="submit" disabled={saving} className={primaryButtonClass} style={primaryButtonStyle}>
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </form>
@@ -403,12 +407,12 @@ export default function AdminStaffPage() {
       {transferTarget && (
         <Modal title={`Transfer "${transferTarget.username}"`} onClose={() => setTransferTarget(null)}>
           <form onSubmit={handleTransfer} className="flex flex-col gap-4">
-            {transferError && <p className="text-xl text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{transferError}</p>}
-            <p style={{ color: "var(--text-color)", opacity: 0.68 }}>
+            {transferError && <p className={errorBoxClass}>{transferError}</p>}
+            <p className={bodyText} style={mutedTextStyle}>
               Moves this account to a different branch. Role, username, and password stay the same.
             </p>
             <div className="flex flex-col gap-2">
-              <label className={labelClass} style={labelStyle}>New Branch</label>
+              <label className={labelText} style={mutedTextStyle}>New Branch</label>
               <select
                 value={transferBranchId}
                 onChange={(e) => setTransferBranchId(e.target.value)}
@@ -426,8 +430,8 @@ export default function AdminStaffPage() {
             <button
               type="submit"
               disabled={transferring || !transferBranchId}
-              className={primaryBtnClass}
-              style={primaryBtnStyle}
+              className={primaryButtonClass}
+              style={primaryButtonStyle}
             >
               {transferring ? "Transferring..." : "Transfer"}
             </button>

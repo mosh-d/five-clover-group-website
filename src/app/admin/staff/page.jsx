@@ -45,8 +45,8 @@ import {
 
 const ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron"];
 
-const emptyCreateForm = { username: "", display_name: "", role: "receptionist", password: "" };
-const emptyEditForm = { display_name: "", role: "receptionist" };
+const emptyCreateForm = { username: "", role: "receptionist", password: "" };
+const emptyEditForm = { role: "receptionist" };
 
 function formatDate(d) {
   if (!d) return "Never";
@@ -141,7 +141,6 @@ export default function AdminStaffPage() {
       setCreateError(null);
       await createHqStaff({
         username: createForm.username.trim(),
-        display_name: createForm.display_name.trim() || undefined,
         role: createForm.role,
         branch_id: Number(selectedBranchId),
         password: createForm.password,
@@ -157,7 +156,7 @@ export default function AdminStaffPage() {
 
   const openEdit = (account) => {
     setEditTarget(account);
-    setEditForm({ display_name: account.display_name, role: account.role });
+    setEditForm({ role: account.role });
     setEditPassword("");
     setEditError(null);
   };
@@ -168,7 +167,7 @@ export default function AdminStaffPage() {
     try {
       setSaving(true);
       setEditError(null);
-      const payload = { display_name: editForm.display_name.trim(), role: editForm.role };
+      const payload = { role: editForm.role };
       if (editPassword) payload.password = editPassword;
       await updateHqStaff(editTarget.id, payload);
       setEditTarget(null);
@@ -288,7 +287,6 @@ export default function AdminStaffPage() {
               <thead>
                 <tr className={tableHeadRowClass} style={tableHeadRowStyle}>
                   <th className={tableThClass}>Username</th>
-                  <th className={tableThClass}>Display Name</th>
                   <th className={tableThClass}>Role</th>
                   <th className={tableThClass}>Status</th>
                   <th className={tableThClass}>Last Login</th>
@@ -299,7 +297,6 @@ export default function AdminStaffPage() {
                 {visibleStaff.map((account) => (
                   <tr key={account.id} className={tableRowClass} style={tableRowStyle}>
                     <td className={tableTdClass}>{account.username}</td>
-                    <td className={tableTdClass}>{account.display_name}</td>
                     <td className={`${tableTdClass} capitalize`}>{account.role}</td>
                     <td className={tableTdClass}>
                       <StatusBadge status={account.is_active ? "active" : "inactive"} />
@@ -345,16 +342,6 @@ export default function AdminStaffPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className={labelText} style={mutedTextStyle}>Display Name (optional)</label>
-              <input
-                type="text"
-                value={createForm.display_name}
-                onChange={(e) => setCreateForm({ ...createForm, display_name: e.target.value })}
-                className={inputClass}
-                style={inputStyle}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
               <label className={labelText} style={mutedTextStyle}>Role</label>
               <select
                 value={createForm.role}
@@ -394,16 +381,6 @@ export default function AdminStaffPage() {
         <Modal title={`Edit "${editTarget.username}"`} onClose={() => setEditTarget(null)}>
           <form onSubmit={handleEdit} className="flex flex-col gap-4">
             {editError && <p className={errorBoxClass}>{editError}</p>}
-            <div className="flex flex-col gap-2">
-              <label className={labelText} style={mutedTextStyle}>Display Name</label>
-              <input
-                type="text"
-                value={editForm.display_name}
-                onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
-                className={inputClass}
-                style={inputStyle}
-              />
-            </div>
             <div className="flex flex-col gap-2">
               <label className={labelText} style={mutedTextStyle}>Role</label>
               <select

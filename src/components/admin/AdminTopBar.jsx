@@ -54,7 +54,7 @@ export default function AdminTopBar() {
       {user && (
         <div className="flex items-center gap-5">
           <div className="text-right hidden sm:block">
-            <div className="text-lg font-semibold text-white">{user.display_name}</div>
+            <div className="text-lg font-semibold text-white">{user.username}</div>
             <div className="text-base text-white/60">
               {ROLE_LABELS[user.staff_role] || user.staff_role}
             </div>

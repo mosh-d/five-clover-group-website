@@ -62,7 +62,7 @@ export default function AdminAccountPage() {
         <PageHeading icon={IoKeyOutline}>Account</PageHeading>
         {user && (
           <p className={`${bodyText} mt-2`} style={mutedTextStyle}>
-            {user.display_name} &middot; {ROLE_LABELS[user.staff_role] || user.staff_role}
+            {user.username} &middot; {ROLE_LABELS[user.staff_role] || user.staff_role}
           </p>
         )}
       </div>

@@ -52,7 +52,7 @@ export default function AdminSidebar() {
       {/* Desktop sidebar — nav on <nav> itself so the background fills the
           full column height regardless of item-list height. */}
       <nav
-        className="hidden md:flex overflow-y-auto shrink-0 w-lg"
+        className="hidden md:flex overflow-y-auto shrink-0 w-sm"
         style={{ backgroundColor: "var(--accent-2)" }}
       >
         <div className="flex flex-col px-4 py-8 gap-2 w-full">

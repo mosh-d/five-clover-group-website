@@ -215,7 +215,7 @@ export default function AdminStaffPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-8">
+    <div className="max-w-5xl flex flex-col gap-8">
       <div>
         <PageHeading icon={IoPeopleOutline}>Staff Accounts</PageHeading>
         <p className={`${bodyText} mt-2`} style={mutedTextStyle}>

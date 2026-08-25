@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { IoPeopleOutline } from "react-icons/io5";
 import {
   fetchBranches,
   fetchHqStaff,
@@ -11,6 +12,7 @@ import {
   transferHqStaff,
   HqApiError,
 } from "@/lib/hq-api";
+import PageHeading from "@/components/admin/PageHeading";
 
 const ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron"];
 
@@ -193,8 +195,8 @@ export default function AdminStaffPage() {
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-8">
       <div>
-        <h1 className="text-5xl font-bold" style={{ color: "var(--text-color)" }}>Staff Accounts</h1>
-        <p className="text-xl" style={{ color: "var(--text-color)", opacity: 0.68 }}>
+        <PageHeading icon={IoPeopleOutline}>Staff Accounts</PageHeading>
+        <p className="text-xl mt-2" style={{ color: "var(--text-color)", opacity: 0.68 }}>
           Manage staff across every branch.
         </p>
       </div>

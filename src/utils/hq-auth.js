@@ -14,7 +14,7 @@ const DEV_ROLE_OVERRIDE_KEY = "hq_dev_role_override";
 // only: every hq-staff/branches request still carries the real HQ token,
 // so the backend enforces access exactly as it always did regardless of
 // what's simulated here.
-export const SIMULATABLE_HQ_ROLES = ["head_hr"];
+export const SIMULATABLE_HQ_ROLES = ["head_hr", "hr"];
 
 export function storeHqSession(data) {
   if (typeof window === "undefined") return;

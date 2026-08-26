@@ -12,7 +12,7 @@ import {
 } from "@/utils/hq-auth";
 import { useRouter } from "next/navigation";
 
-const ROLE_LABELS = { head_hr: "Head HR", developer: "Developer" };
+const ROLE_LABELS = { head_hr: "Head HR", developer: "Developer", hr: "HR" };
 
 export default function AdminTopBar() {
   const router = useRouter();

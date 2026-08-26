@@ -18,8 +18,8 @@ describe('Sitemap Generation', () => {
 
     const result = await sitemap();
 
-    // Should have 4 static pages
-    expect(result).toHaveLength(4);
+    // Should have 6 static pages
+    expect(result).toHaveLength(6);
 
     // Check homepage
     const homepage = result.find(entry => entry.url === 'https://fivecloverhotels.com');
@@ -48,6 +48,20 @@ describe('Sitemap Generation', () => {
     expect(blogPage.changeFrequency).toBe('daily');
     expect(blogPage.priority).toBe(0.8);
     expect(blogPage.lastModified).toBeInstanceOf(Date);
+
+    // Check privacy policy page
+    const privacyPage = result.find(entry => entry.url === 'https://fivecloverhotels.com/privacy-policy');
+    expect(privacyPage).toBeDefined();
+    expect(privacyPage.changeFrequency).toBe('yearly');
+    expect(privacyPage.priority).toBe(0.3);
+    expect(privacyPage.lastModified).toBeInstanceOf(Date);
+
+    // Check terms of service page
+    const termsPage = result.find(entry => entry.url === 'https://fivecloverhotels.com/terms-of-service');
+    expect(termsPage).toBeDefined();
+    expect(termsPage.changeFrequency).toBe('yearly');
+    expect(termsPage.priority).toBe(0.3);
+    expect(termsPage.lastModified).toBeInstanceOf(Date);
   });
 
   it('should include blog posts from Hashnode', async () => {
@@ -68,8 +82,8 @@ describe('Sitemap Generation', () => {
 
     const result = await sitemap();
 
-    // Should have 4 static pages + 2 blog posts
-    expect(result).toHaveLength(6);
+    // Should have 6 static pages + 2 blog posts
+    expect(result).toHaveLength(8);
 
     // Check first blog post
     const blog1 = result.find(entry => entry.url === 'https://fivecloverhotels.com/blog/test-blog-1');
@@ -91,11 +105,13 @@ describe('Sitemap Generation', () => {
     const result = await sitemap();
 
     // Should still return static pages
-    expect(result).toHaveLength(4);
+    expect(result).toHaveLength(6);
     expect(result.find(entry => entry.url === 'https://fivecloverhotels.com')).toBeDefined();
     expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/about')).toBeDefined();
     expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/contact')).toBeDefined();
     expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/blog')).toBeDefined();
+    expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/privacy-policy')).toBeDefined();
+    expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/terms-of-service')).toBeDefined();
   });
 
   it('should have correct URL structure for all entries', async () => {

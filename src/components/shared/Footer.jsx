@@ -346,6 +346,14 @@ export default function Footer() {
         </div>
       </div>
       <div className="h-[0.1rem] w-full bg-[color:var(--footer-text-color)]/50 min-w-[2rem]"></div>
+      <nav aria-label="Legal" className="flex gap-[2rem] text-lg">
+        <Link href="/privacy-policy" className="underline">
+          Privacy Policy
+        </Link>
+        <Link href="/terms-of-service" className="underline">
+          Terms of Service
+        </Link>
+      </nav>
       <div
         data-component="Copyright"
         className="text-[color:var(--footer-text-color)]/50 text-2xl font-bold text-center"

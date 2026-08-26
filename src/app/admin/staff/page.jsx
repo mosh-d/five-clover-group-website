@@ -46,9 +46,22 @@ import {
   rowButtonSuccessClass,
 } from "@/components/admin/adminStyles";
 
-const ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron"];
+const BRANCH_ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron"];
+// Only role creatable/assignable from "Head Office" — developer/head_hr
+// stay CLI-only (see manage-staff-account.ts), never offered here.
+const HEAD_OFFICE_ASSIGNABLE_ROLES = ["hr"];
+// developer/head_hr accounts now show up in the "Head Office" list (see
+// HqStaffService.list(null)) and any head_hr/hr/developer session can
+// fully manage them here (edit password, deactivate, reactivate) — the
+// page itself is already gated to those roles, so there's no extra wall
+// on top. The one thing that stays fixed is their ROLE (excluded from
+// HQ_ASSIGNABLE_ROLES on the backend — can't be promoted/demoted through
+// this tool), so the Edit modal shows it read-only for these two instead
+// of a dropdown.
+const CLI_ONLY_ROLES = ["developer", "head_hr"];
 
-const emptyCreateForm = { username: "", role: "receptionist", password: "" };
+const HEAD_OFFICE = "head_office";
+
 const emptyEditForm = { role: "receptionist" };
 
 function formatDate(d) {
@@ -67,7 +80,7 @@ export default function AdminStaffPage() {
   const [showDeactivated, setShowDeactivated] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState(emptyCreateForm);
+  const [createForm, setCreateForm] = useState({ username: "", role: "receptionist", password: "" });
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
 
@@ -119,8 +132,11 @@ export default function AdminStaffPage() {
     else setStaff([]);
   }, [selectedBranchId, loadStaff]);
 
+  const isHeadOffice = selectedBranchId === HEAD_OFFICE;
+  const assignableRoles = isHeadOffice ? HEAD_OFFICE_ASSIGNABLE_ROLES : BRANCH_ASSIGNABLE_ROLES;
+
   const openCreate = () => {
-    setCreateForm(emptyCreateForm);
+    setCreateForm({ username: "", role: assignableRoles[0], password: "" });
     setCreateError(null);
     setIsCreateOpen(true);
   };
@@ -134,7 +150,10 @@ export default function AdminStaffPage() {
       await createHqStaff({
         username: createForm.username.trim(),
         role: createForm.role,
-        branch_id: Number(selectedBranchId),
+        // Head Office roles (hr) have no home branch — omit branch_id
+        // entirely rather than sending the "head_office" sentinel itself,
+        // which is a frontend-only concept the backend never sees.
+        ...(isHeadOffice ? {} : { branch_id: Number(selectedBranchId) }),
         password: createForm.password,
       });
       setIsCreateOpen(false);
@@ -159,7 +178,11 @@ export default function AdminStaffPage() {
     try {
       setSaving(true);
       setEditError(null);
-      const payload = { role: editForm.role };
+      const payload = {};
+      // developer/head_hr's role can't be changed through this tool (see
+      // HQ_ASSIGNABLE_ROLES on the backend) — the modal shows it read-only
+      // for these two, so there's nothing to send here but a password reset.
+      if (!CLI_ONLY_ROLES.includes(editTarget.role)) payload.role = editForm.role;
       if (editPassword) payload.password = editPassword;
       await updateHqStaff(editTarget.id, payload);
       setEditTarget(null);
@@ -254,6 +277,7 @@ export default function AdminStaffPage() {
               style={inputStyle}
             >
               <option value="">-- Select a branch --</option>
+              <option value={HEAD_OFFICE}>Head Office</option>
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
@@ -289,7 +313,9 @@ export default function AdminStaffPage() {
       ) : loadingStaff ? (
         <p className={bodyText} style={mutedTextStyle}>Loading staff...</p>
       ) : staff.length === 0 ? (
-        <p className={bodyText} style={mutedTextStyle}>No staff accounts at this branch yet.</p>
+        <p className={bodyText} style={mutedTextStyle}>
+          No staff accounts {isHeadOffice ? "at Head Office" : "at this branch"} yet.
+        </p>
       ) : visibleStaff.length === 0 ? (
         <p className={bodyText} style={mutedTextStyle}>
           All staff accounts at this branch are deactivated. Check &quot;View deactivated accounts&quot; above to see them.
@@ -321,9 +347,11 @@ export default function AdminStaffPage() {
                         <button onClick={() => openEdit(account)} className={rowButtonPrimaryClass} style={rowButtonPrimaryStyle}>
                           Edit
                         </button>
-                        <button onClick={() => openTransfer(account)} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
-                          Transfer
-                        </button>
+                        {account.branch_id && (
+                          <button onClick={() => openTransfer(account)} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
+                            Transfer
+                          </button>
+                        )}
                         <button
                           onClick={() => handleToggleActive(account)}
                           disabled={actionLoadingId === account.id}
@@ -363,7 +391,7 @@ export default function AdminStaffPage() {
                 className={inputClass}
                 style={inputStyle}
               >
-                {ASSIGNABLE_ROLES.map((r) => (
+                {assignableRoles.map((r) => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
@@ -397,16 +425,22 @@ export default function AdminStaffPage() {
             {editError && <p className={errorBoxClass}>{editError}</p>}
             <div className="flex flex-col gap-2">
               <label className={labelText} style={mutedTextStyle}>Role</label>
-              <select
-                value={editForm.role}
-                onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                className={inputClass}
-                style={inputStyle}
-              >
-                {ASSIGNABLE_ROLES.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
+              {CLI_ONLY_ROLES.includes(editTarget.role) ? (
+                <p className={`${bodyText} capitalize`} style={mutedTextStyle}>
+                  {editTarget.role.replace("_", " ")} (role can only be changed via the server CLI)
+                </p>
+              ) : (
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  className={inputClass}
+                  style={inputStyle}
+                >
+                  {assignableRoles.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <label className={labelText} style={mutedTextStyle}>Reset Password (optional)</label>

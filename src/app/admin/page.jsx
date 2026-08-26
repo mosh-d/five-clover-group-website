@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
             Five Clover HQ
           </h1>
           <p className="text-2xl" style={mutedTextStyle}>
-            Sign in to manage staff across every branch.
+            Sign in to handle Head Office level operations.
           </p>
         </div>
 

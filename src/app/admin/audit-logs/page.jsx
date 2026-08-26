@@ -60,7 +60,11 @@ const ROLE_LABELS = {
   accountant: "Accountant",
   waitron: "Waitron",
   developer: "Developer",
+  head_hr: "Head HR",
+  hr: "HR",
 };
+
+const HEAD_OFFICE = "head_office";
 
 const PAGE_SIZE = 20;
 
@@ -189,6 +193,7 @@ export default function AdminAuditLogsPage() {
 
   const currentFilters = { staffId: filterStaffId, role: filterRole, action: filterAction, from: filterFrom, to: filterTo, search: filterSearch };
   const pages = Math.ceil(total / PAGE_SIZE);
+  const isHeadOffice = selectedBranchId === HEAD_OFFICE;
 
   return (
     <div className="w-full flex flex-col gap-8">
@@ -211,6 +216,7 @@ export default function AdminAuditLogsPage() {
             style={inputStyle}
           >
             <option value="">-- Select a branch --</option>
+            <option value={HEAD_OFFICE}>Head Office</option>
             {branches.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
@@ -315,7 +321,9 @@ export default function AdminAuditLogsPage() {
             <p className={bodyText} style={mutedTextStyle}>Loading audit logs...</p>
           ) : !error && entries.length === 0 ? (
             <p className={bodyText} style={mutedTextStyle}>
-              {hasFilters ? "No actions match these filters." : "No actions have been recorded yet at this branch."}
+              {hasFilters
+                ? "No actions match these filters."
+                : `No actions have been recorded yet ${isHeadOffice ? "at Head Office" : "at this branch"}.`}
             </p>
           ) : entries.length > 0 ? (
             <>

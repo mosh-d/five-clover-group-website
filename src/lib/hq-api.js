@@ -1,4 +1,4 @@
-import { getHqAuthHeaders, getHqRefreshToken, storeHqSession, clearHqSession } from "@/utils/hq-auth";
+import { getHqToken, getHqAuthHeaders, getHqRefreshToken, storeHqSession, clearHqSession } from "@/utils/hq-auth";
 
 // Plain fetch, not axios — this repo has no axios dependency, unlike the
 // hotel-frontends' admin panels this otherwise mirrors in spirit.
@@ -76,6 +76,25 @@ export async function hqLogin(username, password) {
   });
   storeHqSession(data);
   return data;
+}
+
+// Deliberately NOT hqRequest — that helper silently refreshes on a 401,
+// which is exactly what must NOT happen here. AdminShell calls this on
+// every protected-route mount to decide whether the session is still
+// good, the same way the hotel-frontends' ProtectedRoute calls their own
+// verify() with the raw access token: an expired token means a real
+// re-login, not a free 7-day extension just because the tab was reopened.
+export async function verifyHqSession() {
+  const token = getHqToken();
+  if (!token) return false;
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/users/hq-verify`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 export async function fetchBranches() {

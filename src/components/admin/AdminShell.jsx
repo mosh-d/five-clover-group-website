@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { isHqAuthenticated } from "@/utils/hq-auth";
+import { isHqAuthenticated, clearHqSession } from "@/utils/hq-auth";
+import { verifyHqSession } from "@/lib/hq-api";
 import AdminTopBar from "./AdminTopBar";
 import AdminSidebar from "./AdminSidebar";
 
@@ -23,23 +24,59 @@ function getServerSnapshot() {
 // Every other /admin/* route gets the topbar+sidebar shell and is gated
 // here once, instead of each page repeating its own redirect-if-signed-out
 // check as more pages ship under this shell.
+//
+// A stored token alone isn't enough to call the session live — that used
+// to be the entire check, so as long as the tab got reopened at least once
+// every 7 days (the refresh token's own life) the session silently renewed
+// itself forever via the first API call's auto-refresh, regardless of how
+// many days of real inactivity sat in between. verifyHqSession() (a raw
+// call, deliberately bypassing that auto-refresh) confirms the ACCESS
+// token itself is still good on every mount — the same thing the
+// hotel-frontends' ProtectedRoute already does with their own verify()
+// call, where an expired access token means a real re-login, not a free
+// extension.
 export default function AdminShell({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/admin";
-  const isAuthed = useSyncExternalStore(subscribe, isHqAuthenticated, getServerSnapshot);
+  const hasStoredToken = useSyncExternalStore(subscribe, isHqAuthenticated, getServerSnapshot);
+
+  const [checking, setChecking] = useState(true);
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    if (!isLoginPage && !isAuthed) {
+    if (isLoginPage) {
+      setChecking(false);
+      return;
+    }
+    if (!hasStoredToken) {
+      setChecking(false);
+      setVerified(false);
+      return;
+    }
+    let cancelled = false;
+    verifyHqSession().then((ok) => {
+      if (cancelled) return;
+      if (!ok) clearHqSession();
+      setVerified(ok);
+      setChecking(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoginPage, hasStoredToken]);
+
+  useEffect(() => {
+    if (!checking && !isLoginPage && !verified) {
       router.replace("/admin");
     }
-  }, [isLoginPage, isAuthed, router]);
+  }, [checking, isLoginPage, verified, router]);
 
   if (isLoginPage) {
     return <div className="admin-root">{children}</div>;
   }
 
-  if (!isAuthed) {
+  if (checking || !verified) {
     return <div className="admin-root" style={{ minHeight: "100vh" }} />;
   }
 

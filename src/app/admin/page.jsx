@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { hqLogin, HqApiError } from "@/lib/hq-api";
-import { isHqAuthenticated } from "@/utils/hq-auth";
+import { isHqAuthenticated, markJustLoggedIn } from "@/utils/hq-auth";
 import PasswordField from "@/components/admin/PasswordField";
 import {
   textColorStyle,
@@ -35,6 +35,10 @@ export default function AdminLoginPage() {
       setSubmitting(true);
       setError(null);
       await hqLogin(username.trim(), password);
+      // This token is seconds old, straight from a real login response —
+      // AdminShell would otherwise spend an extra round-trip re-verifying
+      // it before showing the first protected page for no reason.
+      markJustLoggedIn();
       router.push("/admin/staff");
     } catch (err) {
       setError(err instanceof HqApiError ? err.message : "Failed to sign in.");

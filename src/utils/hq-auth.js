@@ -56,6 +56,25 @@ export function isHqAuthenticated() {
   return Boolean(getHqToken());
 }
 
+// A plain in-memory flag (not persisted — resets on a real page load),
+// not localStorage: this only needs to survive from the login page's
+// handleSubmit to AdminShell's very next effect run within the SAME tab
+// session, both in the same React tree. Lets AdminShell trust a token
+// that was JUST issued by a real login without an extra verifyHqSession()
+// round-trip before showing the first protected page — that token can't
+// possibly be stale, it's seconds old. A token inherited from localStorage
+// on a genuinely fresh mount (tab reopened, page refreshed) still goes
+// through the real check, since this flag was never set in that case.
+let justLoggedIn = false;
+export function markJustLoggedIn() {
+  justLoggedIn = true;
+}
+export function consumeJustLoggedIn() {
+  const was = justLoggedIn;
+  justLoggedIn = false;
+  return was;
+}
+
 export function getHqAuthHeaders() {
   const token = getHqToken();
   return token ? { Authorization: `Bearer ${token}` } : {};

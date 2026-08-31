@@ -1,24 +1,11 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { isHqAuthenticated, clearHqSession } from "@/utils/hq-auth";
 import { verifyHqSession } from "@/lib/hq-api";
 import AdminTopBar from "./AdminTopBar";
 import AdminSidebar from "./AdminSidebar";
-
-// localStorage isn't readable during SSR, and reading it inside a plain
-// useState/useEffect pair to avoid a hydration mismatch means flashing an
-// unauthenticated view for a frame first. useSyncExternalStore is the
-// hook React designed for exactly this: it renders getServerSnapshot's
-// value (false — unknown/unauthenticated) through hydration, then
-// resolves to the real client value with no separate effect-driven flash.
-function subscribe() {
-  return () => {};
-}
-function getServerSnapshot() {
-  return false;
-}
 
 // /admin itself is the login page — no shell chrome, no auth requirement.
 // Every other /admin/* route gets the topbar+sidebar shell and is gated
@@ -32,51 +19,57 @@ function getServerSnapshot() {
 // many days of real inactivity sat in between. verifyHqSession() (a raw
 // call, deliberately bypassing that auto-refresh) confirms the ACCESS
 // token itself is still good on every mount — the same thing the
-// hotel-frontends' ProtectedRoute already does with their own verify()
-// call, where an expired access token means a real re-login, not a free
+// hotel-frontends' ProtectedRoute already does with its own verify() call,
+// where an expired access token means a real re-login, not a free
 // extension.
+//
+// `status` is driven entirely by the effect below, gated on [pathname]
+// alone — deliberately NOT on anything read from localStorage. An earlier
+// version tracked the stored token reactively (useSyncExternalStore), but
+// clearHqSession() below mutates that exact value, which re-triggered the
+// very same effect the instant it ran — looping the verify call and the
+// redirect after it, visible as the login page stuttering with a flood of
+// hq-verify 401s. isHqAuthenticated()/verifyHqSession() are only ever read
+// imperatively inside the effect now, never as reactive state.
 export default function AdminShell({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/admin";
-  const hasStoredToken = useSyncExternalStore(subscribe, isHqAuthenticated, getServerSnapshot);
 
-  const [checking, setChecking] = useState(true);
-  const [verified, setVerified] = useState(false);
+  const [status, setStatus] = useState(isLoginPage ? "login" : "checking");
 
   useEffect(() => {
     if (isLoginPage) {
-      setChecking(false);
+      setStatus("login");
       return;
     }
-    if (!hasStoredToken) {
-      setChecking(false);
-      setVerified(false);
+    if (!isHqAuthenticated()) {
+      setStatus("denied");
       return;
     }
     let cancelled = false;
+    setStatus("checking");
     verifyHqSession().then((ok) => {
       if (cancelled) return;
       if (!ok) clearHqSession();
-      setVerified(ok);
-      setChecking(false);
+      setStatus(ok ? "ok" : "denied");
     });
     return () => {
       cancelled = true;
     };
-  }, [isLoginPage, hasStoredToken]);
+  }, [pathname, isLoginPage]);
 
   useEffect(() => {
-    if (!checking && !isLoginPage && !verified) {
+    if (status === "denied") {
       router.replace("/admin");
     }
-  }, [checking, isLoginPage, verified, router]);
+  }, [status, router]);
 
   if (isLoginPage) {
     return <div className="admin-root">{children}</div>;
   }
 
-  if (checking || !verified) {
+  if (status !== "ok") {
     return <div className="admin-root" style={{ minHeight: "100vh" }} />;
   }
 

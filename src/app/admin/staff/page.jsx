@@ -46,7 +46,7 @@ import {
   rowButtonSuccessClass,
 } from "@/components/admin/adminStyles";
 
-const BRANCH_ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron"];
+const BRANCH_ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper"];
 // Only role creatable/assignable from "Head Office" — developer/head_hr
 // stay CLI-only (see manage-staff-account.ts), never offered here.
 const HEAD_OFFICE_ASSIGNABLE_ROLES = ["hr"];

@@ -59,6 +59,7 @@ const ROLE_LABELS = {
   receptionist: "Receptionist",
   accountant: "Accountant",
   waitron: "Waitron",
+  storekeeper: "Store Keeper",
   developer: "Developer",
   head_hr: "Head HR",
   hr: "HR",

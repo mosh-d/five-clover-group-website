@@ -15,6 +15,7 @@ const KEYS = {
   branch: "pms_branch",
   branches: "pms_branches",
   roleOverride: "pms_dev_role_override",
+  lastActivity: "pms_last_activity",
 };
 
 // Roles a developer can "view as", to see exactly what that role's PMS looks
@@ -46,6 +47,31 @@ export function storePmsSession(data) {
 export function clearPmsSession() {
   if (!hasStorage()) return;
   Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+}
+
+// Whether the person is still here - not merely whether a session exists.
+// The access token lapses every 30 minutes by design; an actively-used
+// session renews through it, an untouched one ends on the same clock (the
+// branch PMS's rule, owner 2026-09-27: "I was only logged in for about 30
+// minutes so why did my tokens expire?"). Stamped only from a real pointer
+// or key event (see PmsShell), never from a network response - the PMS
+// refetches on its own, and that must not keep an abandoned front-desk
+// terminal signed in.
+export const IDLE_LIMIT_MS = 30 * 60 * 1000;
+
+export function markActivity() {
+  try {
+    localStorage.setItem(KEYS.lastActivity, String(Date.now()));
+  } catch {
+    // Storage unavailable: treated as active, below.
+  }
+}
+
+// No stamp at all (storage unavailable) counts as active.
+export function hasBeenIdleTooLong() {
+  if (!hasStorage()) return false;
+  const stamp = Number(localStorage.getItem(KEYS.lastActivity) || 0);
+  return Boolean(stamp) && Date.now() - stamp > IDLE_LIMIT_MS;
 }
 
 export const getPmsToken = () => (hasStorage() ? localStorage.getItem(KEYS.token) : null);

@@ -18,7 +18,8 @@ export function applyServerClock(serverTimeISO) {
 // How far off this device's clock is, in minutes.
 export const deviceClockDriftMinutes = () => Math.round(serverClockOffsetMs / 60000);
 
-const serverNow = () => new Date(Date.now() + serverClockOffsetMs);
+// Now, by the server's clock.
+export const serverNow = () => new Date(Date.now() + serverClockOffsetMs);
 
 // A Date whose UTC fields read as Lagos's calendar - so getUTC*() below
 // gives the Lagos date whatever timezone the device is set to.
@@ -31,6 +32,36 @@ const isoOf = (d) =>
 export const todayISO = () => isoOf(lagosCalendar(0));
 export const yesterdayISO = () => isoOf(lagosCalendar(-1));
 export const monthStartISO = () => `${todayISO().slice(0, 8)}01`;
+
+// Today's BUSINESS date: a hotel day runs 6am to 6am, so before 6am in
+// Lagos it is still yesterday - what the server records a walk-in, a charge
+// or a shift against (the branch PMS's currentBusinessDateISO).
+const BUSINESS_DAY_START_HOUR = 6;
+export const businessDateISO = () =>
+  isoOf(new Date(serverNow().getTime() + (LAGOS_OFFSET_MINUTES - BUSINESS_DAY_START_HOUR * 60) * 60000));
+
+// Whether noon (Lagos) on a date has passed - the hotel's check-in and
+// check-out time. A stay due out "today" isn't due until noon. Stored dates
+// are UTC midnight standing for the Lagos calendar date, so noon Lagos is
+// that midnight + 11 hours. Mirrors the backend's hasPassedNoonCutoff().
+export const hasPassedNoonCutoff = (dateOnly, now = serverNow()) => {
+  const d = new Date(dateOnly);
+  const dayUTC = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  return now.getTime() >= dayUTC + (12 * 60 - LAGOS_OFFSET_MINUTES) * 60000;
+};
+
+// How many Lagos calendar days ago a date-only value was: "today",
+// "yesterday", "3 days ago". Counted in calendar days, not elapsed hours -
+// a check-in from yesterday can be under 24 hours ago and must still read
+// "yesterday".
+export const calendarDaysAgo = (date) => {
+  const d = new Date(date);
+  const dateDay = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const today = lagosCalendar(0);
+  const todayDay = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const diff = Math.round((todayDay - dateDay) / 86400000);
+  return diff <= 0 ? "today" : diff === 1 ? "yesterday" : `${diff} days ago`;
+};
 
 export const formatShortDate = (d) =>
   d ? new Date(d).toLocaleDateString("en-US", { timeZone: "Africa/Lagos", month: "short", day: "numeric" }) : "N/A";

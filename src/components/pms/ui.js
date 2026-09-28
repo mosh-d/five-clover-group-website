@@ -30,6 +30,11 @@ export const btn = {
     "px-5 py-2.5 rounded-lg border border-(--accent-2) bg-(--card) text-(--text-color) text-lg font-semibold tracking-wide cursor-pointer whitespace-nowrap transition-all hover:bg-black/5 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed",
   rowDanger:
     "px-5 py-2.5 rounded-lg border border-red-300 bg-(--card) text-red-600 text-lg font-semibold tracking-wide cursor-pointer whitespace-nowrap transition-all hover:bg-red-600 hover:text-white hover:border-red-600 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed",
+  rowSuccess:
+    "px-5 py-2.5 rounded-lg bg-green-700 text-white text-lg font-bold tracking-wide cursor-pointer whitespace-nowrap transition-all hover:bg-green-600 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed",
+  // Solid destructive - the confirm step of something that can't be undone.
+  dangerSolid:
+    "px-8 py-4 rounded-lg bg-red-600 text-white text-xl font-bold tracking-wide cursor-pointer transition-all hover:bg-red-700 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed",
   // A text-only jump ("View all ->").
   link: "text-xl font-bold text-(--emphasis) hover:underline cursor-pointer",
 };
@@ -41,6 +46,10 @@ export const field = {
   select:
     "w-full border border-(--accent-2) rounded-lg px-4 py-3 text-2xl bg-white text-(--text-color) focus:outline-none focus:ring-2 focus:ring-(--emphasis) focus:border-transparent transition-shadow cursor-pointer",
   error: "text-xl text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3",
+  success: "text-xl text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3",
+  hint: "text-lg text-(--text-color)/60",
+  textarea:
+    "w-full border border-(--accent-2) rounded-lg px-4 py-3 text-2xl bg-white text-(--text-color) placeholder:text-(--text-color)/30 focus:outline-none focus:ring-2 focus:ring-(--emphasis) focus:border-transparent transition-shadow resize-none overflow-hidden",
 };
 
 export const card = {

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import NotYetMoved from "@/components/pms/NotYetMoved";
 import { PMS_NAV_ITEMS } from "@/components/pms/pmsNavItems";
 
@@ -12,5 +13,11 @@ export function generateStaticParams() {
 
 export default async function PmsSectionPage({ params }) {
   const { section } = await params;
-  return <NotYetMoved slug={section} />;
+  // NotYetMoved reads the query string, which Next.js needs inside Suspense
+  // for a page it renders ahead of time.
+  return (
+    <Suspense>
+      <NotYetMoved slug={section} />
+    </Suspense>
+  );
 }

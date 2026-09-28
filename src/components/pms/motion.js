@@ -11,6 +11,25 @@ export const MotionButton = motion.button;
 
 export const EASE_OUT = [0.22, 1, 0.36, 1];
 
+// Content swapping in under a tab bar.
+export const tabEnter = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.22, ease: EASE_OUT },
+};
+
+// A dialog opening: the backdrop fades, the panel rises into place.
+export const backdropEnter = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  transition: { duration: 0.18 },
+};
+export const panelEnter = {
+  initial: { opacity: 0, y: 16, scale: 0.97 },
+  animate: { opacity: 1, y: 0, scale: 1 },
+  transition: { type: "spring", stiffness: 420, damping: 32 },
+};
+
 // A group of cards arriving one after another (parent + child variants).
 export const staggerParent = {
   hidden: {},

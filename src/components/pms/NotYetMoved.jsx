@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { IoOpenOutline, IoConstructOutline } from "react-icons/io5";
 import PageHeading from "@/components/admin/PageHeading";
 import { usePmsSession } from "./PmsSessionContext";
@@ -15,6 +16,9 @@ export default function NotYetMoved({ slug }) {
   const item = navItemFor(slug);
   const title = pageTitle(item);
   const site = siteForBranch(branch);
+  // Carried over, so a link that meant one record (the new-booking popup's
+  // ?reservation_id=...) opens that record on the branch's page too.
+  const query = useSearchParams().toString();
 
   return (
     <div className={page.wrap}>
@@ -30,7 +34,7 @@ export default function NotYetMoved({ slug }) {
           </div>
         </div>
         {site && (
-          <a href={`${site}/admin/${slug}`} target="_blank" rel="noopener noreferrer" className={`${btn.secondary} self-start inline-flex items-center gap-3`}>
+          <a href={`${site}/admin/${slug}${query ? `?${query}` : ""}`} target="_blank" rel="noopener noreferrer" className={`${btn.secondary} self-start inline-flex items-center gap-3`}>
             Open {title} on {branch?.name}&apos;s PMS
             <IoOpenOutline size={18} />
           </a>

@@ -1,12 +1,17 @@
-import { getPmsToken, getPmsRefreshToken, storePmsSession, clearPmsSession } from "./session";
+import { getPmsToken, getPmsRefreshToken, storePmsSession, clearPmsSession, hasBeenIdleTooLong } from "./session";
 
 // The PMS's one way to reach the backend. Plain fetch, as the HQ admin's
 // client (lib/hq-api.js) is - this repo has no axios.
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+// Also where the live socket connects (see PmsLive).
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
 
-// Fired when a session can't be renewed; the shell answers by returning to
-// the sign-in page.
+// Fired when a session has ended for good mid-work - idle too long, or the
+// server refused to renew it. The shell answers with the "session has ended"
+// prompt rather than yanking the page away (see SessionEndedModal).
 export const SESSION_ENDED_EVENT = "pms:session-ended";
+const endSession = () => {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
+};
 
 export class PmsApiError extends Error {
   constructor(message, status, data) {
@@ -26,9 +31,10 @@ const withQuery = (path, query) => {
   return qs ? `${path}?${qs}` : path;
 };
 
-// One refresh at a time, however many requests hit a 401 together.
+// A new access token from the refresh token (a week's life). One refresh at
+// a time, however many requests hit a 401 together.
 let refreshing = null;
-function renewSession() {
+export function renewSession() {
   const refreshToken = getPmsRefreshToken();
   if (!refreshToken) return Promise.resolve(false);
   if (!refreshing) {
@@ -50,9 +56,10 @@ function renewSession() {
   return refreshing;
 }
 
-// Attaches the session's token, renews it once on a 401 (an access token
-// lasts half an hour; the refresh token a week), and throws PmsApiError -
-// with the server's own message - on anything but a 2xx.
+// Attaches the session's token and throws PmsApiError - with the server's
+// own message - on anything but a 2xx. On a 401 the access token has lapsed
+// (it lasts half an hour): someone still working gets it renewed and the
+// request retried; a session left untouched for 30 minutes ends instead.
 export async function pmsRequest(path, { method = "GET", body, query, auth = true, _retried = false } = {}) {
   const headers = { "Content-Type": "application/json" };
   const token = auth ? getPmsToken() : null;
@@ -64,10 +71,14 @@ export async function pmsRequest(path, { method = "GET", body, query, auth = tru
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
+  // A 401 after a successful renewal is about the request itself, not the
+  // session - "Current password is incorrect." on Account, say - so it is
+  // shown as an ordinary error rather than ending the session.
   if (res.status === 401 && auth && !_retried) {
-    if (await renewSession()) return pmsRequest(path, { method, body, query, auth, _retried: true });
-    clearPmsSession();
-    if (typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
+    if (!hasBeenIdleTooLong() && (await renewSession())) {
+      return pmsRequest(path, { method, body, query, auth, _retried: true });
+    }
+    endSession();
   }
 
   const data = await res.json().catch(() => null);
@@ -110,16 +121,21 @@ export async function pmsSignOut() {
   }
 }
 
-// Whether the stored access token itself is still good. Deliberately not
-// pmsRequest: that would quietly renew it, and a tab reopened after days
-// away should be asked to sign in again, not extended for another week -
-// the same rule the branch PMS and the HQ admin follow.
+// Whether the stored session is still good, checked on arrival. A lapsed
+// access token is renewed only for someone who was working in the last 30
+// minutes; a tab reopened after a longer absence is asked to sign in again,
+// not quietly extended for another week - the branch PMS's rule.
 export async function verifyPmsSession() {
-  const token = getPmsToken();
-  if (!token) return false;
-  try {
+  const check = async () => {
+    const token = getPmsToken();
+    if (!token) return { ok: false, status: 0 };
     const res = await fetch(`${API_BASE_URL}/api/users/verify`, { headers: { Authorization: `Bearer ${token}` } });
-    return res.ok;
+    return { ok: res.ok, status: res.status };
+  };
+  try {
+    let result = await check();
+    if (result.status === 401 && !hasBeenIdleTooLong() && (await renewSession())) result = await check();
+    return result.ok;
   } catch {
     return false;
   }

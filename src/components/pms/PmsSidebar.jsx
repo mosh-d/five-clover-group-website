@@ -6,11 +6,13 @@ import { usePathname } from "next/navigation";
 import { FiMenu, FiX } from "react-icons/fi";
 import { usePmsSession } from "./PmsSessionContext";
 import { visibleNavItems } from "./pmsNavItems";
+import { usePmsLive } from "./live/PmsLive";
 
 function NavItems({ pathname, role, onNavigate }) {
+  const { alertCount } = usePmsLive();
   return (
     <ul className="flex flex-col gap-2">
-      {visibleNavItems(role).map(({ href, label, icon: Icon }) => {
+      {visibleNavItems(role).map(({ href, label, icon: Icon, showAlertBadge }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <li key={href}>
@@ -23,6 +25,16 @@ function NavItems({ pathname, role, onNavigate }) {
             >
               <Icon size={20} className="shrink-0" />
               <span>{label}</span>
+              {showAlertBadge && alertCount > 0 && (
+                <span
+                  className={`ml-auto min-w-[2.4rem] h-[2.4rem] px-2 rounded-full text-base font-bold flex items-center justify-center ${
+                    isActive ? "bg-white text-(--emphasis)" : "bg-red-600 text-white"
+                  }`}
+                  aria-label={`${alertCount} open alerts`}
+                >
+                  {alertCount > 99 ? "99+" : alertCount}
+                </span>
+              )}
             </Link>
           </li>
         );

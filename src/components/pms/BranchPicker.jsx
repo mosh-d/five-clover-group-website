@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Modal from "@/components/admin/Modal";
+import Modal from "./Modal";
 import { BRANDS } from "./theme/brands";
 import { btn, field } from "./ui";
 
@@ -32,7 +32,7 @@ export default function BranchPicker({ branches, currentId, title = "Choose a br
   };
 
   return (
-    <Modal title={title} onClose={busy ? undefined : onClose}>
+    <Modal title={title} onClose={busy ? undefined : onClose} size="sm">
       <form onSubmit={choose} className="flex flex-col gap-6">
         {intro && <p className="text-xl text-(--text-color)/68">{intro}</p>}
         {error && <p className={field.error}>{error}</p>}

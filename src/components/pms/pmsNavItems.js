@@ -46,16 +46,17 @@ export const PMS_NAV_ITEMS = [
   { slug: "fnb-sales", label: "F&B SALES", icon: IoFastFoodOutline, roles: ["waitron"] },
   { slug: "laundry-sales", label: "LAUNDRY SALES", icon: IoShirtOutline, roles: FRONT_DESK },
   { slug: "check-ins", label: "CHECK-INS", icon: IoLogInOutline, roles: FRONT_DESK },
-  { slug: "check-outs", label: "CHECK-OUTS", icon: IoLogOutOutline, roles: FRONT_DESK },
+  { slug: "check-outs", label: "CHECK-OUTS", icon: IoLogOutOutline, roles: FRONT_DESK, ready: true },
   { slug: "in-house", label: "IN-HOUSE", icon: IoHomeOutline, roles: OVERSIGHT },
   { slug: "reports", label: "REPORTS", icon: IoBarChartOutline, roles: EVERY_ROLE },
-  { slug: "night-audit", label: "NIGHT AUDIT", icon: IoMoonOutline, roles: FRONT_DESK },
-  { slug: "alerts", label: "ALERTS", icon: IoNotificationsOutline, roles: OVERSIGHT },
-  { slug: "ota-payments", label: "OTA PAYMENTS", icon: IoBusinessOutline, roles: FRONT_DESK },
+  { slug: "night-audit", label: "NIGHT AUDIT", icon: IoMoonOutline, roles: FRONT_DESK, ready: true },
+  // showAlertBadge: carries the live count of open alerts.
+  { slug: "alerts", label: "ALERTS", icon: IoNotificationsOutline, roles: OVERSIGHT, showAlertBadge: true, ready: true },
+  { slug: "ota-payments", label: "OTA PAYMENTS", icon: IoBusinessOutline, roles: FRONT_DESK, ready: true },
   { slug: "audit-trail", label: "AUDIT TRAIL", icon: IoDocumentTextOutline, roles: ["manager", "accountant"] },
   { slug: "menu", label: "MENU", icon: IoRestaurantOutline, roles: ["storekeeper"] },
-  { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE },
-  { slug: "help", label: "HELP", icon: IoHelpCircleOutline, roles: EVERY_ROLE },
+  { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE, ready: true },
+  { slug: "help", label: "HELP", icon: IoHelpCircleOutline, roles: EVERY_ROLE, ready: true },
 ].map((item) => ({ ...item, href: `/pms/${item.slug}` }));
 
 export const navItemFor = (slug) => PMS_NAV_ITEMS.find((item) => item.slug === slug) || null;

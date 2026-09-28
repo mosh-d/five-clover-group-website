@@ -22,6 +22,7 @@ import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
 import { MotionDiv, MotionButton, staggerParent, staggerChild } from "@/components/pms/motion";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
+import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, page, table } from "@/components/pms/ui";
 import { frontOffice, rooms, reservations, alerts, reports, nightAudit, branches } from "@/lib/pms/api";
 import { todayISO, yesterdayISO, monthStartISO, formatShortDate } from "@/lib/pms/dates";
@@ -30,9 +31,9 @@ import { money } from "@/lib/pms/format";
 // The branch's day at a glance - the branch PMS's Overview
 // (hotel-frontends admin_pages/AdminOverview.jsx), moved here.
 //
-// That page refreshes the moment anything changes, over the live socket.
-// The socket comes to this PMS with the rest of its live layer; until then
-// this page reloads every minute and whenever its tab is looked at again.
+// Refreshed the moment rooms, bookings or alerts change (the live socket),
+// and on a slow clock besides - "Arrivals Today" rolls over at midnight with
+// no change on the server to announce it.
 const REFRESH_MS = 60000;
 
 export default function PmsOverviewPage() {
@@ -91,18 +92,11 @@ export default function PmsOverviewPage() {
   }, [branch?.id]);
 
   useEffect(() => {
-    let active = true;
-    const refresh = () => active && load();
-    refresh();
-    const timer = setInterval(refresh, REFRESH_MS);
-    const onVisible = () => document.visibilityState === "visible" && refresh();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      active = false;
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
+    load();
+    const timer = setInterval(load, REFRESH_MS);
+    return () => clearInterval(timer);
   }, [load]);
+  useLiveRefresh(load, ["rooms", "reservations", "alerts"]);
 
   // Occupied/held counts only real guests - never out-of-order or reserved
   // rooms, which are a maintenance/admin block (RoomsService.getHouseStatusSummary).
@@ -111,25 +105,25 @@ export default function PmsOverviewPage() {
   const totalAvailable = roomTypes.reduce((s, rt) => s + (rt.available || 0), 0);
   const occupancyPct = totalRooms > 0 ? Math.round((totalOccupiedOrHeld / totalRooms) * 100) : 0;
 
-  const alertTotal = alertsSummary?.total ?? 0;
+  const alertTotal = alertsSummary?.total || 0;
   // Every category the total counts, in the Alerts page's tab order, so the
   // parts add up to the total.
   const alertParts = alertsSummary
     ? [
-        { count: alertsSummary.missed_check_ins?.length ?? 0, label: "missed check-in" },
-        { count: alertsSummary.unconfirmed?.length ?? 0, label: "unconfirmed booking" },
-        { count: alertsSummary.overdue_checkouts?.length ?? 0, label: "overdue checkout" },
-        { count: alertsSummary.overdue_balances?.length ?? 0, label: "unpaid balance" },
-        { count: alertsSummary.guest_credits?.length ?? 0, label: "credit to guest", plural: "credits to guests" },
+        { count: alertsSummary.missed_check_ins?.length || 0, label: "missed check-in" },
+        { count: alertsSummary.unconfirmed?.length || 0, label: "unconfirmed booking" },
+        { count: alertsSummary.overdue_checkouts?.length || 0, label: "overdue checkout" },
+        { count: alertsSummary.overdue_balances?.length || 0, label: "unpaid balance" },
+        { count: alertsSummary.guest_credits?.length || 0, label: "credit to guest", plural: "credits to guests" },
       ].filter((p) => p.count > 0)
     : [];
 
   const reportTotals = reportSummary?.summary || {};
-  // Worked out here, not inside the JSX: this site's React Compiler
-  // mistranslated a `??` written in these props into a variable it never
-  // declared, which crashed the page.
-  const totalStays = reportTotals.total_stays ?? "—";
-  const completedStays = reportTotals.completed_stays ?? 0;
+  // No `??` in a PMS component: this site's React Compiler and Next's
+  // transform together can lower it into a temporary they never declare,
+  // which crashed this page and Alerts (2026-09-28/29). A real 0 stays 0.
+  const totalStays = reportTotals.total_stays == null ? "—" : reportTotals.total_stays;
+  const completedStays = reportTotals.completed_stays || 0;
   const paymentsCollectedMTD = (reportSummary?.paymentMethods || []).reduce((s, m) => s + (m.total || 0), 0);
   // Current if the latest run covers yesterday's business date or later.
   const auditCurrent = lastAudit && String(lastAudit.audit_date).slice(0, 10) >= yesterdayISO();

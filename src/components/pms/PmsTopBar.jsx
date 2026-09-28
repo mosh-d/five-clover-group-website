@@ -19,9 +19,29 @@ const ROLE_LABELS = {
   storekeeper: "Store Keeper",
 };
 
+// One rota's readout: who is on it today, and the control to correct a
+// wrong pick (every change is audit-logged).
+function ShiftRow({ shift }) {
+  return (
+    <div className="flex items-center gap-2 text-base text-white/70">
+      <span>{shift.label}</span>
+      <span className="text-lg font-semibold text-white">{shift.name || "Not recorded"}</span>
+      {shift.onChange && (
+        <button
+          type="button"
+          onClick={shift.onChange}
+          className="cursor-pointer rounded-lg border border-white/30 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-white/10"
+        >
+          {shift.name ? "Change" : "Record"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // The HQ admin's top bar (components/admin/AdminTopBar.jsx), wearing the
 // signed-in branch's logo and name.
-export default function PmsTopBar() {
+export default function PmsTopBar({ shifts = [] }) {
   const { user, branch, branches, role, realRole, roleOverride, switchBranch, setRoleOverride, signOut } = usePmsSession();
   const [picking, setPicking] = useState(false);
   const isDeveloper = realRole === "developer";
@@ -36,6 +56,19 @@ export default function PmsTopBar() {
       </Link>
 
       <div className="flex items-center gap-5 flex-wrap justify-end">
+        {/* Whose shift the business day is (the 6am prompt, ShiftGate) - only
+            for the rotas themselves, a manager and a developer. Both rotas at
+            once sit behind a "Shifts" toggle; your own is one line. */}
+        {shifts.length > 1 ? (
+          <details className="text-base text-white/70">
+            <summary className="cursor-pointer transition-colors hover:text-white">Shifts</summary>
+            <div className="flex flex-col gap-1 pt-2">
+              {shifts.map((shift) => <ShiftRow key={shift.key} shift={shift} />)}
+            </div>
+          </details>
+        ) : (
+          shifts.map((shift) => <ShiftRow key={shift.key} shift={shift} />)
+        )}
         <div className="text-right hidden sm:block">
           {/* The real account, never the "view as" role - this line states who
               is actually signed in. */}

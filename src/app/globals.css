@@ -50,7 +50,10 @@ body {
 
 body {
   font-family: var(--font-family-primary);
-  letter-spacing: 0.3em;
+  /* The typeface's own spacing, as on the hotel websites (owner,
+     2026-09-21; here 2026-09-28). It was widened to 0.3em for a
+     distinctive look; elements that want tracking set their own. */
+  letter-spacing: normal;
   line-height: 1.6;
   color: var(--text-color);
   background-color: var(--background-color);
@@ -124,13 +127,20 @@ body {
   --ringruby: hsla(359, 78%, 51%, 1);
   --cordis: hsla(47, 100%, 56%, 1);
 
-  /* Typography */
-  --font-family-primary: var(--font-cambay), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-family-secondary: Georgia, "Times New Roman", Times, serif;
-  --font-family-accent: var(--font-cormorant), serif;
+  /* Typography - the hotel websites' typefaces (see app/layout.jsx): Jost
+     for text, Playfair Display for headings. .font-accent was this site's
+     third face (Cormorant); it is Playfair Display too now, so every
+     heading here reads as the hotels' do. */
+  --font-family-primary: var(--font-jost), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-family-secondary: var(--font-playfair), Georgia, serif;
+  --font-family-accent: var(--font-playfair), Georgia, serif;
 
-  .font-secondary {
+  /* Playfair Display loads at 400 and 500 only. With synthesised bold off,
+     a bold heading gets the real 500 face instead of a faux bold. */
+  .font-secondary,
+  .font-accent {
     font-family: var(--font-family-secondary);
+    font-synthesis: style;
     letter-spacing: 0.04em;
     word-spacing: 0.1em;
   }
@@ -138,10 +148,21 @@ body {
   .font-primary {
     font-family: var(--font-family-primary);
   }
+}
 
-  .font-accent {
-    font-family: var(--font-family-accent);
-  }
+/* Running text reads in the sans, as on the hotel websites: Playfair
+   Display is a display face, dense over a paragraph. Paragraphs and bullet
+   points inside a serif block - or marked serif themselves - use Jost at
+   its own spacing; headings stay in Playfair. :root-prefixed to outrank
+   the rules nested in :root above. */
+:root .font-secondary p,
+:root p.font-secondary,
+:root .font-secondary ul li,
+:root .font-accent p,
+:root p.font-accent {
+  font-family: var(--font-family-primary);
+  letter-spacing: normal;
+  word-spacing: normal;
 }
 
 /* ===================================
@@ -218,14 +239,19 @@ select:focus {
    HQ ADMIN OVERRIDES
    =================================== */
 
-/* The marketing site's body styling (letter-spacing: 0.3em, line-height:
-   1.6) is tuned for sparse display type — headings, hero copy. Applied to
-   dense admin UI (tables, form labels, small text) it reads as broken,
-   overly spaced-out text. Scope it back to normal inside the admin shell
-   rather than touching the shared body rule the marketing pages rely on. */
+/* The HQ admin and the PMS read in Inter, as the hotel websites' own PMS
+   does: built for screens, and clearer than a display sans at the small
+   sizes a working tool is full of. Redefining the variable, not just
+   font-family, means .font-primary inside them follows too. Tables get
+   equal-width figures, so money columns line up digit for digit. */
 .admin-root {
+  --font-family-primary: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-family-primary);
   letter-spacing: normal;
   line-height: 1.5;
+}
+.admin-root table {
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===================================

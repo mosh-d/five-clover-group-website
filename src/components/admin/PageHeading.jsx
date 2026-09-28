@@ -1,8 +1,7 @@
 // Page-level heading with a brand-tinted icon chip, matching the style
 // already used across the hotel-frontends' admin panels (see
 // components/shared/PageHeading.jsx there) — same icon-chip treatment,
-// this repo's own brand serif (Cormorant, via .font-accent) instead of
-// borrowing their Georgia fallback.
+// and the same heading face, Playfair Display (via .font-accent).
 // Usage: <PageHeading icon={IoPeopleOutline}>Staff Accounts</PageHeading>
 export default function PageHeading({ icon: Icon, children, badge, className = "" }) {
   return (

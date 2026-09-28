@@ -20,7 +20,7 @@ import {
 
 // The Help page's guide - one section per sidebar page, in the sidebar's
 // order. Carried over from the branch PMS's Help (AdminHelp.jsx), with the
-// lines that had fallen behind the PMS brought up to date (2026-09-29):
+// lines that had fallen behind the PMS brought up to date (2026-09-28):
 // walk-in credit refunds by drawer, the audit trail in plain words, Menu as
 // the store keeper's page, and signing in to this PMS.
 export const HELP_SECTIONS = [

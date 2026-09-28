@@ -15,7 +15,8 @@ const WIDTHS = {
 // header with title/subtitle and close, a scrolling body, and an optional
 // footer for actions. Closes on Escape and a backdrop click; closing is
 // always the same as Cancel, never an action of its own.
-export default function Modal({ onClose, title, subtitle, badge, children, footer, size = "lg", zIndex = 1000 }) {
+// `loading`: just a centred body (a spinner) while its contents load.
+export default function Modal({ onClose, title, subtitle, badge, children, footer, size = "lg", zIndex = 1000, loading = false }) {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose?.();
     document.addEventListener("keydown", onKey);
@@ -38,6 +39,10 @@ export default function Modal({ onClose, title, subtitle, badge, children, foote
       aria-label={typeof title === "string" ? title : "Dialog"}
     >
       <MotionDiv {...panelEnter} className={`bg-(--card) rounded-2xl w-full ${WIDTHS[size] || WIDTHS.lg} max-h-[90vh] flex flex-col shadow-2xl overflow-hidden`}>
+        {loading ? (
+          <div className="p-20 flex justify-center">{children}</div>
+        ) : (
+        <>
         <div className="flex items-start justify-between gap-4 px-8 py-6 border-b border-(--accent-2) shrink-0">
           <div className="min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
@@ -59,6 +64,8 @@ export default function Modal({ onClose, title, subtitle, badge, children, foote
         <div className="overflow-y-auto px-8 py-6 flex flex-col gap-8 grow">{children}</div>
         {footer && (
           <div className="px-8 py-5 border-t border-(--accent-2) bg-(--text-color)/3 flex flex-wrap justify-end items-center gap-3 shrink-0">{footer}</div>
+        )}
+        </>
         )}
       </MotionDiv>
     </MotionDiv>

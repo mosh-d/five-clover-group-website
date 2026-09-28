@@ -2,7 +2,14 @@
 const nextConfig = {
   /* config options here */
   reactCompiler: true,
-  
+
+  // No "browserslist" in package.json, on purpose: Next's own modern targets
+  // apply. The old "last 2 ... versions" list resolved to browser versions
+  // newer than Turbopack's built-in data knows (Chrome 144, Safari 26), and
+  // Turbopack then quietly compiled the whole site down to old-browser
+  // JavaScript - whose rewrite of `??` crashed PMS pages ("_room_0_base_rate
+  // is not defined", 2026-09-28).
+
   // Image optimization for SEO
   images: {
     formats: ['image/avif', 'image/webp'],

@@ -6,7 +6,7 @@ import PageHeading from "@/components/admin/PageHeading";
 import PasswordField from "@/components/admin/PasswordField";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { btn, card, field, page } from "@/components/pms/ui";
-import { account } from "@/lib/pms/api";
+import { changePassword } from "@/lib/pms/api/auth-api";
 
 const EMPTY = { current_password: "", new_password: "", confirm_password: "" };
 const ROLE_LABELS = {
@@ -41,7 +41,7 @@ export default function PmsAccountPage() {
     if (form.new_password === form.current_password) return setError("New password must be different from your current password.");
     try {
       setSaving(true);
-      await account.changePassword(form.current_password, form.new_password);
+      await changePassword({ current_password: form.current_password, new_password: form.new_password });
       setSuccess("Your password was updated successfully.");
       setForm(EMPTY);
     } catch (err) {

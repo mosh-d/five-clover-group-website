@@ -7,7 +7,7 @@ import Modal from "@/components/pms/Modal";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
 import { btn, field, page, table } from "@/components/pms/ui";
-import { otaSettlements } from "@/lib/pms/api";
+import { fetchOtaSettlements, markOtaSettlementPaid } from "@/lib/pms/api/ota-api";
 import { money } from "@/lib/pms/format";
 
 // OTA Payments - the branch PMS's page (AdminOtaPayments.jsx): money owed by
@@ -33,7 +33,7 @@ export default function PmsOtaPaymentsPage() {
     try {
       setLoading(true);
       setError(null);
-      setSettlements((await otaSettlements.list(status)) || []);
+      setSettlements((await fetchOtaSettlements(status)) || []);
     } catch (err) {
       setError(`${err.message || "Failed to load OTA payments."} Please refresh the page.`);
     } finally {
@@ -50,7 +50,7 @@ export default function PmsOtaPaymentsPage() {
     try {
       setSaving(true);
       setError(null);
-      await otaSettlements.markPaid(confirming.id, reference.trim() || undefined);
+      await markOtaSettlementPaid(confirming.id, reference.trim() || undefined);
       setConfirming(null);
       setReference("");
       await load();

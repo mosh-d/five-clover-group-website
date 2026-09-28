@@ -11,7 +11,8 @@ import Toast from "@/components/pms/Toast";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
 import { usePmsLive, useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
-import { alerts as alertsApi, reservations } from "@/lib/pms/api";
+import { fetchAlerts } from "@/lib/pms/api/alerts-api";
+import { markNoShow } from "@/lib/pms/api/reservations-pms-api";
 import { calendarDaysAgo, serverNow } from "@/lib/pms/dates";
 import { formatDate, money } from "@/lib/pms/format";
 
@@ -40,7 +41,7 @@ const timeUntil = (date, now) => {
 //
 // No `??` in here: in a component, this site's React Compiler and Next's
 // transform together lower several of them into one temporary they then
-// name two ways ("_ref is not defined", 2026-09-29). `||` needs no
+// name two ways ("_ref is not defined", 2026-09-28). `||` needs no
 // temporary and means the same for a list. Each tab is described once, below, and drawn by the
 // same table, rather than five near-copies of it.
 export default function PmsAlertsPage() {
@@ -65,7 +66,7 @@ export default function PmsAlertsPage() {
   const loadAlerts = useCallback(async () => {
     try {
       setLoading(true);
-      const result = await alertsApi.list();
+      const result = await fetchAlerts();
       setData(result);
       setError(null);
       // This page holds the freshest total; the sidebar badge follows it.
@@ -89,7 +90,7 @@ export default function PmsAlertsPage() {
   const handleMarkNoShow = async (id, guestName) => {
     try {
       setActionLoading(id);
-      await reservations.markNoShow(id);
+      await markNoShow(id);
       setToast(`${guestName} marked as no-show.`);
       loadAlerts();
     } catch (err) {

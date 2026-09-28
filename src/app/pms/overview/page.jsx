@@ -21,10 +21,14 @@ import PageHeading from "@/components/admin/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
 import { MotionDiv, MotionButton, staggerParent, staggerChild } from "@/components/pms/motion";
-import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, page, table } from "@/components/pms/ui";
-import { frontOffice, rooms, reservations, alerts, reports, nightAudit, branches } from "@/lib/pms/api";
+import { fetchAlerts } from "@/lib/pms/api/alerts-api";
+import { fetchCheckInList, fetchCheckOutList, fetchInHouse } from "@/lib/pms/api/front-office-api";
+import { fetchNightAuditHistory } from "@/lib/pms/api/night-audit-api";
+import { fetchReportsDashboard } from "@/lib/pms/api/reports-api";
+import { fetchHouseStatus, fetchReservations, fetchRoomStatusList } from "@/lib/pms/api/reservations-pms-api";
+import { fetchMaintenanceMode } from "@/lib/pms/api/room-data";
 import { todayISO, yesterdayISO, monthStartISO, formatShortDate } from "@/lib/pms/dates";
 import { money } from "@/lib/pms/format";
 
@@ -38,7 +42,6 @@ const REFRESH_MS = 60000;
 
 export default function PmsOverviewPage() {
   const router = useRouter();
-  const { branch } = usePmsSession();
   const [roomTypes, setRoomTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -52,16 +55,16 @@ export default function PmsOverviewPage() {
   const load = useCallback(async () => {
     const today = todayISO();
     const [house, arrivals, departures, inHouse, alertList, report, audits, bookings, status, maintenance] = await Promise.allSettled([
-      rooms.houseStatus(),
-      frontOffice.checkInList(today),
-      frontOffice.checkOutList(today),
-      frontOffice.inHouse(),
-      alerts.list(),
-      reports.dashboard(monthStartISO(), today),
-      nightAudit.history({ page: 1, limit: 1 }),
-      reservations.list({ page: 1, limit: 5 }),
-      rooms.status(),
-      branches.maintenanceMode(branch?.id),
+      fetchHouseStatus(),
+      fetchCheckInList(today),
+      fetchCheckOutList(today),
+      fetchInHouse(),
+      fetchAlerts(),
+      fetchReportsDashboard(monthStartISO(), today),
+      fetchNightAuditHistory({ page: 1, limit: 1 }),
+      fetchReservations({ page: 1, limit: 5 }),
+      fetchRoomStatusList(),
+      fetchMaintenanceMode(),
     ]);
     const value = (r) => (r.status === "fulfilled" ? r.value : undefined);
     const count = (r) => (Array.isArray(value(r)) ? value(r).length : null);
@@ -89,7 +92,7 @@ export default function PmsOverviewPage() {
       }
       setRoomFlags(flags);
     }
-  }, [branch?.id]);
+  }, []);
 
   useEffect(() => {
     load();

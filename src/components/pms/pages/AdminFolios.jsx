@@ -1,0 +1,1607 @@
+"use client";
+"use no memo";
+
+// Carried over from the branch PMS's admin_pages/AdminFolios.jsx (2026-09-28).
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "@/lib/pms/router";
+import { IoClose, IoReceiptOutline } from "react-icons/io5";
+import Modal from "@/components/pms/Modal";
+import PageHeading from "@/components/admin/PageHeading";
+import StatusBadge from "@/components/pms/StatusBadge";
+import { CHARGE_TYPE_LABELS, settlementByCharge } from "@/components/pms/folioCharges";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import { btn, field, table } from "@/components/pms/ui";
+import { useWebSocketContext } from "@/components/pms/live/PmsLive";
+import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
+import RefundCreditModal from "@/components/pms/RefundCreditModal";
+import CopyIconButton from "@/components/pms/CopyIconButton";
+import PaymentSplitRows from "@/components/pms/PaymentSplitRows";
+import RoomStatusTag from "@/components/pms/RoomStatusTag";
+import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
+import { canRefund, getStoredStaffRole } from "@/lib/pms/auth";
+import { markOtaSettlementPaid, createOtaSettlement, updateOtaSettlement, previewOtaAmount } from "@/lib/pms/api/ota-api";
+import { fetchInHouse } from "@/lib/pms/api/front-office-api";
+import { formatPaymentMethod, money, formatDate, PAYMENT_METHODS } from "@/lib/pms/format";
+import DateInput from "@/components/pms/DateInput";
+import {
+  fetchFolios,
+  fetchPendingFolios,
+  fetchOverdueFolios,
+  fetchFolioById,
+  addFolioItem,
+  closeFolio,
+  createFolio,
+  recordPayment,
+  recordRefund,
+  refundDeposit,
+  fetchGuestCredit,
+  applyDeposit,
+  transferDepositCredit,
+} from "@/lib/pms/api/folios-api";
+import GuestName from "@/components/pms/GuestName";
+import { withGuestTags } from "@/lib/pms/guest-tags";
+import Pagination from "@/components/pms/Pagination";
+
+// No laundry: it is posted from Laundry Sales, a garment at a time and
+// priced from the laundry list, and the server refuses a laundry charge
+// with no garment (owner, 2026-09-28).
+const CHARGE_TYPES = ["room_charge", "penalty", "adjustment", "correction"];
+
+// Food/drink moved to the dedicated Guest Sales page (AdminGuestSales.jsx —
+// a guest picker plus the printed receipt, instead of hunting for a folio
+// here first) — waitron has nothing left to post on this page, so
+// their charge-type list is empty rather than special-cased; the "Add a
+// charge" form's own item_type guard (see handleAddItem) already refuses to
+// submit with nothing selected, so a waitstaff account that still finds
+// this page via a direct link or an old bookmark can't post anything from
+// it. Receptionist/manager/developer are unaffected — they never touched
+// food/drink here anyway.
+const allowedChargeTypesForRole = (role) => {
+  if (role === "waitron") return [];
+  return CHARGE_TYPES;
+};
+
+// Both tax and discount can be either a percentage of the charge amount or
+// a flat figure, picked via tax_mode/discount_mode.
+const emptyItemForm = { description: "", amount: "", tax: "0", tax_mode: "fixed", discount: "0", discount_mode: "percentage", item_type: "", notes: "", date: "" };
+const emptyCreateForm = { reservation_id: "", guest_id: "", total_amount: "0", amount_paid: "0" };
+// tax_mode/tax and discount_mode/discount mirror the Add-a-Charge item form
+// above — posted together as one 'adjustment' folio item (the same
+// mechanism already used to discount/correct an already-posted charge, see
+// the Adjustment type's own help text below) right before the payment
+// itself is recorded, so the payment posts against the already-adjusted
+// balance.
+const emptyPaymentForm = {
+  splits: [{ amount: "", payment_method: "transfer" }], receipt_number: "", notes: "",
+  tax_mode: "fixed", tax: "", discount_mode: "percentage", discount: "",
+};
+const emptyRefundForm = { amount: "", payment_method: "transfer", receipt_number: "", notes: "" };
+
+// id set means the form is adjusting that settlement's nights rather than
+// adding a range. touched means someone has actually moved the nights, which
+// is what allows the amount to be re-quoted (see the preview effect).
+const EMPTY_OTA_FORM = { open: false, id: null, start: "", end: "", breakfast: false, amount: "", touched: false };
+
+export default function AdminFoliosPage() {
+  // Waitstaff only ever posts charges to a folio still open for business
+  // (closed folios reject new items — see FoliosService.addFolioItem), and
+  // never creates one (that's a front-desk task tied to a reservation/
+  // check-in) — so their view of this page is locked to exactly that
+  // slice: no tab/status switching, no "+ Create Folio".
+  const staffRole = getStoredStaffRole();
+  const isWaitstaffSession = staffRole === "waitron";
+
+  const [subTab, setSubTab] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(isWaitstaffSession ? "open" : "all");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [folios, setFolios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
+
+  const [selectedFolio, setSelectedFolio] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  // Deep-linked from the Audit Trail page's "View folio" link
+  // (?highlight_payment_id=) — scrolls the specific payment/refund row into
+  // view once the folio modal's payments list exists in the DOM. Same
+  // pattern as AdminRooms.jsx's highlightRoomInventoryId.
+  const [highlightPaymentId, setHighlightPaymentId] = useState(null);
+  const highlightedPaymentRef = useRef(null);
+  useEffect(() => {
+    if (highlightPaymentId && highlightedPaymentRef.current) {
+      highlightedPaymentRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightPaymentId, selectedFolio]);
+  const allowedChargeTypes = allowedChargeTypesForRole(staffRole);
+  const resetItemForm = () => ({ ...emptyItemForm, item_type: allowedChargeTypes[0] || "" });
+
+  const [itemForm, setItemForm] = useState(resetItemForm);
+  const [addingItem, setAddingItem] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  const [paymentForm, setPaymentForm] = useState(emptyPaymentForm);
+  const [recordingPayment, setRecordingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
+
+  const [refundForm, setRefundForm] = useState(emptyRefundForm);
+  const [recordingRefund, setRecordingRefund] = useState(false);
+  const [refundError, setRefundError] = useState(null);
+
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState(emptyCreateForm);
+  const [creating, setCreating] = useState(false);
+
+  // Shown right after recording a payment/refund so the reference number is
+  // on screen long enough to write down or copy — not an auto-fading toast.
+  const [transactionReceipt, setTransactionReceipt] = useState(null);
+
+  // Guards against a slower, stale request (e.g. the initial "all" fetch on
+  // mount) resolving *after* a newer one (e.g. the deep-link effect below
+  // switching to "pending") and overwriting its correct data — a real race,
+  // not just theoretical: a server restart mid-request is exactly the kind
+  // of variable latency that makes the older request finish last.
+  const loadSeq = useRef(0);
+  const loadFolios = useCallback(async () => {
+    const seq = ++loadSeq.current;
+    try {
+      setLoading(true);
+      let nextFolios, nextTotalPages;
+      if (searchTerm.trim()) {
+        // A search by folio number or payment reference overrides
+        // subTab/statusFilter entirely — it's a different question ("where
+        // is this specific folio/transaction?") than "what's in this list
+        // right now?".
+        const result = await fetchFolios({ search: searchTerm.trim(), page, limit });
+        nextFolios = result.data || [];
+        nextTotalPages = result.totalPages || 1;
+      } else if (subTab === "pending") {
+        const result = await fetchPendingFolios();
+        nextFolios = Array.isArray(result) ? result : [];
+        nextTotalPages = 1;
+      } else if (subTab === "overdue") {
+        const result = await fetchOverdueFolios();
+        nextFolios = Array.isArray(result) ? result : [];
+        nextTotalPages = 1;
+      } else {
+        const params = { page, limit };
+        if (statusFilter !== "all") params.status = statusFilter;
+        const result = await fetchFolios(params);
+        nextFolios = result.data || [];
+        nextTotalPages = result.totalPages || 1;
+      }
+      if (seq !== loadSeq.current) return; // a newer request has since started — discard this stale one
+      setFolios(nextFolios);
+      setTotalPages(nextTotalPages);
+      setError(null);
+    } catch (err) {
+      if (seq !== loadSeq.current) return;
+      setError((err.response?.data?.message || "Failed to load folios.") + " Please refresh the page.");
+    } finally {
+      if (seq === loadSeq.current) setLoading(false);
+    }
+  }, [subTab, statusFilter, searchTerm, page]);
+
+  useEffect(() => { loadFolios(); }, [loadFolios]);
+  useEffect(() => setPage(1), [subTab, statusFilter, searchTerm]);
+
+  // Re-fetch whenever the socket (re)connects — e.g. after a backend
+  // restart — so a page left open doesn't keep showing a load failure or
+  // stale data once the connection is actually back. Same pattern already
+  // used in AdminOverview.jsx/AdminRooms.jsx.
+  const { isConnected } = useWebSocketContext();
+  useEffect(() => {
+    if (!isConnected) return;
+    loadFolios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected]);
+
+  const openFolioDetail = async (folio) => {
+    setDetailLoading(true);
+    setItemForm(resetItemForm());
+    setPaymentForm(emptyPaymentForm);
+    setPaymentError(null);
+    setRefundForm(emptyRefundForm);
+    setRefundError(null);
+    try {
+      const full = await fetchFolioById(folio.id);
+      setSelectedFolio(full);
+    } catch (err) {
+      setError((err.response?.data?.message || "Failed to load folio.") + " Please refresh the page.");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  // Always called right after a mutation (add charge, record payment/refund,
+  // close folio) has already succeeded — a network blip on this GET must
+  // never surface as that action failing, so it swallows its own errors
+  // rather than letting the caller's try/catch mistake a stale-data refresh
+  // failure for the mutation itself failing (which would show "Failed to
+  // add charge" etc. after the charge was actually posted, and risk a staff
+  // member retrying and double-charging).
+  const refreshSelectedFolio = async () => {
+    if (!selectedFolio) return;
+    try {
+      const full = await fetchFolioById(selectedFolio.id);
+      setSelectedFolio(full);
+    } catch {
+      // Stale data until the next successful refresh — not worth surfacing
+      // as an error for an action that already succeeded.
+    }
+  };
+
+  const closeFolioDetail = () => {
+    setSelectedFolio(null);
+    setItemForm(resetItemForm());
+    setPaymentForm(emptyPaymentForm);
+    setPaymentError(null);
+    setRefundForm(emptyRefundForm);
+    setRefundError(null);
+  };
+
+  // Lets other pages deep-link straight into a filtered view or a specific
+  // guest's folio — e.g. the Overview page's "Outstanding" card links to
+  // ?tab=pending, checking a guest in redirects to ?reservation_id=123 so a
+  // payment can be recorded right away, and the Audit Trail page's "View
+  // folio" links use ?folio_id=123 directly (the id is already known there,
+  // no need to look it up like the reservation_id case does).
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (!isWaitstaffSession && (tab === "pending" || tab === "overdue" || tab === "all")) {
+      setSubTab(tab);
+    }
+    const reservationId = searchParams.get("reservation_id");
+    if (reservationId) {
+      fetchFolios({ reservation_id: Number(reservationId) })
+        .then((result) => {
+          const folio = result?.data?.[0];
+          if (folio) openFolioDetail(folio);
+        })
+        .catch(() => {});
+    }
+    const folioId = searchParams.get("folio_id");
+    if (folioId) {
+      openFolioDetail({ id: Number(folioId) });
+    }
+    const highlightPaymentIdParam = searchParams.get("highlight_payment_id");
+    if (highlightPaymentIdParam) {
+      setHighlightPaymentId(Number(highlightPaymentIdParam));
+    }
+    if (tab || reservationId || folioId) setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAddItem = async () => {
+    if (!selectedFolio || !itemForm.item_type || !itemForm.description || !itemForm.amount) return;
+    try {
+      setAddingItem(true);
+      const amount = Number(itemForm.amount);
+      // Both tax and discount can be entered as either a % of the charge or
+      // a flat figure, depending on tax_mode/discount_mode — both get
+      // converted to real currency amounts here before hitting the API,
+      // which still stores/reports plain amounts (no schema change needed).
+      const discountAmount = itemForm.discount_mode === "percentage"
+        ? amount * (Number(itemForm.discount || 0) / 100)
+        : Number(itemForm.discount || 0);
+      const taxAmount = itemForm.tax_mode === "percentage"
+        ? amount * (Number(itemForm.tax || 0) / 100)
+        : Number(itemForm.tax || 0);
+      await addFolioItem(selectedFolio.id, {
+        description: itemForm.description,
+        amount,
+        tax: taxAmount,
+        discount: discountAmount,
+        item_type: itemForm.item_type,
+        notes: itemForm.notes.trim() || undefined,
+        date: itemForm.date || undefined,
+      });
+      setItemForm(resetItemForm());
+      await refreshSelectedFolio();
+      loadFolios();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to add item.");
+    } finally {
+      setAddingItem(false);
+    }
+  };
+
+  const hasValidPaymentSplits = paymentForm.splits.length > 0 && paymentForm.splits.every((s) => Number(s.amount) > 0);
+  // Both computed against the folio's current balance (already on screen) —
+  // unlike the Add-a-Charge Tax/Discount above, which are a % of the ONE
+  // new charge being posted, these adjust what's already owed overall.
+  const paymentTaxAmount = selectedFolio
+    ? paymentForm.tax_mode === "percentage"
+      ? Number(selectedFolio.balance) * (Number(paymentForm.tax || 0) / 100)
+      : Number(paymentForm.tax || 0)
+    : 0;
+  const paymentDiscountAmount = selectedFolio
+    ? paymentForm.discount_mode === "percentage"
+      ? Number(selectedFolio.balance) * (Number(paymentForm.discount || 0) / 100)
+      : Number(paymentForm.discount || 0)
+    : 0;
+
+  // Recording an OTA's share after check-in. The nights are bounded by the
+  // stay, exactly as on the check-in form, and the amount is prefilled from
+  // the rate for them before anyone edits it down to the OTA's net figure.
+  const canRecordOta = ["receptionist", "manager", "developer"].includes(getStoredStaffRole());
+  const [otaForm, setOtaForm] = useState(EMPTY_OTA_FORM);
+  const [addingOta, setAddingOta] = useState(false);
+  // Its own error line: this panel's failures used to surface in the payment
+  // section far below, which read as the save doing nothing at all.
+  const [otaError, setOtaError] = useState(null);
+  const otaMin = selectedFolio?.reservation?.check_in ? String(selectedFolio.reservation.check_in).slice(0, 10) : "";
+  const otaMax = selectedFolio?.reservation?.check_out ? String(selectedFolio.reservation.check_out).slice(0, 10) : "";
+
+  useEffect(() => {
+    if (!otaForm.open || !otaForm.start || !otaForm.end || otaForm.end <= otaForm.start) return undefined;
+    if (!selectedFolio?.reservation?.id) return undefined;
+    // An adjustment opens on the figure already agreed with the OTA — often
+    // net of its commission, which nobody wants silently recomputed. It is
+    // re-quoted only once someone actually moves the nights.
+    if (otaForm.id && !otaForm.touched) return undefined;
+    let cancelled = false;
+    previewOtaAmount({
+      reservationId: selectedFolio.reservation.id,
+      startDate: otaForm.start,
+      endDate: otaForm.end,
+      includesBreakfast: otaForm.breakfast,
+    })
+      .then((result) => { if (!cancelled) setOtaForm((prev) => ({ ...prev, amount: String(result.amount) })); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [otaForm.open, otaForm.id, otaForm.touched, otaForm.start, otaForm.end, otaForm.breakfast, selectedFolio?.reservation?.id]);
+
+  const handleSaveOta = async () => {
+    if (!selectedFolio?.reservation?.id) return;
+    try {
+      setAddingOta(true);
+      setOtaError(null);
+      if (otaForm.id) {
+        await updateOtaSettlement(otaForm.id, {
+          startDate: otaForm.start,
+          endDate: otaForm.end,
+          includesBreakfast: otaForm.breakfast,
+          amount: otaForm.amount || undefined,
+        });
+      } else {
+        await createOtaSettlement({
+          reservationId: selectedFolio.reservation.id,
+          startDate: otaForm.start,
+          endDate: otaForm.end,
+          includesBreakfast: otaForm.breakfast,
+          amount: otaForm.amount || undefined,
+        });
+      }
+      setOtaForm(EMPTY_OTA_FORM);
+      await refreshSelectedFolio();
+      loadFolios();
+    } catch (err) {
+      setOtaError(err.response?.data?.message
+        || (otaForm.id ? "Failed to adjust the OTA nights." : "Failed to record the OTA payment."));
+    } finally {
+      setAddingOta(false);
+    }
+  };
+
+  // A pending deposit left over on another of this guest's stays. The
+  // reservation modal has offered this for a while; the folio is where a bill
+  // actually gets settled, so it belongs here too (owner, 2026-09-16).
+  const [guestCredit, setGuestCredit] = useState([]);
+  const [creditActionLoading, setCreditActionLoading] = useState(null);
+  const [creditError, setCreditError] = useState(null);
+  const creditGuestId = selectedFolio?.guest?.id ?? null;
+  const creditReservationId = selectedFolio?.reservation?.id ?? null;
+
+  const loadGuestCredit = useCallback(async () => {
+    if (!creditGuestId) {
+      setGuestCredit([]);
+      return;
+    }
+    try {
+      const credit = await fetchGuestCredit(creditGuestId);
+      // Credit held against THIS stay is already shown as Reservation
+      // (Credit) below — this panel is only for money left on another one.
+      setGuestCredit((credit || []).filter((c) => c.reservation_id !== creditReservationId));
+    } catch {
+      setGuestCredit([]);
+    }
+  }, [creditGuestId, creditReservationId]);
+
+  useEffect(() => { loadGuestCredit(); }, [loadGuestCredit]);
+
+  const handleApplyCredit = async (depositId) => {
+    if (!creditReservationId) return;
+    try {
+      setCreditActionLoading(depositId);
+      setCreditError(null);
+      await applyDeposit(depositId, creditReservationId);
+      await refreshSelectedFolio();
+      await loadGuestCredit();
+      loadFolios();
+    } catch (err) {
+      setCreditError(err.response?.data?.message || "Failed to apply the credit.");
+    } finally {
+      setCreditActionLoading(null);
+    }
+  };
+
+  // The OTA's money usually arrives long after the guest has gone.
+  // Recording it here settles the nights it covered; the same action lives on
+  // the OTA Payments page, which is where a departed guest is still reachable.
+  const [otaPayingId, setOtaPayingId] = useState(null);
+  const handleMarkOtaPaid = async (settlementId) => {
+    try {
+      setOtaPayingId(settlementId);
+      setPaymentError(null);
+      await markOtaSettlementPaid(settlementId);
+      await refreshSelectedFolio();
+      loadFolios();
+    } catch (err) {
+      setPaymentError(err.response?.data?.message || "Failed to record the OTA payment.");
+    } finally {
+      setOtaPayingId(null);
+    }
+  };
+
+  const handleRecordPayment = async () => {
+    if (!selectedFolio || !hasValidPaymentSplits) return;
+    setPaymentError(null);
+    try {
+      setRecordingPayment(true);
+      if (paymentTaxAmount > 0 || paymentDiscountAmount > 0) {
+        await addFolioItem(selectedFolio.id, {
+          description: "Tax/discount adjustment applied at payment",
+          amount: 0,
+          tax: paymentTaxAmount,
+          discount: paymentDiscountAmount,
+          item_type: "adjustment",
+        });
+      }
+      const result = await recordPayment({
+        folio_id: selectedFolio.id,
+        payments: paymentForm.splits.map((s) => ({ amount: Number(s.amount), payment_method: s.payment_method })),
+        receipt_number: paymentForm.receipt_number || undefined,
+        notes: paymentForm.notes || undefined,
+      });
+      setPaymentForm(emptyPaymentForm);
+      await refreshSelectedFolio();
+      loadFolios();
+      setSuccessMessage(
+        result.overpayment_deposit
+          ? `Payment recorded — ${money(result.overpayment_deposit.amount)} over the balance kept on file as a deposit.`
+          : "Payment recorded.",
+      );
+      setTimeout(() => setSuccessMessage(""), 6000);
+      setTransactionReceipt({
+        title: "Payment Recorded",
+        items: result.payments.map((p) => ({ reference: p.payment_reference, amount: money(p.amount), method: p.payment_method })),
+      });
+    } catch (err) {
+      setPaymentError(err.response?.data?.message || "Failed to record payment.");
+    } finally {
+      setRecordingPayment(false);
+    }
+  };
+
+  // Hands a deposit-backed credit straight back from the folio.
+  //
+  // The older refund form below only appears when folio.balance is
+  // NEGATIVE, which no longer happens: an overpayment is now capped at the
+  // outstanding balance and the excess parked as a pending deposit, so the
+  // balance floors at 0 and that form never rendered for the very case it
+  // exists to handle. This is the equivalent action for the new shape,
+  // placed on the credit itself so staff don't have to leave the folio.
+  // Confirmed through the app's own Modal rather than window.confirm — a
+  // native browser dialog looks nothing like the rest of the admin panel
+  // and can't carry the reference/amount styling the other destructive
+  // confirmations use.
+  const [refundCreditTarget, setRefundCreditTarget] = useState(null);
+
+  // Moving a credit to another folio: the same guest booked under a different
+  // number last time, so their two stays never matched to one account and the
+  // automatic match can't see it (owner, 2026-09-16). Same roles as a refund —
+  // money is moving either way.
+  const [transferCreditId, setTransferCreditId] = useState(null);
+  const [transferTo, setTransferTo] = useState("");
+  const [inHouseOptions, setInHouseOptions] = useState([]);
+  const [transferring, setTransferring] = useState(false);
+
+  const openTransfer = async (creditId) => {
+    setTransferCreditId(creditId);
+    setTransferTo("");
+    setRefundError(null);
+    try {
+      const list = await fetchInHouse();
+      // Whoever is in the house now, minus this stay — a credit already on
+      // this folio has nowhere to go here.
+      setInHouseOptions((Array.isArray(list) ? list : []).filter((r) => r.id !== selectedFolio?.reservation?.id));
+    } catch {
+      setInHouseOptions([]);
+    }
+  };
+
+  const closeTransfer = () => {
+    setTransferCreditId(null);
+    setTransferTo("");
+  };
+
+  const handleTransferCredit = async (creditId) => {
+    try {
+      setTransferring(true);
+      setRefundError(null);
+      await transferDepositCredit(creditId, Number(transferTo));
+      closeTransfer();
+      await refreshSelectedFolio();
+      loadFolios();
+    } catch (err) {
+      setRefundError(err.response?.data?.message || "Failed to move the credit.");
+    } finally {
+      setTransferring(false);
+    }
+  };
+  const [refundingCreditId, setRefundingCreditId] = useState(null);
+  const handleRefundCredit = async (refundMethod) => {
+    const credit = refundCreditTarget;
+    if (!selectedFolio || !credit) return;
+    setRefundError(null);
+    try {
+      setRefundingCreditId(credit.id);
+      const result = await refundDeposit(credit.id, refundMethod);
+      setRefundCreditTarget(null);
+      await refreshSelectedFolio();
+      loadFolios();
+      setSuccessMessage(`Refunded ${money(result.refunded_amount ?? credit.available)} to the guest by ${formatPaymentMethod(refundMethod)}.`);
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (err) {
+      setRefundError(err.response?.data?.message || "Failed to refund the credit.");
+      setRefundCreditTarget(null);
+    } finally {
+      setRefundingCreditId(null);
+    }
+  };
+
+  const handleRecordRefund = async () => {
+    if (!selectedFolio || !refundForm.amount) return;
+    setRefundError(null);
+    try {
+      setRecordingRefund(true);
+      const result = await recordRefund({
+        folio_id: selectedFolio.id,
+        amount: Number(refundForm.amount),
+        payment_method: refundForm.payment_method,
+        receipt_number: refundForm.receipt_number || undefined,
+        notes: refundForm.notes || undefined,
+      });
+      setRefundForm(emptyRefundForm);
+      await refreshSelectedFolio();
+      loadFolios();
+      setSuccessMessage("Refund recorded.");
+      setTimeout(() => setSuccessMessage(""), 5000);
+      setTransactionReceipt({
+        title: "Refund Recorded",
+        reference: result.refund.payment_reference,
+        amount: money(result.refund.amount),
+      });
+    } catch (err) {
+      setRefundError(err.response?.data?.message || "Failed to record refund.");
+    } finally {
+      setRecordingRefund(false);
+    }
+  };
+
+  const handleCloseFolio = async () => {
+    if (!selectedFolio) return;
+    try {
+      setClosing(true);
+      await closeFolio(selectedFolio.id);
+      setSuccessMessage("Folio closed.");
+      setTimeout(() => setSuccessMessage(""), 5000);
+      closeFolioDetail();
+      loadFolios();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to close folio.");
+    } finally {
+      setClosing(false);
+    }
+  };
+
+  const handleCreateFolio = async () => {
+    try {
+      setCreating(true);
+      await createFolio({
+        reservation_id: Number(createForm.reservation_id),
+        guest_id: Number(createForm.guest_id),
+        total_amount: Number(createForm.total_amount || 0),
+        amount_paid: Number(createForm.amount_paid || 0),
+      });
+      setSuccessMessage("Folio created.");
+      setTimeout(() => setSuccessMessage(""), 5000);
+      setIsCreateOpen(false);
+      setCreateForm(emptyCreateForm);
+      loadFolios();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to create folio.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Closing is part of finalizing a stay once it's over — a still in-house
+  // guest can still incur new charges, so a zero balance alone isn't enough;
+  // matches the same precondition the backend's auto-close paths already use.
+  // A no-show is the other way a stay definitively ends without an
+  // actual_check_out (the guest never arrived at all).
+  const canCloseFolio =
+    selectedFolio &&
+    Number(selectedFolio.balance) <= 0 &&
+    (Boolean(selectedFolio.reservation?.actual_check_out) || Boolean(selectedFolio.reservation?.is_no_show));
+  // What the money received has settled, charge by charge (display only -
+  // see settlementByCharge).
+  // What the charge form still needs before it can be posted. Amount may
+  // legitimately be negative (an adjustment walking back a charge), so it is
+  // checked for "filled in", not for "greater than zero".
+  const chargeAmountEntered = String(itemForm.amount ?? "").trim() !== "" && !Number.isNaN(Number(itemForm.amount));
+  const chargeDescriptionEntered = String(itemForm.description ?? "").trim() !== "";
+  const chargeReady = Boolean(itemForm.item_type) && chargeDescriptionEntered && chargeAmountEntered;
+  const chargeBlockReason = !chargeDescriptionEntered && !chargeAmountEntered
+    ? "Enter a description and an amount to post this charge."
+    : !chargeDescriptionEntered
+      ? "Enter a description — it appears on the guest's bill, so it can't be blank."
+      : "Enter an amount for this charge.";
+
+  const chargeSettlement = settlementByCharge(
+    selectedFolio?.items || [],
+    selectedFolio?.total_received ?? selectedFolio?.amount_paid ?? 0,
+  );
+  const hasOutstandingBalance = selectedFolio && Number(selectedFolio.balance) > 0;
+  const hasCreditBalance = selectedFolio && Number(selectedFolio.balance) < 0;
+  // Guest Status (Guest Ledger / City Ledger) is shown on every tab now,
+  // not just Outstanding Balance/Overdue — "All" mixes settled and owing
+  // folios together same as a search does, and there's no good reason to
+  // hide a City Ledger receivable just because the guest happens to be
+  // viewed from that tab. getFolios (every one of these queries goes
+  // through it or one of its balance-filtered siblings) now fetches
+  // actual_check_out on every path. Since "All" and a search aren't
+  // balance-filtered the way Outstanding Balance/Overdue's own queries are,
+  // each row's badge below checks its own balance rather than trusting the
+  // column's visibility alone — a settled or credit row shows a plain "—".
+  // Check-Out Date only makes sense on Overdue itself, where it explains
+  // *why* a folio counts as overdue in the first place — not a
+  // general-purpose column, left as is.
+  const showGuestStatusColumn = true;
+  const showCheckOutDateColumn = subTab === "overdue" && !searchTerm;
+  const extraColumnCount = (showGuestStatusColumn ? 1 : 0) + (showCheckOutDateColumn ? 1 : 0);
+  const folioTableColSpan = 7 + extraColumnCount;
+
+  return (
+    <>
+      {successMessage && (
+        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl z-50 flex items-center gap-4 shadow-lg">
+          <span className="text-xl font-bold">{successMessage}</span>
+          <button onClick={() => setSuccessMessage("")} className="text-green-700 hover:text-green-900 cursor-pointer">
+            <IoClose size={24} />
+          </button>
+        </div>
+      )}
+
+      <div data-component="AdminFolios" className="flex flex-col items-start gap-[3rem]">
+        <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
+          <PageHeading icon={IoReceiptOutline}>Guest Folios</PageHeading>
+          {/* Waitstaff never creates a folio — that's a front-desk task tied
+              to a reservation/check-in, not something a waitron does. */}
+          {!isWaitstaffSession && (
+            <button onClick={() => setIsCreateOpen(true)} className={`${btn.primary} whitespace-nowrap`}>
+              + Create Folio
+            </button>
+          )}
+        </div>
+
+        <div className="flex gap-3 text-xl flex-wrap items-center w-full">
+          {/* Waitstaff's view is locked to open folios only (they can only
+              ever post to one that's still open — see FoliosService.addFolioItem),
+              so there's nothing for these tab/status controls to switch between. */}
+          {!isWaitstaffSession && [
+            { key: "all", label: "All" },
+            { key: "pending", label: "Outstanding Balance" },
+            { key: "overdue", label: "Overdue" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => { setSubTab(t.key); setSearchInput(""); setSearchTerm(""); }}
+              className={`px-6 py-3 rounded-lg font-bold cursor-pointer transition-all ${!searchTerm && subTab === t.key ? "bg-[color:var(--emphasis)] text-white" : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"}`}
+            >
+              {t.label}
+            </button>
+          ))}
+          {!isWaitstaffSession && subTab === "all" && !searchTerm && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={`${field.select} w-auto text-xl!`}
+            >
+              <option value="all">All Statuses</option>
+              <option value="open">Open</option>
+              <option value="pending">Pending</option>
+              <option value="closed">Closed</option>
+            </select>
+          )}
+
+          <form
+            onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); }}
+            className="flex gap-2 items-center ml-auto"
+          >
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search by folio #, guest name, or payment reference (e.g. FOL-D7931B, PAY-3F9A2B)"
+              className={`${field.input} w-auto text-xl!`}
+            />
+            <button type="submit" className={btn.secondary}>Search</button>
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => { setSearchInput(""); setSearchTerm(""); }}
+                className={btn.rowSecondary}
+              >
+                Clear
+              </button>
+            )}
+          </form>
+        </div>
+
+        <p className="text-xl text-[color:var(--text-color)]/76">
+          {searchTerm
+            ? `Folios matching folio #, guest name, or payment/refund reference "${searchTerm}".`
+            : isWaitstaffSession
+            ? "Open folios only. Food and drink orders are posted from Guest Sales — this page is for payments, corrections, and other charges."
+            : subTab === "all"
+            ? "Every folio across all guests, open and closed."
+            : subTab === "pending"
+            ? "Open folios with a balance still owed — both in-house guests (Guest Ledger) and guests who've already departed still owing (City Ledger)."
+            : "Guests who are supposed to have checked out but still have a balance owed — only counted from noon on their checkout date onward. A guest who has genuinely left is a City Ledger receivable; one still in-house past their scheduled date is still a Guest Ledger matter — see the Guest Status column."}
+        </p>
+
+        <div className={table.card}>
+          <div className={table.scroll}>
+            <table className={table.el}>
+              <thead>
+                <tr className={table.headRow}>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
+                  <th className={table.th}>Folio #</th>
+                  {showGuestStatusColumn && <th className={table.th}>Guest Status</th>}
+                  {showCheckOutDateColumn && <th className={`${table.th} hidden md:table-cell`}>Check-Out Date</th>}
+                  <th className={table.th}>Total</th>
+                  <th className={table.th}>Paid</th>
+                  <th className={table.th}>Balance</th>
+                  <th className={`${table.th} hidden md:table-cell`}>Status</th>
+                  <th className={table.th}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={folioTableColSpan} className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
+                ) : error ? (
+                  <tr><td colSpan={folioTableColSpan} className="px-8 py-10 text-center text-red-600 text-xl">{error}</td></tr>
+                ) : folios.length === 0 ? (
+                  <tr><td colSpan={folioTableColSpan} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">{searchTerm ? "No folios match that folio #, guest name, or payment reference." : "No folios match filter."}</td></tr>
+                ) : (
+                  folios.map((f) => (
+                    <tr key={f.id} className={table.row}>
+                      <td className={`${table.td} ${table.stickyTd} font-medium text-[color:var(--black)]`}>
+                        {/* The name THIS booking was made under comes first: a
+                            repeat guest's account can carry an older spelling,
+                            which used to show here while the reservation showed
+                            the new one (owner, 2026-09-16). */}
+                        <GuestName
+                          name={f.reservation?.guest_name || (f.guest ? `${f.guest.first_name} ${f.guest.last_name}` : "N/A")}
+                          tags={f.reservation?.guest_tags || f.guest_tags}
+                        />
+                      </td>
+                      <td className={`${table.td} font-medium`}>{f.folio_number}</td>
+                      {showGuestStatusColumn && (
+                        <td className={table.td}>
+                          {/* Outside a search, this tab's own query is
+                              already balance > 0 filtered — but a search
+                              runs through the generic, unfiltered getFolios
+                              query regardless of subTab, so a matched row
+                              here could have a zero or credit balance. City
+                              Ledger/Still In-House only mean anything for an
+                              actual receivable, so check the row's own
+                              balance rather than trusting the tab. */}
+                          {Number(f.balance) <= 0 ? (
+                            <span className="text-lg text-[color:var(--text-color)]/40">—</span>
+                          ) : f.reservation?.actual_check_out ? (
+                            <span
+                              className="text-sm font-bold uppercase tracking-wide text-[color:var(--text-color)]/60 bg-black/5 px-2.5 py-1 rounded-full whitespace-nowrap"
+                              title="Checked out, still owing — a City Ledger receivable"
+                            >
+                              City Ledger
+                            </span>
+                          ) : (
+                            <span
+                              className="text-sm font-bold uppercase tracking-wide text-orange-700 bg-orange-100 px-2.5 py-1 rounded-full whitespace-nowrap"
+                              title="Still a registered in-house guest — a Guest Ledger matter"
+                            >
+                              Still In-House
+                            </span>
+                          )}
+                        </td>
+                      )}
+                      {showCheckOutDateColumn && (
+                        <td className={`${table.td} hidden md:table-cell`}>{formatDate(f.reservation?.check_out)}</td>
+                      )}
+                      <td className={table.td}>{money(f.total_amount)}</td>
+                      <td className={table.td}>{money(f.total_received ?? f.amount_paid)}</td>
+                      <td className={`${table.td} font-bold ${Number(f.balance) > 0 ? "text-red-500" : Number(f.balance) < 0 ? "text-green-600" : ""}`}>
+                        {Number(f.balance) < 0 ? `Credit: ${money(Math.abs(Number(f.balance)))}` : money(f.balance)}
+                        {/* A ₦0 balance still hides credit the hotel is
+                            holding — surface it so the row isn't misread as
+                            fully closed out. */}
+                        {Number(f.credit_on_file) > 0 && (
+                          <span className="block text-base font-medium text-green-700">+{money(f.credit_on_file)} credit</span>
+                        )}
+                      </td>
+                      <td className={`${table.td} hidden md:table-cell`}><StatusBadge status={f.status} /></td>
+                      <td className={table.td}>
+                        <div className={table.actions}>
+                          <button onClick={() => openFolioDetail(f)} className={btn.rowPrimary}>View</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {subTab === "all" && <Pagination page={page} totalPages={totalPages} onPage={setPage} />}
+      </div>
+
+      {/* ==== Folio Detail Modal ==== */}
+      {(selectedFolio || detailLoading) && (
+        <Modal
+          onClose={closeFolioDetail}
+          loading={detailLoading || !selectedFolio}
+          title={selectedFolio?.folio_number || ""}
+          subtitle={selectedFolio ? `Reservation: ${selectedFolio.reservation?.booking_reference || selectedFolio.reservation_id}` : ""}
+          badge={selectedFolio && <StatusBadge status={selectedFolio.status} />}
+          size="lg"
+          footer={selectedFolio && (
+            <>
+              <button onClick={closeFolioDetail} className={btn.secondary}>Close</button>
+              {selectedFolio.status !== "closed" && (
+                <button
+                  onClick={handleCloseFolio}
+                  disabled={!canCloseFolio || closing}
+                  className={btn.primary}
+                  title={
+                    !canCloseFolio
+                      ? Number(selectedFolio.balance) > 0
+                        ? "Settle full balance before closing folio"
+                        : "Guest must check out (or be marked no-show) before the folio can be closed"
+                      : ""
+                  }
+                >
+                  {closing ? "Closing..." : "Close Folio"}
+                </button>
+              )}
+            </>
+          )}
+        >
+          {detailLoading || !selectedFolio ? (
+            <LoadingSpinner size="lg" />
+          ) : (
+            <>
+              {/* Summary */}
+              <div className="grid grid-cols-1 gap-4">
+                <SummaryStat
+                  label="Guest"
+                  value={
+                    <GuestName
+                      name={selectedFolio.reservation?.guest_name || (selectedFolio.guest ? `${selectedFolio.guest.first_name} ${selectedFolio.guest.last_name}` : "N/A")}
+                      tags={selectedFolio.reservation?.guest_tags || selectedFolio.guest_tags}
+                    />
+                  }
+                />
+                {/* The stay the folio belongs to. Shows what actually happened
+                    once it has — an arrival or departure that is still only
+                    scheduled says so, rather than passing a plan off as fact. */}
+                <SummaryStat
+                  label="Check-In"
+                  value={selectedFolio.reservation?.actual_check_in
+                    ? formatDate(selectedFolio.reservation.actual_check_in)
+                    : `${formatDate(selectedFolio.reservation?.check_in)} (expected)`}
+                />
+                <SummaryStat
+                  label="Check-Out"
+                  value={selectedFolio.reservation?.actual_check_out
+                    ? formatDate(selectedFolio.reservation.actual_check_out)
+                    : `${formatDate(selectedFolio.reservation?.check_out)} (expected)`}
+                />
+                <SummaryStat label="Total Charged" value={money(selectedFolio.total_amount)} />
+                <SummaryStat label="Total Paid" value={money(selectedFolio.total_received ?? selectedFolio.amount_paid)} />
+                <SummaryStat
+                  label="Balance Due"
+                  value={hasOutstandingBalance ? money(selectedFolio.balance) : "Settled"}
+                  tone={hasOutstandingBalance ? "danger" : "success"}
+                />
+              </div>
+              {/* Nights an OTA is paying for, not the guest. They are charged on
+                  this folio like any others — so Balance Due above stays owing
+                  until the money lands — but the desk must never ask the guest
+                  for them, which is what Guest To Pay is. */}
+              {Number(selectedFolio.ota_pending) > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-5 py-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <span className="text-amber-800 font-bold text-xl">Awaiting OTA payment:</span>
+                    <span className="text-amber-800 font-bold text-2xl">{money(selectedFolio.ota_pending)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <span className="text-xl font-bold text-[color:var(--black)]">Guest to pay:</span>
+                    <span className="text-2xl font-bold text-[color:var(--black)]">
+                      {money(Math.max(Number(selectedFolio.guest_due || 0), 0))}
+                    </span>
+                  </div>
+                  <p className="text-lg text-amber-800/80">
+                    Do not collect the OTA share from the guest. Mark it paid below once the OTA remits it.
+                  </p>
+                </div>
+              )}
+              {(selectedFolio.ota_settlements || []).length > 0 && (
+                <div className="border border-(--accent-2) rounded-lg px-5 py-4 flex flex-col gap-3">
+                  <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">OTA Payments</p>
+                  {selectedFolio.ota_settlements.map((s) => (
+                    <div key={s.id} className="flex items-center justify-between gap-4 flex-wrap border-b border-(--accent-2) last:border-0 pb-3 last:pb-0">
+                      <div className="flex flex-col">
+                        <span className="text-xl font-medium text-[color:var(--black)]">
+                          {s.start_date} to {s.end_date} &middot; {money(s.amount)}
+                        </span>
+                        <span className="text-lg text-[color:var(--text-color)]/68">
+                          {s.includes_breakfast ? "Room and breakfast" : "Room only"}{s.reference ? ` · ${s.reference}` : ""}
+                        </span>
+                      </div>
+                      {s.status === "pending" ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {canRecordOta && (
+                            <button
+                              onClick={() => {
+                                setOtaError(null);
+                                setOtaForm({
+                                  open: true,
+                                  id: s.id,
+                                  start: String(s.start_date).slice(0, 10),
+                                  end: String(s.end_date).slice(0, 10),
+                                  breakfast: Boolean(s.includes_breakfast),
+                                  amount: String(s.amount ?? ""),
+                                  touched: false,
+                                });
+                              }}
+                              className={btn.rowSecondary}
+                            >
+                              Adjust OTA paid nights
+                            </button>
+                          )}
+                          <button onClick={() => handleMarkOtaPaid(s.id)} disabled={otaPayingId === s.id} className={btn.rowSuccess}>
+                            {otaPayingId === s.id ? "Recording..." : "Mark OTA Paid"}
+                          </button>
+                        </div>
+                      ) : (
+                        <StatusBadge status="paid" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {canRecordOta && selectedFolio.status !== "closed" && selectedFolio.reservation && (
+                otaForm.open ? (
+                  <div className="border border-(--accent-2) rounded-lg px-5 py-4 flex flex-col gap-4">
+                    <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
+                      {otaForm.id ? "Adjust OTA paid nights" : "Add an OTA payment"}
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>OTA covers from</label>
+                        <DateInput
+                          value={otaForm.start}
+                          min={otaMin}
+                          max={otaMax}
+                          onChange={(e) => setOtaForm({ ...otaForm, start: e.target.value, touched: true })}
+                          className={field.input}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Until</label>
+                        <DateInput
+                          value={otaForm.end}
+                          min={otaMin}
+                          max={otaMax}
+                          onChange={(e) => setOtaForm({ ...otaForm, end: e.target.value, touched: true })}
+                          className={field.input}
+                        />
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2 text-xl cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={otaForm.breakfast}
+                        onChange={(e) => setOtaForm({ ...otaForm, breakfast: e.target.checked, touched: true })}
+                        className="w-5 h-5 cursor-pointer"
+                      />
+                      The OTA rate includes breakfast
+                    </label>
+                    <div className="flex flex-col gap-2">
+                      <label className={field.label}>Amount the OTA will pay</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={otaForm.amount}
+                        onChange={(e) => setOtaForm({ ...otaForm, amount: e.target.value })}
+                        className={field.input}
+                      />
+                      <p className="text-lg text-[color:var(--text-color)]/60">
+                        Prefilled from the rate for those nights. Change it to use a custom amount for the OTA payment.
+                      </p>
+                    </div>
+                    {otaError && (
+                      <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{otaError}</p>
+                    )}
+                    <div className="flex gap-3 flex-wrap">
+                      <button
+                        onClick={handleSaveOta}
+                        disabled={addingOta || !otaForm.start || !otaForm.end || otaForm.end <= otaForm.start}
+                        className={btn.primary}
+                      >
+                        {addingOta ? "Saving..." : otaForm.id ? "Adjust OTA paid nights" : "Save OTA payment"}
+                      </button>
+                      <button
+                        onClick={() => { setOtaForm(EMPTY_OTA_FORM); setOtaError(null); }}
+                        className={btn.secondary}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setOtaError(null); setOtaForm({ ...EMPTY_OTA_FORM, open: true, start: otaMin, end: otaMax }); }}
+                    className={`${btn.secondary} self-start`}
+                  >
+                    {(selectedFolio.ota_settlements || []).length > 0
+                      ? "Add another OTA range"
+                      : "An OTA is paying for some nights"}
+                  </button>
+                )
+              )}
+              {/* Money this guest left behind on a DIFFERENT stay — the same
+                  panel the reservation modal offers, put where a bill is
+                  actually settled (owner, 2026-09-16). */}
+              {guestCredit.length > 0 && selectedFolio.status !== "closed" && (
+                <div className="border border-(--accent-2) rounded-lg px-5 py-4 flex flex-col gap-3">
+                  <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
+                    Credit from a previous stay
+                  </p>
+                  {guestCredit.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between gap-4 flex-wrap border-b border-(--accent-2) last:border-0 pb-3 last:pb-0">
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-base text-[color:var(--text-color)]/68 font-mono">
+                          {c.deposit_reference}{c.receipt_number ? ` · Receipt #${c.receipt_number}` : ""} · {formatDate(c.deposit_date)}
+                          {c.booking_reference ? ` · from booking ${c.booking_reference}` : ""}
+                        </span>
+                        <span className="text-xl font-medium">
+                          {money(c.amount)} · {formatPaymentMethod(c.payment_method)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleApplyCredit(c.id)}
+                        disabled={creditActionLoading === c.id || !creditReservationId}
+                        className={btn.rowSuccess}
+                        title={creditReservationId ? "Apply this credit to this folio" : "This folio has no reservation to apply a credit to"}
+                      >
+                        {creditActionLoading === c.id ? "..." : "Apply"}
+                      </button>
+                    </div>
+                  ))}
+                  {creditError && <p className="text-red-600 text-lg">{creditError}</p>}
+                </div>
+              )}
+              {hasCreditBalance && (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-5 py-4 flex items-center justify-between">
+                  <span className="text-green-700 font-bold text-xl">Credit Due to Guest:</span>
+                  <span className="text-green-700 font-bold text-2xl">{money(Math.abs(Number(selectedFolio.balance)))}</span>
+                </div>
+              )}
+              {/* Money the hotel is holding for this guest that isn't
+                  covering a charge yet — an overpayment capped off the folio
+                  at payment time, or an advance deposit nobody has drawn on.
+                  Without this the folio reads "Settled" with no sign the
+                  credit exists at all. */}
+              {/* Every reservation credit ever held against this stay —
+                  including ones already spent or refunded. A consumed credit
+                  used to disappear entirely, which left the folio unable to
+                  explain the gap between what was tendered and what the
+                  charges came to. */}
+              {selectedFolio.credit_on_file?.entries?.length > 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-5 py-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <span className="text-green-700 font-bold text-xl">
+                      Reservation (Credit){Number(selectedFolio.credit_on_file.total) > 0 ? " Available:" : ""}
+                    </span>
+                    {Number(selectedFolio.credit_on_file.total) > 0 ? (
+                      <span className="text-green-700 font-bold text-2xl">{money(selectedFolio.credit_on_file.total)}</span>
+                    ) : (
+                      <span className="text-lg text-green-700/70">Nothing left to claim</span>
+                    )}
+                  </div>
+                  {selectedFolio.credit_on_file.entries.map((c) => {
+                    const spent = Number(c.amount_applied) > 0;
+                    const refunded = c.status === "refunded";
+                    return (
+                      <div key={c.id} className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-4 text-lg text-green-700/90 flex-wrap">
+                          <span>
+                            <span className="font-mono text-base">{c.deposit_reference}</span>
+                            <span className="ml-2">{c.from_overpayment ? "from an overpayment" : "paid in advance"}</span>
+                            {refunded ? (
+                              <span className="ml-2 text-green-700/70">· refunded to the guest</span>
+                            ) : spent ? (
+                              <span className="ml-2 text-green-700/70">
+                                · {money(c.amount_applied)} of {money(c.amount)} went to charges
+                                {Number(c.available) > 0 ? "" : " (fully used)"}
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="flex items-center gap-3">
+                            <span className={`font-bold whitespace-nowrap ${Number(c.available) > 0 ? "" : "text-green-700/50 line-through"}`}>
+                              {money(Number(c.available) > 0 ? c.available : c.amount)}
+                            </span>
+                            {Number(c.available) > 0 && canRefund() && (
+                              <>
+                                <button
+                                  onClick={() => openTransfer(c.id)}
+                                  disabled={transferring || refundingCreditId === c.id}
+                                  className={btn.rowSecondary}
+                                  title="Move this credit to another folio"
+                                >
+                                  Transfer
+                                </button>
+                                <button
+                                  onClick={() => setRefundCreditTarget(c)}
+                                  disabled={refundingCreditId === c.id}
+                                  className={btn.rowDanger}
+                                >
+                                  {refundingCreditId === c.id ? "Refunding..." : "Refund"}
+                                </button>
+                              </>
+                            )}
+                          </span>
+                        </div>
+                        {transferCreditId === c.id && (
+                          <div className="flex flex-col gap-3 border border-(--accent-2) rounded-lg px-5 py-4 bg-(--card)">
+                            <p className="text-lg text-[color:var(--text-color)]/68">
+                              Move this credit to another folio — for the same guest booked under a different number,
+                              whose two stays never matched to one account. It settles whatever that folio owes, and
+                              the rest stays claimable there.
+                            </p>
+                            <select value={transferTo} onChange={(e) => setTransferTo(e.target.value)} className={field.select}>
+                              <option value="">Choose the folio to move it to…</option>
+                              {inHouseOptions.map((r) => (
+                                <option key={r.id} value={r.id}>
+                                  {withGuestTags(r.guest_name, r.guest_tags)}
+                                  {(r.room_assignments || []).length > 0
+                                    ? ` · Room ${(r.room_assignments || []).map((a) => a.room_number).join(", ")}`
+                                    : ""}
+                                  {r.booking_reference ? ` · ${r.booking_reference}` : ""}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="flex gap-3 flex-wrap">
+                              <button
+                                onClick={() => handleTransferCredit(c.id)}
+                                disabled={!transferTo || transferring}
+                                className={btn.rowPrimary}
+                              >
+                                {transferring ? "Moving..." : "Move the credit"}
+                              </button>
+                              <button onClick={closeTransfer} className={btn.rowSecondary}>Cancel</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {refundError && (
+                    <p className="text-red-600 text-lg bg-red-50 border border-red-200 rounded-lg px-4 py-2">{refundError}</p>
+                  )}
+                  {Number(selectedFolio.credit_on_file.total) > 0 && (
+                    <p className="text-lg text-green-700/80">
+                      Already counted in Total Paid above — this is the part not covering a charge yet.
+                      It applies automatically to the next night, or hand it back now with Refund.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Charges */}
+              <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges</h3>
+                {/* Surfaced so a missing/short room charge doesn't read as a
+                    bug — postStayChargesForDay silently excludes a
+                    complementary room's own share when it posts. */}
+                {selectedFolio.complementary_rooms && selectedFolio.complementary_rooms.length > 0 && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg px-5 py-3 flex items-center gap-3 flex-wrap">
+                    <RoomStatusTag status="complementary" />
+                    <span className="text-lg text-purple-700">
+                      Room{selectedFolio.complementary_rooms.length > 1 ? "s" : ""} {selectedFolio.complementary_rooms.join(", ")} {selectedFolio.complementary_rooms.length > 1 ? "are" : "is"} complementary — no room charge posts for {selectedFolio.complementary_rooms.length > 1 ? "them" : "it"}.
+                    </span>
+                  </div>
+                )}
+                {selectedFolio.reservation?.actual_check_in && Number(selectedFolio.reservation?.total_rate) > 0 && (
+                  <div className="bg-[color:var(--text-color)]/3 border border-(--accent-2) rounded-lg px-5 py-3 text-lg text-[color:var(--text-color)]/76">
+                    Original Total Cost of Accommodation: <span className="font-bold text-[color:var(--black)]">{money(selectedFolio.reservation.total_rate)}</span>
+                    <span className="block text-base mt-1">
+                      Reference only — not part of the balance below. Room charges are billed night by night; use this if you need to compare against a later discount.
+                    </span>
+                  </div>
+                )}
+                {(!selectedFolio.items || selectedFolio.items.length === 0) ? (
+                  <p className="text-xl text-[color:var(--text-color)]/76">No charges yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {selectedFolio.items.map((item) => (
+                      <div key={item.id} className="flex justify-between items-start gap-4 bg-[color:var(--text-color)]/3 rounded-lg px-5 py-3 text-xl">
+                        <span className="capitalize min-w-0 break-words">
+                          {item.description}
+                          <span className="text-[color:var(--text-color)]/68 ml-2">({CHARGE_TYPE_LABELS[item.item_type] || item.item_type})</span>
+                          {item.bill_no && <span className="text-[color:var(--text-color)]/68 ml-2">· Bill No {item.bill_no}</span>}
+                          {Number(item.service_charge) > 0 && <span className="text-[color:var(--text-color)]/68 ml-2">· Service Charge {money(item.service_charge)}</span>}
+                          {(item.is_manager || item.is_complementary) && (
+                            <span className="ml-2"><StatusBadge status={item.is_manager ? "manager" : "complementary"} /></span>
+                          )}
+                        </span>
+                        <span className="flex items-center gap-3 shrink-0">
+                          <StatusBadge status={chargeSettlement.get(item.id)} />
+                          <span className="font-bold whitespace-nowrap">{money(item.total)}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {selectedFolio.status !== "closed" && (
+                  <div className="flex flex-col gap-4 mt-2">
+                    <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a charge</p>
+                    <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Charge Type</label>
+                        <select
+                          value={itemForm.item_type}
+                          onChange={(e) => setItemForm({ ...itemForm, item_type: e.target.value, description: "", amount: "" })}
+                          className={field.select}
+                        >
+                          {allowedChargeTypes.map((t) => <option key={t} value={t}>{CHARGE_TYPE_LABELS[t]}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Amount (₦) *</label>
+                        <input
+                          type="number"
+                          value={itemForm.amount}
+                          onChange={(e) => setItemForm({ ...itemForm, amount: e.target.value })}
+                          className={field.input}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Tax ({itemForm.tax_mode === "percentage" ? "%" : "₦"})</label>
+                        <div className="flex flex-col gap-2">
+                          <select
+                            value={itemForm.tax_mode}
+                            onChange={(e) => setItemForm({ ...itemForm, tax_mode: e.target.value })}
+                            className={`${field.select} w-auto`}
+                          >
+                            <option value="fixed">Fixed (₦)</option>
+                            <option value="percentage">Percentage (%)</option>
+                          </select>
+                          <input type="number" value={itemForm.tax} onChange={(e) => setItemForm({ ...itemForm, tax: e.target.value })} className={field.input} />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Discount ({itemForm.discount_mode === "percentage" ? "%" : "₦"})</label>
+                        <div className="flex flex-col gap-2">
+                          <select
+                            value={itemForm.discount_mode}
+                            onChange={(e) => setItemForm({ ...itemForm, discount_mode: e.target.value })}
+                            className={`${field.select} w-auto`}
+                          >
+                            <option value="fixed">Fixed (₦)</option>
+                            <option value="percentage">Percentage (%)</option>
+                          </select>
+                          <input type="number" value={itemForm.discount} onChange={(e) => setItemForm({ ...itemForm, discount: e.target.value })} className={field.input} />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Description *</label>
+                        <AutoGrowTextarea value={itemForm.description} onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })} className={field.textarea} />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className={field.label}>Remarks (optional)</label>
+                      <AutoGrowTextarea value={itemForm.notes} onChange={(e) => setItemForm({ ...itemForm, notes: e.target.value })} className={field.textarea} />
+                    </div>
+                    {itemForm.item_type === "adjustment" && (
+                      <p className="text-lg text-[color:var(--text-color)]/60 -mt-1">
+                        To discount or correct an already-posted charge (e.g. a night-audit room charge), don't edit that
+                        line — post a new adjustment here with a <strong>negative amount</strong> instead
+                        (e.g. -3000.00). This keeps the original charge visible for audit.
+                      </p>
+                    )}
+                    <button onClick={handleAddItem} disabled={addingItem || !chargeReady} className={`${btn.primary} self-start`}>
+                      {addingItem ? "Adding..." : "Add Charge"}
+                    </button>
+                    {/* Never leave a disabled button unexplained — this one
+                        needed a description and never said so, which read as
+                        the button being broken (owner, 2026-09-27). */}
+                    {!chargeReady && !addingItem && (
+                      <p className="text-lg text-[color:var(--text-color)]/68">{chargeBlockReason}</p>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              {/* Payments */}
+              <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Payments</h3>
+                {(!selectedFolio.payments || selectedFolio.payments.length === 0) ? (
+                  <p className="text-xl text-[color:var(--text-color)]/76">No payments recorded yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {selectedFolio.payments.map((p) => {
+                      const isRefund = p.status === "refunded";
+                      const isHighlighted = p.id === highlightPaymentId;
+                      return (
+                        <div
+                          key={p.id}
+                          ref={isHighlighted ? highlightedPaymentRef : null}
+                          className={`flex justify-between items-center gap-4 rounded-lg px-5 py-3 text-xl ${
+                            isHighlighted
+                              ? "bg-[color:var(--emphasis)]/5 ring-1 ring-[color:var(--emphasis)]/50"
+                              : "bg-[color:var(--text-color)]/3"
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <span className="font-medium">{isRefund ? "Refund" : "Payment"} · {formatPaymentMethod(p.payment_method)}</span>
+                            {p.notes && <span className="text-[color:var(--text-color)]/68 ml-2">· {p.notes}</span>}
+                            <span className="flex items-center gap-1 text-base text-[color:var(--text-color)]/60">
+                              <span className="font-mono">{p.payment_reference}</span>
+                              <CopyIconButton value={p.payment_reference} />
+                              {p.receipt_number && <>· Receipt #{p.receipt_number}</>} · {formatDate(p.payment_date)}
+                            </span>
+                          </div>
+                          <span className={`font-bold whitespace-nowrap ${isRefund ? "text-red-600" : "text-green-700"}`}>
+                            {isRefund ? "−" : ""}{money(p.amount)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {selectedFolio.status !== "closed" && (
+                  <div className="flex flex-col gap-4 mt-2">
+                    {paymentError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{paymentError}</p>}
+                    <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
+                      Record a payment
+                      {" "}— {hasOutstandingBalance ? `balance due: ${money(selectedFolio.balance)}` : hasCreditBalance ? `credit on account: ${money(Math.abs(Number(selectedFolio.balance)))}` : "balance settled"}
+                    </p>
+                    <PaymentSplitRows splits={paymentForm.splits} setSplits={(splits) => setPaymentForm({ ...paymentForm, splits })} />
+                    {hasOutstandingBalance && (
+                      <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                        <div className="flex flex-col gap-2">
+                          <label className={field.label}>Tax ({paymentForm.tax_mode === "percentage" ? "%" : "₦"}) — optional</label>
+                          <div className="flex flex-col gap-2">
+                            <select
+                              value={paymentForm.tax_mode}
+                              onChange={(e) => setPaymentForm({ ...paymentForm, tax_mode: e.target.value })}
+                              className={`${field.select} w-auto`}
+                            >
+                              <option value="fixed">Fixed (₦)</option>
+                              <option value="percentage">Percentage (%)</option>
+                            </select>
+                            <input
+                              type="number"
+                              value={paymentForm.tax}
+                              onChange={(e) => setPaymentForm({ ...paymentForm, tax: e.target.value })}
+                              className={field.input}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className={field.label}>Discount ({paymentForm.discount_mode === "percentage" ? "%" : "₦"}) — optional</label>
+                          <div className="flex flex-col gap-2">
+                            <select
+                              value={paymentForm.discount_mode}
+                              onChange={(e) => setPaymentForm({ ...paymentForm, discount_mode: e.target.value })}
+                              className={`${field.select} w-auto`}
+                            >
+                              <option value="fixed">Fixed (₦)</option>
+                              <option value="percentage">Percentage (%)</option>
+                            </select>
+                            <input
+                              type="number"
+                              value={paymentForm.discount}
+                              onChange={(e) => setPaymentForm({ ...paymentForm, discount: e.target.value })}
+                              className={field.input}
+                            />
+                          </div>
+                        </div>
+                        {(paymentTaxAmount > 0 || paymentDiscountAmount > 0) && (
+                          <p className="text-lg text-[color:var(--text-color)]/68 col-span-2 max-sm:col-span-1">
+                            → balance after tax/discount: <strong>{money(Math.max(Number(selectedFolio.balance) + paymentTaxAmount - paymentDiscountAmount, 0))}</strong>
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Receipt Number</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. from the receipt book"
+                          value={paymentForm.receipt_number}
+                          onChange={(e) => setPaymentForm({ ...paymentForm, receipt_number: e.target.value })}
+                          className={field.input}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Remarks</label>
+                        <AutoGrowTextarea
+                          placeholder="e.g. cash received at front desk"
+                          value={paymentForm.notes}
+                          onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
+                          className={field.textarea}
+                        />
+                      </div>
+                    </div>
+                    <button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits} className={`${btn.success} self-start`}>
+                      {recordingPayment ? "Recording..." : "Record Payment"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Refunding a credit is allowed even on a closed folio — a folio
+                    auto-closes the moment a credit appears, so this is the normal
+                    case, not an edge case gated behind "still open". */}
+                {/* Receptionists and managers only — see canRefund. The API refuses every other
+                    role, so the form is hidden rather than left to 403. */}
+                {hasCreditBalance && canRefund() && (
+                  <div className="flex flex-col gap-4 mt-2 border-t border-(--accent-2) pt-6">
+                    {refundError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{refundError}</p>}
+                    <p className="text-lg font-semibold uppercase tracking-wide text-red-600">Record a refund to the guest</p>
+                    <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Amount (₦) *</label>
+                        <input
+                          type="number"
+                          placeholder={`Credit on account: ${money(Math.abs(Number(selectedFolio.balance)))}`}
+                          value={refundForm.amount}
+                          onChange={(e) => setRefundForm({ ...refundForm, amount: e.target.value })}
+                          className={field.input}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Method *</label>
+                        <select value={refundForm.payment_method} onChange={(e) => setRefundForm({ ...refundForm, payment_method: e.target.value })} className={field.select}>
+                          {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{formatPaymentMethod(m)}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className={field.label}>Receipt Number</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. from the receipt book"
+                          value={refundForm.receipt_number}
+                          onChange={(e) => setRefundForm({ ...refundForm, receipt_number: e.target.value })}
+                          className={field.input}
+                        />
+                      </div>
+                      <div className="col-span-2 max-sm:col-span-1 flex flex-col gap-2">
+                        <label className={field.label}>Remarks</label>
+                        <AutoGrowTextarea
+                          placeholder="e.g. cash refunded to guest at checkout"
+                          value={refundForm.notes}
+                          onChange={(e) => setRefundForm({ ...refundForm, notes: e.target.value })}
+                          className={field.textarea}
+                        />
+                      </div>
+                    </div>
+                    <button onClick={handleRecordRefund} disabled={recordingRefund || !refundForm.amount} className={`${btn.dangerSolid} self-start`}>
+                      {recordingRefund ? "Recording..." : "Record Refund"}
+                    </button>
+                  </div>
+                )}
+              </section>
+            </>
+          )}
+        </Modal>
+      )}
+
+      {/* ==== Create Folio Modal ==== */}
+      {isCreateOpen && (
+        <Modal
+          onClose={() => setIsCreateOpen(false)}
+          title="Create Folio"
+          subtitle="For backfilling a folio onto an existing reservation. New bookings get one automatically on confirmation."
+          size="sm"
+          footer={
+            <>
+              <button onClick={() => setIsCreateOpen(false)} className={btn.secondary}>Cancel</button>
+              <button onClick={handleCreateFolio} disabled={creating || !createForm.reservation_id || !createForm.guest_id} className={btn.primary}>
+                {creating ? "Creating..." : "Create Folio"}
+              </button>
+            </>
+          }
+        >
+          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+            <div className="flex flex-col gap-2">
+              <label className={field.label}>Reservation ID *</label>
+              <input type="number" value={createForm.reservation_id} onChange={(e) => setCreateForm({ ...createForm, reservation_id: e.target.value })} className={field.input} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className={field.label}>Guest ID *</label>
+              <input type="number" value={createForm.guest_id} onChange={(e) => setCreateForm({ ...createForm, guest_id: e.target.value })} className={field.input} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className={field.label}>Total Amount</label>
+              <input type="number" value={createForm.total_amount} onChange={(e) => setCreateForm({ ...createForm, total_amount: e.target.value })} className={field.input} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className={field.label}>Amount Paid</label>
+              <input type="number" value={createForm.amount_paid} onChange={(e) => setCreateForm({ ...createForm, amount_paid: e.target.value })} className={field.input} />
+            </div>
+          </div>
+        </Modal>
+      )}
+
+
+      {/* ==== Refund Credit Confirmation ==== */}
+      {refundCreditTarget && (
+        <RefundCreditModal
+          credit={refundCreditTarget}
+          reference={refundCreditTarget.deposit_reference}
+          guestName={selectedFolio?.reservation?.guest_name}
+          busy={refundingCreditId === refundCreditTarget.id}
+          onConfirm={handleRefundCredit}
+          onClose={() => setRefundCreditTarget(null)}
+        />
+      )}
+
+      {transactionReceipt && (
+        <TransactionReceiptModal
+          title={transactionReceipt.title}
+          reference={transactionReceipt.reference}
+          amount={transactionReceipt.amount}
+          items={transactionReceipt.items}
+          onClose={() => setTransactionReceipt(null)}
+        />
+      )}
+    </>
+  );
+}
+
+function SummaryStat({ label, value, tone }) {
+  const valueColor =
+    tone === "danger" ? "text-red-600" : tone === "success" ? "text-green-700" : "text-[color:var(--black)]";
+  return (
+    <div className="bg-[color:var(--text-color)]/5 border-1 border-gray-200 rounded-lg px-5 py-4">
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}</p>
+      <p className={`text-2xl font-bold ${valueColor} truncate`}>{value}</p>
+    </div>
+  );
+}

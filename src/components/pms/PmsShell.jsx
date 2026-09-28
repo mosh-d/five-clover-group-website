@@ -17,7 +17,7 @@ import { canOpen, navItemForPath, pageTitle } from "./pmsNavItems";
 import { card } from "./ui";
 import { readPmsSession, clearPmsSession, consumeJustSignedIn, setDevRoleOverride, markActivity } from "@/lib/pms/session";
 import { verifyPmsSession, pmsSignOut, pmsSwitchBranch, SESSION_ENDED_EVENT } from "@/lib/pms/client";
-import { frontOffice } from "@/lib/pms/api";
+import { fetchBusinessDate } from "@/lib/pms/api/front-office-api";
 import { applyServerClock, deviceClockDriftMinutes } from "@/lib/pms/dates";
 
 // Everything around a PMS page: the session, the brand's colours, the top
@@ -44,7 +44,8 @@ export default function PmsShell({ children }) {
       if (cancelled) return;
       if (!ok) {
         clearPmsSession();
-        router.replace("/pms");
+        // Back here once signed in (pathAfterSignIn).
+        router.replace(`/pms?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
         return;
       }
       setSession(readPmsSession());
@@ -145,8 +146,7 @@ function BranchWorkspace({ pathname, children }) {
   // "Today" by the server's clock, not this device's (see lib/pms/dates.js).
   useEffect(() => {
     let cancelled = false;
-    frontOffice
-      .businessDate()
+    fetchBusinessDate()
       .then((d) => {
         if (cancelled || !d?.server_time) return;
         applyServerClock(d.server_time);

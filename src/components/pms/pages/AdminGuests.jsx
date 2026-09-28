@@ -1,0 +1,775 @@
+"use client";
+"use no memo";
+
+// Carried over from the branch PMS's admin_pages/AdminGuests.jsx (2026-09-28).
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from "@/lib/pms/router";
+import { IoClose, IoFilter, IoPeopleOutline } from 'react-icons/io5';
+import ManagerOnlyTag from "@/components/pms/ManagerOnlyTag";
+import Modal from "@/components/pms/Modal";
+import PageHeading from "@/components/admin/PageHeading";
+import StatusBadge from "@/components/pms/StatusBadge";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
+import PhoneInput from "@/components/pms/PhoneInput";
+import { formatPhone } from "@/lib/pms/phone-format";
+import { btn, field, table } from "@/components/pms/ui";
+import {
+  fetchGuests,
+  fetchGuestReservations,
+  createGuest,
+  updateGuest,
+  updateGuestStatus,
+  fetchGuestNotes,
+  addGuestNote,
+  deleteGuestNote,
+} from "@/lib/pms/api/guests-api";
+import { isManager } from "@/lib/pms/auth";
+import { useWebSocketContext } from "@/components/pms/live/PmsLive";
+import { money } from "@/lib/pms/format";
+import { GuestTagPills } from "@/components/pms/GuestName";
+import { GUEST_TYPES, guestTagLabel } from "@/lib/pms/guest-tags";
+import Pagination from "@/components/pms/Pagination";
+
+const RESERVATIONS_PAGE_SIZE = 5;
+
+// Ordinary contact-info fields, saved via PUT /api/guests/:id (any staff).
+// Blacklist status/reason are saved separately via PATCH /:id/status
+// (manager-only on the backend) — see handleSaveEdit below.
+const CONTACT_INFO_FIELDS = [
+  'first_name', 'last_name', 'email', 'phone', 'address', 'city', 'country',
+  'id_type', 'id_number', 'date_of_birth', 'nationality', 'guest_types',
+  'company_name', 'tax_id',
+];
+
+const emptyGuestForm = {
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: '',
+  address: '',
+  city: '',
+  country: '',
+  id_type: '',
+  id_number: '',
+  guest_types: [],
+  company_name: '',
+  is_blacklisted: false,
+  blacklist_reason: '',
+};
+
+// The Status filter: the blacklist, or one guest type.
+const STATUS_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'blacklisted', label: 'Blacklisted' },
+  ...GUEST_TYPES.map((t) => ({ key: t, label: guestTagLabel(t) })),
+];
+
+// A guest's types as a checklist - any number at once, a corporate VIP say
+// (2026-09-28). Shared by the edit and the add forms.
+function GuestTypeChecklist({ value = [], onChange }) {
+  const toggle = (type) =>
+    onChange(value.includes(type) ? value.filter((t) => t !== type) : GUEST_TYPES.filter((t) => t === type || value.includes(t)));
+  return GUEST_TYPES.map((t) => (
+    <label key={t} className='flex items-center gap-3 text-xl cursor-pointer'>
+      <input
+        type='checkbox'
+        checked={value.includes(t)}
+        onChange={() => toggle(t)}
+        className='w-6 h-6 accent-[var(--emphasis)] cursor-pointer'
+      />
+      {guestTagLabel(t)}
+    </label>
+  ));
+}
+
+export default function AdminGuestsPage() {
+  const canManageGuestStatus = isManager();
+  const navigate = useNavigate();
+  const [guests, setGuests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
+
+  const [searchQuery, setSearchQuery] = useState('');
+  // One Status filter (2026-09-28): the blacklist or one guest type.
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterDropdownRef = useRef(null);
+
+  const [selectedGuest, setSelectedGuest] = useState(null);
+  const [selectedGuestReservations, setSelectedGuestReservations] = useState(
+    [],
+  );
+  const [reservationsPage, setReservationsPage] = useState(1);
+  const [editForm, setEditForm] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const [guestNotes, setGuestNotes] = useState([]);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [addingNote, setAddingNote] = useState(false);
+  const [deletingNoteId, setDeletingNoteId] = useState(null);
+  const [notesError, setNotesError] = useState('');
+
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState(emptyGuestForm);
+  const [creating, setCreating] = useState(false);
+
+  const loadGuests = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = { page, limit };
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (statusFilter === 'blacklisted') params.is_blacklisted = true;
+      else if (statusFilter !== 'all') params.guest_type = statusFilter;
+
+      const result = await fetchGuests(params);
+      setGuests(result.data || []);
+      setTotalPages(result.totalPages || 1);
+      setError(null);
+    } catch (err) {
+      setError(
+        (err.response?.data?.message || 'Failed to load guests.') +
+          ' Please refresh the page.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [page, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    loadGuests();
+  }, [loadGuests]);
+
+  useEffect(() => setPage(1), [searchQuery, statusFilter]);
+
+  // Re-fetch whenever the socket (re)connects (e.g. after a backend
+  // restart), same pattern as AdminOverview.jsx/AdminRooms.jsx.
+  const { isConnected } = useWebSocketContext();
+  useEffect(() => {
+    if (!isConnected) return;
+    loadGuests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        filterDropdownRef.current &&
+        !filterDropdownRef.current.contains(e.target)
+      ) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const openGuestDetail = async (guest) => {
+    setSelectedGuest(guest);
+    setEditForm({ ...emptyGuestForm, ...guest });
+    setSelectedGuestReservations([]);
+    setReservationsPage(1);
+    setGuestNotes([]);
+    setNewNoteText('');
+    setNotesError('');
+    try {
+      const reservations = await fetchGuestReservations(guest.id);
+      setSelectedGuestReservations(
+        Array.isArray(reservations) ? reservations : [],
+      );
+    } catch {
+      setSelectedGuestReservations([]);
+    }
+    try {
+      const notes = await fetchGuestNotes(guest.id);
+      setGuestNotes(Array.isArray(notes) ? notes : []);
+    } catch {
+      setGuestNotes([]);
+    }
+  };
+
+  const closeGuestDetail = () => {
+    setSelectedGuest(null);
+    setEditForm(null);
+    setSelectedGuestReservations([]);
+    setReservationsPage(1);
+    setGuestNotes([]);
+    setNewNoteText('');
+    setNotesError('');
+  };
+
+  const handleAddNote = async () => {
+    if (!selectedGuest || !newNoteText.trim()) return;
+    try {
+      setAddingNote(true);
+      setNotesError('');
+      const note = await addGuestNote(selectedGuest.id, newNoteText.trim());
+      setGuestNotes((prev) => [note, ...prev]);
+      setNewNoteText('');
+    } catch (err) {
+      setNotesError(err.response?.data?.message || 'Failed to add note.');
+    } finally {
+      setAddingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    if (!selectedGuest) return;
+    try {
+      setDeletingNoteId(noteId);
+      setNotesError('');
+      await deleteGuestNote(selectedGuest.id, noteId);
+      setGuestNotes((prev) => prev.filter((n) => n.id !== noteId));
+    } catch (err) {
+      setNotesError(err.response?.data?.message || 'Failed to delete note.');
+    } finally {
+      setDeletingNoteId(null);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedGuest) return;
+    try {
+      setSavingEdit(true);
+      const contactInfo = {};
+      for (const key of CONTACT_INFO_FIELDS) {
+        contactInfo[key] = editForm[key];
+      }
+      await updateGuest(selectedGuest.id, contactInfo);
+      // Only when it actually changed (2026-09-28) - sending it on every
+      // save logged a blacklist change each time a manager saved anything.
+      const blacklistChanged =
+        Boolean(editForm.is_blacklisted) !== Boolean(selectedGuest.is_blacklisted) ||
+        (editForm.blacklist_reason || '') !== (selectedGuest.blacklist_reason || '');
+      if (canManageGuestStatus && blacklistChanged) {
+        await updateGuestStatus(selectedGuest.id, {
+          is_blacklisted: editForm.is_blacklisted,
+          blacklist_reason: editForm.blacklist_reason,
+        });
+      }
+      setSuccessMessage('Guest profile updated.');
+      setTimeout(() => setSuccessMessage(''), 5000);
+      closeGuestDetail();
+      loadGuests();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update guest.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleCreateGuest = async () => {
+    try {
+      setCreating(true);
+      await createGuest(createForm);
+      setSuccessMessage('Guest profile created.');
+      setTimeout(() => setSuccessMessage(''), 5000);
+      setIsCreateOpen(false);
+      setCreateForm(emptyGuestForm);
+      loadGuests();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create guest.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <>
+      {successMessage && (
+        <div className='fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl z-50 flex items-center gap-4 shadow-lg'>
+          <span className='text-xl font-bold'>{successMessage}</span>
+          <button
+            onClick={() => setSuccessMessage('')}
+            className='text-green-700 hover:text-green-900 cursor-pointer'
+          >
+            <IoClose size={24} />
+          </button>
+        </div>
+      )}
+
+      <div
+        data-component='AdminGuests'
+        className='flex flex-col items-start gap-[3rem]'
+      >
+        <div className='w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4'>
+          <PageHeading icon={IoPeopleOutline}>Guests</PageHeading>
+
+          <div className='relative flex flex-col items-start gap-3'>
+            <input
+              type='text'
+              placeholder='Search by name (partial), or full email/phone...'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`${field.input} text-xl! w-72 max-sm:w-full`}
+            />
+            <div className='flex gap-3'>
+              <div
+                className='relative'
+                ref={filterDropdownRef}
+              >
+                <button
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className={`bg-(--card) border-1 border-gray-300 rounded-3xl py-2.5 px-6 flex items-center gap-2`}
+                  title='Filter'
+                >
+                  <IoFilter size={22} /> Filters
+                </button>
+                {isFilterOpen && (
+                  <div className='absolute right-0 mt-2 w-96 bg-(--card) border border-(--accent-2) rounded-xl shadow-xl z-20 overflow-hidden font-primary'>
+                    <div className='p-6'>
+                      <p className='text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-4'>
+                        Status
+                      </p>
+                      <div className='grid grid-cols-2 gap-3'>
+                        {STATUS_FILTERS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => {
+                              setStatusFilter(opt.key);
+                              setIsFilterOpen(false);
+                            }}
+                            className={`py-3 rounded-lg text-xl cursor-pointer transition-all ${statusFilter === opt.key ? 'bg-[color:var(--emphasis)] text-white font-bold' : 'bg-black/4 text-[color:var(--text-color)] hover:bg-black/8'}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setIsCreateOpen(true)}
+                className={`${btn.primary} whitespace-nowrap`}
+              >
+                + Add Guest
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className={table.card}>
+          <div className={table.scroll}>
+            <table className={table.el}>
+              <thead>
+                <tr className={table.headRow}>
+                  <th className={`${table.th} ${table.stickyTh}`}>Name</th>
+                  <th className={`${table.th} hidden md:table-cell`}>Email</th>
+                  <th className={`${table.th} hidden md:table-cell`}>Phone</th>
+                  <th className={`${table.th} hidden md:table-cell`}>Status</th>
+                  <th className={`${table.th} hidden md:table-cell`}>Stays</th>
+                  <th className={table.th}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ?
+                  <tr>
+                    <td
+                      colSpan='6'
+                      className='px-8 py-10 text-center text-xl'
+                    >
+                      <LoadingSpinner />
+                    </td>
+                  </tr>
+                : error ?
+                  <tr>
+                    <td
+                      colSpan='6'
+                      className='px-8 py-10 text-center text-red-600 text-xl'
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                : guests.length === 0 ?
+                  <tr>
+                    <td
+                      colSpan='6'
+                      className='px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68'
+                    >
+                      No guests match filter.
+                    </td>
+                  </tr>
+                : guests.map((g) => (
+                    <tr
+                      key={g.id}
+                      className={table.row}
+                    >
+                      <td className={`${table.td} ${table.stickyTd} font-medium`}>
+                        <div className='flex items-center gap-3 flex-wrap'>
+                          {g.first_name} {g.last_name}
+                          {Number(g.outstanding_balance) > 0 && (
+                            <span className='text-sm font-bold uppercase tracking-wide text-orange-700 bg-orange-100 px-2 py-1 rounded-full whitespace-nowrap'>
+                              Owing {money(g.outstanding_balance)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className={`${table.td} hidden md:table-cell`}>
+                        {g.email || 'N/A'}
+                      </td>
+                      <td className={`${table.td} hidden md:table-cell`}>
+                        {g.phone ? formatPhone(g.phone) : 'N/A'}
+                      </td>
+                      <td className={`${table.td} hidden md:table-cell`}>
+                        {g.guest_tags?.length ? <GuestTagPills tags={g.guest_tags} /> : '—'}
+                      </td>
+                      <td className={`${table.td} hidden md:table-cell`}>
+                        {g.total_stays}
+                      </td>
+                      <td className={table.td}>
+                        <div className={table.actions}>
+                          <button
+                            onClick={() => openGuestDetail(g)}
+                            className={btn.rowPrimary}
+                          >
+                            View
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+      </div>
+
+      {/* ==== Guest Detail / Edit Modal ==== */}
+      {selectedGuest && editForm && (
+        <Modal
+          onClose={closeGuestDetail}
+          title={`${selectedGuest.first_name} ${selectedGuest.last_name}`}
+          subtitle={selectedGuest.email || undefined}
+          badge={<GuestTagPills tags={selectedGuest.guest_tags} />}
+          size='lg'
+          footer={
+            <>
+              <button
+                onClick={closeGuestDetail}
+                className={btn.secondary}
+              >
+                Close
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={savingEdit}
+                className={btn.primary}
+              >
+                {savingEdit ? 'Saving...' : 'Save Changes'}
+              </button>
+            </>
+          }
+        >
+          {(() => {
+            const knownNames = (selectedGuest.alternate_names || '')
+              .split(',')
+              .map((n) => n.trim())
+              .filter(Boolean);
+            return knownNames.length > 0 && (
+              <section className='flex flex-col gap-2'>
+                <label className={field.label}>Known Names</label>
+                <select
+                  value=''
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    const [first, ...rest] = e.target.value.trim().split(/\s+/);
+                    setEditForm({ ...editForm, first_name: first, last_name: rest.join(' ') || first });
+                  }}
+                  className={field.select}
+                >
+                  <option value=''>Select a known name to prefill…</option>
+                  {knownNames.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </section>
+            );
+          })()}
+
+          <section className='grid grid-cols-2 gap-4 max-sm:grid-cols-1'>
+            <LabeledInput
+              label='First Name'
+              value={editForm.first_name || ''}
+              onChange={(v) => setEditForm({ ...editForm, first_name: v })}
+            />
+            <LabeledInput
+              label='Last Name'
+              value={editForm.last_name || ''}
+              onChange={(v) => setEditForm({ ...editForm, last_name: v })}
+            />
+            <LabeledInput
+              label='Email'
+              value={editForm.email || ''}
+              onChange={(v) => setEditForm({ ...editForm, email: v })}
+            />
+            <LabeledPhoneInput
+              label='Phone'
+              value={editForm.phone || ''}
+              onChange={(v) => setEditForm({ ...editForm, phone: v })}
+            />
+            <LabeledInput
+              label='Address'
+              value={editForm.address || ''}
+              onChange={(v) => setEditForm({ ...editForm, address: v })}
+            />
+            <LabeledInput
+              label='City'
+              value={editForm.city || ''}
+              onChange={(v) => setEditForm({ ...editForm, city: v })}
+            />
+            <LabeledInput
+              label='Country'
+              value={editForm.country || ''}
+              onChange={(v) => setEditForm({ ...editForm, country: v })}
+            />
+          </section>
+
+          {/* Status (2026-09-28): the guest's types - several at once - and the
+              blacklist, all shown as tags beside their name on every screen.
+              Types are front-desk work; the blacklist stays manager-only. */}
+          <section className='flex flex-col gap-4 border-t border-(--accent-2) pt-6'>
+            <label className={field.label}>Status</label>
+            <div className='flex flex-wrap gap-x-8 gap-y-3'>
+              <GuestTypeChecklist
+                value={editForm.guest_types}
+                onChange={(guest_types) => setEditForm({ ...editForm, guest_types })}
+              />
+              <label className={`flex items-center gap-3 text-xl ${canManageGuestStatus ? 'cursor-pointer' : 'text-[color:var(--text-color)]/60'}`}>
+                <input
+                  type='checkbox'
+                  checked={!!editForm.is_blacklisted}
+                  disabled={!canManageGuestStatus}
+                  onChange={(e) => setEditForm({ ...editForm, is_blacklisted: e.target.checked })}
+                  className='w-6 h-6 accent-[var(--emphasis)] cursor-pointer disabled:cursor-not-allowed'
+                />
+                Blacklisted
+                {!canManageGuestStatus && <ManagerOnlyTag />}
+              </label>
+            </div>
+            {editForm.is_blacklisted && (
+              canManageGuestStatus ? (
+                <div className='flex flex-col gap-2'>
+                  <label className={field.label}>Blacklist Reason</label>
+                  <AutoGrowTextarea
+                    value={editForm.blacklist_reason || ''}
+                    onChange={(e) => setEditForm({ ...editForm, blacklist_reason: e.target.value })}
+                    className={field.textarea}
+                  />
+                </div>
+              ) : editForm.blacklist_reason ? (
+                <p className='text-xl text-[color:var(--text-color)]/76'>Reason: {editForm.blacklist_reason}</p>
+              ) : null
+            )}
+          </section>
+
+          <section className='flex flex-col gap-3 border-t border-(--accent-2) pt-6'>
+            <label className={field.label}>Notes</label>
+            <p className='text-lg text-[color:var(--text-color)]/60 -mt-1'>
+              Independent notes about this guest (e.g. "VIP", "Fish allergy") — separate from any single stay's request, which is recorded on the reservation itself and shows in the Manifest report's Notes section.
+            </p>
+            {notesError && (
+              <p className='text-lg text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3'>{notesError}</p>
+            )}
+            {guestNotes.length === 0 ? (
+              <p className='text-xl text-[color:var(--text-color)]/76'>No notes yet.</p>
+            ) : (
+              <div className='flex flex-col gap-2'>
+                {guestNotes.map((n) => (
+                  <div key={n.id} className='flex justify-between items-center gap-4 bg-[color:var(--text-color)]/3 rounded-lg px-5 py-3 text-xl'>
+                    <span className='break-words'>{n.note}</span>
+                    <button
+                      type='button'
+                      onClick={() => handleDeleteNote(n.id)}
+                      disabled={deletingNoteId === n.id}
+                      className='p-1 text-[color:var(--text-color)]/50 hover:text-red-600 transition-colors cursor-pointer shrink-0'
+                      aria-label='Delete note'
+                    >
+                      <IoClose size={20} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className='flex gap-3 items-center flex-wrap'>
+              <input
+                type='text'
+                value={newNoteText}
+                onChange={(e) => setNewNoteText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNote(); } }}
+                placeholder='e.g. VIP'
+                className={`${field.input} w-auto flex-1 min-w-[16rem]`}
+              />
+              <button
+                type='button'
+                onClick={handleAddNote}
+                disabled={addingNote || !newNoteText.trim()}
+                className={btn.secondary}
+              >
+                {addingNote ? 'Adding...' : '+ Add Note'}
+              </button>
+            </div>
+          </section>
+
+          <section className='flex flex-col gap-3 border-t border-(--accent-2) pt-6'>
+            <h3 className='text-2xl font-bold text-[color:var(--black)]'>
+              Reservations
+            </h3>
+            {selectedGuestReservations.length === 0 ?
+              <p className='text-xl text-[color:var(--text-color)]/76'>
+                No reservations for this guest yet.
+              </p>
+            : (() => {
+                const reservationsTotalPages = Math.max(1, Math.ceil(selectedGuestReservations.length / RESERVATIONS_PAGE_SIZE));
+                const pagedReservations = selectedGuestReservations.slice(
+                  (reservationsPage - 1) * RESERVATIONS_PAGE_SIZE,
+                  reservationsPage * RESERVATIONS_PAGE_SIZE,
+                );
+                return (
+                  <>
+                    <div className='flex flex-col gap-2'>
+                      {pagedReservations.map((r) => {
+                        // A folio only exists once a reservation has been
+                        // checked in — hold/confirmed/cancelled never have
+                        // one, so those rows stay non-interactive.
+                        const hasFolio = r.status === 'active' || r.status === 'completed';
+                        return (
+                          <div
+                            key={r.id}
+                            onClick={hasFolio ? () => navigate(`/pms/folios?reservation_id=${r.id}`) : undefined}
+                            className={`flex justify-between items-center gap-4 bg-[color:var(--text-color)]/3 rounded-lg px-5 py-3 text-xl ${hasFolio ? 'cursor-pointer hover:bg-[color:var(--text-color)]/8' : ''}`}
+                          >
+                            <span className='truncate'>
+                              {r.booking_reference || r.id}
+                              <span className='text-[color:var(--text-color)]/68 ml-3'>
+                                {new Date(r.check_in).toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })} –{' '}
+                                {new Date(r.check_out).toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })}
+                              </span>
+                            </span>
+                            <StatusBadge status={r.status} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <Pagination page={reservationsPage} totalPages={reservationsTotalPages} onPage={setReservationsPage} className='mt-2' />
+                  </>
+                );
+              })()
+            }
+          </section>
+        </Modal>
+      )}
+
+      {/* ==== Create Guest Modal ==== */}
+      {isCreateOpen && (
+        <Modal
+          onClose={() => setIsCreateOpen(false)}
+          title='Add Guest'
+          subtitle='Create a new guest profile.'
+          size='md'
+          footer={
+            <>
+              <button
+                onClick={() => setIsCreateOpen(false)}
+                className={btn.secondary}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateGuest}
+                disabled={
+                  creating ||
+                  !createForm.first_name ||
+                  !createForm.last_name ||
+                  !createForm.phone
+                }
+                className={btn.primary}
+              >
+                {creating ? 'Creating...' : 'Create Guest'}
+              </button>
+            </>
+          }
+        >
+          <section className='grid grid-cols-2 gap-4 max-sm:grid-cols-1'>
+            <LabeledInput
+              label='First Name *'
+              value={createForm.first_name}
+              onChange={(v) => setCreateForm({ ...createForm, first_name: v })}
+            />
+            <LabeledInput
+              label='Last Name *'
+              value={createForm.last_name}
+              onChange={(v) => setCreateForm({ ...createForm, last_name: v })}
+            />
+            <LabeledInput
+              label='Email'
+              value={createForm.email}
+              onChange={(v) => setCreateForm({ ...createForm, email: v })}
+            />
+            <LabeledPhoneInput
+              label='Phone *'
+              value={createForm.phone}
+              onChange={(v) => setCreateForm({ ...createForm, phone: v })}
+            />
+            <div className='flex flex-col gap-2'>
+              <label className={field.label}>Status</label>
+              <div className='flex flex-wrap gap-x-8 gap-y-3 py-2'>
+                <GuestTypeChecklist
+                  value={createForm.guest_types}
+                  onChange={(guest_types) => setCreateForm({ ...createForm, guest_types })}
+                />
+              </div>
+            </div>
+            <LabeledInput
+              label='Company Name'
+              value={createForm.company_name}
+              onChange={(v) =>
+                setCreateForm({ ...createForm, company_name: v })
+              }
+            />
+          </section>
+        </Modal>
+      )}
+    </>
+  );
+}
+
+// Same shape as LabeledInput, but the phone number is entered as an explicit
+// country code plus a national number — phone is what identifies a guest
+// here, so the format it is captured in decides whether a returning guest
+// matches their existing profile or spawns a duplicate.
+function LabeledPhoneInput({ label, value, onChange }) {
+  return (
+    <div className='flex flex-col gap-2'>
+      <label className={field.label}>{label}</label>
+      <PhoneInput
+        value={value}
+        onChange={onChange}
+        selectClassName={field.select}
+        inputClassName={field.input}
+      />
+    </div>
+  );
+}
+
+function LabeledInput({ label, value, onChange, type = 'text' }) {
+  return (
+    <div className='flex flex-col gap-2'>
+      <label className={field.label}>{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={field.input}
+      />
+    </div>
+  );
+}

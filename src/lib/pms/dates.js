@@ -37,8 +37,18 @@ export const monthStartISO = () => `${todayISO().slice(0, 8)}01`;
 // Lagos it is still yesterday - what the server records a walk-in, a charge
 // or a shift against (the branch PMS's currentBusinessDateISO).
 const BUSINESS_DAY_START_HOUR = 6;
-export const businessDateISO = () =>
-  isoOf(new Date(serverNow().getTime() + (LAGOS_OFFSET_MINUTES - BUSINESS_DAY_START_HOUR * 60) * 60000));
+const businessDayShifted = () => new Date(serverNow().getTime() + (LAGOS_OFFSET_MINUTES - BUSINESS_DAY_START_HOUR * 60) * 60000);
+export const businessDateISO = () => isoOf(businessDayShifted());
+
+// The earliest valid walk-in checkout: business date + 1 day. Before 6am
+// Lagos that is TODAY (a same-day stay is valid - the guest arrived before
+// the cutover); from 6am, TOMORROW.
+export const minWalkInCheckOutISO = () => isoOf(new Date(businessDayShifted().getTime() + 86400000));
+
+// The branch PMS's names for the same days (its utils/date-utils.js), which
+// the pages moved over from it use.
+export const adminTodayISO = () => todayISO();
+export const currentBusinessDateISO = () => businessDateISO();
 
 // Whether noon (Lagos) on a date has passed - the hotel's check-in and
 // check-out time. A stay due out "today" isn't due until noon. Stored dates

@@ -38,7 +38,7 @@ export default function BranchPicker({ branches, currentId, title = "Choose a br
         {error && <p className={field.error}>{error}</p>}
         <div className="flex flex-col gap-2">
           <label htmlFor="pms-branch" className={field.label}>Branch</label>
-          <select id="pms-branch" value={branchId} onChange={(e) => setBranchId(e.target.value)} className={field.select} autoFocus>
+          <select id="pms-branch" value={branchId} onChange={(e) => setBranchId(e.target.value)} className={`${field.select} w-full`} autoFocus>
             <option value="">-- Select a branch --</option>
             {byBrand.map(({ brand, list }) => (
               <optgroup key={brand.key} label={brand.name}>

@@ -55,32 +55,19 @@ export const BRANDS = {
 // the group's own colours.
 export const GROUP_BRAND = BRANDS.fc;
 
-// Per branch, what differs from its brand. Abijo trades as "Five Clover
+// Per branch, what differs from its brand: Abijo trades as "Five Clover
 // Inn" and its own site shows that mark, not the group's "Five Clover
-// Hotels". site: the branch's own hotel website, whose /admin is the branch
-// PMS this one is replacing.
-const BRANCHES = {
-  "fc-monastery": { site: "https://monastery.fivecloverhotels.com" },
-  "fc-abijo": { site: "https://abijo.fivecloverhotels.com", logo: fiveCloverInnLogo },
-  "fc-ilupeju": { site: "https://ilupeju.fivecloverhotels.com" },
-  "ci-igbobi": { site: "https://igbobi.caritasinn.com" },
-  "ci-ilasan": { site: "https://ilasan.caritasinn.com" },
-  "ci-lekki": { site: "https://lekki.caritasinn.com" },
-  "ci-yaba": { site: "https://yaba.caritasinn.com" },
-  "rr-sangotedo": { site: "https://unitedestate.ringrubyhotel.com" },
-  "rr-eso": { site: "https://eso.ringrubyhotel.com" },
-  "rr-oduduwa": { site: "https://oduduwa.ringrubyhotel.com" },
-  "rr-value-county": { site: "https://valuecounty.ringrubyhotel.com" },
-  "rr-bateye": { site: "https://bateye.ringrubyhotel.com" },
+// Hotels".
+const BRANCH_LOGOS = {
+  "fc-abijo": fiveCloverInnLogo,
 };
 
 const codeOf = (branch) => String(branch?.branch_code || "").toLowerCase();
 
 export const brandForBranch = (branch) => BRANDS[codeOf(branch).split("-")[0]] || GROUP_BRAND;
 
-export const logoForBranch = (branch) => BRANCHES[codeOf(branch)]?.logo || brandForBranch(branch).logo;
+export const logoForBranch = (branch) => BRANCH_LOGOS[codeOf(branch)] || brandForBranch(branch).logo;
 
-export const siteForBranch = (branch) => BRANCHES[codeOf(branch)]?.site || null;
 
 // Branch names are stored as "<Brand> <Location>" ("Caritas Inn Ilasan").
 // The logo already says the brand, so the top bar shows the location alone -

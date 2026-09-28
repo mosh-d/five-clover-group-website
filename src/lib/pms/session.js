@@ -74,6 +74,10 @@ export function hasBeenIdleTooLong() {
   return Boolean(stamp) && Date.now() - stamp > IDLE_LIMIT_MS;
 }
 
+// The signed-in branch's id - what the branch PMS hard-codes per site as
+// BRANCH_ID. Read at the moment it's needed, since a developer can switch.
+export const currentBranchId = () => readJson(KEYS.branch)?.id || null;
+
 export const getPmsToken = () => (hasStorage() ? localStorage.getItem(KEYS.token) : null);
 export const getPmsRefreshToken = () => (hasStorage() ? localStorage.getItem(KEYS.refresh) : null);
 

@@ -7,7 +7,7 @@ import GroupLogo from "@/assets/five-clover-logo.webp";
 import PasswordField from "@/components/admin/PasswordField";
 import BranchPicker from "@/components/pms/BranchPicker";
 import { BRANDS } from "@/components/pms/theme/brands";
-import { landingPath } from "@/components/pms/pmsNavItems";
+import { pathAfterSignIn } from "@/components/pms/pmsNavItems";
 import { btn, field } from "@/components/pms/ui";
 import { pmsSignIn, PmsApiError } from "@/lib/pms/client";
 import { readPmsSession, markJustSignedIn } from "@/lib/pms/session";
@@ -16,6 +16,11 @@ import { readPmsSession, markJustSignedIn } from "@/lib/pms/session";
 // which branch; someone who may open several (a developer, or a manager with
 // accounts at more than one) is asked which, then lands on that branch in
 // its own brand.
+//
+// ?next= is the page that sent them here (a bookmark, a branch PMS's
+// "moved" card); signing in carries on to it (pathAfterSignIn).
+const nextParam = () => new URLSearchParams(window.location.search).get("next");
+
 export default function PmsSignInPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -24,15 +29,15 @@ export default function PmsSignInPage() {
   const [error, setError] = useState(null);
   const [choices, setChoices] = useState(null);
 
-  // Already signed in - straight to their own first page.
+  // Already signed in - straight on.
   useEffect(() => {
     const session = readPmsSession();
-    if (session) router.replace(landingPath(session.role));
+    if (session) router.replace(pathAfterSignIn(session.role, nextParam()));
   }, [router]);
 
   const enter = (data) => {
     markJustSignedIn();
-    router.push(landingPath(data.staff_role));
+    router.push(pathAfterSignIn(data.staff_role, nextParam()));
   };
 
   const handleSubmit = async (e) => {

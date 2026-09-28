@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { MotionDiv, panelEnter } from "./motion";
 import { btn, field } from "./ui";
-import { shifts as shiftsApi, staffAccounts } from "@/lib/pms/api";
+import { selectCurrentShift } from "@/lib/pms/api/shifts-api";
+import { fetchStaffAccounts } from "@/lib/pms/api/staff-accounts-api";
 
 // How each rota reads on screen.
 const ROTA = {
@@ -31,8 +32,7 @@ export default function ShiftGate({ role, businessDate, currentName, onSelected,
 
   useEffect(() => {
     let cancelled = false;
-    staffAccounts
-      .list(role)
+    fetchStaffAccounts(role)
       .then((list) => !cancelled && setStaff(list || []))
       .catch(() => {
         if (cancelled) return;
@@ -51,7 +51,7 @@ export default function ShiftGate({ role, businessDate, currentName, onSelected,
     try {
       setSaving(true);
       setError(null);
-      onSelected(await shiftsApi.record(role, selected));
+      onSelected(await selectCurrentShift(role, selected));
     } catch (err) {
       setError(err?.message || "Could not record the shift. Try again.");
       setSaving(false);
@@ -93,7 +93,7 @@ export default function ShiftGate({ role, businessDate, currentName, onSelected,
             <label htmlFor="shift-person" className={field.label}>
               {rota.person.charAt(0).toUpperCase() + rota.person.slice(1)} on duty
             </label>
-            <select id="shift-person" value={selected} onChange={(e) => setSelected(e.target.value)} className={field.select}>
+            <select id="shift-person" value={selected} onChange={(e) => setSelected(e.target.value)} className={`${field.select} w-full`}>
               <option value="">Select a name</option>
               {staff.map((person) => (
                 <option key={person.id} value={person.id}>{person.username}</option>

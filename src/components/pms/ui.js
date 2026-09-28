@@ -43,14 +43,19 @@ export const field = {
   label: "text-xl font-semibold uppercase tracking-wide text-(--text-color)/68",
   input:
     "w-full border border-(--accent-2) rounded-lg px-4 py-3 text-2xl bg-white text-(--text-color) placeholder:text-(--text-color)/30 focus:outline-none focus:ring-2 focus:ring-(--emphasis) focus:border-transparent transition-shadow",
+  // Sized to its contents, as the branch PMS's selects are - add w-full
+  // where one should span its row.
   select:
-    "w-full border border-(--accent-2) rounded-lg px-4 py-3 text-2xl bg-white text-(--text-color) focus:outline-none focus:ring-2 focus:ring-(--emphasis) focus:border-transparent transition-shadow cursor-pointer",
+    "w-auto border border-(--accent-2) rounded-lg px-4 py-3 text-2xl bg-white text-(--text-color) focus:outline-none focus:ring-2 focus:ring-(--emphasis) focus:border-transparent transition-shadow cursor-pointer",
   error: "text-xl text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3",
   success: "text-xl text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3",
   hint: "text-lg text-(--text-color)/60",
   textarea:
     "w-full border border-(--accent-2) rounded-lg px-4 py-3 text-2xl bg-white text-(--text-color) placeholder:text-(--text-color)/30 focus:outline-none focus:ring-2 focus:ring-(--emphasis) focus:border-transparent transition-shadow resize-none overflow-hidden",
 };
+
+// A heading inside a dialog or a card.
+export const sectionTitle = "text-2xl font-bold text-(--black)";
 
 export const card = {
   surface: "rounded-xl border border-(--accent-2) bg-(--card)",

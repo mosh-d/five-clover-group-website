@@ -8,7 +8,7 @@ import Pagination from "@/components/pms/Pagination";
 import GuestName from "@/components/pms/GuestName";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, card, field, page, table } from "@/components/pms/ui";
-import { nightAudit } from "@/lib/pms/api";
+import { fetchNightAuditHistory, runNightAudit } from "@/lib/pms/api/night-audit-api";
 import { yesterdayISO } from "@/lib/pms/dates";
 import { formatDate, formatTime, money } from "@/lib/pms/format";
 
@@ -33,7 +33,7 @@ export default function PmsNightAuditPage() {
   const loadHistory = useCallback(async (p = 1) => {
     try {
       setHistoryLoading(true);
-      const data = await nightAudit.history({ page: p, limit: PAGE_SIZE });
+      const data = await fetchNightAuditHistory({ page: p, limit: PAGE_SIZE });
       setHistory(data.data || []);
       setHistoryTotal(data.total || 0);
       setHistoryPage(p);
@@ -58,7 +58,7 @@ export default function PmsNightAuditPage() {
       setRunning(true);
       setResult(null);
       setRunError(null);
-      setResult(await nightAudit.run(auditDate));
+      setResult(await runNightAudit(auditDate));
       loadHistory(1);
     } catch (err) {
       setRunError(err.message || "Audit failed. Check if it has already been run for this date.");

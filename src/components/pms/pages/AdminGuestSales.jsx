@@ -1,0 +1,517 @@
+"use client";
+"use no memo";
+
+// Carried over from the branch PMS's admin_pages/AdminGuestSales.jsx (2026-09-28).
+import { useState, useEffect } from "react";
+import { IoFastFoodOutline } from "react-icons/io5";
+import PageOrSection from "@/components/pms/PageOrSection";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import StatusBadge from "@/components/pms/StatusBadge";
+import PrintReceiptModal from "@/components/pms/PrintReceiptModal";
+import FolioBalanceModal from "@/components/pms/FolioBalanceModal";
+import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
+import OrderItemRows from "@/components/pms/OrderItemRows";
+import { btn, field, table } from "@/components/pms/ui";
+import { formatDateTime, money, formatDate } from "@/lib/pms/format";
+import { getStoredStaffRole } from "@/lib/pms/auth";
+import { fetchFoodItems, fetchDrinkItems } from "@/lib/pms/api/menu-api";
+import { fetchInHouse } from "@/lib/pms/api/front-office-api";
+import { addFolioItemsBatch, fetchFolioById, fetchPendingFolios, recordPayment } from "@/lib/pms/api/folios-api";
+import GuestName from "@/components/pms/GuestName";
+import { withGuestTags } from "@/lib/pms/guest-tags";
+import Pagination from "@/components/pms/Pagination";
+import usePagedRows from "@/components/pms/usePagedRows";
+
+const emptyRow = { item_kind: "food", reference_id: "", quantity: "1", is_complementary: false };
+const emptyOrder = { reservation_id: "", bill_no: "", rows: [{ ...emptyRow }] };
+// Deliberately no tax_mode/tax/discount_mode/discount fields, unlike
+// AdminFolios.jsx's own payment form — this panel is scoped to "record what
+// the guest paid," not the fuller adjustment/refund/closing workflow that
+// stays Folios-page-only.
+const emptyPaymentForm = { splits: [{ amount: "", payment_method: "transfer" }], receipt_number: "", notes: "" };
+
+// Dedicated order-taking page for an in-house guest's room folio —
+// AdminFolios.jsx's generic "Add a Charge" form used to be the only way to
+// post a food/drink charge to a guest, which meant finding the right folio
+// first. This replaces that for food/drink specifically: pick the guest
+// from a dropdown (resolves straight to their room folio via
+// front-office/in-house, which now includes it), build the order the same
+// way Non-Guest Sales does, submit as one batch, print the receipt.
+// Renders as its own page, or as one section of a combined page - see
+// PageOrSection and AdminFnbSales (2026-09-24).
+export default function AdminGuestSalesPage({ asSection = false, hideTitle = false }) {
+  // A receptionist can post everything else to a guest folio EXCEPT
+  // food/drink (see FoliosService.addFolioItemsBatch's own role check) — a
+  // page that's exclusively food/drink has nothing they could actually
+  // submit, so it's hidden from them the same defense-in-depth way
+  // AdminNonGuestSales.jsx hides itself from an accountant session.
+  const staffRole = getStoredStaffRole();
+  const canAccess = !["accountant", "receptionist"].includes(staffRole);
+
+  const [foodItems, setFoodItems] = useState([]);
+  const [drinkItems, setDrinkItems] = useState([]);
+  const [inHouse, setInHouse] = useState([]);
+  const [loadingGuests, setLoadingGuests] = useState(true);
+  // In-house guests who have actually ordered F&B - the list under the form.
+  const [fnbGuests, setFnbGuests] = useState([]);
+  const [loadingFnbGuests, setLoadingFnbGuests] = useState(true);
+  // Folios for a guest who has already checked out but still owes F&B — a
+  // checked-out reservation drops off fetchInHouse() immediately (it's
+  // scoped to currently-active stays), but the backend deliberately leaves
+  // an unsettled folio open as a receivable rather than closing it (see
+  // ReservationsService.checkOut) — this is the only place that folio is
+  // still reachable from once the room-level "In-House" list has moved on.
+  // fetchPendingFolios() already returns exactly open+owing folios
+  // branch-wide (both still-in-house and departed) — filtered here to
+  // departed only, since an in-house one is already covered by the tab
+  // above.
+  const [checkedOutFolios, setCheckedOutFolios] = useState([]);
+  const [loadingCheckedOut, setLoadingCheckedOut] = useState(true);
+  const [folioTab, setFolioTab] = useState("in-house");
+  // 10 rows a page (2026-09-28). Owing first, highest balance first - who
+  // staff need to take a payment from; the most recently checked out first.
+  const inHousePage = usePagedRows([...fnbGuests].sort((a, b) => Number(b.folio?.balance || 0) - Number(a.folio?.balance || 0)));
+  const checkedOutPage = usePagedRows(
+    [...checkedOutFolios].sort((a, b) => new Date(b.reservation?.actual_check_out || 0) - new Date(a.reservation?.actual_check_out || 0)),
+  );
+  // The order form's guest picker offers every in-house guest - a first
+  // order has to be postable. The lists underneath show only guests who
+  // actually ordered F&B (owner, 2026-09-28): every owing guest in the
+  // house, most of whom never bought a thing at the bar, confused waitrons.
+  // Reloaded after an order or a payment, so a first order puts a guest on
+  // the list and a settled bill leaves Checked-Out (Owing).
+  const loadGuests = () => Promise.all([
+    fetchInHouse()
+      .then((list) => setInHouse(list.filter((r) => r.folio)))
+      .catch(() => setInHouse([]))
+      .finally(() => setLoadingGuests(false)),
+    fetchInHouse({ with_sales: "fnb" })
+      .then((list) => setFnbGuests(list.filter((r) => r.folio)))
+      .catch(() => setFnbGuests([]))
+      .finally(() => setLoadingFnbGuests(false)),
+    fetchPendingFolios({ with_sales: "fnb" })
+      .then((list) => setCheckedOutFolios((list || []).filter((f) => f.reservation?.actual_check_out)))
+      .catch(() => setCheckedOutFolios([]))
+      .finally(() => setLoadingCheckedOut(false)),
+  ]);
+
+  useEffect(() => {
+    if (!canAccess) return;
+    fetchFoodItems().then(setFoodItems).catch(() => {});
+    fetchDrinkItems().then(setDrinkItems).catch(() => {});
+    loadGuests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const menuFor = (kind) => (kind === "food" ? foodItems : drinkItems);
+  const itemFor = (row) => menuFor(row.item_kind).find((i) => String(i.id) === String(row.reference_id));
+  const isComp = (row) => row.is_complementary;
+  // Preview only — the backend always re-resolves price/service_charge
+  // itself from the live menu item at posting time, same "never trust the
+  // client" reasoning as Non-Guest Sales.
+  const rowAmount = (row) => {
+    const item = itemFor(row);
+    if (!item || isComp(row)) return 0;
+    return Number(item.price) * (Number(row.quantity) || 0);
+  };
+  const rowServiceCharge = (row) => {
+    const item = itemFor(row);
+    if (!item || isComp(row)) return 0;
+    return Number(item.service_charge || 0) * (Number(row.quantity) || 0);
+  };
+
+  const [order, setOrder] = useState(emptyOrder);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [printReceipt, setPrintReceipt] = useState(null);
+
+  const selectedGuest = inHouse.find((r) => String(r.id) === String(order.reservation_id));
+  const orderTotal = order.rows.reduce((sum, row) => sum + rowAmount(row) + rowServiceCharge(row), 0);
+  // A line nobody has touched — added with + Add Item and then left alone —
+  // is dropped on submit rather than blocking the order, so adding lines can
+  // never strand the Post Order button. It used to: one untouched line
+  // disabled the button with nothing on screen saying which line was the
+  // problem, which read as "past N items the button stops working". A line
+  // someone HAS started still has to be finished, since dropping that one
+  // silently would under-post the bill.
+  const rowUntouched = (row) => !row.reference_id && String(row.quantity) === "1" && !row.is_complementary;
+  const postableRows = order.rows.filter((row) => !rowUntouched(row));
+  const orderValid = Boolean(order.reservation_id) && postableRows.length > 0
+    && postableRows.every((row) => row.reference_id && Number(row.quantity) > 0);
+  const orderBlockReason = !order.reservation_id
+    ? "Select a guest to post this order to."
+    : postableRows.length === 0
+      ? "Pick an item on at least one line."
+      : "Finish the lines you started — each needs an item and a quantity of 1 or more.";
+
+  const updateRow = (index, patch) => {
+    setOrder({ ...order, rows: order.rows.map((row, i) => (i === index ? { ...row, ...patch } : row)) });
+  };
+  const addRow = () => setOrder({ ...order, rows: [...order.rows, { ...emptyRow }] });
+  const removeRow = (index) => setOrder({ ...order, rows: order.rows.filter((_, i) => i !== index) });
+
+  // The selected folio's balance/recent-charges/payment form, shown in a
+  // modal — inHouse's own `folio` field is only { id, folio_number }, no
+  // balance, so a real fetch is needed once a row is picked. { folioId,
+  // guestName, roomNumber } rather than a raw inHouse/checkedOutFolios row:
+  // the two tabs' rows have different shapes (one has room_assignments, the
+  // other doesn't), so the modal is fed a small, uniform summary instead of
+  // needing to know which tab a selection came from.
+  //
+  // Deliberately its own state, separate from order.reservation_id: the
+  // guest-folio list below lets staff jump straight to any guest's folio to
+  // record a payment without that guest needing to be the one selected in
+  // the order form above (they might not be placing an order at all — a
+  // checked-out guest can't anyway). handleSubmit/orderValid/etc. below stay
+  // entirely driven by order.reservation_id — this only ever affects which
+  // folio the modal shows.
+  const [selectedFolioMeta, setSelectedFolioMeta] = useState(null);
+  const [folioDetail, setFolioDetail] = useState(null);
+  const [loadingFolio, setLoadingFolio] = useState(false);
+  const [folioError, setFolioError] = useState(null);
+  const [paymentForm, setPaymentForm] = useState(emptyPaymentForm);
+  const [recordingPayment, setRecordingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
+  const [transactionReceipt, setTransactionReceipt] = useState(null);
+
+  const folioId = selectedFolioMeta?.folioId ?? null;
+
+  const loadFolioDetail = async (id) => {
+    if (!id) {
+      setFolioDetail(null);
+      return;
+    }
+    try {
+      setLoadingFolio(true);
+      setFolioError(null);
+      setFolioDetail(await fetchFolioById(id));
+    } catch (err) {
+      setFolioError(err.response?.data?.message || "Failed to load folio balance.");
+    } finally {
+      setLoadingFolio(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFolioDetail(folioId);
+    setPaymentForm(emptyPaymentForm);
+    setPaymentError(null);
+  }, [folioId]);
+
+  const handleSubmit = async () => {
+    if (!orderValid || !selectedGuest) return;
+    try {
+      setSubmitting(true);
+      setError(null);
+      const result = await addFolioItemsBatch(selectedGuest.folio.id, {
+        bill_no: order.bill_no.trim() || undefined,
+        items: postableRows.map((row) => ({
+          item_type: row.item_kind === "food" ? "food_charge" : "drink_charge",
+          reference_id: Number(row.reference_id),
+          quantity: Number(row.quantity),
+          amount: rowAmount(row), // preview only — server resolves the real price
+          description: itemFor(row)?.name || "",
+          is_complementary: row.is_complementary,
+        })),
+      });
+      const roomNumber = selectedGuest.room_assignments?.[0]?.room_number;
+      setOrder({ ...emptyOrder, reservation_id: order.reservation_id }); // keep the same guest selected for a follow-up order
+      setPrintReceipt({
+        billNo: result.bill_no,
+        who: { room_number: roomNumber, guest_name: selectedGuest.guest_name },
+        items: result.items.map((i) => ({ description: i.description, quantity: i.quantity, line_total: Number(i.amount) + Number(i.service_charge) })),
+        serviceCharge: result.items.reduce((s, i) => s + Number(i.service_charge || 0), 0),
+        total: result.total,
+      });
+      // Only refresh the balance here if this same guest's folio is the one
+      // currently open in the modal (selectedFolioMeta can point at a
+      // different folio, picked from either list, than the one this order
+      // was just posted to) — otherwise the folioId-keyed effect below
+      // already owns loading whichever folio actually is selected.
+      if (String(selectedFolioMeta?.folioId) === String(selectedGuest.folio.id)) {
+        await loadFolioDetail(selectedGuest.folio.id);
+      }
+      await loadGuests();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to post the order.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const hasValidPaymentSplits = paymentForm.splits.length > 0 && paymentForm.splits.every((s) => Number(s.amount) > 0);
+
+  const handleRecordPayment = async () => {
+    if (!folioDetail || !hasValidPaymentSplits) return;
+    try {
+      setRecordingPayment(true);
+      setPaymentError(null);
+      const result = await recordPayment({
+        folio_id: folioDetail.id,
+        payments: paymentForm.splits.map((s) => ({ amount: Number(s.amount), payment_method: s.payment_method })),
+        receipt_number: paymentForm.receipt_number.trim() || undefined,
+        notes: paymentForm.notes.trim() || undefined,
+      });
+      setPaymentForm(emptyPaymentForm);
+      await loadFolioDetail(folioDetail.id);
+      await loadGuests();
+      setTransactionReceipt({
+        title: "Payment Recorded",
+        items: result.payments.map((p) => ({ reference: p.payment_reference, amount: money(p.amount), method: p.payment_method })),
+      });
+    } catch (err) {
+      setPaymentError(err.response?.data?.message || "Failed to record payment.");
+    } finally {
+      setRecordingPayment(false);
+    }
+  };
+
+  if (!canAccess) {
+    return (
+      <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoFastFoodOutline} title="Guest Sales" dataComponent="AdminGuestSales">
+        <p className="text-2xl text-[color:var(--text-color)]/68">
+          You don't have permission to view this page.
+        </p>
+      </PageOrSection>
+    );
+  }
+
+  return (
+    <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoFastFoodOutline} title="Guest Sales" dataComponent="AdminGuestSales">
+      <p className="text-xl text-[color:var(--text-color)]/76">
+        Post a food/drink order to an in-house guest's room folio and print the receipt.
+      </p>
+
+      {error && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3 w-full">{error}</p>}
+
+      <div className="w-full flex flex-col gap-4 bg-(--card) rounded-xl border border-(--accent-2) p-6">
+        <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">New Guest Order</p>
+
+        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+          <div className="flex flex-col gap-2">
+            <label className={field.label}>Guest</label>
+            {loadingGuests ? (
+              <LoadingSpinner />
+            ) : (
+              <select
+                value={order.reservation_id}
+                onChange={(e) => setOrder({ ...order, reservation_id: e.target.value })}
+                className={field.select}
+              >
+                <option value="">Select an in-house guest</option>
+                {inHouse.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    Room {r.room_assignments?.[0]?.room_number || "—"} — {withGuestTags(r.guest_name, r.guest_tags)}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className={field.label}>Bill No (optional)</label>
+            <input
+              type="text"
+              placeholder="Leave blank to have the system generate one"
+              value={order.bill_no}
+              onChange={(e) => setOrder({ ...order, bill_no: e.target.value })}
+              className={field.input}
+            />
+          </div>
+        </div>
+        <p className="text-lg text-[color:var(--text-color)]/60">
+          One receipt number covers the whole order — leave it blank and the system fills one in.
+        </p>
+
+        <OrderItemRows
+          rows={order.rows}
+          onUpdate={updateRow}
+          onRemove={removeRow}
+          onAdd={addRow}
+          menuFor={menuFor}
+          itemFor={itemFor}
+          rowAmount={rowAmount}
+          rowServiceCharge={rowServiceCharge}
+        />
+
+        <div className="flex justify-between items-center border-t border-(--accent-2) pt-4">
+          <span className="text-xl font-bold uppercase tracking-wide text-[color:var(--text-color)]/68">Total</span>
+          <span className="text-2xl font-bold">{money(orderTotal)}</span>
+        </div>
+
+        <button
+          onClick={handleSubmit}
+          disabled={submitting || !orderValid}
+          className={`${btn.primary} self-start`}
+        >
+          {submitting ? "Posting..." : "Post Order"}
+        </button>
+        {/* Never leave a disabled button unexplained — that is what made this
+            look broken rather than incomplete. */}
+        {!orderValid && !submitting && (
+          <p className="text-lg text-[color:var(--text-color)]/68">{orderBlockReason}</p>
+        )}
+      </div>
+
+      <div className={table.card}>
+        <div className="px-8 py-4 border-b border-(--accent-2) flex gap-3 flex-wrap">
+          {[
+            { key: "in-house", label: "In-House" },
+            { key: "checked-out", label: "Checked-Out (Owing)" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setFolioTab(t.key)}
+              className={`px-5 py-2.5 rounded-lg text-lg font-bold cursor-pointer transition-all ${
+                folioTab === t.key ? "bg-[color:var(--emphasis)] text-white" : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {folioTab === "in-house" ? (
+          <div className={table.scroll}>
+            <table className={table.el}>
+              <thead>
+                <tr className={table.headRow}>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
+                  <th className={table.th}>Room</th>
+                  <th className={table.th}>Folio #</th>
+                  <th className={table.th}>Date &amp; Time</th>
+                  <th className={table.th}>Status</th>
+                  <th className={table.th}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingFnbGuests ? (
+                  <tr><td colSpan={6} className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
+                ) : fnbGuests.length === 0 ? (
+                  <tr><td colSpan={6} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No in-house guest has ordered F&amp;B yet.</td></tr>
+                ) : (
+                  // Owing folios first (highest balance first) — that's who
+                  // staff actually need to chase down and take a payment
+                  // from; a settled or credit folio can sit further down.
+                  inHousePage.rows.map((r) => {
+                      const isSelected = String(r.folio.id) === String(selectedFolioMeta?.folioId);
+                      const balance = Number(r.folio?.balance || 0);
+                      return (
+                        <tr key={r.id} className={`${table.row} ${isSelected ? "bg-[color:var(--emphasis)]/5" : ""}`}>
+                          {/* Selected-row tint matched explicitly (2026-09-16
+                              -style inline conditional, same as the row's own):
+                              the sticky cell's own opaque background would
+                              otherwise sit plain white over an already-tinted
+                              selected row. */}
+                          <td className={`${table.td} sticky left-0 z-10 max-lg:whitespace-normal! max-lg:min-w-[18rem] [box-shadow:inset_-1px_0_0_color-mix(in_srgb,var(--text-color)_12%,transparent)] ${isSelected ? "bg-[color-mix(in_srgb,var(--emphasis)_5%,white)]" : "bg-(--card) group-hover:bg-[color-mix(in_srgb,black_2%,white)]"}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
+                          <td className={table.td}>{r.room_assignments?.[0]?.room_number || "—"}</td>
+                          <td className={table.td}>{r.folio.folio_number}</td>
+                          {/* When this guest's bill was opened. */}
+                          <td className={`${table.td} whitespace-nowrap`}>{formatDateTime(r.folio.created_at)}</td>
+                          <td className={table.td}>
+                            <StatusBadge status={balance > 0 ? "owing" : "paid"} />
+                          </td>
+                          <td className={table.td}>
+                            <button
+                              onClick={() => setSelectedFolioMeta({ folioId: r.folio.id, guestName: r.guest_name, roomNumber: r.room_assignments?.[0]?.room_number })}
+                              className={btn.rowPrimary}
+                            >
+                              {isSelected ? "Viewing" : "View / Pay"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className={table.scroll}>
+            <table className={table.el}>
+              <thead>
+                <tr className={table.headRow}>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
+                  <th className={table.th}>Folio #</th>
+                  <th className={table.th}>Checked Out</th>
+                  <th className={table.th}>Balance</th>
+                  <th className={table.th}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingCheckedOut ? (
+                  <tr><td colSpan={5} className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
+                ) : checkedOutFolios.length === 0 ? (
+                  <tr><td colSpan={5} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No checked-out guests owing F&amp;B right now.</td></tr>
+                ) : (
+                  // Most recently checked out first — that's the receivable
+                  // most likely to still be fresh in a guest's memory (or to
+                  // still be reachable by phone), and the one staff most
+                  // likely mean when they say "the guest who just left".
+                  checkedOutPage.rows.map((f) => {
+                      const isSelected = String(f.id) === String(selectedFolioMeta?.folioId);
+                      const guestName = f.guest ? `${f.guest.first_name} ${f.guest.last_name}` : (f.reservation?.guest_name || "N/A");
+                      return (
+                        <tr key={f.id} className={`${table.row} ${isSelected ? "bg-[color:var(--emphasis)]/5" : ""}`}>
+                          <td className={table.td}><GuestName name={guestName} tags={f.guest_tags || f.reservation?.guest_tags} /></td>
+                          <td className={table.td}>{f.folio_number}</td>
+                          <td className={table.td}>{formatDate(f.reservation?.actual_check_out)}</td>
+                          <td className={`${table.td} font-bold text-red-500`}>{money(f.balance)}</td>
+                          <td className={table.td}>
+                            <button
+                              onClick={() => setSelectedFolioMeta({ folioId: f.id, guestName, roomNumber: null })}
+                              className={btn.rowPrimary}
+                            >
+                              {isSelected ? "Viewing" : "View / Pay"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {folioTab === "in-house" ? (
+          <Pagination page={inHousePage.page} totalPages={inHousePage.totalPages} onPage={inHousePage.setPage} className="my-4" />
+        ) : (
+          <Pagination page={checkedOutPage.page} totalPages={checkedOutPage.totalPages} onPage={checkedOutPage.setPage} className="my-4" />
+        )}
+      </div>
+
+      {selectedFolioMeta && (
+        <FolioBalanceModal
+          meta={selectedFolioMeta}
+          folioDetail={folioDetail}
+          loading={loadingFolio}
+          error={folioError}
+          paymentForm={paymentForm}
+          setPaymentForm={setPaymentForm}
+          hasValidPaymentSplits={hasValidPaymentSplits}
+          recordingPayment={recordingPayment}
+          paymentError={paymentError}
+          onRecordPayment={handleRecordPayment}
+          onClose={() => setSelectedFolioMeta(null)}
+        />
+      )}
+
+      {printReceipt && (
+        <PrintReceiptModal
+          billNo={printReceipt.billNo}
+          who={printReceipt.who}
+          items={printReceipt.items}
+          serviceCharge={printReceipt.serviceCharge}
+          total={printReceipt.total}
+          onClose={() => setPrintReceipt(null)}
+        />
+      )}
+
+      {transactionReceipt && (
+        <TransactionReceiptModal
+          title={transactionReceipt.title}
+          items={transactionReceipt.items}
+          onClose={() => setTransactionReceipt(null)}
+        />
+      )}
+    </PageOrSection>
+  );
+}

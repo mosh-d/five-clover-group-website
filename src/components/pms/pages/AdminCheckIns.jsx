@@ -1,0 +1,1713 @@
+"use client";
+"use no memo";
+
+// Carried over from the branch PMS's admin_pages/AdminCheckIns.jsx (2026-09-28).
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "@/lib/pms/router";
+import { IoClose, IoLogInOutline } from "react-icons/io5";
+import Modal from "@/components/pms/Modal";
+import PageHeading from "@/components/admin/PageHeading";
+import StatusBadge from "@/components/pms/StatusBadge";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import { btn, field, table } from "@/components/pms/ui";
+import { fetchCheckInList } from "@/lib/pms/api/front-office-api";
+import { checkGuestBlacklist, fetchGuests } from "@/lib/pms/api/guests-api";
+import { adminTodayISO, currentBusinessDateISO, minWalkInCheckOutISO } from "@/lib/pms/dates";
+import { useWebSocketContext } from "@/components/pms/live/PmsLive";
+import RoomAssignmentPicker from "@/components/pms/RoomAssignmentPicker";
+import RoomStatusTag from "@/components/pms/RoomStatusTag";
+import PaymentSplitRows from "@/components/pms/PaymentSplitRows";
+import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
+import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
+import PhoneInput from "@/components/pms/PhoneInput";
+import { formatPhone, parsePhone } from "@/lib/pms/phone-format";
+import {
+  checkInReservation,
+  assignRoom,
+  checkAvailability,
+  createAdminReservation,
+  confirmReservationById,
+  fetchAvailableRoomNumbers,
+  updateRoomStatus,
+} from "@/lib/pms/api/reservations-pms-api";
+import { createOtaSettlement, previewOtaAmount } from "@/lib/pms/api/ota-api";
+import { fetchFolios, recordPayment, addFolioItem } from "@/lib/pms/api/folios-api";
+
+import DateInput from "@/components/pms/DateInput";
+import { MotionDiv, tabEnter } from "@/components/pms/motion";
+import { currentBranchId } from "@/lib/pms/session";
+import { formatDate } from "@/lib/pms/format";
+import GuestName from "@/components/pms/GuestName";
+import { GuestTagPills } from "@/components/pms/GuestName";
+import EmailStatusTag from "@/components/pms/EmailStatusTag";
+const todayISO = () => adminTodayISO();
+// A Walk-In's check-in is always "right now" — but the reservation it
+// creates must be dated by the hotel's business day (6am Lagos cutover, see
+// date-utils.js), not the raw calendar date, so an arrival before 6am can
+// validly have a same-calendar-day checkout instead of being forced into
+// "the next day." The backend recomputes this authoritatively itself
+// (ReservationsService.createReservationHold) — this is only used to keep
+// the availability check, room-number picker, and displayed night count
+// consistent with what will actually be booked.
+const walkInCheckInISO = () => currentBusinessDateISO();
+// The date picker above can be browsed ahead, so a listed arrival isn't
+// necessarily due. Check-in waits for the booked arrival's business day,
+// same rule the server enforces (ReservationsService.checkIn).
+const arrivesLater = (r) => String(r.check_in || "").slice(0, 10) > currentBusinessDateISO();
+const fmtCurrency = (amount, symbol = "₦") => `${symbol}${Number(amount || 0).toLocaleString()}`;
+
+const EMPTY_WALK_IN = {
+  checkOut: "", roomsBooked: 1, roomTypeId: "", guestFirstName: "", guestLastName: "", phone: "", email: "",
+  roomNumbers: [], roomRate: "", discountMode: "percentage", discount: "", withoutBreakfast: false, complementary: false,
+  paymentSplits: [{ amount: "", payment_method: "transfer" }], paymentReceiptNumber: "", paymentNotes: "",
+  paymentTaxMode: "fixed", paymentTax: "", paymentDiscountMode: "percentage", paymentDiscount: "",
+  // Nights an OTA is paying for instead of the guest (see OtaNightsFields).
+  ota: { start: "", end: "", breakfast: false, amount: "" },
+};
+
+export default function AdminCheckInsPage() {
+  const navigate = useNavigate();
+  const [tab, setTab] = useState("arrivals");
+
+  // --- Arrivals tab ---
+  const [date, setDate] = useState(todayISO());
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [roomNumbers, setRoomNumbers] = useState([]);
+  const [processing, setProcessing] = useState(false);
+
+  // --- Walk-in tab ---
+  const [walkIn, setWalkIn] = useState(EMPTY_WALK_IN);
+  const [availability, setAvailability] = useState(null);
+  const [availLoading, setAvailLoading] = useState(false);
+  const [walkInProcessing, setWalkInProcessing] = useState(false);
+  const [walkInSuccess, setWalkInSuccess] = useState(null);
+  const [walkInError, setWalkInError] = useState(null);
+  const [walkInAvailableRooms, setWalkInAvailableRooms] = useState(null);
+  const [walkInRoomsLoading, setWalkInRoomsLoading] = useState(false);
+  // Every tag of the guest behind the typed phone - a VIP as much as a
+  // blacklist (2026-09-28).
+  const [walkInTags, setWalkInTags] = useState([]);
+  const [walkInKnownNames, setWalkInKnownNames] = useState([]);
+  // Guest-profile lookup as name, phone, OR email is typed — distinct from
+  // walkInKnownNames above (that one's the SAME guest's own alternate
+  // aliases, keyed off the phone they just typed; this is ACROSS every
+  // guest profile, for "is this person already in our system" — since two
+  // different guests can share a first name, matches show phone alongside
+  // the name so staff can tell them apart. walkInActiveGuestField tracks
+  // which of the three fields is currently focused, since that's what
+  // decides both the search term (see the effect below) and which row's
+  // dropdown to render the results under.
+  const [walkInGuestMatches, setWalkInGuestMatches] = useState([]);
+  const [walkInActiveGuestField, setWalkInActiveGuestField] = useState(null); // 'name' | 'phone' | 'email' | null
+  const [walkInReceipt, setWalkInReceipt] = useState(null);
+  const [walkInPaymentWarning, setWalkInPaymentWarning] = useState(null);
+
+  // quiet: a socket-driven refresh repaints the list in place — another
+  // receptionist checking a guest in shouldn't blank the list being read.
+  const loadList = useCallback(async (quiet = false) => {
+    try {
+      if (!quiet) setLoading(true);
+      const result = await fetchCheckInList(date);
+      setReservations(Array.isArray(result) ? result : []);
+      setError(null);
+    } catch (err) {
+      setError((err.response?.data?.message || "Failed to load check-in list.") + " Please refresh the page.");
+    } finally {
+      if (!quiet) setLoading(false);
+    }
+  }, [date]);
+
+  useEffect(() => { loadList(); }, [loadList]);
+
+  // Re-fetch whenever the socket (re)connects (e.g. after a backend
+  // restart), same pattern as AdminOverview.jsx/AdminRooms.jsx.
+  const { isConnected, subscribe } = useWebSocketContext();
+  useEffect(() => {
+    if (!isConnected) return;
+    loadList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected]);
+
+  // ...and whenever any reservation changes state, so an arrival checked in
+  // at another desk drops off this list straight away.
+  useEffect(() => subscribe(() => loadList(true), "reservations"), [subscribe, loadList]);
+
+  const openCheckIn = (reservation) => {
+    setSelected(reservation);
+    setRoomNumbers((reservation.room_assignments || []).map((ra) => ra.room_number));
+  };
+
+  // Same lookup for the walk-in flow, before a reservation exists — needs a
+  // room type and check-out date chosen first.
+  useEffect(() => {
+    if (!walkIn.roomTypeId || !walkIn.checkOut) {
+      setWalkInAvailableRooms(null);
+      return;
+    }
+    let cancelled = false;
+    setWalkInRoomsLoading(true);
+    fetchAvailableRoomNumbers({
+      roomTypeId: Number(walkIn.roomTypeId),
+      checkIn: walkInCheckInISO(),
+      checkOut: walkIn.checkOut,
+    })
+      .then((data) => { if (!cancelled) setWalkInAvailableRooms(data); })
+      .catch(() => { if (!cancelled) setWalkInAvailableRooms({ available: [], unlabeled_rooms: 0 }); })
+      .finally(() => { if (!cancelled) setWalkInRoomsLoading(false); });
+    return () => { cancelled = true; };
+  }, [walkIn.roomTypeId, walkIn.checkOut]);
+
+  // Live blacklist check as the receptionist types the phone number —
+  // there's no reservation (or guest_id link) yet at this point, so this has
+  // to match by phone directly rather than relying on the usual guest
+  // association. Phone (not email) since that's the identity key guests are
+  // actually matched on at confirmation — see confirmReservation. Debounced
+  // so it's not firing on every keystroke, and gated on a minimum length
+  // rather than a "looks like a phone number" check since formats vary.
+  // Also surfaces the account's known names (if any), for the "someone
+  // booking on someone else's behalf using their own phone" case — same
+  // response payload AdminGuests.jsx's edit-modal dropdown reads.
+  useEffect(() => {
+    const phone = walkIn.phone.trim();
+    // Gate on the national digits, not the whole string: the field now
+    // always carries a "+234" prefix, so a raw length check would fire the
+    // lookup after three typed digits.
+    if (parsePhone(phone).national.length < 7) {
+      setWalkInTags([]);
+      setWalkInKnownNames([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      checkGuestBlacklist({ phone })
+        .then((data) => {
+          if (cancelled) return;
+          setWalkInTags(data?.guest_tags || []);
+          setWalkInKnownNames(
+            (data?.alternate_names || "").split(",").map((n) => n.trim()).filter(Boolean),
+          );
+        })
+        .catch(() => { if (!cancelled) { setWalkInTags([]); setWalkInKnownNames([]); } });
+    }, 400);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [walkIn.phone]);
+
+  // Live guest-profile search as name, phone, OR email is typed, so an
+  // existing guest (repeat visitor, or someone already in the system from
+  // an online booking) can be picked and have their details prefilled
+  // instead of re-typed. The search term comes from whichever field is
+  // actually focused, not all four combined — email/phone are encrypted at
+  // rest and matched via an exact-value hash (see GuestsService.getGuests),
+  // so mixing them with the name into one string would never hash-match
+  // anything; each field's own value is what has to reach the backend
+  // untouched. Name search stays partial (ILIKE), so it can suggest before
+  // the full name is typed; phone/email can only ever match once the
+  // complete value is typed, for the same encryption reason — still worth
+  // searching on every keystroke since a paste or autofill lands the full
+  // value in one change.
+  useEffect(() => {
+    let term = "";
+    if (walkInActiveGuestField === "name") term = `${walkIn.guestFirstName} ${walkIn.guestLastName}`.trim();
+    else if (walkInActiveGuestField === "phone") term = walkIn.phone.trim();
+    else if (walkInActiveGuestField === "email") term = walkIn.email.trim();
+
+    if (term.length < 2) {
+      setWalkInGuestMatches([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      fetchGuests({ search: term, limit: 6 })
+        .then((data) => { if (!cancelled) setWalkInGuestMatches(data?.data || []); })
+        .catch(() => { if (!cancelled) setWalkInGuestMatches([]); });
+    }, 400);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [walkInActiveGuestField, walkIn.guestFirstName, walkIn.guestLastName, walkIn.phone, walkIn.email]);
+
+  const selectWalkInGuestMatch = (guest) => {
+    setWalkIn((p) => ({
+      ...p,
+      guestFirstName: guest.first_name || "",
+      guestLastName: guest.last_name || "",
+      phone: guest.phone || p.phone,
+      email: guest.email || p.email,
+    }));
+    setWalkInGuestMatches([]);
+    setWalkInActiveGuestField(null);
+  };
+
+  // Shared by the name row and the phone/email row below — same dropdown,
+  // just rendered under whichever row is currently active.
+  const renderWalkInGuestMatches = () => (
+    <div className="absolute top-full left-0 right-0 mt-1 z-20 bg-(--card) border border-(--accent-2) rounded-lg shadow-lg max-h-64 overflow-y-auto">
+      {walkInGuestMatches.map((g) => (
+        <button
+          key={g.id}
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); selectWalkInGuestMatch(g); }}
+          className="w-full text-left px-4 py-3 hover:bg-black/5 flex items-center justify-between gap-4 text-lg border-b border-[color:var(--text-color)]/8 last:border-b-0 cursor-pointer"
+        >
+          <span className="font-medium text-[color:var(--black)]">{g.first_name} {g.last_name}</span>
+          <span className="text-[color:var(--text-color)]/60 whitespace-nowrap">{formatPhone(g.phone)}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  // Nights an OTA is paying for instead of the guest, recorded as part of
+  // checking in — this is when the desk has the booking in front of them.
+  // Defaults to the whole stay, which is the usual case; the amount is
+  // prefilled from the rate for those nights and stays editable, since an OTA
+  // normally remits net of its commission.
+  const [ota, setOta] = useState({ start: "", end: "", breakfast: false, amount: "" });
+  const otaMin = selected?.check_in ? String(selected.check_in).slice(0, 10) : "";
+  const otaMax = selected?.check_out ? String(selected.check_out).slice(0, 10) : "";
+
+  useEffect(() => {
+    // Defaults to the whole stay, the usual case; narrowing the range leaves
+    // the nights outside it on the guest's bill.
+    setOta({ start: otaMin, end: otaMax, breakfast: false, amount: "" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
+  useEffect(() => {
+    if (!selected || !ota.start || !ota.end || ota.end <= ota.start) return undefined;
+    let cancelled = false;
+    previewOtaAmount({
+      reservationId: selected.id,
+      startDate: ota.start,
+      endDate: ota.end,
+      includesBreakfast: ota.breakfast,
+    })
+      .then((result) => { if (!cancelled) setOta((prev) => ({ ...prev, amount: String(result.amount) })); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id, ota.start, ota.end, ota.breakfast]);
+
+  const handleCheckIn = async () => {
+    if (!selected) return;
+    try {
+      setProcessing(true);
+      // The Confirm Check In button is disabled until every booked room has
+      // a number assigned (see roomNumbers.length check on the footer
+      // button above), so this is always non-empty by the time we get here.
+      await assignRoom(selected.id, roomNumbers);
+      const checkedInId = selected.id;
+      await checkInReservation(checkedInId);
+      // Recorded after the check-in, since the folio has to exist to hang it
+      // on. A failure here must never read as a failed check-in — the guest
+      // is in — so it is reported on its own terms instead.
+      let otaError = null;
+      if (ota.start && ota.end && ota.end > ota.start) {
+        try {
+          await createOtaSettlement({
+            reservationId: checkedInId,
+            startDate: ota.start,
+            endDate: ota.end,
+            includesBreakfast: ota.breakfast,
+            amount: ota.amount || undefined,
+          });
+        } catch (err) {
+          otaError = err.response?.data?.message || "the OTA payment could not be saved";
+        }
+      }
+      setSelected(null);
+      setRoomNumbers([]);
+      if (otaError) {
+        setError(`Checked in, but ${otaError}. Add it from the guest folio.`);
+        return;
+      }
+      // Straight to the folio so staff can record payment right away —
+      // covers a hold that was paid but never recorded, or a guest paying
+      // now at the front desk.
+      navigate(`/pms/folios?reservation_id=${checkedInId}`);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to check in.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleCheckAvailability = async () => {
+    if (!walkIn.checkOut) return;
+    setAvailLoading(true);
+    setAvailability(null);
+    setWalkInError(null);
+    try {
+      const result = await checkAvailability(currentBranchId(), walkInCheckInISO(), walkIn.checkOut);
+      setAvailability(result);
+    } catch (err) {
+      setWalkInError(err.response?.data?.message || "Could not load availability.");
+    } finally {
+      setAvailLoading(false);
+    }
+  };
+
+  const handleWalkIn = async (e) => {
+    e.preventDefault();
+    if (!walkIn.roomTypeId || !walkIn.guestFirstName.trim() || !walkIn.phone.trim() || !walkIn.checkOut) {
+      setWalkInError("Guest name, phone, room type, and check-out date are required.");
+      return;
+    }
+    const validRoomNumbers = walkIn.roomNumbers.map((r) => r.trim()).filter(Boolean);
+    if (validRoomNumbers.length < Number(walkIn.roomsBooked || 1)) {
+      setWalkInError("Assign a room number to every room before checking in.");
+      return;
+    }
+    setWalkInProcessing(true);
+    setWalkInError(null);
+    // Concatenated into one string only at submit time, same as the public
+    // booking site's own form (separate fields, joined for the backend's
+    // single guest_name column) — see BookingConfirmation.jsx.
+    const guestFullName = `${walkIn.guestFirstName} ${walkIn.guestLastName}`.trim();
+    try {
+      const hold = await createAdminReservation({
+        branch_id: currentBranchId(),
+        room_type_id: Number(walkIn.roomTypeId),
+        guest_name: guestFullName,
+        phone_number: walkIn.phone.trim(),
+        guest_email: walkIn.email.trim(),
+        check_in: walkInCheckInISO(),
+        check_out: walkIn.checkOut,
+        rooms_booked: Number(walkIn.roomsBooked),
+        source: "walk_in",
+        booking_channel: "direct",
+        // A walk-in goes straight from creation to Confirmed (see below) with
+        // no separate Hold-stage review step to adjust the rate afterward
+        // (unlike an online booking) — so the rate has to be sent here.
+        // walkInTotal already folds in the (possibly overridden) per-night
+        // rate × rooms booked × nights, matching how the backend would
+        // otherwise compute it from the room type's own base_rate.
+        total_rate: walkInTotal,
+        without_breakfast: walkIn.withoutBreakfast,
+      });
+
+      const internalId = hold.internal_id;
+      const bookingRef = hold.reservation_id;
+
+      // Rooms must be assigned BEFORE confirming — confirmReservation and
+      // checkIn both now require every booked room to already have a room
+      // number (see reservations.service.ts), so this has to run first.
+      await assignRoom(internalId, validRoomNumbers);
+
+      // Must happen before checkInReservation below — postStayChargesForDay
+      // reads each assigned room's CURRENT status when posting the first
+      // night's charge, so a room only gets excluded from it if this runs
+      // first. Resolved against the room list fetched for the picker
+      // (still valid: assigning a room doesn't change its own inventory id,
+      // only its status/assignment) rather than needing a re-fetch.
+      if (walkIn.complementary) {
+        const roomIds = validRoomNumbers
+          .map((num) => walkInAvailableRooms?.available?.find((r) => r.room_number === num)?.id)
+          .filter(Boolean);
+        await Promise.all(roomIds.map((id) => updateRoomStatus(id, "complementary")));
+      }
+
+      await confirmReservationById(internalId);
+      await checkInReservation(internalId);
+
+      // The folio exists by now (confirmReservationById above), which is what
+      // an OTA settlement hangs on. Reported as a warning rather than thrown:
+      // the guest is checked in either way.
+      if (walkIn.ota.start && walkIn.ota.end && walkIn.ota.end > walkIn.ota.start) {
+        try {
+          await createOtaSettlement({
+            reservationId: internalId,
+            startDate: walkIn.ota.start,
+            endDate: walkIn.ota.end,
+            includesBreakfast: walkIn.ota.breakfast,
+            amount: walkIn.ota.amount || undefined,
+          });
+        } catch (err) {
+          setWalkInPaymentWarning(
+            `The OTA payment was not saved: ${err.response?.data?.message || "add it from the guest folio"}.`,
+          );
+        }
+      }
+
+      // Payment is optional — only attempted if the receptionist actually
+      // entered an amount. Failing this must never undo or hide the
+      // check-in that already succeeded; it's reported as a separate
+      // warning, directing staff to record it from the folio instead.
+      const validPaymentSplits = walkIn.paymentSplits.filter((s) => Number(s.amount) > 0);
+      let overpaymentDeposit = null;
+      if (validPaymentSplits.length > 0) {
+        try {
+          const folios = await fetchFolios({ reservation_id: internalId });
+          const folioId = folios?.data?.[0]?.id;
+          if (!folioId) throw new Error("Folio not found");
+          if (walkInPaymentTaxAmount > 0 || walkInPaymentDiscountAmount > 0) {
+            await addFolioItem(folioId, {
+              description: "Tax/discount adjustment applied at check-in payment",
+              amount: 0,
+              tax: walkInPaymentTaxAmount,
+              discount: walkInPaymentDiscountAmount,
+              item_type: "adjustment",
+            });
+          }
+          const result = await recordPayment({
+            folio_id: folioId,
+            payments: validPaymentSplits.map((s) => ({ amount: Number(s.amount), payment_method: s.payment_method })),
+            receipt_number: walkIn.paymentReceiptNumber || undefined,
+            notes: walkIn.paymentNotes || undefined,
+          });
+          setWalkInReceipt({
+            title: "Payment Recorded",
+            items: result.payments.map((p) => ({ reference: p.payment_reference, amount: fmtCurrency(p.amount), method: p.payment_method })),
+          });
+          overpaymentDeposit = result.overpayment_deposit;
+        } catch (payErr) {
+          setWalkInPaymentWarning(
+            (payErr.response?.data?.message || "Failed to record the payment") +
+              " — the guest is checked in; record the payment from their folio instead.",
+          );
+        }
+      }
+
+      setWalkInSuccess({ bookingRef, guestName: guestFullName, overpaymentDeposit });
+      setWalkIn(EMPTY_WALK_IN);
+      setAvailability(null);
+      setWalkInGuestMatches([]);
+      setWalkInActiveGuestField(null);
+    } catch (err) {
+      setWalkInError(err.response?.data?.message || "Walk-in check-in failed. Please try again.");
+    } finally {
+      setWalkInProcessing(false);
+    }
+  };
+
+  const resetWalkIn = () => {
+    setWalkInSuccess(null);
+    setWalkInError(null);
+    setWalkIn(EMPTY_WALK_IN);
+    setAvailability(null);
+    setWalkInReceipt(null);
+    setWalkInPaymentWarning(null);
+  };
+
+  const availableTypes = availability
+    ? availability.room_types.filter((rt) => rt.available_rooms >= Number(walkIn.roomsBooked))
+    : [];
+
+  const selectedWalkInRoomType = availableTypes.find((rt) => String(rt.room_type_id) === walkIn.roomTypeId);
+  const walkInNights = walkIn.checkOut
+    ? Math.max(1, Math.ceil((new Date(walkIn.checkOut) - new Date(walkInCheckInISO())) / (1000 * 60 * 60 * 24)))
+    : 1;
+  // The field holds a per-night rate, pre-filled with the room type's own
+  // base rate (not the total) — staff think in "rate per night", and the
+  // label alongside shows the resulting total live as they override it.
+  const walkInRoomRate = walkIn.roomRate !== "" ? Number(walkIn.roomRate) : Number(selectedWalkInRoomType?.base_rate || 0);
+  // Breakfast is priced/discounted separately from the room rate (the
+  // Discount % below only ever applies to roomRate) — folded in here so the
+  // live total actually matches what postStayChargesForDay bills each
+  // night, and updates immediately when Without Breakfast is toggled.
+  const walkInBreakfastRate = Number(selectedWalkInRoomType?.breakfast_rate || 0);
+  const walkInBreakfastIncluded = !walkIn.withoutBreakfast && walkInBreakfastRate > 0;
+  const walkInPerNightRate = walkInRoomRate + (walkInBreakfastIncluded ? walkInBreakfastRate : 0);
+  const walkInTotal = walkInPerNightRate * Number(walkIn.roomsBooked || 1) * walkInNights;
+  const walkInValidRoomNumbers = walkIn.roomNumbers.map((r) => r.trim()).filter(Boolean);
+  const walkInBaseRate = Number(selectedWalkInRoomType?.base_rate || 0);
+
+  // What the OTA is expected to cover, so the desk can see what to actually
+  // take from the guest rather than working it out in their head. A typed
+  // amount wins (an OTA usually remits net of its commission); otherwise it is
+  // the rate for the nights in the range, which is exactly what the server
+  // fills in when the field is left blank.
+  const walkInOtaNights = walkIn.ota.start && walkIn.ota.end && walkIn.ota.end > walkIn.ota.start
+    ? Math.max(0, Math.round((new Date(walkIn.ota.end) - new Date(walkIn.ota.start)) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const walkInOtaPerNight = walkInRoomRate + (walkIn.ota.breakfast && walkInBreakfastIncluded ? walkInBreakfastRate : 0);
+  const walkInOtaAmount = walkInOtaNights === 0
+    ? 0
+    : (String(walkIn.ota.amount).trim() !== ""
+      ? Number(walkIn.ota.amount) || 0
+      : walkInOtaPerNight * Number(walkIn.roomsBooked || 1) * walkInOtaNights);
+  // Everything the OTA is not covering is the guest's own. Floored at zero:
+  // an OTA remitting more than the stay costs is the folio's problem to hold
+  // as credit, not a negative sum to ask someone for.
+  const walkInGuestDue = Math.max(walkInTotal - walkInOtaAmount, 0);
+
+  // Tax/Discount applied at payment time — distinct from the Discount above
+  // (which adjusts the Room Rate the stay bills at going forward). These
+  // post as one 'adjustment' folio item right before the payment is
+  // recorded (same mechanism AdminFolios.jsx's Record Payment uses), so
+  // they only ever apply alongside an actual payment. No real folio balance
+  // exists yet to compute a percentage against until after check-in
+  // succeeds, so it's computed against the stay total shown above instead.
+  const walkInPaymentTaxAmount = walkIn.paymentTaxMode === "percentage"
+    ? walkInTotal * (Number(walkIn.paymentTax || 0) / 100)
+    : Number(walkIn.paymentTax || 0);
+  const walkInPaymentDiscountAmount = walkIn.paymentDiscountMode === "percentage"
+    ? walkInTotal * (Number(walkIn.paymentDiscount || 0) / 100)
+    : Number(walkIn.paymentDiscount || 0);
+
+  // A complementary room's own charge is already excluded at check-in time
+  // (see postStayChargesForDay's billableRooms) — this just makes that fact
+  // visible *before* check-in, so staff don't assign one without realizing.
+  const walkInComplementaryRoomNumbers = walkInValidRoomNumbers.filter(
+    (num) => walkInAvailableRooms?.available?.find((r) => r.room_number === num)?.status === "complementary",
+  );
+  // Combines rooms already flagged complementary (from a prior visit) with
+  // the Complementary checkbox above (this stay, not yet submitted) — either
+  // way the total should show waived right away, not just after check-in.
+  const walkInAllSelectedComplementary =
+    walkInValidRoomNumbers.length > 0 && walkInComplementaryRoomNumbers.length === walkInValidRoomNumbers.length;
+  const walkInEffectivelyComplementary = walkInAllSelectedComplementary || walkIn.complementary;
+
+  // Discount is a one-shot calculator, not a persisted field — touching it
+  // recomputes the per-night Room Rate from the room type's own base rate
+  // every time, same pattern as the Hold reservation modal's discount field.
+  const handleWalkInDiscountChange = (patch) => {
+    setWalkIn((p) => {
+      const next = { ...p, ...patch };
+      const value = Number(next.discount || 0);
+      const discountAmount = next.discountMode === "percentage" ? walkInBaseRate * (value / 100) : value;
+      next.roomRate = String(Math.max(walkInBaseRate - discountAmount, 0));
+      return next;
+    });
+  };
+
+  // Free-text fallback only when this room type has no numbered inventory at
+  // all — same convention as RoomAssignmentPicker elsewhere in the app.
+  const hasNumberedWalkInInventory = !(walkInAvailableRooms && walkInAvailableRooms.unlabeled_rooms > 0);
+  const noWalkInRoomsFree = hasNumberedWalkInInventory && walkInAvailableRooms && walkInAvailableRooms.available.length === 0;
+
+  const updateWalkInRoomNumber = (index, value) => {
+    setWalkIn((p) => {
+      const next = [...p.roomNumbers];
+      next[index] = value;
+      return { ...p, roomNumbers: next };
+    });
+  };
+
+  return (
+    <>
+      {successMessage && (
+        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl z-50 flex items-center gap-4 shadow-lg">
+          <span className="text-xl font-bold">{successMessage}</span>
+          <button onClick={() => setSuccessMessage("")} className="text-green-700 hover:text-green-900 cursor-pointer">
+            <IoClose size={24} />
+          </button>
+        </div>
+      )}
+
+      <div data-component="AdminCheckIns" className="flex flex-col items-start gap-[3rem]">
+        <PageHeading icon={IoLogInOutline}>Check-Ins</PageHeading>
+
+        {/* Tabs - the same wrapping pills as Reports' tabs. Underlined in
+            one row, their labels broke mid-word on a phone ("Walk- / In"). */}
+        <div className="flex flex-wrap gap-3 w-full">
+          {[
+            { key: "arrivals", label: "Expected Arrivals" },
+            { key: "walkin", label: "Walk-In" },
+            // A walk-in who wants a LATER date, not a room tonight — see
+            // FutureBookingForm for why this can't reuse the Walk-In form.
+            { key: "future", label: "Future Booking" },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-6 py-3 rounded-lg text-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
+                tab === key
+                  ? "bg-[color:var(--emphasis)] text-white"
+                  : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <p className="text-xl text-[color:var(--text-color)]/76">
+          {tab === "arrivals"
+            ? "Confirmed (paid) reservations expected to check in on the selected date. Check-in opens on each guest's arrival day — to let someone in early, change their check-in date to today in Reservations first."
+            : "Register a guest who arrives without an existing reservation."}
+        </p>
+
+        <MotionDiv key={tab} className="w-full flex flex-col items-start gap-[3rem]" {...tabEnter}>
+        {/* EXPECTED ARRIVALS */}
+        {tab === "arrivals" && (
+          <>
+            <div className="w-auto flex justify-end">
+              <DateInput
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className={`${field.input} w-auto text-xl!`}
+              />
+            </div>
+            <div className={table.card}>
+              <div className={table.scroll}>
+                <table className={table.el}>
+                  <thead>
+                    <tr className={table.headRow}>
+                      <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
+                      <th className={`${table.th} hidden md:table-cell`}>Room Type</th>
+                      <th className={`${table.th} hidden md:table-cell`}>Check-Out</th>
+                      <th className={table.th}>Status</th>
+                      <th className={table.th}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr><td colSpan="5" className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
+                    ) : error ? (
+                      <tr><td colSpan="5" className="px-8 py-10 text-center text-red-600 text-xl">{error}</td></tr>
+                    ) : reservations.length === 0 ? (
+                      <tr><td colSpan="5" className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No expected arrivals for this date.</td></tr>
+                    ) : (
+                      reservations.map((r) => (
+                        <tr key={r.id} className={table.row}>
+                          <td className={`${table.td} ${table.stickyTd} font-medium`}>
+                            <GuestName name={r.guest_name} tags={r.guest_tags} />
+                            <EmailStatusTag status={r.email_status} className="ml-2" />
+                          </td>
+                          <td className={`${table.td} hidden md:table-cell`}>{r.room_type?.name || "N/A"}</td>
+                          <td className={`${table.td} hidden md:table-cell`}>{formatDate(r.check_out)}</td>
+                          <td className={table.td}><StatusBadge status={r.status} /></td>
+                          <td className={table.td}>
+                            <div className={table.actions}>
+                              <button
+                                onClick={() => r.status === "confirmed" && !arrivesLater(r) && openCheckIn(r)}
+                                disabled={r.status !== "confirmed" || arrivesLater(r)}
+                                title={
+                                  r.status === "hold"
+                                    ? "Awaiting payment — confirm reservation first"
+                                    : arrivesLater(r)
+                                      ? `Booked to arrive ${formatDate(r.check_in)} — to check in early, change the check-in date to today in Reservations first`
+                                      : ""
+                                }
+                                className={btn.rowPrimary}
+                              >
+                                Check In
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* WALK-IN */}
+        {tab === "walkin" && (
+          <div className="w-full">
+            {walkInSuccess ? (
+              <div className="flex flex-col items-center gap-6 py-16 text-center bg-(--card) rounded-xl border border-(--accent-2) w-full">
+                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-5xl font-bold">✓</div>
+                <h2 className="text-4xl font-secondary font-bold text-[color:var(--black)]">{walkInSuccess.guestName}</h2>
+                <p className="text-2xl text-[color:var(--text-color)]/84">
+                  Checked in · Booking Ref: <strong className="text-[color:var(--black)]">{walkInSuccess.bookingRef}</strong>
+                </p>
+                <p className="text-xl text-[color:var(--text-color)]/68">Guest profile and folio have been created.</p>
+                {walkInSuccess.overpaymentDeposit && (
+                  <p className="text-blue-700 text-xl bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 max-w-lg">
+                    {fmtCurrency(walkInSuccess.overpaymentDeposit.amount)} over the balance was kept on file as a deposit.
+                  </p>
+                )}
+                {walkInPaymentWarning && (
+                  <p className="text-orange-700 text-xl bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 max-w-lg">{walkInPaymentWarning}</p>
+                )}
+                <button onClick={resetWalkIn} className={`${btn.primary} mt-4`}>New Walk-In</button>
+              </div>
+            ) : (
+              <form onSubmit={handleWalkIn} className="w-full flex flex-col gap-8 bg-(--card) rounded-xl border border-(--accent-2) p-8">
+                {walkInError && (
+                  <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{walkInError}</p>
+                )}
+
+                {/* Date + rooms row */}
+                <div className="flex gap-4 flex-wrap items-end">
+                  <div className="flex flex-col gap-2">
+                    <label className={field.label}>
+                      Check-Out Date <span className="text-red-500">*</span>
+                    </label>
+                    <DateInput
+                      min={minWalkInCheckOutISO()}
+                      value={walkIn.checkOut}
+                      onChange={(e) => {
+                        setWalkIn((p) => ({ ...p, checkOut: e.target.value, roomTypeId: "", roomNumbers: [] }));
+                        setAvailability(null);
+                      }}
+                      className={field.input}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className={field.label}>Rooms</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={walkIn.roomsBooked}
+                      onChange={(e) => {
+                        setWalkIn((p) => ({ ...p, roomsBooked: e.target.value, roomTypeId: "", roomNumbers: [] }));
+                        setAvailability(null);
+                      }}
+                      className={`${field.input} w-28`}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCheckAvailability}
+                    disabled={!walkIn.checkOut || availLoading}
+                    className={btn.primary}
+                  >
+                    {availLoading ? "Checking..." : "Check Availability"}
+                  </button>
+                </div>
+
+                {/* Room type selection */}
+                {availability && (
+                  <div className="flex flex-col gap-3">
+                    <label className={field.label}>
+                      Room Type <span className="text-red-500">*</span>
+                    </label>
+                    {availableTypes.length === 0 ? (
+                      <p className="text-red-600 text-xl">
+                        No rooms available for {walkIn.roomsBooked} room(s) on those dates.
+                      </p>
+                    ) : (
+                      <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(33rem,1fr))]">
+                        {availableTypes.map((rt) => (
+                          <label
+                            key={rt.room_type_id}
+                            className={`w-full max-w-[48rem] flex items-center justify-between gap-4 border rounded-xl px-6 py-4 cursor-pointer transition-colors ${
+                              walkIn.roomTypeId === String(rt.room_type_id)
+                                ? "border-[color:var(--emphasis)] bg-[color:var(--emphasis)]/5 ring-1 ring-[color:var(--emphasis)]"
+                                : "border-[color:var(--text-color)]/20 hover:border-[color:var(--emphasis)]/40"
+                            }`}
+                          >
+                            <div className="flex items-center gap-4">
+                              <input
+                                type="radio"
+                                name="roomType"
+                                value={rt.room_type_id}
+                                checked={walkIn.roomTypeId === String(rt.room_type_id)}
+                                onChange={(e) => setWalkIn((p) => ({ ...p, roomTypeId: e.target.value, roomNumbers: [], roomRate: "", discount: "" }))}
+                                className="accent-[color:var(--emphasis)] w-5 h-5"
+                              />
+                              <span className="text-xl font-medium">{rt.room_type_name}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xl font-bold text-[color:var(--emphasis)]">
+                                {fmtCurrency(rt.base_rate, rt.currency_symbol)} / night
+                              </span>
+                              <span className="block text-lg text-[color:var(--text-color)]/68">
+                                {rt.available_rooms} available
+                              </span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Room rate override — a walk-in goes straight to Confirmed
+                    with no separate Hold-stage review step, so this is the
+                    only chance to adjust it before the folio is created.
+                    Pre-filled with the room type's own rate (editable from
+                    there); the label alongside always shows the resulting
+                    total for the whole stay, updating live as it's overridden. */}
+                {walkIn.roomTypeId && (
+                  <div className="flex flex-col gap-2">
+                    <label className={field.label}>Room Rate (₦/night)</label>
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <input
+                        type="number"
+                        value={walkIn.roomRate !== "" ? walkIn.roomRate : String(selectedWalkInRoomType?.base_rate ?? "")}
+                        onChange={(e) => setWalkIn((p) => ({ ...p, roomRate: e.target.value }))}
+                        className={`${field.input} max-w-xs`}
+                      />
+                      <span className="text-xl text-[color:var(--text-color)]/76 whitespace-nowrap flex items-center gap-2 flex-wrap">
+                        {walkInNights} night{walkInNights > 1 ? "s" : ""}
+                        {Number(walkIn.roomsBooked) > 1 ? ` × ${walkIn.roomsBooked} rooms` : ""}
+                        {" × "}{fmtCurrency(walkInPerNightRate)}
+                        {walkInBreakfastIncluded && (
+                          <span className="text-lg text-[color:var(--text-color)]/60">(incl. {fmtCurrency(walkInBreakfastRate)} breakfast)</span>
+                        )}
+                        {" = "}
+                        {walkInEffectivelyComplementary ? (
+                          <s className="text-[color:var(--text-color)]/50">{fmtCurrency(walkInTotal)}</s>
+                        ) : (
+                          <strong className="text-[color:var(--black)]">{fmtCurrency(walkInTotal)}</strong>
+                        )}
+                        {walkInEffectivelyComplementary && (
+                          <span className="flex items-center gap-2">
+                            <RoomStatusTag status="complementary" />
+                            <span className="text-lg text-[color:var(--text-color)]/68">no charge at check-in</span>
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    {/* Mixed multi-room case: some but not all selected rooms
+                        are complementary — no single strike-through total
+                        would read correctly, so name them instead. */}
+                    {walkInComplementaryRoomNumbers.length > 0 && !walkInAllSelectedComplementary && (
+                      <p className="text-lg text-purple-700">
+                        Room{walkInComplementaryRoomNumbers.length > 1 ? "s" : ""} {walkInComplementaryRoomNumbers.join(", ")} {walkInComplementaryRoomNumbers.length > 1 ? "are" : "is"} complementary — no room charge will post for {walkInComplementaryRoomNumbers.length > 1 ? "them" : "it"} at check-in.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Discount — applies against the room type's own base rate
+                    (not whatever's currently typed in Room Rate above), and
+                    writes the result straight into Room Rate so the total
+                    updates live the same way overriding it directly would. */}
+                {walkIn.roomTypeId && (
+                  <div className="flex flex-col gap-2">
+                    <label className={field.label}>Discount ({walkIn.discountMode === "percentage" ? "%" : "₦/night"})</label>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <select
+                        value={walkIn.discountMode}
+                        onChange={(e) => handleWalkInDiscountChange({ discountMode: e.target.value })}
+                        className={`${field.select} w-auto`}
+                      >
+                        <option value="fixed">Fixed (₦/night)</option>
+                        <option value="percentage">Percentage (%)</option>
+                      </select>
+                      <input
+                        type="number"
+                        value={walkIn.discount}
+                        onChange={(e) => handleWalkInDiscountChange({ discount: e.target.value })}
+                        className={`${field.input} max-w-xs`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Without Breakfast — a manual opt-out from the room type's
+                    breakfast_rate, applied to every night of the stay. */}
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="walkin-without-breakfast"
+                    checked={walkIn.withoutBreakfast}
+                    onChange={(e) => setWalkIn((p) => ({ ...p, withoutBreakfast: e.target.checked }))}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <label htmlFor="walkin-without-breakfast" className={`${field.label} cursor-pointer`}>
+                    Without Breakfast
+                  </label>
+                </div>
+
+                {/* Complementary — flags the assigned room(s) complementary the
+                    moment check-in runs, so no room charge posts for them at
+                    all (see postStayChargesForDay's billableRooms) — a
+                    discount only shrinks the amount charged, this removes the
+                    room charge outright and marks the room itself comped
+                    (visible on Rooms/Room Chart too). Independent of Discount
+                    above; combining them is harmless (a comped room posts
+                    nothing regardless of what total_rate says). */}
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="walkin-complementary"
+                    checked={walkIn.complementary}
+                    onChange={(e) => setWalkIn((p) => ({ ...p, complementary: e.target.checked }))}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <label htmlFor="walkin-complementary" className={`${field.label} cursor-pointer`}>
+                    Complementary (no room charge, sets room status)
+                  </label>
+                </div>
+
+                {/* Guest details */}
+                <div className="flex flex-col gap-6">
+                  {walkInKnownNames.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <label className={field.label}>Known Names</label>
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          if (!e.target.value) return;
+                          const [first, ...rest] = e.target.value.trim().split(/\s+/);
+                          setWalkIn((p) => ({ ...p, guestFirstName: first, guestLastName: rest.join(" ") || "" }));
+                        }}
+                        className={field.select}
+                      >
+                        <option value="">Select a known name to prefill…</option>
+                        {walkInKnownNames.map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div className="relative">
+                    <div className="flex gap-4 flex-wrap">
+                      <div className="flex flex-col gap-2 flex-1 min-w-48">
+                        <label className={field.label}>
+                          First Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="First name"
+                          value={walkIn.guestFirstName}
+                          onChange={(e) => setWalkIn((p) => ({ ...p, guestFirstName: e.target.value }))}
+                          onFocus={() => setWalkInActiveGuestField("name")}
+                          onBlur={() => setWalkInActiveGuestField(null)}
+                          className={field.input}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 flex-1 min-w-48">
+                        <label className={field.label}>Last Name</label>
+                        <input
+                          type="text"
+                          placeholder="Last name"
+                          value={walkIn.guestLastName}
+                          onChange={(e) => setWalkIn((p) => ({ ...p, guestLastName: e.target.value }))}
+                          onFocus={() => setWalkInActiveGuestField("name")}
+                          onBlur={() => setWalkInActiveGuestField(null)}
+                          className={field.input}
+                        />
+                      </div>
+                    </div>
+                    {/* Existing-guest matches — mousedown (not click) fires
+                        before the input's onBlur closes this, so a selection
+                        registers instead of the list vanishing first. */}
+                    {walkInActiveGuestField === "name" && walkInGuestMatches.length > 0 && renderWalkInGuestMatches()}
+                  </div>
+                  <div className="relative">
+                    <div className="flex gap-4 flex-wrap">
+                      <div className="flex flex-col gap-2 flex-1 min-w-48">
+                        <label className={field.label}>
+                          Phone <span className="text-red-500">*</span>
+                          <GuestTagPills tags={walkInTags} className="ml-3" />
+                        </label>
+                        <PhoneInput
+                          value={walkIn.phone}
+                          onChange={(v) => setWalkIn((p) => ({ ...p, phone: v }))}
+                          onFocus={() => setWalkInActiveGuestField("phone")}
+                          onBlur={() => setWalkInActiveGuestField(null)}
+                          selectClassName={field.select}
+                          inputClassName={field.input}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 flex-1 min-w-48">
+                        <label className={field.label}>
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          placeholder="guest@example.com"
+                          value={walkIn.email}
+                          onChange={(e) => setWalkIn((p) => ({ ...p, email: e.target.value }))}
+                          onFocus={() => setWalkInActiveGuestField("email")}
+                          onBlur={() => setWalkInActiveGuestField(null)}
+                          className={field.input}
+                        />
+                      </div>
+                    </div>
+                    {(walkInActiveGuestField === "phone" || walkInActiveGuestField === "email") && walkInGuestMatches.length > 0 && renderWalkInGuestMatches()}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className={field.label}>
+                      Room Number{Number(walkIn.roomsBooked) > 1 ? "s" : ""}
+                    </label>
+                    {!walkIn.roomTypeId ? (
+                      <p className="text-lg text-[color:var(--text-color)]/60">Select a room type first.</p>
+                    ) : walkInRoomsLoading ? (
+                      <p className="text-lg text-[color:var(--text-color)]/68">Loading available rooms…</p>
+                    ) : noWalkInRoomsFree ? (
+                      <p className="text-lg text-red-600">No rooms of this type are currently free.</p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {Array.from({ length: Number(walkIn.roomsBooked) || 1 }).map((_, index) => {
+                          const value = walkIn.roomNumbers[index] || "";
+                          const options = hasNumberedWalkInInventory && walkInAvailableRooms
+                            ? walkInAvailableRooms.available.filter(
+                                (r) => r.room_number === value || !walkIn.roomNumbers.includes(r.room_number),
+                              )
+                            : [];
+                          return hasNumberedWalkInInventory ? (
+                            <select
+                              key={index}
+                              value={value}
+                              onChange={(e) => updateWalkInRoomNumber(index, e.target.value)}
+                              className={`${field.select} w-44`}
+                            >
+                              <option value="">-- Select a room --</option>
+                              {options.map((r) => (
+                                <option key={r.id} value={r.room_number}>
+                                  {r.room_number}{r.status === "complementary" ? " (Complementary)" : ""}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              key={index}
+                              type="text"
+                              placeholder="e.g. 205"
+                              value={value}
+                              onChange={(e) => updateWalkInRoomNumber(index, e.target.value)}
+                              className={`${field.input} w-44`}
+                            />
+                          );
+                        })}
+                        {walkInValidRoomNumbers.length < Number(walkIn.roomsBooked || 1) && (
+                          <p className="text-lg text-orange-600">
+                            {walkInValidRoomNumbers.length} of {walkIn.roomsBooked} room(s) assigned — a room number is required for every room before check-in.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <OtaNightsFields
+                  value={walkIn.ota}
+                  onChange={(next) => setWalkIn((p) => ({ ...p, ota: next }))}
+                  minDate={walkInCheckInISO()}
+                  maxDate={walkIn.checkOut}
+                />
+
+                {/* Payment (optional) — a walk-in commonly pays at the desk
+                    right away; recording it here saves the trip to the
+                    folio afterward. Left blank, nothing is charged and the
+                    folio opens exactly as it would without this section. */}
+                <div className="flex flex-col gap-4 border-t border-(--accent-2) pt-6">
+                  <div>
+                    <label className={field.label}>Payment (optional)</label>
+                    <p className="text-lg text-[color:var(--text-color)]/68 mt-1">
+                      If the guest is paying now, record it here — leave the amount blank to skip and record it later from the folio.
+                    </p>
+                  </div>
+                  {/* With an OTA covering part of the stay, the stay total is
+                      not what the guest owes — this states the difference so
+                      nobody has to work it out at the desk. */}
+                  {walkInOtaAmount > 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-5 py-4 flex flex-col gap-1">
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <span className="text-xl text-amber-800">Stay total</span>
+                        <span className="text-xl font-semibold text-amber-800">{fmtCurrency(walkInTotal)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <span className="text-xl text-amber-800">
+                          OTA is paying ({walkInOtaNights} night{walkInOtaNights > 1 ? "s" : ""})
+                        </span>
+                        <span className="text-xl font-semibold text-amber-800">-{fmtCurrency(walkInOtaAmount)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4 flex-wrap border-t border-amber-200 mt-1 pt-2">
+                        <span className="text-xl font-bold text-amber-900">Collect from the guest</span>
+                        <span className="text-2xl font-bold text-amber-900">{fmtCurrency(walkInGuestDue)}</span>
+                      </div>
+                    </div>
+                  )}
+                  <PaymentSplitRows
+                    splits={walkIn.paymentSplits}
+                    setSplits={(splits) => setWalkIn((p) => ({ ...p, paymentSplits: splits }))}
+                  />
+                  <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                    <div className="flex flex-col gap-2">
+                      <label className={field.label}>Tax ({walkIn.paymentTaxMode === "percentage" ? "%" : "₦"}) — optional</label>
+                      <div className="flex flex-col gap-2">
+                        <select
+                          value={walkIn.paymentTaxMode}
+                          onChange={(e) => setWalkIn((p) => ({ ...p, paymentTaxMode: e.target.value }))}
+                          className={`${field.select} w-auto`}
+                        >
+                          <option value="fixed">Fixed (₦)</option>
+                          <option value="percentage">Percentage (%)</option>
+                        </select>
+                        <input
+                          type="number"
+                          value={walkIn.paymentTax}
+                          onChange={(e) => setWalkIn((p) => ({ ...p, paymentTax: e.target.value }))}
+                          className={field.input}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className={field.label}>Discount ({walkIn.paymentDiscountMode === "percentage" ? "%" : "₦"}) — optional</label>
+                      <div className="flex flex-col gap-2">
+                        <select
+                          value={walkIn.paymentDiscountMode}
+                          onChange={(e) => setWalkIn((p) => ({ ...p, paymentDiscountMode: e.target.value }))}
+                          className={`${field.select} w-auto`}
+                        >
+                          <option value="fixed">Fixed (₦)</option>
+                          <option value="percentage">Percentage (%)</option>
+                        </select>
+                        <input
+                          type="number"
+                          value={walkIn.paymentDiscount}
+                          onChange={(e) => setWalkIn((p) => ({ ...p, paymentDiscount: e.target.value }))}
+                          className={field.input}
+                        />
+                      </div>
+                    </div>
+                    {(walkInPaymentTaxAmount > 0 || walkInPaymentDiscountAmount > 0) && (
+                      <p className="text-lg text-[color:var(--text-color)]/68 col-span-2 max-sm:col-span-1">
+                        Net {fmtCurrency(walkInPaymentTaxAmount - walkInPaymentDiscountAmount)} adjustment, applied when the payment below is recorded
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-4 flex-wrap">
+                    <div className="flex flex-col gap-2 flex-1 min-w-48">
+                      <label className={field.label}>Receipt Number</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. from the receipt book"
+                        value={walkIn.paymentReceiptNumber}
+                        onChange={(e) => setWalkIn((p) => ({ ...p, paymentReceiptNumber: e.target.value }))}
+                        className={field.input}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2 flex-1 min-w-48">
+                      <label className={field.label}>Remarks</label>
+                      <AutoGrowTextarea
+                        placeholder="e.g. cash received at check-in"
+                        value={walkIn.paymentNotes}
+                        onChange={(e) => setWalkIn((p) => ({ ...p, paymentNotes: e.target.value }))}
+                        className={field.textarea}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={
+                    walkInProcessing ||
+                    !walkIn.roomTypeId ||
+                    !walkIn.guestFirstName.trim() ||
+                    !walkIn.phone.trim() ||
+                    walkInValidRoomNumbers.length < Number(walkIn.roomsBooked || 1)
+                  }
+                  className={`${btn.primary} self-start px-12! py-4!`}
+                >
+                  {walkInProcessing ? "Processing..." : "Check In Guest"}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+
+        {tab === "future" && <FutureBookingForm />}
+        </MotionDiv>
+      </div>
+
+      {walkInReceipt && (
+        <TransactionReceiptModal
+          title={walkInReceipt.title}
+          items={walkInReceipt.items}
+          onClose={() => setWalkInReceipt(null)}
+        />
+      )}
+
+      {/* ==== Check-in modal for expected arrivals ==== */}
+      {selected && (
+        <Modal
+          onClose={() => setSelected(null)}
+          title={<GuestName name={selected.guest_name} tags={selected.guest_tags} />}
+          subtitle="Confirm arrival details before checking the guest in."
+          size="sm"
+          footer={
+            <>
+              <button onClick={() => setSelected(null)} className={btn.secondary}>Cancel</button>
+              <button onClick={() => navigate(`/pms/folios?reservation_id=${selected.id}`)} className={btn.secondary}>
+                Go to Folio
+              </button>
+              <button
+                onClick={handleCheckIn}
+                disabled={processing || roomNumbers.length < (selected.rooms_booked || 1)}
+                className={btn.success}
+                title={roomNumbers.length < (selected.rooms_booked || 1) ? "Assign a room number to every room before checking in" : undefined}
+              >
+                {processing ? "Checking In..." : "Confirm Check In"}
+              </button>
+            </>
+          }
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[color:var(--text-color)]/3 rounded-lg px-5 py-4">
+              <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">Room Type</p>
+              <p className="text-2xl font-bold text-[color:var(--black)]">{selected.room_type?.name || "N/A"}</p>
+            </div>
+            <div className="bg-[color:var(--text-color)]/3 rounded-lg px-5 py-4">
+              <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">Rooms Booked</p>
+              <p className="text-2xl font-bold text-[color:var(--black)]">{selected.rooms_booked}</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className={field.label}>Room{selected.rooms_booked > 1 ? "s" : ""}</label>
+            <RoomAssignmentPicker
+              reservationId={selected.id}
+              roomTypeId={selected.room_type_id}
+              roomsBooked={selected.rooms_booked}
+              initialRoomNumbers={roomNumbers}
+              onSlotsChange={setRoomNumbers}
+              hideSaveButton
+            />
+            {roomNumbers.length < (selected.rooms_booked || 1) && (
+              <p className="text-lg text-orange-600">
+                {roomNumbers.length} of {selected.rooms_booked} room(s) assigned — a room number is required for every room before check-in.
+              </p>
+            )}
+          </div>
+
+          {/* Nights an OTA is paying for — the same control the Walk-In and
+              Future Booking forms use, so the question reads identically
+              wherever a booking is keyed in. Defaults to the whole stay here,
+              since an arrival being checked in already has its dates. */}
+          <OtaNightsFields value={ota} onChange={setOta} minDate={otaMin} maxDate={otaMax} />
+        </Modal>
+      )}
+    </>
+  );
+}
+
+const EMPTY_FUTURE_BOOKING = {
+  guestFirstName: "", guestLastName: "", phone: "", email: "",
+  checkIn: "", checkOut: "", roomTypeId: "", roomsBooked: 1, roomNumbers: [],
+};
+
+/**
+ * A walk-in guest booking a LATER date, rather than taking a room now.
+ *
+ * Deliberately not folded into the Walk-In form above: that one pins check-in
+ * to today's business date, requires a room number, and checks the guest in
+ * immediately — none of which apply here.
+ *
+ * A room number IS required, even though the guest is not arriving yet. It
+ * was briefly optional and that was wrong: a room_hold reserves a COUNT, so
+ * the room type cannot be oversold either way, but room_assignments is what
+ * the room chart, room status, the night audit's per-room charge posting and
+ * the per-room report all read — a confirmed reservation without one is
+ * invisible to every one of them. The room can be reassigned any time before
+ * arrival, so picking one now costs nothing.
+ *
+ * The booking is CONFIRMED rather than left on hold, because holds lapse
+ * after 2 hours (HOLD_EXPIRY_HOURS) — one taken today for next week would
+ * release itself the same afternoon.
+ */
+// The OTA half of both booking forms: which nights an OTA is paying for
+// instead of the guest. Keyed in by hand because there is no channel manager —
+// an OTA booking reaches the desk as a walk-in or as a future booking, never
+// as an automatic arrival.
+//
+// The amount is optional here, unlike on the arrivals check-in form: the
+// reservation does not exist yet, so there is nothing to price the nights from
+// until it does. Left blank, the server fills in the rate for those nights.
+function OtaNightsFields({ value, onChange, minDate, maxDate }) {
+  const set = (patch) => onChange({ ...value, ...patch });
+  // The range is the switch: dates filled in mean an OTA is paying for those
+  // nights, blank means nobody is. A checkbox over the whole stay could not
+  // express the common case — three nights booked through an OTA and a fourth
+  // added at the desk, which the guest pays for themselves.
+  const hasRange = Boolean(value.start && value.end && value.end > value.start);
+  return (
+    <div className="flex flex-col gap-3 border-t border-(--accent-2) pt-4">
+      <div className="flex flex-col gap-1">
+        <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
+          OTA-paid nights — optional
+        </p>
+        <p className="text-lg text-[color:var(--text-color)]/60">
+          Leave both dates blank if no OTA is involved. Any night outside this range stays on the guest&apos;s own
+          bill, so a guest can add nights and pay for them directly.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+        <div className="flex flex-col gap-2">
+          <label className={field.label}>OTA covers from</label>
+          <DateInput
+            value={value.start}
+            min={minDate}
+            max={maxDate}
+            onChange={(e) => set({ start: e.target.value })}
+            className={field.input}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className={field.label}>Until</label>
+          <DateInput
+            value={value.end}
+            min={minDate}
+            max={maxDate}
+            onChange={(e) => set({ end: e.target.value })}
+            className={field.input}
+          />
+        </div>
+      </div>
+      {hasRange && (
+        <label className="flex items-center gap-2 text-xl cursor-pointer">
+          <input
+            type="checkbox"
+            checked={value.breakfast}
+            onChange={(e) => set({ breakfast: e.target.checked })}
+            className="w-5 h-5 cursor-pointer"
+          />
+          The OTA rate includes breakfast
+        </label>
+      )}
+      {hasRange && (
+        <div className="flex flex-col gap-2">
+          <label className={field.label}>Amount the OTA will pay — optional</label>
+          <input
+            type="number"
+            min="0"
+            value={value.amount}
+            onChange={(e) => set({ amount: e.target.value })}
+            placeholder="Leave blank to use the rate for those nights"
+            className={field.input}
+          />
+          <p className="text-lg text-[color:var(--text-color)]/60">
+            Fill this to use a custom amount for the OTA payment.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FutureBookingForm() {
+  const [form, setForm] = useState(EMPTY_FUTURE_BOOKING);
+  const [availability, setAvailability] = useState(null);
+  const [rooms, setRooms] = useState(null);
+  const [checking, setChecking] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [created, setCreated] = useState(null);
+  const [futureOta, setFutureOta] = useState({ start: "", end: "", breakfast: false, amount: "" });
+  const [guestMatches, setGuestMatches] = useState([]);
+  const [activeGuestField, setActiveGuestField] = useState(null);
+
+  const minCheckIn = minWalkInCheckOutISO(); // tomorrow — today's walk-ins use the tab above
+  const bothDates = Boolean(form.checkIn && form.checkOut && form.checkOut > form.checkIn);
+
+  // Live guest-profile search as the name, phone or email is typed, so a
+  // returning guest can be picked instead of re-typed — same behaviour, and
+  // the same reasoning, as the Walk-In tab above: the search term comes from
+  // whichever field is focused, never all of them joined, because phone and
+  // email are matched by an exact-value hash and would never match a
+  // concatenated string.
+  useEffect(() => {
+    let term = "";
+    if (activeGuestField === "name") term = `${form.guestFirstName} ${form.guestLastName}`.trim();
+    else if (activeGuestField === "phone") term = form.phone.trim();
+    else if (activeGuestField === "email") term = form.email.trim();
+
+    if (term.length < 2) {
+      setGuestMatches([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      fetchGuests({ search: term, limit: 6 })
+        .then((data) => { if (!cancelled) setGuestMatches(data?.data || []); })
+        .catch(() => { if (!cancelled) setGuestMatches([]); });
+    }, 400);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [activeGuestField, form.guestFirstName, form.guestLastName, form.phone, form.email]);
+
+  const selectGuestMatch = (guest) => {
+    setForm((p) => ({
+      ...p,
+      guestFirstName: guest.first_name || "",
+      guestLastName: guest.last_name || "",
+      phone: guest.phone || p.phone,
+      email: guest.email || p.email,
+    }));
+    setGuestMatches([]);
+    setActiveGuestField(null);
+  };
+
+  // Same dropdown under whichever row is active, matching the Walk-In tab.
+  const renderGuestMatches = () => (
+    <div className="absolute top-full left-0 right-0 mt-1 z-20 bg-(--card) border border-(--accent-2) rounded-lg shadow-lg max-h-64 overflow-y-auto">
+      {guestMatches.map((g) => (
+        <button
+          key={g.id}
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); selectGuestMatch(g); }}
+          className="w-full text-left px-4 py-3 hover:bg-black/5 flex items-center justify-between gap-4 text-lg border-b border-[color:var(--text-color)]/8 last:border-b-0 cursor-pointer"
+        >
+          <span className="font-medium text-[color:var(--black)]">{g.first_name} {g.last_name}</span>
+          <span className="text-[color:var(--text-color)]/60 whitespace-nowrap">{formatPhone(g.phone)}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  // Availability is for the BOOKING's own dates, not today's, so this cannot
+  // reuse the Walk-In tab's room list.
+  useEffect(() => {
+    if (!bothDates) {
+      setAvailability(null);
+      return;
+    }
+    let cancelled = false;
+    setChecking(true);
+    checkAvailability(currentBranchId(), form.checkIn, form.checkOut)
+      .then((data) => { if (!cancelled) setAvailability(data); })
+      .catch(() => { if (!cancelled) setAvailability(null); })
+      .finally(() => { if (!cancelled) setChecking(false); });
+    return () => { cancelled = true; };
+  }, [bothDates, form.checkIn, form.checkOut]);
+
+  const roomTypes = (availability?.room_types || []).filter(
+    (rt) => rt.available_rooms >= Number(form.roomsBooked || 1),
+  );
+
+  // Real, numbered rooms of the chosen type that are free across the booking's
+  // own dates — the same endpoint the check-in picker uses, which takes a
+  // date range precisely so it can answer for a future stay.
+  useEffect(() => {
+    if (!form.roomTypeId || !bothDates) {
+      setRooms(null);
+      return;
+    }
+    let cancelled = false;
+    fetchAvailableRoomNumbers({ roomTypeId: Number(form.roomTypeId), checkIn: form.checkIn, checkOut: form.checkOut })
+      .then((data) => { if (!cancelled) setRooms(data); })
+      .catch(() => { if (!cancelled) setRooms(null); });
+    return () => { cancelled = true; };
+  }, [form.roomTypeId, bothDates, form.checkIn, form.checkOut]);
+
+  const roomOptions = rooms?.available || [];
+  const slots = Array.from({ length: Number(form.roomsBooked || 1) }, (_, i) => form.roomNumbers[i] || "");
+  const chosenRooms = slots.map((v) => v.trim()).filter(Boolean);
+  const allRoomsChosen = chosenRooms.length === Number(form.roomsBooked || 1)
+    && new Set(chosenRooms).size === chosenRooms.length;
+
+  const setSlot = (index, value) => {
+    setForm((p) => {
+      const next = [...slots];
+      next[index] = value;
+      return { ...p, roomNumbers: next };
+    });
+  };
+
+  const canSubmit =
+    form.guestFirstName.trim() && form.phone.trim() && form.roomTypeId && bothDates && allRoomsChosen && !submitting;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const hold = await createAdminReservation({
+        branch_id: currentBranchId(),
+        room_type_id: Number(form.roomTypeId),
+        guest_name: `${form.guestFirstName} ${form.guestLastName}`.trim(),
+        phone_number: form.phone.trim(),
+        guest_email: form.email.trim(),
+        check_in: form.checkIn,
+        check_out: form.checkOut,
+        rooms_booked: Number(form.roomsBooked),
+        source: "walk_in",
+        booking_channel: "direct",
+      });
+      // Rooms first: confirmReservation refuses until every booked room has
+      // a real number, future-dated or not.
+      await assignRoom(hold.internal_id, chosenRooms);
+      await confirmReservationById(hold.internal_id);
+
+      // Same as the walk-in form: the folio exists once the reservation is
+      // confirmed, and a failure here must not read as a failed booking.
+      let otaWarning = null;
+      if (futureOta.start && futureOta.end && futureOta.end > futureOta.start) {
+        try {
+          await createOtaSettlement({
+            reservationId: hold.internal_id,
+            startDate: futureOta.start,
+            endDate: futureOta.end,
+            includesBreakfast: futureOta.breakfast,
+            amount: futureOta.amount || undefined,
+          });
+        } catch (err) {
+          otaWarning = err.response?.data?.message || "the OTA payment could not be saved";
+        }
+      }
+
+      setCreated({ reference: hold.reservation_id, checkIn: form.checkIn });
+      if (otaWarning) setError(`Reservation created, but ${otaWarning}. Add it from the guest folio.`);
+      setFutureOta({ start: "", end: "", breakfast: false, amount: "" });
+      setForm(EMPTY_FUTURE_BOOKING);
+      setAvailability(null);
+      setRooms(null);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to create the reservation.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="w-full bg-(--card) rounded-xl border border-(--accent-2) p-8 flex flex-col gap-6">
+      <div>
+        <h2 className="text-3xl font-bold text-[color:var(--black)]">Future Booking</h2>
+        <p className="text-xl text-[color:var(--text-color)]/76 mt-1">
+          For a guest booking a later date in person. A room number is required — it holds a real room for those
+          dates, and can be reassigned any time before the guest arrives.
+        </p>
+      </div>
+
+      {created && (
+        <div className="p-4 bg-green-50 border border-green-200 text-green-800 rounded-xl text-xl">
+          Reservation <strong>{created.reference}</strong> confirmed for <strong>{created.checkIn}</strong>. It will appear
+          under Expected Arrivals on that date, where a room can be assigned.
+        </div>
+      )}
+      {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl">{error}</div>}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <div className="relative">
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex flex-col gap-2 flex-1 min-w-48">
+              <label className={field.label}>First Name <span className="text-red-500">*</span></label>
+              <input type="text" value={form.guestFirstName} className={field.input}
+                onFocus={() => setActiveGuestField("name")}
+                onBlur={() => setActiveGuestField(null)}
+                onChange={(e) => setForm((p) => ({ ...p, guestFirstName: e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-2 flex-1 min-w-48">
+              <label className={field.label}>Last Name</label>
+              <input type="text" value={form.guestLastName} className={field.input}
+                onFocus={() => setActiveGuestField("name")}
+                onBlur={() => setActiveGuestField(null)}
+                onChange={(e) => setForm((p) => ({ ...p, guestLastName: e.target.value }))} />
+            </div>
+          </div>
+          {activeGuestField === "name" && guestMatches.length > 0 && renderGuestMatches()}
+        </div>
+
+        <div className="relative">
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex flex-col gap-2 flex-1 min-w-48">
+              <label className={field.label}>Phone <span className="text-red-500">*</span></label>
+              <PhoneInput value={form.phone} onChange={(v) => setForm((p) => ({ ...p, phone: v }))}
+                onFocus={() => setActiveGuestField("phone")}
+                onBlur={() => setActiveGuestField(null)}
+                selectClassName={field.select} inputClassName={field.input} />
+            </div>
+            <div className="flex flex-col gap-2 flex-1 min-w-48">
+              <label className={field.label}>Email</label>
+              <input type="email" value={form.email} className={field.input}
+                onFocus={() => setActiveGuestField("email")}
+                onBlur={() => setActiveGuestField(null)}
+                onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} />
+            </div>
+          </div>
+          {(activeGuestField === "phone" || activeGuestField === "email") && guestMatches.length > 0 && renderGuestMatches()}
+        </div>
+
+        <div className="flex gap-4 flex-wrap">
+          <div className="flex flex-col gap-2 flex-1 min-w-48">
+            <label className={field.label}>Check In <span className="text-red-500">*</span></label>
+            <DateInput value={form.checkIn} min={minCheckIn} className={field.input}
+              onChange={(e) => setForm((p) => ({ ...p, checkIn: e.target.value, roomTypeId: "" }))} />
+          </div>
+          <div className="flex flex-col gap-2 flex-1 min-w-48">
+            <label className={field.label}>Check Out <span className="text-red-500">*</span></label>
+            <DateInput value={form.checkOut} min={form.checkIn || minCheckIn} className={field.input}
+              onChange={(e) => setForm((p) => ({ ...p, checkOut: e.target.value, roomTypeId: "" }))} />
+          </div>
+          <div className="flex flex-col gap-2 flex-1 min-w-48">
+            <label className={field.label}>Rooms</label>
+            <input type="number" min={1} value={form.roomsBooked} className={field.input}
+              onChange={(e) => setForm((p) => ({ ...p, roomsBooked: e.target.value, roomTypeId: "" }))} />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className={field.label}>Room Type <span className="text-red-500">*</span></label>
+          {!bothDates ? (
+            <p className="text-xl text-[color:var(--text-color)]/68">Pick the dates first to see what is free.</p>
+          ) : checking ? (
+            <p className="text-xl text-[color:var(--text-color)]/68">Checking availability...</p>
+          ) : roomTypes.length === 0 ? (
+            <p className="text-red-600 text-xl">
+              No rooms available for {form.roomsBooked} room(s) on those dates.
+            </p>
+          ) : (
+            <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(33rem,1fr))]">
+              {roomTypes.map((rt) => (
+                <label
+                  key={rt.room_type_id}
+                  className={`w-full max-w-[48rem] flex items-center justify-between gap-4 border rounded-xl px-6 py-4 cursor-pointer transition-colors ${
+                    form.roomTypeId === String(rt.room_type_id)
+                      ? "border-[color:var(--emphasis)] bg-[color:var(--emphasis)]/5 ring-1 ring-[color:var(--emphasis)]"
+                      : "border-[color:var(--text-color)]/20 hover:border-[color:var(--emphasis)]/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="radio"
+                      name="futureRoomType"
+                      value={rt.room_type_id}
+                      checked={form.roomTypeId === String(rt.room_type_id)}
+                      onChange={(e) => setForm((p) => ({ ...p, roomTypeId: e.target.value, roomNumbers: [] }))}
+                      className="accent-[color:var(--emphasis)] w-5 h-5"
+                    />
+                    <span className="text-xl font-medium">{rt.room_type_name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-[color:var(--emphasis)]">
+                      {fmtCurrency(rt.base_rate, rt.currency_symbol)} / night
+                    </span>
+                    <span className="block text-lg text-[color:var(--text-color)]/68">
+                      {rt.available_rooms} available
+                    </span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {form.roomTypeId && bothDates && (
+          <div className="flex flex-col gap-2">
+            <label className={field.label}>
+              Room Number{Number(form.roomsBooked) > 1 ? "s" : ""} <span className="text-red-500">*</span>
+            </label>
+            <p className="text-lg text-[color:var(--text-color)]/68">
+              Free across these dates. Reassign any time before the guest arrives.
+            </p>
+            {roomOptions.length === 0 ? (
+              <p className="text-xl text-red-600">No free rooms of this type across those dates.</p>
+            ) : (
+              <div className="flex gap-4 flex-wrap">
+                {slots.map((value, index) => (
+                  <select
+                    key={index}
+                    value={value}
+                    onChange={(e) => setSlot(index, e.target.value)}
+                    className={`${field.select} min-w-40`}
+                  >
+                    <option value="">-- Room {index + 1} --</option>
+                    {roomOptions
+                      .filter((r) => r.room_number === value || !chosenRooms.includes(r.room_number))
+                      .map((r) => (
+                        <option key={r.id} value={r.room_number}>{r.room_number}</option>
+                      ))}
+                  </select>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <OtaNightsFields
+          value={futureOta}
+          onChange={setFutureOta}
+          minDate={form.checkIn}
+          maxDate={form.checkOut}
+        />
+
+        <button type="submit" disabled={!canSubmit} className={`${btn.primary} self-start px-12! py-4!`}>
+          {submitting ? "Creating..." : "Create Reservation"}
+        </button>
+      </form>
+    </div>
+  );
+}

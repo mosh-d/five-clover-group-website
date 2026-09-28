@@ -6,10 +6,20 @@ import { motion } from "motion/react";
 // inside it position against the card instead of the screen. The shell's
 // <MotionConfig reducedMotion="user"> turns it all off for anyone whose
 // system asks for less motion.
+export { AnimatePresence, MotionConfig } from "motion/react";
 export const MotionDiv = motion.div;
 export const MotionButton = motion.button;
+export const MotionUl = motion.ul;
+export const MotionLi = motion.li;
 
 export const EASE_OUT = [0.22, 1, 0.36, 1];
+
+// A page's content arriving after navigation.
+export const pageEnter = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.28, ease: EASE_OUT },
+};
 
 // Content swapping in under a tab bar.
 export const tabEnter = {

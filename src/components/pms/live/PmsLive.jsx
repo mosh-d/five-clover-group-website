@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { API_BASE_URL } from "@/lib/pms/client";
-import { alerts } from "@/lib/pms/api";
+import { fetchAlerts } from "@/lib/pms/api/alerts-api";
 
 // The PMS's live connection to the backend (Socket.IO) - the branch PMS's
 // WebSocketContext, for whichever branch is signed in. Pages subscribe to
@@ -45,8 +45,7 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, children }) {
   // Only for a role with an Alerts page - the server refuses the rest.
   const refreshAlertCount = useCallback(() => {
     if (!canSeeAlerts) return;
-    alerts
-      .list()
+    fetchAlerts()
       .then((data) => syncAlertCount(data?.total || 0))
       .catch(() => {});
   }, [canSeeAlerts, syncAlertCount]);
@@ -132,6 +131,8 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, children }) {
 }
 
 export const usePmsLive = () => useContext(PmsLiveContext);
+// The branch PMS's name for the same thing, used by pages moved over from it.
+export const useWebSocketContext = usePmsLive;
 
 // A page's data kept current: `load` runs whenever one of `types` changes
 // on the server, after the socket reconnects (anything broadcast while it

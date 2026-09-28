@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { shifts as shiftsApi } from "@/lib/pms/api";
+import { fetchCurrentShift } from "@/lib/pms/api/shifts-api";
 import { businessDateISO } from "@/lib/pms/dates";
 
 const SHIFT_ROLES = ["receptionist", "waitron"];
@@ -36,8 +36,7 @@ export default function useShifts(role) {
     if (!visibleKey) return undefined;
     let cancelled = false;
     visibleKey.split(",").forEach((r) => {
-      shiftsApi
-        .current(r)
+      fetchCurrentShift(r)
         .then((current) => !cancelled && setShifts((all) => ({ ...all, [r]: current })))
         .catch(() => !cancelled && setShifts((all) => ({ ...all, [r]: null })));
     });

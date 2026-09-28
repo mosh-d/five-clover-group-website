@@ -13,11 +13,15 @@ const endSession = () => {
   if (typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
 };
 
+// Also shaped like an axios error (err.response.status / .data), which is
+// how every page moved over from the branch PMS reads a refusal:
+// err.response?.data?.message.
 export class PmsApiError extends Error {
   constructor(message, status, data) {
     super(message);
     this.status = status;
     this.data = data;
+    this.response = { status, data };
   }
 }
 
@@ -86,6 +90,31 @@ export async function pmsRequest(path, { method = "GET", body, query, auth = tru
     throw new PmsApiError(data?.message || `Request failed (${res.status})`, res.status, data);
   }
   return data;
+}
+
+// Downloads a file from a signed-in endpoint (the Excel and CSV exports).
+// Through fetch with the session's token, not a link: a plain browser
+// navigation can't send the Authorization header. A lapsed token is renewed
+// once, the same as pmsRequest; a refusal comes back as a PmsApiError with
+// the server's own reason.
+export async function pmsDownload(path, params, filename) {
+  const attempt = () =>
+    fetch(`${API_BASE_URL}${withQuery(path, params)}`, { headers: { Authorization: `Bearer ${getPmsToken() || ""}` } });
+  let res = await attempt();
+  if (res.status === 401 && !hasBeenIdleTooLong() && (await renewSession())) res = await attempt();
+  if (res.status === 401) endSession();
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new PmsApiError(data?.message || `Download failed (${res.status})`, res.status, data);
+  }
+  const url = window.URL.createObjectURL(await res.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 }
 
 // --- signing in and out ---

@@ -10,7 +10,9 @@ import GuestName from "@/components/pms/GuestName";
 import Toast from "@/components/pms/Toast";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
-import { frontOffice, reservations, folios } from "@/lib/pms/api";
+import { fetchFolios } from "@/lib/pms/api/folios-api";
+import { fetchCheckOutList } from "@/lib/pms/api/front-office-api";
+import { checkOutReservation, shortenStayToDeparture } from "@/lib/pms/api/reservations-pms-api";
 import { todayISO, hasPassedNoonCutoff } from "@/lib/pms/dates";
 import { formatDate, money } from "@/lib/pms/format";
 
@@ -62,7 +64,7 @@ export default function PmsCheckOutsPage() {
   const loadList = useCallback(async () => {
     try {
       setLoading(true);
-      const result = await frontOffice.checkOutList(date);
+      const result = await fetchCheckOutList(date);
       setList(Array.isArray(result) ? result : []);
       setError(null);
     } catch (err) {
@@ -83,7 +85,7 @@ export default function PmsCheckOutsPage() {
     setFolio(null);
     setFolioLoading(true);
     try {
-      const result = await folios.list({ reservation_id: reservation.id });
+      const result = await fetchFolios({ reservation_id: reservation.id });
       setFolio(result?.data?.[0] || null);
     } catch {
       setFolio(null);
@@ -96,7 +98,7 @@ export default function PmsCheckOutsPage() {
     if (!selected) return;
     try {
       setProcessing(true);
-      await reservations.checkOut(selected.id);
+      await checkOutReservation(selected.id);
       setToast(`${selected.guest_name} checked out.`);
       setSelected(null);
       loadList();
@@ -114,7 +116,7 @@ export default function PmsCheckOutsPage() {
     try {
       setAdjustingDate(true);
       setAdjustError("");
-      const updated = await reservations.shortenToDeparture(selected.id);
+      const updated = await shortenStayToDeparture(selected.id);
       setSelected((p) => ({ ...p, check_out: updated.check_out, total_rate: updated.total_rate }));
       setToast("Checkout date corrected to today — the stay now bills only the nights actually slept.");
       loadList();

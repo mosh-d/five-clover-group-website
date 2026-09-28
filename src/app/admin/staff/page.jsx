@@ -381,7 +381,14 @@ export default function AdminStaffPage() {
                 onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
                 className={inputClass}
                 style={inputStyle}
+                placeholder="e.g. Ada Okafor"
               />
+              {/* One naming pattern for every account (owner, 2026-09-28):
+                  the username is the only name the system shows for a staff
+                  member - on shifts, reports and the audit trail. */}
+              <p className={bodyText} style={mutedTextStyle}>
+                Use the person&apos;s first name, then last name, e.g. &quot;Ada Okafor&quot;. It&apos;s the name shown on shifts, reports and the audit trail.
+              </p>
             </div>
             <div className="flex flex-col gap-2">
               <label className={labelText} style={mutedTextStyle}>Role</label>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { MotionConfig } from "motion/react";
 import { IoLockClosedOutline } from "react-icons/io5";
@@ -13,8 +14,8 @@ import SessionEndedModal from "./SessionEndedModal";
 import useShifts from "./useShifts";
 import { PmsLiveProvider } from "./live/PmsLive";
 import { brandForBranch, themeStyle, GROUP_BRAND } from "./theme/brands";
-import { canOpen, navItemForPath, pageTitle } from "./pmsNavItems";
-import { card } from "./ui";
+import { canOpen, landingPath, navItemForPath, pageTitle } from "./pmsNavItems";
+import { btn, card } from "./ui";
 import { readPmsSession, clearPmsSession, consumeJustSignedIn, setDevRoleOverride, markActivity } from "@/lib/pms/session";
 import { verifyPmsSession, pmsSignOut, pmsSwitchBranch, SESSION_ENDED_EVENT } from "@/lib/pms/client";
 import { fetchBusinessDate } from "@/lib/pms/api/front-office-api";
@@ -162,7 +163,7 @@ function BranchWorkspace({ pathname, children }) {
   const refused = item && !canOpen(role, item.slug);
 
   return (
-    <PmsLiveProvider branchId={branch?.id} canSeeAlerts={canOpen(role, "alerts")}>
+    <PmsLiveProvider branchId={branch?.id} canSeeAlerts={canOpen(role, "alerts")} canSeeOtaPayments={canOpen(role, "ota-payments")}>
       <div className="admin-root h-screen flex flex-col overflow-hidden text-(--text-color)" style={{ ...themeStyle(brand), background: "var(--background-color)" }}>
         <PmsTopBar shifts={readouts} />
         {/* The dates on screen already follow the server; this tells the desk
@@ -178,7 +179,7 @@ function BranchWorkspace({ pathname, children }) {
         <div className="flex flex-1 overflow-hidden">
           <PmsSidebar />
           <main className="flex-1 overflow-y-auto px-16 max-sm:px-4 py-16">
-            {refused ? <Refused title={pageTitle(item)} /> : children}
+            {refused ? <Refused title={pageTitle(item)} role={role} /> : children}
           </main>
         </div>
         <NewBookingPopup enabled={canOpen(role, "reservations")} />
@@ -188,11 +189,23 @@ function BranchWorkspace({ pathname, children }) {
   );
 }
 
-function Refused({ title }) {
+// A page this role may not open, asked for another way than the sidebar (a
+// typed address, a bookmark, a link from elsewhere): it names the page and
+// offers the role's own first page, as the branch PMS's refusal did - "go
+// back" may be nowhere useful.
+function Refused({ title, role }) {
+  const home = landingPath(role);
   return (
-    <div className={`${card.surface} max-w-3xl p-10 flex items-center gap-6`}>
+    <div className={`${card.surface} max-w-3xl p-10 flex items-start gap-6`}>
       <IoLockClosedOutline size={32} className="shrink-0 text-(--emphasis)" />
-      <p className="text-2xl">Your role isn&apos;t authorized to open {title}.</p>
+      <div className="flex flex-col items-start gap-6">
+        <p className="text-2xl">
+          Your role isn&apos;t authorized to open {title}. If you need it for your work, ask a manager to grant it or to do it for you.
+        </p>
+        <Link href={home} className={btn.primary}>
+          Go to {pageTitle(navItemForPath(home))}
+        </Link>
+      </div>
     </div>
   );
 }

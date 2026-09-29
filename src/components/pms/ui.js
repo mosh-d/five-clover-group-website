@@ -69,7 +69,7 @@ export const table = {
   headRow: "border-b border-(--accent-2) bg-(--text-color)/3",
   th: "px-8 py-4 text-left whitespace-nowrap text-xl font-semibold uppercase tracking-wide text-(--text-color)/76",
   // `group` lets the pinned column follow the row's hover tint.
-  row: "group border-b border-(--accent-2) last:border-b-0 transition-colors hover:bg-black/2",
+  row: "group border-b border-(--accent-2) last:border-b-0 transition-colors hover:bg-black/6",
   td: "px-8 py-4 text-left whitespace-nowrap text-(--text-color)",
   actions: "flex items-center gap-2 flex-nowrap",
   empty: "px-8 py-10 text-center text-xl text-(--text-color)/68",
@@ -89,5 +89,5 @@ export const table = {
   stickyTh:
     "sticky left-0 z-10 bg-[color-mix(in_srgb,var(--text-color)_3%,var(--card))] [box-shadow:inset_-1px_0_0_var(--accent-2)]",
   stickyTd:
-    "sticky left-0 z-10 max-lg:whitespace-normal! max-lg:min-w-[18rem] bg-(--card) group-hover:bg-[color-mix(in_srgb,black_2%,var(--card))] [box-shadow:inset_-1px_0_0_var(--accent-2)]",
+    "sticky left-0 z-10 max-lg:whitespace-normal! max-lg:min-w-[18rem] bg-(--card) group-hover:bg-[color-mix(in_srgb,black_6%,var(--card))] [box-shadow:inset_-1px_0_0_var(--accent-2)]",
 };

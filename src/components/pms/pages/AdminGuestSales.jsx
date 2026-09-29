@@ -401,7 +401,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
                               the sticky cell's own opaque background would
                               otherwise sit plain white over an already-tinted
                               selected row. */}
-                          <td className={`${table.td} sticky left-0 z-10 max-lg:whitespace-normal! max-lg:min-w-[18rem] [box-shadow:inset_-1px_0_0_color-mix(in_srgb,var(--text-color)_12%,transparent)] ${isSelected ? "bg-[color-mix(in_srgb,var(--emphasis)_5%,white)]" : "bg-(--card) group-hover:bg-[color-mix(in_srgb,black_2%,white)]"}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
+                          <td className={`${table.td} sticky left-0 z-10 max-lg:whitespace-normal! max-lg:min-w-[18rem] [box-shadow:inset_-1px_0_0_color-mix(in_srgb,var(--text-color)_12%,transparent)] ${isSelected ? "bg-[color-mix(in_srgb,var(--emphasis)_5%,white)]" : "bg-(--card) group-hover:bg-[color-mix(in_srgb,black_6%,var(--card))]"}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
                           <td className={table.td}>{r.room_assignments?.[0]?.room_number || "—"}</td>
                           <td className={table.td}>{r.folio.folio_number}</td>
                           {/* When this guest's bill was opened. */}

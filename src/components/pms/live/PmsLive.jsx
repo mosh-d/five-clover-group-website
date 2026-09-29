@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { io } from "socket.io-client";
 import { API_BASE_URL } from "@/lib/pms/client";
 import { fetchAlerts } from "@/lib/pms/api/alerts-api";
+import { fetchOtaSettlements, OTA_CHANGED_EVENT } from "@/lib/pms/api/ota-api";
 
 // The PMS's live connection to the backend (Socket.IO) - the branch PMS's
 // WebSocketContext, for whichever branch is signed in. Pages subscribe to
@@ -25,7 +26,13 @@ const DISCONNECTED_FALLBACK_MS = 30000;
 // room assigned, confirmed, checked in); pages refetch once, not four times.
 const RESERVATION_REFRESH_DEBOUNCE_MS = 250;
 
-export function PmsLiveProvider({ branchId, canSeeAlerts, children }) {
+// OTA payments still to arrive - the OTA Payments badge. The server sends no
+// event for them, so the count is refetched when bookings or rooms change (a
+// check-in may add one), when this PC changes one (OTA_CHANGED_EVENT), and
+// once a minute for changes made on another PC.
+const OTA_COUNT_REFRESH_MS = 60000;
+
+export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, children }) {
   const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set() });
   const reservationTimerRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -53,6 +60,36 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, children }) {
   useEffect(() => {
     refreshAlertCount();
   }, [refreshAlertCount]);
+
+  const subscribe = useCallback((callback, type = "rooms") => {
+    const set = listenersRef.current[type] || listenersRef.current.rooms;
+    set.add(callback);
+    return () => set.delete(callback);
+  }, []);
+
+  const [otaPendingCount, setOtaPendingCount] = useState(0);
+  // Only for a role with an OTA Payments page - the server refuses the rest.
+  const refreshOtaCount = useCallback(() => {
+    if (!canSeeOtaPayments) return;
+    fetchOtaSettlements("pending")
+      .then((list) => setOtaPendingCount(Array.isArray(list) ? list.length : 0))
+      .catch(() => {});
+  }, [canSeeOtaPayments]);
+
+  useEffect(() => {
+    if (!canSeeOtaPayments) return undefined;
+    refreshOtaCount();
+    const timer = setInterval(refreshOtaCount, OTA_COUNT_REFRESH_MS);
+    window.addEventListener(OTA_CHANGED_EVENT, refreshOtaCount);
+    const offReservations = subscribe(refreshOtaCount, "reservations");
+    const offRooms = subscribe(refreshOtaCount, "rooms");
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener(OTA_CHANGED_EVENT, refreshOtaCount);
+      offReservations();
+      offRooms();
+    };
+  }, [canSeeOtaPayments, refreshOtaCount, subscribe]);
 
   useEffect(() => {
     if (!branchId) return undefined;
@@ -117,14 +154,10 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, children }) {
     };
   }, [branchId, canSeeAlerts, syncAlertCount]);
 
-  const subscribe = useCallback((callback, type = "rooms") => {
-    const set = listenersRef.current[type] || listenersRef.current.rooms;
-    set.add(callback);
-    return () => set.delete(callback);
-  }, []);
-
   return (
-    <PmsLiveContext.Provider value={{ isConnected, subscribe, alertCount, refreshAlertCount, syncAlertCount, disconnectedRefreshTick }}>
+    <PmsLiveContext.Provider
+      value={{ isConnected, subscribe, alertCount, refreshAlertCount, syncAlertCount, otaPendingCount, refreshOtaCount, disconnectedRefreshTick }}
+    >
       {children}
     </PmsLiveContext.Provider>
   );

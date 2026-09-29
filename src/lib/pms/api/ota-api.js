@@ -2,6 +2,14 @@
 // functions, same arguments - onto lib/pms/http, which sends each call through
 // the PMS session (see http.js).
 import { http } from "../http";
+
+// Tells the sidebar's OTA Payments badge to recount (PmsLive) once this PC
+// records, adjusts or settles one - the server sends no live event for them.
+export const OTA_CHANGED_EVENT = "pms:ota-changed";
+const announced = (data) => {
+  window.dispatchEvent(new Event(OTA_CHANGED_EVENT));
+  return data;
+};
 // Nights an OTA is paying for instead of the guest. They stay charged on the
 // folio — so it reads owing until the money lands — but they are left out of
 // what the desk asks the guest for (the folio's guest_due).
@@ -38,7 +46,7 @@ export const createOtaSettlement = async ({ reservationId, startDate, endDate, i
       ...(reference ? { reference } : {}),
     },
   );
-  return response.data;
+  return announced(response.data);
 };
 
 // The OTA's money arrived. The payment lands on the folio with method "ota"
@@ -58,7 +66,7 @@ export const updateOtaSettlement = async (id, { startDate, endDate, includesBrea
       ...(reference ? { reference } : {}),
     },
   );
-  return response.data;
+  return announced(response.data);
 };
 
 export const markOtaSettlementPaid = async (id, reference) => {
@@ -66,5 +74,5 @@ export const markOtaSettlementPaid = async (id, reference) => {
     `/api/ota-settlements/${id}/paid`,
     reference ? { reference } : {},
   );
-  return response.data;
+  return announced(response.data);
 };

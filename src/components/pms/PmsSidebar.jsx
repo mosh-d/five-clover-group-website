@@ -9,11 +9,17 @@ import { visibleNavItems } from "./pmsNavItems";
 import { usePmsLive } from "./live/PmsLive";
 
 function NavItems({ pathname, role, onNavigate }) {
-  const { alertCount } = usePmsLive();
+  const { alertCount, otaPendingCount } = usePmsLive();
+  // Each nav item's `badge` (pmsNavItems): its live count, and what it counts.
+  const badges = {
+    alerts: { count: alertCount, label: "open alerts" },
+    ota: { count: otaPendingCount, label: "OTA payments still to arrive" },
+  };
   return (
     <ul className="flex flex-col gap-2">
-      {visibleNavItems(role).map(({ href, label, icon: Icon, showAlertBadge }) => {
+      {visibleNavItems(role).map(({ href, label, icon: Icon, badge }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
+        const count = badge ? badges[badge].count : 0;
         return (
           <li key={href}>
             <Link
@@ -25,14 +31,14 @@ function NavItems({ pathname, role, onNavigate }) {
             >
               <Icon size={20} className="shrink-0" />
               <span>{label}</span>
-              {showAlertBadge && alertCount > 0 && (
+              {count > 0 && (
                 <span
                   className={`ml-auto min-w-[2.4rem] h-[2.4rem] px-2 rounded-full text-base font-bold flex items-center justify-center ${
                     isActive ? "bg-white text-(--emphasis)" : "bg-red-600 text-white"
                   }`}
-                  aria-label={`${alertCount} open alerts`}
+                  aria-label={`${count} ${badges[badge].label}`}
                 >
-                  {alertCount > 99 ? "99+" : alertCount}
+                  {count > 99 ? "99+" : count}
                 </span>
               )}
             </Link>

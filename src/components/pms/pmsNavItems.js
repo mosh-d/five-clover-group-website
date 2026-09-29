@@ -48,9 +48,10 @@ export const PMS_NAV_ITEMS = [
   { slug: "in-house", label: "IN-HOUSE", icon: IoHomeOutline, roles: OVERSIGHT },
   { slug: "reports", label: "REPORTS", icon: IoBarChartOutline, roles: EVERY_ROLE },
   { slug: "night-audit", label: "NIGHT AUDIT", icon: IoMoonOutline, roles: FRONT_DESK },
-  // showAlertBadge: carries the live count of open alerts.
-  { slug: "alerts", label: "ALERTS", icon: IoNotificationsOutline, roles: OVERSIGHT, showAlertBadge: true },
-  { slug: "ota-payments", label: "OTA PAYMENTS", icon: IoBusinessOutline, roles: FRONT_DESK },
+  // badge: carries a live count (PmsSidebar) - open alerts; OTA payments
+  // still to arrive.
+  { slug: "alerts", label: "ALERTS", icon: IoNotificationsOutline, roles: OVERSIGHT, badge: "alerts" },
+  { slug: "ota-payments", label: "OTA PAYMENTS", icon: IoBusinessOutline, roles: FRONT_DESK, badge: "ota" },
   { slug: "audit-trail", label: "AUDIT TRAIL", icon: IoDocumentTextOutline, roles: ["manager", "accountant"] },
   { slug: "menu", label: "MENU", icon: IoRestaurantOutline, roles: ["storekeeper"] },
   { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE },

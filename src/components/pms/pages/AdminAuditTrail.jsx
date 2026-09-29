@@ -361,7 +361,7 @@ export default function AdminAuditTrail() {
                       const linkDenial = link ? accessDenial(link.path) : null;
                       return (
                         <tr key={entry.id} className={table.row}>
-                          <td className="px-8 py-4 font-semibold sticky left-0 z-10 bg-(--card) group-hover:bg-[color-mix(in_srgb,black_2%,white)] [box-shadow:inset_-1px_0_0_color-mix(in_srgb,var(--text-color)_12%,transparent)]">{entry.username}</td>
+                          <td className="px-8 py-4 font-semibold sticky left-0 z-10 bg-(--card) group-hover:bg-[color-mix(in_srgb,black_6%,var(--card))] [box-shadow:inset_-1px_0_0_color-mix(in_srgb,var(--text-color)_12%,transparent)]">{entry.username}</td>
                           <td className="px-8 py-4 text-xl whitespace-nowrap text-[color:var(--text-color)]/84">{formatWhen(entry.created_at)}</td>
                           <td className="px-8 py-4 hidden md:table-cell">
                             <StatusBadge status={entry.role} />

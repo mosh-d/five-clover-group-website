@@ -155,7 +155,7 @@ export default function AdminReportsPage() {
           : activeTab === "manifest"
           ? "Arrivals and departures for a date range, with room price, receipt numbers, and deposits — the daily front-desk arrivals and departures sheet, digitized."
           : activeTab === "analysis"
-          ? "Every naira taken and paid back in a date range — guest payments, non-guest sales, refunds and reclaimed credits — by room, receipt number, and method. Net Total matches the Overview's Collected for the same dates."
+          ? "Every naira taken and paid back in a date range — guest payments, non-guest sales, refunds and credit refunds — by room, receipt number, and method. Net Total matches the Overview's Collected for the same dates."
           : activeTab === "pms"
           ? "A shift-handoff snapshot: room status (vacant/occupied/out-of-order/reserved/complementary) plus arrivals and departures — pick Evening for end-of-day or Morning to see the previous night's audit."
           : activeTab === "accommodation"
@@ -437,7 +437,7 @@ function DashboardTab() {
             <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
               <div className="px-6 py-5 border-b border-(--accent-2)">
                 <h2 className="text-3xl font-bold text-[color:var(--black)]">Payments by Method</h2>
-                <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Payments and non-guest sales, less refunds and reclaimed credits — the same total as Analysis</p>
+                <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Payments and non-guest sales, less payment and credit refunds — the same total as Analysis</p>
               </div>
               {paymentMethods.length === 0 ? (
                 <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No payments recorded in this period.</p>
@@ -745,7 +745,7 @@ function AnalysisTab() {
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             <SummaryCard label="Collected" value={money(data.total_collected)} sub="guest payments and non-guest sales" accent />
-            <SummaryCard label="Refunded" value={money(data.total_refunded)} sub="refunds and reclaimed credits" warn={data.total_refunded > 0} />
+            <SummaryCard label="Refunded" value={money(data.total_refunded)} sub="payment and credit refunds" warn={data.total_refunded > 0} />
             <SummaryCard label="Net Total" value={money(data.net_total)} sub="collected minus refunded" />
           </div>
 
@@ -761,7 +761,7 @@ function AnalysisTab() {
                 <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
                 <tbody>
                   {/* row_key: rows come from several tables (guest payments,
-                      non-guest sales, reclaimed credits), so their ids can repeat. */}
+                      non-guest sales, credit refunds), so their ids can repeat. */}
                   {data.payments.map((p) => (
                     <tr key={p.row_key || p.id} className={table.row}>
                       <td className={`px-6 py-4 text-[color:var(--text-color)]/84 ${table.stickyTd}`}>{p.room_numbers || "—"}</td>
@@ -1178,11 +1178,11 @@ function AccommodationReportTab({ shift }) {
           {/* One section per payment method — the front desk reconciles the
               cash drawer separately from transfers and card takings, which a
               single mixed list makes tedious. The same rows as the Analysis
-              report: non-guest sales counted in; a refund or a reclaimed
-              credit stays listed under its method, tagged, and is netted out
+              report: non-guest sales counted in; a refund or a credit
+              refund stays listed under its method, tagged, and is netted out
               of that method's total. */}
           {(data.payments_by_method || []).length === 0 ? (
-            <ReportSection title="Payments by Method" subtitle="Every payment, non-guest sale, refund and reclaimed credit this business day, grouped">
+            <ReportSection title="Payments by Method" subtitle="Every payment, non-guest sale, refund and credit refund this business day, grouped">
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No payments recorded for this business day.</p>
             </ReportSection>
           ) : (

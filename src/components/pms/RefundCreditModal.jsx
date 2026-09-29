@@ -10,7 +10,7 @@ import { money, formatPaymentMethod, PAYMENT_METHODS } from "@/lib/pms/format";
 // Paying a guest's credit back out - confirmed, and recorded with how the
 // money left (2026-09-28). The payout method is what lets the payment
 // reports take the refund off cash or transfer instead of a catch-all
-// "Reclaimed Credits" line, so it has to be picked; there is no default to
+// "Credit Refunds" line, so it has to be picked; there is no default to
 // click past. Shared by Guest Folios, Reservations and the non-guest credits
 // list - Reservations used to pay a credit out on a single click, with no
 // confirmation at all.

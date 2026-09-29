@@ -51,12 +51,13 @@ export function TableHead({ cells, rightAlign = [] }) {
 
 // What a row of money is when it isn't a guest's payment - on the Analysis
 // report and the Manifest's Payments by Method (owner, 2026-09-29: "clear on
-// which is a non-guest sale, reclaimed credit and refund"). The backend's
+// which is a non-guest sale, reclaimed credit and refund" - the credit one
+// named Credit refund, since it is a credit paid back out). The backend's
 // fetchMoneyMovements sets `kind`; a guest payment with status "refunded" is
 // a Refund.
 const MONEY_KIND_TAGS = {
   non_guest_sale: { label: "Non-guest sale", className: "text-sky-800 bg-sky-100" },
-  reclaimed_credit: { label: "Reclaimed credit", className: "text-orange-800 bg-orange-100" },
+  credit_refund: { label: "Credit refund", className: "text-orange-800 bg-orange-100" },
   refund: { label: "Refund", className: "text-red-700 bg-red-100" },
 };
 export function MoneyKindTag({ row }) {

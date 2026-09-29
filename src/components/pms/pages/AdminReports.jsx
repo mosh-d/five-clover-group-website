@@ -155,7 +155,7 @@ export default function AdminReportsPage() {
           : activeTab === "manifest"
           ? "Arrivals and departures for a date range, with room price, receipt numbers, and deposits — the daily front-desk arrivals and departures sheet, digitized."
           : activeTab === "analysis"
-          ? "Every payment received in a date range, broken down by room, receipt number, and method."
+          ? "Every naira taken and paid back in a date range — guest payments, walk-in sales, refunds and credits paid back — by room, receipt number, and method. Net Total matches the Overview's Collected for the same dates."
           : activeTab === "pms"
           ? "A shift-handoff snapshot: room status (vacant/occupied/out-of-order/reserved/complementary) plus arrivals and departures — pick Evening for end-of-day or Morning to see the previous night's audit."
           : activeTab === "accommodation"
@@ -744,8 +744,8 @@ function AnalysisTab() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-            <SummaryCard label="Collected" value={money(data.total_collected)} sub="completed payments" accent />
-            <SummaryCard label="Refunded" value={money(data.total_refunded)} sub="refunds issued" warn={data.total_refunded > 0} />
+            <SummaryCard label="Collected" value={money(data.total_collected)} sub="guest payments and walk-in sales" accent />
+            <SummaryCard label="Refunded" value={money(data.total_refunded)} sub="refunds and credits paid back" warn={data.total_refunded > 0} />
             <SummaryCard label="Net Total" value={money(data.net_total)} sub="collected minus refunded" />
           </div>
 
@@ -760,12 +760,21 @@ function AnalysisTab() {
               <table className="w-full text-xl">
                 <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
                 <tbody>
+                  {/* row_key: rows come from several tables (guest payments, walk-in
+                      sales, credits paid back), so their ids can repeat. */}
                   {data.payments.map((p) => (
-                    <tr key={p.id} className={table.row}>
+                    <tr key={p.row_key || p.id} className={table.row}>
                       <td className={`px-6 py-4 text-[color:var(--text-color)]/84 ${table.stickyTd}`}>{p.room_numbers || "—"}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{p.receipt_number || "—"}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/68 font-mono text-lg">{p.payment_reference}</td>
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={p.guest_name} tags={p.guest_tags} /></td>
+                      <td className="px-6 py-4 font-medium text-[color:var(--black)]">
+                        <span className="flex items-center gap-2 flex-wrap">
+                          <GuestName name={p.guest_name} tags={p.guest_tags} />
+                          {p.kind === "credit_refund" && (
+                            <span className="text-sm font-bold uppercase tracking-wide text-red-700 bg-red-100 px-2 py-1 rounded-full whitespace-nowrap">Credit paid back</span>
+                          )}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(p.payment_method)}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatDateTime(p.payment_date)}</td>
                       <td className={`px-6 py-4 text-right font-semibold ${p.status === "refunded" ? "text-red-600" : "text-[color:var(--black)]"}`}>

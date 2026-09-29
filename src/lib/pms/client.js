@@ -63,7 +63,8 @@ export function renewSession() {
 // Attaches the session's token and throws PmsApiError - with the server's
 // own message - on anything but a 2xx. On a 401 the access token has lapsed
 // (it lasts half an hour): someone still working gets it renewed and the
-// request retried; a session left untouched for 30 minutes ends instead.
+// request retried; a session left untouched for an hour ends instead
+// (IDLE_LIMIT_MS).
 export async function pmsRequest(path, { method = "GET", body, query, auth = true, _retried = false } = {}) {
   const headers = { "Content-Type": "application/json" };
   const token = auth ? getPmsToken() : null;

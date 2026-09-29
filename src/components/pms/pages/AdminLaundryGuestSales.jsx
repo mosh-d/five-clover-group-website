@@ -29,16 +29,16 @@ const emptyPaymentForm = { splits: [{ amount: "", payment_method: "transfer" }],
 /**
  * An in-house guest's laundry, posted to their own room folio.
  *
- * The walk-in half of this page opens a non-guest folio; a guest already in
+ * The non-guest half of this page opens a non-guest folio; a guest already in
  * the house has a folio of their own, so their laundry belongs on it and is
  * settled with the rest of the stay at check-out. Until now the only way to
  * record it was the Folios page's generic "Add a Charge" form, which meant
  * finding the folio first and typing the price by hand — off the same
- * catalogue the walk-in side prices automatically.
+ * catalogue the non-guest side prices automatically.
  *
  * Deliberately in-house only, unlike Guest Sales' second "checked-out
  * (owing)" tab: laundry is handed back to someone who is still in the
- * house. A departed guest's laundry is a walk-in sale.
+ * house. A departed guest's laundry is a non-guest sale.
  */
 export default function AdminLaundryGuestSales({ asSection = false, hideTitle = false }) {
   // Laundry is front-desk work (owner's call, 2026-09-14) — the server

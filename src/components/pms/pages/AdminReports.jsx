@@ -42,7 +42,7 @@ import { isAccountant, isReceptionist, isStorekeeper, isWaitron } from "@/lib/pm
 import { money, pct, formatDate, formatDateTime, formatPaymentMethod } from "@/lib/pms/format";
 import { canViewAuditTrail } from "@/components/pms/pmsNavItems";
 import { table } from "@/components/pms/ui";
-import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBadge, StaffActivitySection } from "@/components/pms/reportUi";
+import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBadge, StaffActivitySection, MoneyKindTag } from "@/components/pms/reportUi";
 
 import DateInput from "@/components/pms/DateInput";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
@@ -155,7 +155,7 @@ export default function AdminReportsPage() {
           : activeTab === "manifest"
           ? "Arrivals and departures for a date range, with room price, receipt numbers, and deposits — the daily front-desk arrivals and departures sheet, digitized."
           : activeTab === "analysis"
-          ? "Every naira taken and paid back in a date range — guest payments, walk-in sales, refunds and credits paid back — by room, receipt number, and method. Net Total matches the Overview's Collected for the same dates."
+          ? "Every naira taken and paid back in a date range — guest payments, non-guest sales, refunds and reclaimed credits — by room, receipt number, and method. Net Total matches the Overview's Collected for the same dates."
           : activeTab === "pms"
           ? "A shift-handoff snapshot: room status (vacant/occupied/out-of-order/reserved/complementary) plus arrivals and departures — pick Evening for end-of-day or Morning to see the previous night's audit."
           : activeTab === "accommodation"
@@ -380,13 +380,13 @@ function DashboardTab() {
           {period && (
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Showing data for <strong className="text-[color:var(--black)]">{period.from}</strong> to{" "}
-              <strong className="text-[color:var(--black)]">{period.to}</strong> ({period.days} day{period.days !== 1 ? "s" : ""})
+              <strong className="text-[color:var(--black)]">{period.to}</strong> ({period.days} business day{period.days !== 1 ? "s" : ""}, 6am to 6am)
             </p>
           )}
 
           {/* Summary cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <SummaryCard label="Total Billed" value={money(summary.total_billed)} sub="charged to folios" />
+            <SummaryCard label="Total Billed" value={money(summary.total_billed)} sub="everything charged this period, guests and non-guests" />
             <SummaryCard label="Payments Received" value={money(totalPaymentsCollected)} sub="collected this period" accent />
             {/* outstanding_in_period, not total_outstanding: this card is
                 part of a report ABOUT the selected range, and the branch-wide
@@ -394,8 +394,8 @@ function DashboardTab() {
                 range was picked, and the same as the Overview page's own
                 Outstanding card. The Overview keeps the branch-wide one,
                 since its card links to the full Folios pending list. */}
-            <SummaryCard label="Outstanding" value={money(summary.outstanding_in_period)} sub="still owed from this period" warn={Number(summary.outstanding_in_period) > 0} />
-            <SummaryCard label="Completed Stays" value={summary.completed_stays ?? "—"} sub={`of ${summary.total_stays ?? 0} total`} />
+            <SummaryCard label="Outstanding" value={money(summary.outstanding_in_period)} sub="still owed by stays that began this period" warn={Number(summary.outstanding_in_period) > 0} />
+            <SummaryCard label="Completed Stays" value={summary.completed_stays ?? "—"} sub={`of ${summary.total_stays ?? 0} stays that began this period`} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -403,7 +403,7 @@ function DashboardTab() {
             <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
               <div className="px-6 py-5 border-b border-(--accent-2)">
                 <h2 className="text-3xl font-bold text-[color:var(--black)]">Revenue by Room Type</h2>
-                <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Reservations with check-in in selected period</p>
+                <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Room and breakfast charged for the nights in this period</p>
               </div>
               {revenueByRoomType.length === 0 ? (
                 <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No data for this period.</p>
@@ -437,7 +437,7 @@ function DashboardTab() {
             <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
               <div className="px-6 py-5 border-b border-(--accent-2)">
                 <h2 className="text-3xl font-bold text-[color:var(--black)]">Payments by Method</h2>
-                <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Payments received in selected period</p>
+                <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Payments and non-guest sales, less refunds and reclaimed credits — the same total as Analysis</p>
               </div>
               {paymentMethods.length === 0 ? (
                 <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No payments recorded in this period.</p>
@@ -484,7 +484,7 @@ function DashboardTab() {
           <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
             <div className="px-6 py-5 border-b border-(--accent-2)">
               <h2 className="text-3xl font-bold text-[color:var(--black)]">Occupancy by Room Type</h2>
-              <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Room nights occupied vs available across the selected period</p>
+              <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Room nights booked (no-shows left out) vs available across the selected period</p>
             </div>
             {occupancy.length === 0 ? (
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No data for this period.</p>
@@ -744,8 +744,8 @@ function AnalysisTab() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-            <SummaryCard label="Collected" value={money(data.total_collected)} sub="guest payments and walk-in sales" accent />
-            <SummaryCard label="Refunded" value={money(data.total_refunded)} sub="refunds and credits paid back" warn={data.total_refunded > 0} />
+            <SummaryCard label="Collected" value={money(data.total_collected)} sub="guest payments and non-guest sales" accent />
+            <SummaryCard label="Refunded" value={money(data.total_refunded)} sub="refunds and reclaimed credits" warn={data.total_refunded > 0} />
             <SummaryCard label="Net Total" value={money(data.net_total)} sub="collected minus refunded" />
           </div>
 
@@ -760,8 +760,8 @@ function AnalysisTab() {
               <table className="w-full text-xl">
                 <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
                 <tbody>
-                  {/* row_key: rows come from several tables (guest payments, walk-in
-                      sales, credits paid back), so their ids can repeat. */}
+                  {/* row_key: rows come from several tables (guest payments,
+                      non-guest sales, reclaimed credits), so their ids can repeat. */}
                   {data.payments.map((p) => (
                     <tr key={p.row_key || p.id} className={table.row}>
                       <td className={`px-6 py-4 text-[color:var(--text-color)]/84 ${table.stickyTd}`}>{p.room_numbers || "—"}</td>
@@ -770,9 +770,7 @@ function AnalysisTab() {
                       <td className="px-6 py-4 font-medium text-[color:var(--black)]">
                         <span className="flex items-center gap-2 flex-wrap">
                           <GuestName name={p.guest_name} tags={p.guest_tags} />
-                          {p.kind === "credit_refund" && (
-                            <span className="text-sm font-bold uppercase tracking-wide text-red-700 bg-red-100 px-2 py-1 rounded-full whitespace-nowrap">Credit paid back</span>
-                          )}
+                          <MoneyKindTag row={p} />
                         </span>
                       </td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(p.payment_method)}</td>
@@ -1179,10 +1177,12 @@ function AccommodationReportTab({ shift }) {
 
           {/* One section per payment method — the front desk reconciles the
               cash drawer separately from transfers and card takings, which a
-              single mixed list makes tedious. A refund stays listed under its
-              method and is netted out of that method's total. */}
+              single mixed list makes tedious. The same rows as the Analysis
+              report: non-guest sales counted in; a refund or a reclaimed
+              credit stays listed under its method, tagged, and is netted out
+              of that method's total. */}
           {(data.payments_by_method || []).length === 0 ? (
-            <ReportSection title="Payments by Method" subtitle="Every payment taken this business day, grouped">
+            <ReportSection title="Payments by Method" subtitle="Every payment, non-guest sale, refund and reclaimed credit this business day, grouped">
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No payments recorded for this business day.</p>
             </ReportSection>
           ) : (
@@ -1196,16 +1196,14 @@ function AccommodationReportTab({ shift }) {
                   <TableHead cells={["Guest", "Room", "Amount", "Receipt No.", "Time", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
                   <tbody>
                     {group.payments.map((pmt) => (
-                      <tr key={pmt.id} className={table.row}>
+                      <tr key={pmt.row_key || pmt.id} className={table.row}>
                         {/* No Status column: its only values were "completed" (money in)
                             and "refunded" (money out). A refund now reads as what it did to
                             the drawer: a negative amount, tagged. */}
                         <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>
                           <span className="flex items-center gap-2 flex-wrap">
                             <GuestName name={pmt.guest_name} tags={pmt.guest_tags} />
-                            {pmt.status === "refunded" && (
-                              <span className="text-sm font-bold uppercase tracking-wide text-red-700 bg-red-100 px-2 py-1 rounded-full whitespace-nowrap">Refund</span>
-                            )}
+                            <MoneyKindTag row={pmt} />
                           </span>
                         </td>
                         <td className="px-6 py-4 text-[color:var(--text-color)]/84">{pmt.room_numbers || "Unassigned"}</td>

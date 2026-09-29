@@ -1,6 +1,6 @@
 // Carried over from the branch PMS's components/shared/laundryServices.js (2026-09-28).
 // The two ways the same garment is sold. One list, shared by the guest and
-// walk-in laundry sections (2026-09-24) and matching LAUNDRY_SERVICE_TYPES
+// non-guest laundry sections (2026-09-24) and matching LAUNDRY_SERVICE_TYPES
 // on the server — a garment carries two prices, and the label on the
 // picker, the receipt and the folio line must never disagree about which
 // one was sold.

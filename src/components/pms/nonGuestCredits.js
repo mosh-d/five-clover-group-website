@@ -8,7 +8,7 @@
 // credit is findable afterwards.
 //
 // It wasn't. The only lookup was by the source folio's guest_name, and a
-// walk-in sale is usually rung up without one — so paying ₦2,000 on a
+// non-guest sale is usually rung up without one — so paying ₦2,000 on a
 // ₦1,500 laundry bill produced a ₦500 credit that nothing in the app could
 // ever show or spend again (owner, 2026-09-24: "recorded as if only ₦1,500
 // was paid instead of showing a credit").

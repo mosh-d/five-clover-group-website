@@ -67,7 +67,7 @@ export const fetchPendingNonGuestCredits = async () => {
   return response.data;
 };
 
-// Paying a walk-in credit back out (2026-09-28), with how the money left.
+// Paying a non-guest credit back out (2026-09-28), with how the money left.
 export const refundNonGuestCredit = async (id, refundMethod) => {
   const response = await http.post(
     `/api/non-guest-credits/${id}/refund`,

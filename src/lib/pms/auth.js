@@ -31,6 +31,6 @@ export const isStorekeeper = () => getStoredStaffRole() === "storekeeper";
 export const canEditMenu = () => isManager() || isAccountant() || isStorekeeper();
 export const isReceptionist = () => getStoredStaffRole() === "receptionist";
 export const isWaitron = () => getStoredStaffRole() === "waitron";
-// Folio and reservation-credit refunds (walk-in credits go by drawer instead,
+// Folio and reservation-credit refunds (non-guest credits go by drawer instead,
 // see nonGuestCredits.js).
 export const canRefund = () => is("receptionist", "manager");

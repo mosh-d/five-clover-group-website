@@ -46,7 +46,7 @@ const emptyPayment = { splits: [{ amount: "", payment_method: "cash" }], receipt
  * folio/payment/credit machinery, and is kept apart from the F&B page purely
  * by service_type (derived server-side from the lines, never sent from here).
  * A guest already in the house is charged for laundry on their own folio
- * instead — this page is only for walk-in laundry customers.
+ * instead — this page is only for non-guest laundry customers.
  */
 // Renders as its own page, or as one section of a combined page - see
 // PageOrSection and AdminFnbSales (2026-09-24).
@@ -194,7 +194,7 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
   return (
     <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoShirtOutline} title={title} dataComponent="AdminLaundrySales">
       <p className="text-xl text-[color:var(--text-color)]/76">
-        Laundry for a walk-in customer. An in-house guest&apos;s laundry goes on the Guest Sales tab, charged to their own folio.
+        Laundry for a non-guest customer. An in-house guest&apos;s laundry goes on the Guest Sales tab, charged to their own folio.
       </p>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}

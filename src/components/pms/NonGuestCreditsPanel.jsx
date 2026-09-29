@@ -13,7 +13,7 @@ import usePagedRows from "@/components/pms/usePagedRows";
 import { refundNonGuestCredit } from "@/lib/pms/api/non-guest-folios-api";
 
 // Money the hotel owes back, listed the same way money owed TO the hotel
-// already is. Until now an overpayment on a walk-in bill went into a credit
+// already is. Until now an overpayment on a non-guest bill went into a credit
 // row that no screen showed, so nobody could tell it existed — the one place
 // it could surface needed the sale to have been rung up under a name, and
 // most aren't.

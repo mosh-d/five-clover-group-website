@@ -25,6 +25,8 @@ const PAYMENT_METHOD_LABELS = {
   nil: "NIL",
   charged_to_room: "Charged to Room",
   reservation_credit: "Reservation Credit",
+  // A credit paid back before its payout method was recorded (2026-09-28).
+  credit_refunds: "Reclaimed Credits",
 };
 export const formatPaymentMethod = (method) => {
   const raw = String(method == null ? "" : method).trim();

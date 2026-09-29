@@ -43,7 +43,7 @@ export default function PrintReceiptModal({ billNo, who, items, serviceCharge, t
           {who?.room_number && (
             <p><span className="text-[color:var(--text-color)]/68">Room</span> {who.room_number}</p>
           )}
-          <p><span className="text-[color:var(--text-color)]/68">Guest</span> {who?.guest_name || "Walk-in"}</p>
+          <p><span className="text-[color:var(--text-color)]/68">Guest</span> {who?.guest_name || "Non-guest"}</p>
           {staffName && <p><span className="text-[color:var(--text-color)]/68">Served by</span> {staffName}</p>}
         </div>
 

@@ -41,6 +41,7 @@ import { isAccountant, isReceptionist, isStorekeeper, isWaitron } from "@/lib/pm
 // live here.
 import { money, pct, formatDate, formatDateTime, formatPaymentMethod } from "@/lib/pms/format";
 import { canViewAuditTrail } from "@/components/pms/pmsNavItems";
+import { table } from "@/components/pms/ui";
 import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBadge, StaffActivitySection } from "@/components/pms/reportUi";
 
 import DateInput from "@/components/pms/DateInput";
@@ -410,8 +411,8 @@ function DashboardTab() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-2xl">
                     <thead>
-                      <tr className="border-b border-(--accent-2)">
-                        <th className="px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Room Type</th>
+                      <tr className={table.headRow}>
+                        <th className={`px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${table.stickyTh}`}>Room Type</th>
                         <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Stays</th>
                         <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Revenue</th>
                         <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Avg / Stay</th>
@@ -419,8 +420,8 @@ function DashboardTab() {
                     </thead>
                     <tbody>
                       {revenueByRoomType.map((row, i) => (
-                        <tr key={i} className="border-b border-(--accent-2) transition-colors">
-                          <td className="px-6 py-4 font-medium text-[color:var(--black)]">{row.room_type_name}</td>
+                        <tr key={i} className={table.row}>
+                          <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>{row.room_type_name}</td>
                           <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{row.total_stays}</td>
                           <td className="px-6 py-4 text-right font-semibold text-[color:var(--black)]">{money(row.total_revenue)}</td>
                           <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(row.avg_rate_per_stay)}</td>
@@ -444,8 +445,8 @@ function DashboardTab() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-2xl">
                     <thead>
-                      <tr className="border-b border-(--accent-2)">
-                        <th className="px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Method</th>
+                      <tr className={table.headRow}>
+                        <th className={`px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${table.stickyTh}`}>Method</th>
                         <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Count</th>
                         <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Total</th>
                         <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Share</th>
@@ -453,8 +454,8 @@ function DashboardTab() {
                     </thead>
                     <tbody>
                       {paymentMethods.map((row, i) => (
-                        <tr key={i} className="border-b border-(--accent-2) transition-colors">
-                          <td className="px-6 py-4 font-medium text-[color:var(--black)]">{formatPaymentMethod(row.payment_method)}</td>
+                        <tr key={i} className={table.row}>
+                          <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>{formatPaymentMethod(row.payment_method)}</td>
                           <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{row.count}</td>
                           <td className="px-6 py-4 text-right font-semibold text-[color:var(--black)]">{money(row.total)}</td>
                           <td className="px-6 py-4 text-right text-[color:var(--text-color)]/76">
@@ -465,7 +466,7 @@ function DashboardTab() {
                     </tbody>
                     <tfoot className="border-t border-(--accent-2)">
                       <tr className="bg-[color:var(--text-color)]/3">
-                        <td className="px-6 py-4 font-bold text-[color:var(--black)]">Total</td>
+                        <td className={`px-6 py-4 font-bold text-[color:var(--black)] ${table.stickyTh}`}>Total</td>
                         <td className="px-6 py-4 text-right font-semibold text-[color:var(--text-color)]/84">
                           {paymentMethods.reduce((s, r) => s + r.count, 0)}
                         </td>
@@ -491,8 +492,8 @@ function DashboardTab() {
               <div className="overflow-x-auto">
                 <table className="w-full text-2xl">
                   <thead>
-                    <tr className="border-b border-(--accent-2)">
-                      <th className="px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Room Type</th>
+                    <tr className={table.headRow}>
+                      <th className={`px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${table.stickyTh}`}>Room Type</th>
                       <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Capacity</th>
                       <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Avail. Nights</th>
                       <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Occupied</th>
@@ -501,8 +502,8 @@ function DashboardTab() {
                   </thead>
                   <tbody>
                     {occupancy.map((row, i) => (
-                      <tr key={i} className="border-b border-(--accent-2) transition-colors">
-                        <td className="px-6 py-4 font-medium text-[color:var(--black)]">{row.room_type_name}</td>
+                      <tr key={i} className={table.row}>
+                        <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>{row.room_type_name}</td>
                         <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{row.max_capacity}</td>
                         <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{row.available_room_nights}</td>
                         <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{Number(row.occupied_room_nights).toFixed(1)}</td>
@@ -593,8 +594,8 @@ function ManifestTab() {
   };
 
   const renderRow = (r) => (
-    <tr key={r.id} className="border-b border-(--accent-2) transition-colors">
-      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
+    <tr key={r.id} className={table.row}>
+      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.room_numbers || "Unassigned"}</td>
       <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(r.room_price)}</td>
       <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(r.breakfast_price)}</td>
@@ -760,8 +761,8 @@ function AnalysisTab() {
                 <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
                 <tbody>
                   {data.payments.map((p) => (
-                    <tr key={p.id} className="border-b border-(--accent-2) transition-colors">
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{p.room_numbers || "—"}</td>
+                    <tr key={p.id} className={table.row}>
+                      <td className={`px-6 py-4 text-[color:var(--text-color)]/84 ${table.stickyTd}`}>{p.room_numbers || "—"}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{p.receipt_number || "—"}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/68 font-mono text-lg">{p.payment_reference}</td>
                       <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={p.guest_name} tags={p.guest_tags} /></td>
@@ -891,8 +892,8 @@ function PmsReportTab() {
                 <TableHead cells={["Guest", "Check-In", "Check-Out"]} />
                 <tbody>
                   {data.stay_overs.map((r) => (
-                    <tr key={r.id} className="border-b border-(--accent-2)">
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
+                    <tr key={r.id} className={table.row}>
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
                       {/* A stay-over is already checked in (that's what makes them a stay-over,
                           not an arrival) but hasn't checked out yet — actual_check_in is a real
                           timestamp worth showing with a time; check_out is still just a scheduled
@@ -914,8 +915,8 @@ function PmsReportTab() {
                 <TableHead cells={["Guest", "Status"]} />
                 <tbody>
                   {data.arrivals.map((r) => (
-                    <tr key={r.id} className="border-b border-(--accent-2)">
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
+                    <tr key={r.id} className={table.row}>
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-lg font-bold ${r.arrived ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
                           {r.arrived ? "Arrived" : "Still Expected"}
@@ -936,8 +937,8 @@ function PmsReportTab() {
                 <TableHead cells={["Guest", "Status"]} />
                 <tbody>
                   {data.departures.map((r) => (
-                    <tr key={r.id} className="border-b border-(--accent-2)">
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
+                    <tr key={r.id} className={table.row}>
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-lg font-bold ${r.departed ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
                           {r.departed ? "Departed" : "Still In-House"}
@@ -1096,8 +1097,8 @@ function AccommodationReportTab({ shift }) {
                 <TableHead cells={["Guest", "Room Type", "Room No.", "Arrival Date", "Arrival Time", "Checkout Date", "Checkout Time", "Room Tariff", "Payment Mode", "Payment Status", "Receipt No.", "Paid Today", "Counted in Total", "Refund", "Guest Status", "Remarks", ...(showAudit ? ["Action"] : [])]} />
                 <tbody>
                   {data.rows.map((r, i) => (
-                    <tr key={`${r.reservation_id}-${r.room_number}-${i}`} className="border-b border-(--accent-2)">
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
+                    <tr key={`${r.reservation_id}-${r.room_number}-${i}`} className={table.row}>
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.room_type_name}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.room_number}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84 whitespace-nowrap">{formatDate(r.arrival_date)}</td>
@@ -1155,8 +1156,8 @@ function AccommodationReportTab({ shift }) {
                 <TableHead cells={["Room No.", "Name", "Status", ...(showAudit ? ["Action"] : [])]} />
                 <tbody>
                   {data.non_revenue_rooms.map((r) => (
-                    <tr key={`${r.room_number}-${r.status}`} className="border-b border-(--accent-2)">
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.room_number}</td>
+                    <tr key={`${r.room_number}-${r.status}`} className={table.row}>
+                      <td className={`px-6 py-4 text-[color:var(--text-color)]/84 ${table.stickyTd}`}>{r.room_number}</td>
                       <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={r.name} tags={r.guest_tags} /></td>
                       <td className="px-6 py-4"><StatusBadge status={r.status} /></td>
                       {showAudit && <td className="px-6 py-4"><AuditLink audit={r.audit} /></td>}
@@ -1186,11 +1187,11 @@ function AccommodationReportTab({ shift }) {
                   <TableHead cells={["Guest", "Room", "Amount", "Receipt No.", "Time", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
                   <tbody>
                     {group.payments.map((pmt) => (
-                      <tr key={pmt.id} className="border-b border-(--accent-2) transition-colors">
+                      <tr key={pmt.id} className={table.row}>
                         {/* No Status column: its only values were "completed" (money in)
                             and "refunded" (money out). A refund now reads as what it did to
                             the drawer: a negative amount, tagged. */}
-                        <td className="px-6 py-4 font-medium text-[color:var(--black)]">
+                        <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>
                           <span className="flex items-center gap-2 flex-wrap">
                             <GuestName name={pmt.guest_name} tags={pmt.guest_tags} />
                             {pmt.status === "refunded" && (
@@ -1232,8 +1233,8 @@ function AccommodationReportTab({ shift }) {
                 <TableHead cells={["Guest", "Room", "Amount", "Method", "Status", "Receipt No.", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
                 <tbody>
                   {data.paid_before.map((d) => (
-                    <tr key={d.id} className="border-b border-(--accent-2) transition-colors">
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={d.guest_name} tags={d.guest_tags} /></td>
+                    <tr key={d.id} className={table.row}>
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={d.guest_name} tags={d.guest_tags} /></td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{d.room_numbers || "Unassigned"}</td>
                       <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(d.amount)}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(d.payment_method)}</td>
@@ -1259,8 +1260,8 @@ function AccommodationReportTab({ shift }) {
                 <TableHead cells={["Guest", "Room", "Date Owed", "Total Owed", "Total Paid", "Method", "Reference", ...(showAudit ? ["Action"] : [])]} rightAlign={["Total Owed", "Total Paid"]} />
                 <tbody>
                   {data.debt_recovery.map((d, i) => (
-                    <tr key={i} className="border-b border-(--accent-2) transition-colors">
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={d.guest_name} tags={d.guest_tags} /></td>
+                    <tr key={i} className={table.row}>
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={d.guest_name} tags={d.guest_tags} /></td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{d.room_numbers || "Unassigned"}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatDate(d.debt_date)}</td>
                       <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(d.total_owed)}</td>
@@ -1299,8 +1300,8 @@ function AccommodationReportTab({ shift }) {
                     />
                     <tbody>
                       {data.other_charges.map((c) => (
-                        <tr key={c.id} className="border-b border-(--accent-2)">
-                          <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={c.guest_name} tags={c.guest_tags} /></td>
+                        <tr key={c.id} className={table.row}>
+                          <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={c.guest_name} tags={c.guest_tags} /></td>
                           <td className="px-6 py-4 text-[color:var(--text-color)]/84">{c.room_numbers || "—"}</td>
                           <td className="px-6 py-4 text-[color:var(--text-color)]/84">{c.type}</td>
                           <td className="px-6 py-4 text-[color:var(--text-color)]/84">{c.description || "—"}</td>
@@ -1383,8 +1384,8 @@ function SalesByStaff({ data }) {
           <TableHead cells={["Staff", "Total", ...(showAudit ? ["Action"] : [])]} rightAlign={["Total"]} />
           <tbody>
             {data.staff_breakdown.map((s, i) => (
-              <tr key={i} className="border-b border-(--accent-2) last:border-b-0">
-                <td className="px-6 py-4 font-medium text-[color:var(--black)]">{s.staff_name}</td>
+              <tr key={i} className={table.row}>
+                <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>{s.staff_name}</td>
                 <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(s.total)}</td>
                 {showAudit && <td className="px-6 py-4"><AuditLink audit={s.audit} /></td>}
               </tr>
@@ -1518,8 +1519,8 @@ function FoodSalesReportTab({ shift }) {
                 <TableHead cells={["Customer", "Qty", "Bill No", "Description", "Amount", "Service Charge", "Status", "Payment Method", "Remarks", ...(showAudit ? ["Action"] : [])]} />
                 <tbody>
                   {data.rows.map((r, i) => (
-                    <tr key={i} className="border-b border-(--accent-2)">
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]">{r.customer}</td>
+                    <tr key={i} className={table.row}>
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>{r.customer}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.quantity}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.bill_no || "—"}</td>
                       <td className="px-6 py-4 capitalize text-[color:var(--text-color)]/84">{r.description}</td>
@@ -1636,8 +1637,8 @@ function DrinkSalesReportTab({ shift }) {
                 <TableHead cells={["Customer", "Qty", "Bill No", "Description", "Amount", "Service Charge", "Status", "Payment Method", "Remarks", ...(showAudit ? ["Action"] : [])]} />
                 <tbody>
                   {data.rows.map((r, i) => (
-                    <tr key={i} className="border-b border-(--accent-2)">
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]">{r.customer}</td>
+                    <tr key={i} className={table.row}>
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>{r.customer}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.quantity}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.bill_no || "—"}</td>
                       <td className="px-6 py-4 capitalize text-[color:var(--text-color)]/84">{r.description}</td>
@@ -1760,8 +1761,8 @@ function BarStockReportTab({ shift }) {
                 <TableHead cells={["Stock", "Opening", "Added", "Total (before sales)", "Damaged", "Sold", "Unit Cost Price", "Total Amount", "Closing", "Service Charge", "Remark", ...(showAudit ? ["Action"] : [])]} />
                 <tbody>
                   {data.rows.map((r) => (
-                    <tr key={r.drink_item_id} className="border-b border-(--accent-2)">
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]">{r.stock}</td>
+                    <tr key={r.drink_item_id} className={table.row}>
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>{r.stock}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.opening_stock}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.added_stock}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.total_stock}</td>

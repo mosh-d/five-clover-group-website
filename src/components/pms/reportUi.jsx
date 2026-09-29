@@ -5,6 +5,7 @@
 import { pct } from "@/lib/pms/format";
 import { Link } from "@/lib/pms/router";
 import { accessDenial, canViewAuditTrail } from "@/components/pms/pmsNavItems";
+import { table } from "@/components/pms/ui";
 
 // Small render pieces shared by every report tab in AdminReports.jsx —
 // kept in one place so each report looks and behaves identically.
@@ -32,11 +33,13 @@ export function ReportSection({ title, subtitle, children, footer }) {
 export function TableHead({ cells, rightAlign = [] }) {
   return (
     <thead>
-      <tr className="border-b border-(--accent-2)">
+      <tr className={table.headRow}>
         {cells.map((c, i) => (
           <th
             key={i}
-            className={`px-6 py-3 ${rightAlign.includes(c) ? "text-right" : "text-left"} text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide`}
+            // The first column - whatever names the row - stays pinned while
+            // a wide report scrolls sideways (every row's first cell too).
+            className={`px-6 py-3 ${rightAlign.includes(c) ? "text-right" : "text-left"} text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${i === 0 ? table.stickyTh : ""}`}
           >
             {c}
           </th>
@@ -156,9 +159,9 @@ export function StaffActivitySection({ activity, money }) {
                 <TableHead cells={cells} rightAlign={g.amount ? ["Amount"] : []} />
                 <tbody>
                   {rows.map((r, i) => (
-                    <tr key={i} className="border-b border-(--accent-2) last:border-b-0">
-                      {dated && <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.date}</td>}
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]">{r.staff_name}</td>
+                    <tr key={i} className={table.row}>
+                      {dated && <td className={`px-6 py-4 text-[color:var(--text-color)]/84 ${table.stickyTd}`}>{r.date}</td>}
+                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${dated ? "" : table.stickyTd}`}>{r.staff_name}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.count}</td>
                       {g.amount && (
                         <td className="px-6 py-4 text-right text-[color:var(--black)]">{money(r.total)}</td>

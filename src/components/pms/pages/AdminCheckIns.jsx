@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "@/lib/pms/router";
 import { IoClose, IoLogInOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import { btn, field, table } from "@/components/pms/ui";
@@ -1017,7 +1017,7 @@ export default function AdminCheckInsPage() {
                     {!walkIn.roomTypeId ? (
                       <p className="text-lg text-[color:var(--text-color)]/60">Select a room type first.</p>
                     ) : walkInRoomsLoading ? (
-                      <p className="text-lg text-[color:var(--text-color)]/68">Loading available rooms…</p>
+                      <LoadingSpinner />
                     ) : noWalkInRoomsFree ? (
                       <p className="text-lg text-red-600">No rooms of this type are currently free.</p>
                     ) : (

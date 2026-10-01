@@ -4,7 +4,7 @@
 // Carried over from the branch PMS's admin_pages/AdminMenu.jsx (2026-09-28).
 import { useState, useEffect, useCallback, Fragment } from "react";
 import { IoRestaurantOutline } from "react-icons/io5";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { btn, field, table } from "@/components/pms/ui";

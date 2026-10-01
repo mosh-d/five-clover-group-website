@@ -1,7 +1,6 @@
-// Page-level heading with a brand-tinted icon chip, matching the style
-// already used across the hotel-frontends' admin panels (see
-// components/shared/PageHeading.jsx there) — same icon-chip treatment,
-// and the same heading face, Playfair Display (via .font-accent).
+// A page's heading: the brand-tinted icon chip and the heading face,
+// Playfair Display (.font-accent) - the same on every PMS page, branch or
+// Head Office.
 // Usage: <PageHeading icon={IoPeopleOutline}>Staff Accounts</PageHeading>
 export default function PageHeading({ icon: Icon, children, badge, className = "" }) {
   return (
@@ -11,9 +10,7 @@ export default function PageHeading({ icon: Icon, children, badge, className = "
           <Icon size={26} />
         </span>
       )}
-      <h1 className="font-accent text-6xl font-bold leading-none" style={{ color: "var(--text-color)" }}>
-        {children}
-      </h1>
+      <h1 className="font-accent text-6xl font-bold leading-none text-(--text-color)">{children}</h1>
       {badge}
     </div>
   );

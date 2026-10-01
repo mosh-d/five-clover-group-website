@@ -9,8 +9,11 @@ import BranchPicker from "./BranchPicker";
 import { logoForBranch, branchLocationName } from "./theme/brands";
 import { landingPath } from "./pmsNavItems";
 import { SIMULATABLE_ROLES } from "@/lib/pms/session";
+import { HEAD_OFFICE } from "@/lib/pms/client";
 
 const ROLE_LABELS = {
+  head_hr: "Head HR",
+  hr: "HR",
   developer: "Developer",
   manager: "Manager",
   receptionist: "Receptionist",
@@ -39,20 +42,21 @@ function ShiftRow({ shift }) {
   );
 }
 
-// The HQ admin's top bar (components/admin/AdminTopBar.jsx), wearing the
-// signed-in branch's logo and name.
+// The top bar, wearing the signed-in branch's logo and name - or, at Head
+// Office, the group's logo and "Head Office".
 export default function PmsTopBar({ shifts = [] }) {
-  const { user, branch, branches, role, realRole, roleOverride, switchBranch, setRoleOverride, signOut } = usePmsSession();
+  const { user, branch, branches, scope, role, realRole, roleOverride, switchBranch, setRoleOverride, signOut } = usePmsSession();
   const [picking, setPicking] = useState(false);
   const isDeveloper = realRole === "developer";
+  const placeName = branch?.name || "Head Office";
 
   return (
     <header className="w-full flex items-center justify-between gap-6 pl-6 pr-30 md:pr-6 py-4 shadow-sm shrink-0 bg-(--text-color)">
-      <Link href={landingPath(role)} className="flex flex-col items-center gap-3 shrink-0">
+      <Link href={landingPath(role, scope)} className="flex flex-col items-center gap-3 shrink-0">
         <div className="relative size-36">
-          <Image src={logoForBranch(branch)} alt={branch?.name || "Branch"} fill sizes="9rem" className="object-contain" priority />
+          <Image src={logoForBranch(branch)} alt={branch?.name || "Five Clover Hotels"} fill sizes="9rem" className="object-contain" priority />
         </div>
-        <span className="hidden sm:block text-xl font-bold text-white">{branchLocationName(branch?.name)}</span>
+        <span className="hidden sm:block text-xl font-bold text-white">{branch ? branchLocationName(branch.name) : "Head Office"}</span>
       </Link>
 
       <div className="flex items-center gap-5 flex-wrap justify-end">
@@ -82,11 +86,13 @@ export default function PmsTopBar({ shifts = [] }) {
               type="button"
               onClick={() => setPicking(true)}
               className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-base font-medium border-2 border-white/30 text-white cursor-pointer hover:bg-white/10 transition-colors"
-              title="Open another branch"
+              title="Open Head Office or another branch"
             >
               <IoSwapHorizontalOutline size={16} />
-              <span className="max-w-60 truncate">{branch?.name}</span>
+              <span className="max-w-60 truncate">{placeName}</span>
             </button>
+            {/* "View as" previews a branch role, so it is for a branch only. */}
+            {scope === "branch" && (
             <label className="flex items-center gap-2 text-base text-white/60">
               <span className="hidden lg:block">Viewing as</span>
               <select
@@ -102,6 +108,7 @@ export default function PmsTopBar({ shifts = [] }) {
                 ))}
               </select>
             </label>
+            )}
           </>
         )}
 
@@ -117,8 +124,9 @@ export default function PmsTopBar({ shifts = [] }) {
       {picking && (
         <BranchPicker
           branches={branches}
-          currentId={branch?.id}
-          title="Open another branch"
+          headOffice
+          currentId={branch?.id ?? HEAD_OFFICE}
+          title="Open Head Office or another branch"
           onChoose={async (id) => {
             await switchBranch(id);
             setPicking(false);

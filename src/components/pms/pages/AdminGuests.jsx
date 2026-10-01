@@ -7,7 +7,7 @@ import { useNavigate } from "@/lib/pms/router";
 import { IoClose, IoFilter, IoPeopleOutline } from 'react-icons/io5';
 import ManagerOnlyTag from "@/components/pms/ManagerOnlyTag";
 import Modal from "@/components/pms/Modal";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";

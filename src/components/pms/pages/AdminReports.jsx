@@ -7,7 +7,7 @@ import { IoBarChartOutline, IoDownloadOutline } from "react-icons/io5";
 // IoMailOutline comes back with the Email Report button below, if it does.
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import Button from "@/components/pms/Button";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
 import {
   fetchReportsDashboard,
@@ -308,7 +308,7 @@ function DashboardTab() {
           variant="emphasis"
           className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          {loading ? "Loading..." : "Generate Report"}
+          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
         </Button>
         <Button
           onClick={handleExport}
@@ -624,7 +624,7 @@ function ManifestTab() {
           />
         </div>
         <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          {loading ? "Loading..." : "Generate Report"}
+          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
         </Button>
       </div>
 
@@ -861,7 +861,7 @@ function PmsReportTab() {
           </select>
         </div>
         <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          {loading ? "Loading..." : "Generate Report"}
+          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
         </Button>
       </div>
 
@@ -1037,7 +1037,7 @@ function AccommodationReportTab({ shift }) {
           />
         </div>
         <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          {loading ? "Loading..." : "Generate Report"}
+          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
         </Button>
       </div>
 
@@ -1489,7 +1489,7 @@ function FoodSalesReportTab({ shift }) {
           />
         </div>
         <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          {loading ? "Loading..." : "Generate Report"}
+          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
         </Button>
       </div>
 
@@ -1607,7 +1607,7 @@ function DrinkSalesReportTab({ shift }) {
           />
         </div>
         <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          {loading ? "Loading..." : "Generate Report"}
+          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
         </Button>
       </div>
 
@@ -1728,7 +1728,7 @@ function BarStockReportTab({ shift }) {
           />
         </div>
         <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          {loading ? "Loading..." : "Generate Report"}
+          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
         </Button>
       </div>
 
@@ -1854,7 +1854,7 @@ function RangePicker({ from, to, setFrom, setTo, onGenerate, loading }) {
         />
       </div>
       <Button onClick={onGenerate} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-        {loading ? "Loading..." : "Generate Report"}
+        <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
       </Button>
     </div>
   );

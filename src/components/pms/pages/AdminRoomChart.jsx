@@ -9,7 +9,7 @@ import {
   IoChevronBack,
   IoChevronForward,
 } from 'react-icons/io5';
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import { btn } from "@/components/pms/ui";
 import { fetchRoomChart } from "@/lib/pms/api/reservations-pms-api";

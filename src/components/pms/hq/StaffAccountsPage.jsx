@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { IoPeopleOutline } from "react-icons/io5";
+import PageHeading from "@/components/pms/PageHeading";
+import StatusBadge from "@/components/pms/StatusBadge";
+import Modal from "@/components/pms/Modal";
+import PasswordField from "@/components/pms/PasswordField";
+import ConfirmPanel from "@/components/pms/ConfirmPanel";
+import Notice from "@/components/pms/Notice";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import { page, btn, field, table } from "@/components/pms/ui";
 import {
   fetchBranches,
   fetchHqStaff,
@@ -10,53 +18,24 @@ import {
   deactivateHqStaff,
   reactivateHqStaff,
   transferHqStaff,
-  HqApiError,
-} from "@/lib/hq-api";
-import PageHeading from "@/components/admin/PageHeading";
-import StatusBadge from "@/components/admin/StatusBadge";
-import Modal from "@/components/admin/Modal";
-import PasswordField from "@/components/admin/PasswordField";
-import ConfirmPanel from "@/components/admin/ConfirmPanel";
-import Notice from "@/components/admin/Notice";
-import {
-  mutedTextStyle,
-  bodyText,
-  labelText,
-  inputClass,
-  inputStyle,
-  primaryButtonClass,
-  primaryButtonStyle,
-  errorBoxClass,
-  tableCardClass,
-  tableCardStyle,
-  tableScrollClass,
-  tableClass,
-  tableHeadRowClass,
-  tableHeadRowStyle,
-  tableThClass,
-  tableRowClass,
-  tableRowStyle,
-  tableTdClass,
-  tableActionsClass,
-  rowButtonPrimaryClass,
-  rowButtonPrimaryStyle,
-  rowButtonSecondaryClass,
-  rowButtonSecondaryStyle,
-  rowButtonDangerClass,
-  rowButtonSuccessClass,
-} from "@/components/admin/adminStyles";
+} from "@/lib/pms/api/hq-api";
+import { PmsApiError } from "@/lib/pms/client";
+
+// Staff Accounts (Head Office): every branch's staff, and Head Office's own.
+//
+// Every change goes the same way (owner, 2026-10-01: double confirmation,
+// then feedback either way): fill in the form, review what will happen in
+// words, confirm - then a message at the top of the page says what was done,
+// or the dialog says why it wasn't.
 
 const BRANCH_ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper"];
-// Only role creatable/assignable from "Head Office" — developer/head_hr
-// stay CLI-only (see manage-staff-account.ts), never offered here.
+// Only role creatable/assignable at Head Office - developer/head_hr stay
+// CLI-only (see manage-staff-account.ts), never offered here.
 const HEAD_OFFICE_ASSIGNABLE_ROLES = ["hr"];
-// developer/head_hr accounts now show up in the "Head Office" list (see
-// HqStaffService.list(null)) and any head_hr/hr/developer session can
-// fully manage them here (reset password, deactivate, reactivate) — the
-// page itself is already gated to those roles, so there's no extra wall
-// on top. The one thing that stays fixed is their ROLE (excluded from
-// HQ_ASSIGNABLE_ROLES on the backend — can't be promoted/demoted through
-// this tool), so they get no Change Role action.
+// developer/head_hr accounts are listed at Head Office and can be managed
+// here (reset password, deactivate, reactivate) - the page is already gated
+// to Head Office. Their ROLE stays fixed (the backend refuses a change), so
+// they get no Change Role action.
 const CLI_ONLY_ROLES = ["developer", "head_hr"];
 
 const ROLE_LABELS = {
@@ -64,7 +43,7 @@ const ROLE_LABELS = {
   receptionist: "Receptionist",
   accountant: "Accountant",
   waitron: "Waitron",
-  storekeeper: "Storekeeper",
+  storekeeper: "Store Keeper",
   hr: "HR",
   head_hr: "Head HR",
   developer: "Developer",
@@ -75,7 +54,7 @@ const HEAD_OFFICE = "head_office";
 const MIN_PASSWORD = 8;
 
 const SERVER_UNREACHABLE = "Could not reach the server. Check your connection and try again.";
-const errorText = (err) => (err instanceof HqApiError ? err.message : SERVER_UNREACHABLE);
+const errorText = (err) => (err instanceof PmsApiError ? err.message : SERVER_UNREACHABLE);
 
 // A new password, typed twice: the same checks the server makes, said in
 // plain words before anything is sent.
@@ -85,18 +64,20 @@ function passwordProblem(password, confirm) {
   return null;
 }
 
-function formatDate(d) {
-  if (!d) return "Never";
-  return new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-}
+const formatDate = (d) =>
+  d ? new Date(d).toLocaleString("en-GB", { timeZone: "Africa/Lagos", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Never";
 
-// Every change to an account goes the same way (owner, 2026-10-01: double
-// confirmation, then feedback either way): fill in the form, review what
-// will happen in words, confirm - then a message at the top of the page
-// says what was done, or the dialog says why it wasn't.
-const EMPTY_DIALOG = null;
+const TITLES = {
+  create: "Add Staff Account",
+  rename: "Rename",
+  role: "Change Role",
+  password: "Reset Password",
+  transfer: "Transfer to Another Branch",
+  deactivate: "Deactivate Account",
+  reactivate: "Reactivate Account",
+};
 
-export default function AdminStaffPage() {
+export default function StaffAccountsPage() {
   const [branches, setBranches] = useState([]);
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const [loadingBranches, setLoadingBranches] = useState(true);
@@ -108,7 +89,7 @@ export default function AdminStaffPage() {
   const [showDeactivated, setShowDeactivated] = useState(false);
 
   // { kind: 'create' | 'rename' | 'role' | 'password' | 'transfer' | 'deactivate' | 'reactivate', account?, step: 'form' | 'confirm' }
-  const [dialog, setDialog] = useState(EMPTY_DIALOG);
+  const [dialog, setDialog] = useState(null);
   const [form, setForm] = useState({});
   const [formError, setFormError] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -125,16 +106,11 @@ export default function AdminStaffPage() {
     try {
       setLoadingStaff(true);
       setError(null);
-      const data = await fetchHqStaff(branchId);
-      setStaff(data || []);
+      setStaff((await fetchHqStaff(branchId)) || []);
     } catch (err) {
-      // A branch with zero staff is not an error — the backend returns an
-      // empty array for that (see the "No staff accounts..." empty state
-      // below). Reaching this catch means the request itself failed:
-      // HqApiError carries the backend's real reason (e.g. "Branch not
-      // found"); anything else is a network-level failure (offline, CORS,
-      // or the backend waking up from being idle), not a staff problem.
-      setError(err instanceof HqApiError ? err.message : "Could not reach the server to load staff. Check your connection and try again.");
+      // A branch with no staff is an empty list, not an error: reaching here
+      // means the request itself failed.
+      setError(err instanceof PmsApiError ? err.message : "Could not reach the server to load staff. Check your connection and try again.");
       setStaff([]);
     } finally {
       setLoadingStaff(false);
@@ -163,7 +139,7 @@ export default function AdminStaffPage() {
   };
   const close = () => {
     if (busy) return;
-    setDialog(EMPTY_DIALOG);
+    setDialog(null);
   };
   const back = () => {
     setFormError(null);
@@ -206,9 +182,8 @@ export default function AdminStaffPage() {
         await createHqStaff({
           username,
           role: form.role,
-          // Head Office roles (hr) have no home branch — omit branch_id
-          // entirely rather than sending the "head_office" sentinel itself,
-          // which is a frontend-only concept the backend never sees.
+          // A Head Office role (hr) has no branch: branch_id is left off,
+          // never the "head_office" sentinel, which the server never sees.
           ...(isHeadOffice ? {} : { branch_id: Number(selectedBranchId) }),
           password: form.password,
         });
@@ -233,7 +208,7 @@ export default function AdminStaffPage() {
         await reactivateHqStaff(account.id);
         message = `Reactivated "${account.username}". They can sign in again with their existing password.`;
       }
-      setDialog(EMPTY_DIALOG);
+      setDialog(null);
       setNotice(message);
       loadStaff(selectedBranchId);
     } catch (err) {
@@ -282,7 +257,7 @@ export default function AdminStaffPage() {
         details: [
           "Their old password stops working straight away.",
           "Any session they have open ends within 30 minutes; they then sign in with the new password.",
-          "Give them the new password yourself — it isn't sent anywhere.",
+          "Give them the new password yourself - it isn't sent anywhere.",
         ],
         confirmLabel: "Yes, reset the password",
         busyLabel: "Resetting...",
@@ -300,7 +275,7 @@ export default function AdminStaffPage() {
     if (kind === "deactivate") {
       return {
         question: `Deactivate "${account.username}"?`,
-        details: ["This signs them out everywhere and blocks further sign-ins.", "Nothing is deleted — you can reactivate the account later."],
+        details: ["This signs them out everywhere and blocks further sign-ins.", "Nothing is deleted - you can reactivate the account later."],
         confirmLabel: "Yes, deactivate",
         busyLabel: "Deactivating...",
         danger: true,
@@ -316,37 +291,20 @@ export default function AdminStaffPage() {
     };
   };
 
-  const TITLES = {
-    create: "Add Staff Account",
-    rename: "Rename",
-    role: "Change Role",
-    password: "Reset Password",
-    transfer: "Transfer to Another Branch",
-    deactivate: "Deactivate Account",
-    reactivate: "Reactivate Account",
-  };
-
   return (
-    <div className="w-full flex flex-col gap-8">
+    <div className={page.wrap}>
       <div>
         <PageHeading icon={IoPeopleOutline}>Staff Accounts</PageHeading>
-        <p className={`${bodyText} mt-2`} style={mutedTextStyle}>
-          Manage staff across every branch.
-        </p>
+        <p className={`text-2xl mt-2 ${page.muted}`}>Manage staff across every branch, and Head Office&apos;s own accounts.</p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-2 flex-1 min-w-[16rem]">
-          <label className={labelText} style={mutedTextStyle}>Branch</label>
+      <div className="w-full flex flex-wrap items-end gap-4">
+        <div className="flex flex-col gap-2 min-w-[24rem]">
+          <label htmlFor="staff-branch" className={field.label}>Branch</label>
           {loadingBranches ? (
-            <p className={bodyText} style={mutedTextStyle}>Loading branches...</p>
+            <LoadingSpinner />
           ) : (
-            <select
-              value={selectedBranchId}
-              onChange={(e) => setSelectedBranchId(e.target.value)}
-              className={inputClass}
-              style={inputStyle}
-            >
+            <select id="staff-branch" value={selectedBranchId} onChange={(e) => setSelectedBranchId(e.target.value)} className={field.select}>
               <option value="">-- Select a branch --</option>
               <option value={HEAD_OFFICE}>Head Office</option>
               {branches.map((b) => (
@@ -356,135 +314,126 @@ export default function AdminStaffPage() {
           )}
         </div>
         <button
+          type="button"
           onClick={() => open("create", null, { username: "", role: assignableRoles[0], password: "", confirm: "" })}
           disabled={!selectedBranchId}
-          className={primaryButtonClass}
-          style={primaryButtonStyle}
+          className={btn.primary}
         >
           + Add Staff
         </button>
       </div>
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
-      {error && <p className={errorBoxClass} role="alert">{error}</p>}
+      {error && <p className={`${field.error} w-full`} role="alert">{error}</p>}
 
-      {selectedBranchId && !loadingStaff && staff.length > 0 && (
-        <label className={`${bodyText} flex items-center gap-2 cursor-pointer w-fit`} style={mutedTextStyle}>
-          <input
-            type="checkbox"
-            checked={showDeactivated}
-            onChange={(e) => setShowDeactivated(e.target.checked)}
-            className="cursor-pointer"
-          />
-          View deactivated accounts{deactivatedCount > 0 ? ` (${deactivatedCount})` : ""}
-        </label>
-      )}
+      <div className="w-full flex flex-col gap-4">
+        {selectedBranchId && !loadingStaff && staff.length > 0 && (
+          <label className={`text-xl flex items-center gap-2 cursor-pointer w-fit ${page.muted}`}>
+            <input type="checkbox" checked={showDeactivated} onChange={(e) => setShowDeactivated(e.target.checked)} className="cursor-pointer" />
+            View deactivated accounts{deactivatedCount > 0 ? ` (${deactivatedCount})` : ""}
+          </label>
+        )}
 
-      {!selectedBranchId ? (
-        <p className={bodyText} style={mutedTextStyle}>Select a branch to see its staff accounts.</p>
-      ) : loadingStaff ? (
-        <p className={bodyText} style={mutedTextStyle}>Loading staff...</p>
-      ) : staff.length === 0 ? (
-        <p className={bodyText} style={mutedTextStyle}>
-          No staff accounts {isHeadOffice ? "at Head Office" : "at this branch"} yet.
-        </p>
-      ) : visibleStaff.length === 0 ? (
-        <p className={bodyText} style={mutedTextStyle}>
-          All staff accounts at this branch are deactivated. Check &quot;View deactivated accounts&quot; above to see them.
-        </p>
-      ) : (
-        <div className={tableCardClass} style={tableCardStyle}>
-          <div className={tableScrollClass}>
-            <table className={tableClass}>
-              <thead>
-                <tr className={tableHeadRowClass} style={tableHeadRowStyle}>
-                  <th className={tableThClass}>Username</th>
-                  <th className={tableThClass}>Role</th>
-                  <th className={tableThClass}>Status</th>
-                  <th className={tableThClass}>Last Login</th>
-                  <th className={tableThClass}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleStaff.map((account) => (
-                  <tr key={account.id} className={tableRowClass} style={tableRowStyle}>
-                    <td className={tableTdClass}>{account.username}</td>
-                    <td className={tableTdClass}>{roleLabel(account.role)}</td>
-                    <td className={tableTdClass}>
-                      <StatusBadge status={account.is_active ? "active" : "inactive"} />
-                    </td>
-                    <td className={tableTdClass}>{formatDate(account.last_login_at)}</td>
-                    <td className={tableTdClass}>
-                      <div className={tableActionsClass}>
-                        <button onClick={() => open("rename", account, { username: account.username })} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
-                          Rename
-                        </button>
-                        {!CLI_ONLY_ROLES.includes(account.role) && (
-                          <button onClick={() => open("role", account, { role: account.role })} className={rowButtonPrimaryClass} style={rowButtonPrimaryStyle}>
-                            Change Role
-                          </button>
-                        )}
-                        <button onClick={() => open("password", account, { password: "", confirm: "" })} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
-                          Reset Password
-                        </button>
-                        {account.branch_id && (
-                          <button onClick={() => open("transfer", account, { branchId: "" })} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
-                            Transfer
-                          </button>
-                        )}
-                        <button
-                          onClick={() => open(account.is_active ? "deactivate" : "reactivate", account)}
-                          className={account.is_active ? rowButtonDangerClass : rowButtonSuccessClass}
-                        >
-                          {account.is_active ? "Deactivate" : "Reactivate"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {!selectedBranchId ? (
+          <p className={`text-2xl ${page.muted}`}>Select a branch to see its staff accounts.</p>
+        ) : loadingStaff ? (
+          <div className="flex justify-center py-10">
+            <LoadingSpinner size="lg" />
           </div>
-        </div>
-      )}
+        ) : staff.length === 0 ? (
+          <p className={`text-2xl ${page.muted}`}>No staff accounts {isHeadOffice ? "at Head Office" : "at this branch"} yet.</p>
+        ) : visibleStaff.length === 0 ? (
+          <p className={`text-2xl ${page.muted}`}>
+            All staff accounts here are deactivated. Tick &quot;View deactivated accounts&quot; above to see them.
+          </p>
+        ) : (
+          <div className={table.card}>
+            <div className={table.scroll}>
+              <table className={table.el}>
+                <thead>
+                  <tr className={table.headRow}>
+                    <th className={`${table.th} ${table.stickyTh}`}>Username</th>
+                    <th className={table.th}>Role</th>
+                    <th className={table.th}>Status</th>
+                    <th className={table.th}>Last Login</th>
+                    <th className={table.th}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleStaff.map((account) => (
+                    <tr key={account.id} className={table.row}>
+                      <td className={`${table.td} ${table.stickyTd} font-semibold`}>{account.username}</td>
+                      <td className={table.td}>{roleLabel(account.role)}</td>
+                      <td className={table.td}>
+                        <StatusBadge status={account.is_active ? "active" : "inactive"} />
+                      </td>
+                      <td className={table.td}>{formatDate(account.last_login_at)}</td>
+                      <td className={table.td}>
+                        <div className={table.actions}>
+                          <button type="button" onClick={() => open("rename", account, { username: account.username })} className={btn.rowSecondary}>
+                            Rename
+                          </button>
+                          {!CLI_ONLY_ROLES.includes(account.role) && (
+                            <button type="button" onClick={() => open("role", account, { role: account.role })} className={btn.rowPrimary}>
+                              Change Role
+                            </button>
+                          )}
+                          <button type="button" onClick={() => open("password", account, { password: "", confirm: "" })} className={btn.rowSecondary}>
+                            Reset Password
+                          </button>
+                          {account.branch_id && (
+                            <button type="button" onClick={() => open("transfer", account, { branchId: "" })} className={btn.rowSecondary}>
+                              Transfer
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => open(account.is_active ? "deactivate" : "reactivate", account)}
+                            className={account.is_active ? btn.rowDanger : btn.rowSuccess}
+                          >
+                            {account.is_active ? "Deactivate" : "Reactivate"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
 
       {dialog && (
-        <Modal title={dialog.account ? `${TITLES[dialog.kind]} — ${dialog.account.username}` : TITLES[dialog.kind]} onClose={close}>
+        <Modal title={dialog.account ? `${TITLES[dialog.kind]} — ${dialog.account.username}` : TITLES[dialog.kind]} onClose={close} size="sm">
           {dialog.step === "confirm" ? (
             <ConfirmPanel {...confirmation()} busy={busy} error={formError} onBack={back} onConfirm={confirm} />
           ) : (
-            <form onSubmit={review} className="flex flex-col gap-4">
-              {formError && <p className={errorBoxClass} role="alert">{formError}</p>}
+            <form onSubmit={review} className="flex flex-col gap-5">
+              {formError && <p className={field.error} role="alert">{formError}</p>}
 
               {dialog.kind === "create" && (
                 <>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="staff-username" className={labelText} style={mutedTextStyle}>Username</label>
+                    <label htmlFor="staff-username" className={field.label}>Username</label>
                     <input
                       id="staff-username"
                       type="text"
                       value={form.username}
                       onChange={(e) => setForm({ ...form, username: e.target.value })}
-                      className={inputClass}
-                      style={inputStyle}
+                      className={field.input}
                       placeholder="e.g. Ada Okafor"
                     />
                     {/* One naming pattern for every account (owner, 2026-09-28):
                         the username is the only name the system shows for a staff
                         member - on shifts, reports and the audit trail. */}
-                    <p className={bodyText} style={mutedTextStyle}>
+                    <p className={field.hint}>
                       Use the person&apos;s first name, then last name, e.g. &quot;Ada Okafor&quot;. It&apos;s the name shown on shifts, reports and the audit trail.
                     </p>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="staff-role" className={labelText} style={mutedTextStyle}>Role</label>
-                    <select
-                      id="staff-role"
-                      value={form.role}
-                      onChange={(e) => setForm({ ...form, role: e.target.value })}
-                      className={inputClass}
-                      style={inputStyle}
-                    >
+                    <label htmlFor="staff-role" className={field.label}>Role</label>
+                    <select id="staff-role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className={`${field.select} w-full`}>
                       {assignableRoles.map((r) => (
                         <option key={r} value={r}>{roleLabel(r)}</option>
                       ))}
@@ -492,24 +441,23 @@ export default function AdminStaffPage() {
                   </div>
                   <PasswordField id="staff-password" label="Password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
                   <PasswordField id="staff-password-confirm" label="Type the password again" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
-                  <p className={bodyText} style={mutedTextStyle}>At least {MIN_PASSWORD} characters.</p>
+                  <p className={field.hint}>At least {MIN_PASSWORD} characters.</p>
                 </>
               )}
 
               {dialog.kind === "rename" && (
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="staff-new-username" className={labelText} style={mutedTextStyle}>New username</label>
+                  <label htmlFor="staff-new-username" className={field.label}>New username</label>
                   <input
                     id="staff-new-username"
                     type="text"
                     maxLength={50}
                     value={form.username}
                     onChange={(e) => setForm({ ...form, username: e.target.value })}
-                    className={inputClass}
-                    style={inputStyle}
+                    className={field.input}
                     placeholder="e.g. Ada Okafor"
                   />
-                  <p className={bodyText} style={mutedTextStyle}>
+                  <p className={field.hint}>
                     Use the person&apos;s first name, then last name, e.g. &quot;Ada Okafor&quot;. It&apos;s the name they sign in with and the name shown on shifts and reports.
                   </p>
                 </div>
@@ -517,16 +465,13 @@ export default function AdminStaffPage() {
 
               {dialog.kind === "role" && (
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="staff-new-role" className={labelText} style={mutedTextStyle}>New role</label>
-                  <select
-                    id="staff-new-role"
-                    value={form.role}
-                    onChange={(e) => setForm({ ...form, role: e.target.value })}
-                    className={inputClass}
-                    style={inputStyle}
-                  >
+                  <label htmlFor="staff-new-role" className={field.label}>New role</label>
+                  <select id="staff-new-role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className={`${field.select} w-full`}>
                     {assignableRoles.map((r) => (
-                      <option key={r} value={r}>{roleLabel(r)}{r === dialog.account.role ? " (current)" : ""}</option>
+                      <option key={r} value={r}>
+                        {roleLabel(r)}
+                        {r === dialog.account.role ? " (current)" : ""}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -536,23 +481,20 @@ export default function AdminStaffPage() {
                 <>
                   <PasswordField id="reset-password" label="New password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
                   <PasswordField id="reset-password-confirm" label="Type the new password again" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
-                  <p className={bodyText} style={mutedTextStyle}>At least {MIN_PASSWORD} characters. You&apos;ll be asked to confirm before anything changes.</p>
+                  <p className={field.hint}>At least {MIN_PASSWORD} characters. You&apos;ll be asked to confirm before anything changes.</p>
                 </>
               )}
 
               {dialog.kind === "transfer" && (
                 <>
-                  <p className={bodyText} style={mutedTextStyle}>
-                    Moves this account to a different branch. Role, username, and password stay the same.
-                  </p>
+                  <p className={`text-xl ${page.muted}`}>Moves this account to a different branch. Role, username, and password stay the same.</p>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="staff-transfer-branch" className={labelText} style={mutedTextStyle}>New branch</label>
+                    <label htmlFor="staff-transfer-branch" className={field.label}>New branch</label>
                     <select
                       id="staff-transfer-branch"
                       value={form.branchId}
                       onChange={(e) => setForm({ ...form, branchId: e.target.value })}
-                      className={inputClass}
-                      style={inputStyle}
+                      className={`${field.select} w-full`}
                     >
                       <option value="">-- Select a branch --</option>
                       {branches
@@ -565,7 +507,7 @@ export default function AdminStaffPage() {
                 </>
               )}
 
-              <button type="submit" className={primaryButtonClass} style={primaryButtonStyle}>
+              <button type="submit" className={`${btn.primary} self-start`}>
                 Review
               </button>
             </form>

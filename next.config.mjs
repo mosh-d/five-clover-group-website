@@ -35,14 +35,20 @@ const nextConfig = {
   // Power by header removal for security
   poweredByHeader: false,
 
-  // The HQ admin moved from /admin to /hq (owner, 2026-10-01); old bookmarks
-  // and links land on the same page there. Not permanent, so /admin stays
-  // free to mean something else later without browsers holding on to this.
+  // Head Office's pages live in the PMS now (owner, 2026-10-01): one PMS at
+  // /pms, one sign-in. They were at /hq, and at /admin before that, so old
+  // bookmarks and links land on the same page there - the two renamed ones
+  // first, then everything else by its own name (critical, decision-support,
+  // metrics, account). Not permanent, so /admin and /hq stay free to mean
+  // something else later without browsers holding on to this.
   async redirects() {
-    return [
-      { source: '/admin', destination: '/hq', permanent: false },
-      { source: '/admin/:path*', destination: '/hq/:path*', permanent: false },
+    const moved = (from) => [
+      { source: from, destination: '/pms', permanent: false },
+      { source: `${from}/staff`, destination: '/pms/staff-accounts', permanent: false },
+      { source: `${from}/audit-logs`, destination: '/pms/audit-trail', permanent: false },
+      { source: `${from}/:path*`, destination: '/pms/:path*', permanent: false },
     ];
+    return [...moved('/hq'), ...moved('/admin')];
   },
 };
 

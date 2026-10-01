@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "@/lib/pms/router";
 import { IoClose, IoReceiptOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
 import { CHARGE_TYPE_LABELS, settlementByCharge } from "@/components/pms/folioCharges";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";

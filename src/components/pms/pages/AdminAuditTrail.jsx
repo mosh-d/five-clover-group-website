@@ -7,13 +7,15 @@ import { useNavigate, useSearchParams } from "@/lib/pms/router";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import Button from "@/components/pms/Button";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
 import { table, field } from "@/components/pms/ui";
 import { accessDenial } from "@/components/pms/pmsNavItems";
 import { fetchAuditActionLabels, fetchAuditLogHistory, fetchAuditStaffOptions } from "@/lib/pms/api/audit-log-api";
+import { fetchBranches, fetchHqAuditLogs, fetchHqAuditStaffOptions, fetchHqAuditActionLabels } from "@/lib/pms/api/hq-api";
 import { isManager, isAccountant } from "@/lib/pms/auth";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
+import { usePmsSession } from "@/components/pms/PmsSessionContext";
 
 import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
@@ -62,6 +64,12 @@ const ROLE_LABELS = {
   auto: "Auto (PMS)",
 };
 
+// Head Office reads any branch's trail, or its own (2026-10-01: Head Office
+// moved into the PMS from /hq) - where head_hr and hr act, so they join the
+// role filter there.
+const HEAD_OFFICE = "head_office";
+const HEAD_OFFICE_ROLE_LABELS = { ...ROLE_LABELS, head_hr: "Head HR", hr: "HR" };
+
 // Explicit timeZone so this always shows the hotel's own local time
 // (Africa/Lagos) — without it, toLocaleString renders in whatever timezone
 // the VIEWING device happens to be set to, which silently drifts from the
@@ -86,8 +94,19 @@ export default function AdminAuditTrail() {
   // reviewing the books needs the same trace-back-to-who-did-what visibility
   // a manager has, just never the ability to act on any of it (this page is
   // already read-only for everyone).
-  const canView = isManager() || isAccountant();
+  const isHeadOffice = usePmsSession()?.scope === "hq";
+  const canView = isHeadOffice || isManager() || isAccountant();
   const navigate = useNavigate();
+
+  // At Head Office: which branch's trail (or HEAD_OFFICE's own). Read by
+  // load() through a ref, so a reload always asks about the branch on screen.
+  const [branches, setBranches] = useState([]);
+  const [place, setPlace] = useState("");
+  const placeRef = useRef("");
+  useEffect(() => {
+    if (!isHeadOffice) return;
+    fetchBranches().then((list) => setBranches(list || [])).catch(() => {});
+  }, [isHeadOffice]);
 
   const [entries, setEntries] = useState([]);
   const [total, setTotal] = useState(0);
@@ -118,10 +137,12 @@ export default function AdminAuditTrail() {
   const latestRequest = useRef(0);
 
   const load = useCallback(async (p = 1, filters = {}) => {
+    // Head Office with no branch picked yet has nothing to show.
+    if (isHeadOffice && !placeRef.current) return;
     const requestId = ++latestRequest.current;
     try {
       setLoading(true);
-      const data = await fetchAuditLogHistory({
+      const params = {
         page: p,
         limit: PAGE_SIZE,
         staff_account_id: filters.staffId || undefined,
@@ -130,7 +151,8 @@ export default function AdminAuditTrail() {
         from: filters.from || undefined,
         to: filters.to || undefined,
         search: filters.search || undefined,
-      });
+      };
+      const data = isHeadOffice ? await fetchHqAuditLogs(placeRef.current, params) : await fetchAuditLogHistory(params);
       if (requestId !== latestRequest.current) return;
       setEntries(data.data || []);
       setTotal(data.total || 0);
@@ -142,7 +164,25 @@ export default function AdminAuditTrail() {
     } finally {
       if (requestId === latestRequest.current) setLoading(false);
     }
-  }, []);
+  }, [isHeadOffice]);
+
+  // Head Office picks the branch; the filters start afresh for it.
+  const choosePlace = (value) => {
+    placeRef.current = value;
+    setPlace(value);
+    setFilterStaffId("");
+    setFilterRole("");
+    setFilterAction("");
+    setFilterFrom("");
+    setFilterTo("");
+    setFilterSearch("");
+    setStaffOptions([]);
+    setEntries([]);
+    setTotal(0);
+    if (!value) return;
+    load(1, {});
+    fetchHqAuditStaffOptions(value).then(setStaffOptions).catch(() => {});
+  };
 
   // Load on arrival with the URL's filters, and again whenever the URL itself
   // changes — back/forward between two deep links keeps this page mounted.
@@ -165,8 +205,13 @@ export default function AdminAuditTrail() {
     setFilterTo(fromUrl.to);
     setFilterSearch(fromUrl.search);
     load(1, fromUrl);
-    fetchAuditStaffOptions().then(setStaffOptions).catch(() => {});
-    fetchAuditActionLabels().then(setActionLabels).catch(() => {});
+    if (isHeadOffice) {
+      if (!placeRef.current) setLoading(false);
+      fetchHqAuditActionLabels().then(setActionLabels).catch(() => {});
+    } else {
+      fetchAuditStaffOptions().then(setStaffOptions).catch(() => {});
+      fetchAuditActionLabels().then(setActionLabels).catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canView, urlKey]);
 
@@ -238,15 +283,37 @@ export default function AdminAuditTrail() {
   }
 
   const pages = Math.ceil(total / PAGE_SIZE);
+  const roleLabels = isHeadOffice ? HEAD_OFFICE_ROLE_LABELS : ROLE_LABELS;
+  const waitingForPlace = isHeadOffice && !place;
 
   return (
     <div data-component="AdminAuditTrail" className="flex flex-col items-start gap-[3rem]">
       <div>
         <PageHeading icon={IoDocumentTextOutline}>Audit Trail</PageHeading>
         <p className="text-2xl text-[color:var(--text-color)]/76 mt-2">
-          A record of actions taken by staff on this branch's account. Manager and developer visibility only.
+          {isHeadOffice
+            ? "A record of actions taken by staff at any branch - or at Head Office, by Head Office's own accounts."
+            : "A record of actions taken by staff on this branch's account. Manager and developer visibility only."}
         </p>
       </div>
+
+      {isHeadOffice && (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="audit-place" className={field.label}>Branch</label>
+          <select id="audit-place" value={place} onChange={(e) => choosePlace(e.target.value)} className={field.select}>
+            <option value="">-- Select a branch --</option>
+            <option value={HEAD_OFFICE}>Head Office</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {waitingForPlace ? (
+        <p className="text-2xl text-[color:var(--text-color)]/68">Select a branch, or Head Office, to see its audit trail.</p>
+      ) : (
+      <>
 
       <div className="w-full flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2 flex-1 min-w-64">
@@ -284,7 +351,7 @@ export default function AdminAuditTrail() {
             className={field.select}
           >
             <option value="">All roles</option>
-            {Object.entries(ROLE_LABELS).map(([value, label]) => (
+            {Object.entries(roleLabels).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
@@ -351,7 +418,9 @@ export default function AdminAuditTrail() {
                   </thead>
                   <tbody>
                     {entries.map((entry) => {
-                      const link = entry.entity_type && ENTITY_LINKS[entry.entity_type]
+                      // The pages these open belong to a branch's own PMS -
+                      // nothing to open from Head Office.
+                      const link = !isHeadOffice && entry.entity_type && ENTITY_LINKS[entry.entity_type]
                         ? ENTITY_LINKS[entry.entity_type](entry)
                         : null;
                       // An accountant reads the trail but may not open the
@@ -410,6 +479,8 @@ export default function AdminAuditTrail() {
           </>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

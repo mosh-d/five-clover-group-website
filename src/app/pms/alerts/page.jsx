@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IoNotificationsOutline, IoMenuOutline } from "react-icons/io5";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
 import Pagination from "@/components/pms/Pagination";
@@ -15,6 +15,7 @@ import { fetchAlerts } from "@/lib/pms/api/alerts-api";
 import { markNoShow } from "@/lib/pms/api/reservations-pms-api";
 import { calendarDaysAgo, serverNow } from "@/lib/pms/dates";
 import { formatDate, money } from "@/lib/pms/format";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
 
 const PAGE_SIZE = 10;
 
@@ -139,7 +140,7 @@ export default function PmsAlertsPage() {
             <div className={table.actions}>
               {view("View", `/pms/reservations?reservation_id=${r.id}`)}
               <button onClick={() => handleMarkNoShow(r.id, r.guest_name)} disabled={actionLoading === r.id} className={btn.rowSecondary}>
-                {actionLoading === r.id ? "..." : "No-Show"}
+                {actionLoading === r.id ? <LoadingSpinner size="sm" /> : "No-Show"}
               </button>
             </div>
           ),
@@ -241,7 +242,7 @@ export default function PmsAlertsPage() {
         <AlertTabs tabs={TABS} active={tab} onChange={setTab} />
 
         {loading && !data ? (
-          <p className={`text-xl ${page.muted}`}>Loading…</p>
+          <div className="flex justify-center py-10"><LoadingSpinner size="lg" /></div>
         ) : error ? (
           <p className={field.error}>{error}</p>
         ) : (

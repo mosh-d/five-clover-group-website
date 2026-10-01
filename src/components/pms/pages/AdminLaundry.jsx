@@ -4,7 +4,7 @@
 // Carried over from the branch PMS's admin_pages/AdminLaundry.jsx (2026-09-28).
 import { useState } from "react";
 import { IoShirtOutline } from "react-icons/io5";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import PageTabs from "@/components/pms/PageTabs";
 import AdminLaundryGuestSales from "./AdminLaundryGuestSales";
 import AdminLaundrySales from "./AdminLaundrySales";

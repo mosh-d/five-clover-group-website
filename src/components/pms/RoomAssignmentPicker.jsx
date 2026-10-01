@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { field, btn } from "@/components/pms/ui";
 import { fetchAvailableRoomsForReservation } from "@/lib/pms/api/reservations-pms-api";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
 
 // Editable set of room-number dropdowns for a reservation, up to `roomsBooked`
 // slots — one dropdown per physical room the reservation needs. Each slot's
@@ -66,7 +67,7 @@ export default function RoomAssignmentPicker({ reservationId, roomTypeId, roomsB
   return (
     <div className="flex flex-col gap-3">
       {loading ? (
-        <p className="text-lg text-[color:var(--text-color)]/68">Loading available rooms…</p>
+        <LoadingSpinner />
       ) : noRoomsFree && slots.every((s) => !s) ? (
         <p className="text-lg text-red-600">No rooms of this type are currently free.</p>
       ) : (

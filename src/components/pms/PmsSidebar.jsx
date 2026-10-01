@@ -8,7 +8,7 @@ import { usePmsSession } from "./PmsSessionContext";
 import { visibleNavItems } from "./pmsNavItems";
 import { usePmsLive } from "./live/PmsLive";
 
-function NavItems({ pathname, role, onNavigate }) {
+function NavItems({ pathname, role, scope, onNavigate }) {
   const { alertCount, otaPendingCount } = usePmsLive();
   // Each nav item's `badge` (pmsNavItems): its live count, and what it counts.
   const badges = {
@@ -17,7 +17,7 @@ function NavItems({ pathname, role, onNavigate }) {
   };
   return (
     <ul className="flex flex-col gap-2">
-      {visibleNavItems(role).map(({ href, label, icon: Icon, badge }) => {
+      {visibleNavItems(role, scope).map(({ href, label, icon: Icon, badge }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
         const count = badge ? badges[badge].count : 0;
         return (
@@ -49,11 +49,11 @@ function NavItems({ pathname, role, onNavigate }) {
   );
 }
 
-// The HQ admin's sidebar (components/admin/AdminSidebar.jsx), listing the
+// The sidebar - for a branch, or for Head Office - listing the
 // pages the signed-in role may open.
 export default function PmsSidebar() {
   const pathname = usePathname();
-  const { role } = usePmsSession();
+  const { role, scope } = usePmsSession();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
@@ -68,7 +68,7 @@ export default function PmsSidebar() {
 
       <nav className="hidden md:flex overflow-y-auto shrink-0 w-sm bg-(--accent-2)">
         <div className="flex flex-col px-4 py-8 gap-2 w-full">
-          <NavItems pathname={pathname} role={role} />
+          <NavItems pathname={pathname} role={role} scope={scope} />
         </div>
       </nav>
 
@@ -78,7 +78,7 @@ export default function PmsSidebar() {
             <button onClick={() => setIsMobileOpen(false)} className="self-end cursor-pointer text-(--text-color)" aria-label="Close menu">
               <FiX size={26} />
             </button>
-            <NavItems pathname={pathname} role={role} onNavigate={() => setIsMobileOpen(false)} />
+            <NavItems pathname={pathname} role={role} scope={scope} onNavigate={() => setIsMobileOpen(false)} />
           </div>
           <div className="flex-1 bg-black/40" onClick={() => setIsMobileOpen(false)} />
         </div>

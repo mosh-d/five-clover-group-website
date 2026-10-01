@@ -2,7 +2,7 @@
 "use no memo";
 
 // Carried over from the branch PMS's components/shared/PageOrSection.jsx (2026-09-28).
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 
 // A sales page renders two ways (owner, 2026-09-24): on its own route with
 // its own page heading, or as one part of a combined page - F&B Sales holds

@@ -163,6 +163,25 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, chi
   );
 }
 
+// Head Office has no branch to listen to: its pages keep themselves current
+// over the socket's "hq" room instead (useHqLive). This is the same shape,
+// standing still, for the pieces Head Office shares with a branch - the
+// sidebar's badges and the Audit Trail's reconnect.
+const HEAD_OFFICE_LIVE = {
+  isConnected: true,
+  subscribe: () => () => {},
+  alertCount: 0,
+  refreshAlertCount: () => {},
+  syncAlertCount: () => {},
+  otaPendingCount: 0,
+  refreshOtaCount: () => {},
+  disconnectedRefreshTick: 0,
+};
+
+export function HeadOfficeLiveProvider({ children }) {
+  return <PmsLiveContext.Provider value={HEAD_OFFICE_LIVE}>{children}</PmsLiveContext.Provider>;
+}
+
 export const usePmsLive = () => useContext(PmsLiveContext);
 // The branch PMS's name for the same thing, used by pages moved over from it.
 export const useWebSocketContext = usePmsLive;

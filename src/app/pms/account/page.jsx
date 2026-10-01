@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import { IoKeyOutline, IoCheckmarkCircle, IoAlertCircleOutline } from "react-icons/io5";
-import PageHeading from "@/components/admin/PageHeading";
-import PasswordField from "@/components/admin/PasswordField";
+import PageHeading from "@/components/pms/PageHeading";
+import PasswordField from "@/components/pms/PasswordField";
+import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { btn, card, field, page } from "@/components/pms/ui";
 import { changePassword } from "@/lib/pms/api/auth-api";
 
 const EMPTY = { current_password: "", new_password: "", confirm_password: "" };
 const ROLE_LABELS = {
+  head_hr: "Head HR",
+  hr: "HR",
   developer: "Developer",
   manager: "Manager",
   receptionist: "Receptionist",
@@ -18,7 +21,10 @@ const ROLE_LABELS = {
   storekeeper: "Store Keeper",
 };
 
-// Account & Security - the branch PMS's Account page (AdminAccount.jsx).
+// Account & Security - the branch PMS's Account page (AdminAccount.jsx), and
+// Head Office's (2026-10-01: its own Account page at /hq moved in here, with
+// its step to confirm the change before it is made - the owner's rule for
+// every change, kept for everyone now there is one page).
 //
 // Its "Reset Receptionist Password" section is not here: it only ever showed
 // for the retired shared branch logins, never for a personal account, and
@@ -31,19 +37,34 @@ export default function PmsAccountPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  // Checked, waiting for a Yes.
+  const [confirming, setConfirming] = useState(false);
 
-  const handleSubmit = async (e) => {
+  // Editing a field after reviewing puts the Yes away again, so what is
+  // confirmed is always what is typed.
+  const update = (patch) => {
+    setForm({ ...form, ...patch });
+    setConfirming(false);
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     if (form.new_password.length < 8) return setError("New password must be at least 8 characters.");
     if (form.new_password !== form.confirm_password) return setError("New password and confirmation do not match.");
     if (form.new_password === form.current_password) return setError("New password must be different from your current password.");
+    setConfirming(true);
+  };
+
+  const confirmChange = async () => {
     try {
       setSaving(true);
+      setError("");
       await changePassword({ current_password: form.current_password, new_password: form.new_password });
-      setSuccess("Your password was updated successfully.");
+      setSuccess("Your password was updated. Use the new one the next time you sign in.");
       setForm(EMPTY);
+      setConfirming(false);
     } catch (err) {
       setError(err.message || "Failed to update password.");
     } finally {
@@ -80,7 +101,7 @@ export default function PmsAccountPage() {
             label="Current Password"
             autoComplete="off"
             value={form.current_password}
-            onChange={(e) => setForm({ ...form, current_password: e.target.value })}
+            onChange={(e) => update({ current_password: e.target.value })}
             required
           />
           <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
@@ -89,7 +110,7 @@ export default function PmsAccountPage() {
               label="New Password"
               autoComplete="new-password"
               value={form.new_password}
-              onChange={(e) => setForm({ ...form, new_password: e.target.value })}
+              onChange={(e) => update({ new_password: e.target.value })}
               minLength={8}
               required
             />
@@ -98,16 +119,31 @@ export default function PmsAccountPage() {
               label="Confirm New Password"
               autoComplete="new-password"
               value={form.confirm_password}
-              onChange={(e) => setForm({ ...form, confirm_password: e.target.value })}
+              onChange={(e) => update({ confirm_password: e.target.value })}
               minLength={8}
               required
             />
           </div>
           <p className={field.hint}>Minimum 8 characters.</p>
 
-          <button type="submit" disabled={saving} className={`${btn.primary} self-start`}>
-            {saving ? "Updating..." : "Update Password"}
-          </button>
+          {confirming ? (
+            <ConfirmPanel
+              question="Change your password?"
+              details={["You'll use the new password the next time you sign in."]}
+              confirmLabel="Yes, change my password"
+              busyLabel="Updating..."
+              busy={saving}
+              onBack={() => {
+                setConfirming(false);
+                setError("");
+              }}
+              onConfirm={confirmChange}
+            />
+          ) : (
+            <button type="submit" className={`${btn.primary} self-start`}>
+              Update Password
+            </button>
+          )}
         </form>
       </section>
     </div>

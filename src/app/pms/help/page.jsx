@@ -1,7 +1,7 @@
 "use client";
 
 import { IoHelpCircleOutline } from "react-icons/io5";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { canOpen } from "@/components/pms/pmsNavItems";
 import { HELP_SECTIONS } from "@/components/pms/help/sections";

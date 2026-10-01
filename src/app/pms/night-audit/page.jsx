@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { IoMoonOutline } from "react-icons/io5";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import GuestName from "@/components/pms/GuestName";
@@ -11,6 +11,7 @@ import { btn, card, field, page, table } from "@/components/pms/ui";
 import { fetchNightAuditHistory, runNightAudit } from "@/lib/pms/api/night-audit-api";
 import { yesterdayISO } from "@/lib/pms/dates";
 import { formatDate, formatTime, money } from "@/lib/pms/format";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
 
 const PAGE_SIZE = 10;
 
@@ -152,7 +153,7 @@ export default function PmsNightAuditPage() {
       <div className="w-full flex flex-col gap-4">
         <h2 className={page.sectionTitle}>Audit History</h2>
         {historyLoading ? (
-          <p className={`text-xl ${page.muted}`}>Loading…</p>
+          <div className="flex justify-center py-10"><LoadingSpinner size="lg" /></div>
         ) : historyError ? (
           <p className={field.error}>{historyError}</p>
         ) : history.length === 0 ? (

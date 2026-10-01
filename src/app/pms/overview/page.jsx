@@ -17,7 +17,7 @@ import {
   IoGiftOutline,
   IoBriefcaseOutline,
 } from "react-icons/io5";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
 import { MotionDiv, MotionButton, staggerParent, staggerChild } from "@/components/pms/motion";
@@ -31,6 +31,7 @@ import { fetchHouseStatus, fetchReservations, fetchRoomStatusList } from "@/lib/
 import { fetchMaintenanceMode } from "@/lib/pms/api/room-data";
 import { todayISO, yesterdayISO, monthStartISO, formatShortDate } from "@/lib/pms/dates";
 import { money } from "@/lib/pms/format";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
 
 // The branch's day at a glance - the branch PMS's Overview
 // (hotel-frontends admin_pages/AdminOverview.jsx), moved here.
@@ -267,7 +268,7 @@ export default function PmsOverviewPage() {
                 </thead>
                 <tbody>
                   {isLoading ? (
-                    <tr><td colSpan="5" className={table.empty}>Loading…</td></tr>
+                    <tr><td colSpan="5" className={table.empty}><LoadingSpinner /></td></tr>
                   ) : roomTypes.length === 0 ? (
                     <tr><td colSpan="5" className={table.empty}>No room types configured.</td></tr>
                   ) : (
@@ -322,7 +323,7 @@ export default function PmsOverviewPage() {
                 </thead>
                 <tbody>
                   {recentBookings.length === 0 ? (
-                    <tr><td colSpan="5" className={table.empty}>{isLoading ? "Loading…" : "No bookings yet."}</td></tr>
+                    <tr><td colSpan="5" className={table.empty}>{isLoading ? <LoadingSpinner /> : "No bookings yet."}</td></tr>
                   ) : (
                     recentBookings.map((r) => (
                       <tr key={r.id} className={table.row}>

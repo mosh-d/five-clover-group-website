@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { mutedTextStyle, bodyText } from "@/components/admin/adminStyles";
 import { formatPaymentMethod } from "@/lib/pms/format";
 import { GuestTagPills } from "@/components/pms/GuestName";
-import { DataTable, HeatGrid, StatRow, StatTile, SectionTitle, StateChip, Notice, Choice } from "./parts";
+import { DataTable, HeatGrid, StatRow, StatTile, SectionTitle, StateChip, Remark, Choice } from "./parts";
 import {
   DASH,
   naira,
@@ -50,7 +49,7 @@ const changeCol = (key, label, now, before, kind) => ({
 // "1 Sep, 4 Sep, 9 Sep +3 more"
 const someDays = (days, shown = 4) =>
   days.length === 0 ? "" : days.slice(0, shown).map(shortDay).join(", ") + (days.length > shown ? ` +${days.length - shown} more` : "");
-const nothingNote = (rows, get, what) => (sumRows(rows, get) === 0 ? <Notice>No branch recorded {what} in these dates.</Notice> : null);
+const nothingNote = (rows, get, what) => (sumRows(rows, get) === 0 ? <Remark>No branch recorded {what} in these dates.</Remark> : null);
 
 // Days, or months for a long range, for the shaded grids.
 function gridColumns(dates) {
@@ -308,16 +307,16 @@ function CancellationsView({ data }) {
         <StatTile label="No-shows marked" value={count(t.no_shows)} sub={`${percent(t.no_show_pct)} of bookings`} />
       </StatRow>
       {t.lapse_pct >= 50 && (
-        <Notice>
+        <Remark>
           {percent(t.lapse_pct)} of website bookings for these dates were never paid for: the room was held, then released when payment didn&apos;t
           come. That points at the website&apos;s payment step, or at guests booking without meaning to pay online - worth looking into.
-        </Notice>
+        </Remark>
       )}
       {t.bookings > 0 && t.no_shows === 0 && (
-        <Notice>
+        <Remark>
           No branch marked a no-show in these dates. A guest who never arrives should be marked as a no-show (not cancelled), so how often it
           happens can be seen here.
-        </Notice>
+        </Remark>
       )}
       <DataTable
         rows={data.rows}
@@ -354,10 +353,10 @@ function DiscountsView({ data }) {
         />
       </StatRow>
       {data.price_changes.length > 0 && (
-        <Notice>
+        <Remark>
           Room prices changed since these dates began ({data.price_changes.map((c) => `${c.branch_name}: ${c.label}, ${dayText(c.at)}`).join("; ")}). Stays
           are compared with today&apos;s prices, so stays booked before a change may show a difference that was the old price, not a discount.
-        </Notice>
+        </Remark>
       )}
       <DataTable
         rows={data.rows}
@@ -421,7 +420,7 @@ function ComplimentaryView({ data }) {
         <StatTile label="Worth at standard prices" value={naira(t.worth)} sub="What those nights would have been charged" />
         <StatTile label="Complimentary rooms now" value={count(t.complimentary_now)} sub="Rooms marked complimentary at the moment" />
       </StatRow>
-      <p className={bodyText} style={mutedTextStyle}>
+      <p className="text-xl text-(--text-color)/68">
         {data.counted_to ? `Counted up to the night of ${dayText(data.counted_to)}.` : "No night in these dates has ended yet."}
       </p>
       <DataTable
@@ -468,7 +467,7 @@ function OutOfOrderView({ data }) {
     <>
       <StatRow>
         <StatTile label="Rooms out of order" value={count(t.rooms_out)} sub={`out for ${plural(t.nights_out, "night")} between them`} />
-        <StatTile label="Bookings it may have cost" value={`Up to ${naira(t.lost_up_to)}`} sub={`${plural(t.sold_out_nights, "sold-out night")}`} />
+        <StatTile label="Potential loss" value={naira(t.lost_up_to)} sub={`Bookings they may have cost, over ${plural(t.sold_out_nights, "sold-out night")}`} />
         <StatTile label="Counted to" value={dayText(data.last_night)} sub="The last night that has ended" />
       </StatRow>
       <DataTable
@@ -478,16 +477,16 @@ function OutOfOrderView({ data }) {
         rowKey={byBranch}
         defaultSort={{ key: "lost", dir: "desc" }}
         columns={[
-          countCol("rooms_out", "Rooms Out", (r) => r.rooms_out),
-          countCol("nights_out", "Nights Out", (r) => r.nights_out),
+          countCol("rooms_out", "Rooms OOO", (r) => r.rooms_out, { hint: "Out of Order" }),
+          countCol("nights_out", "Nights OOO", (r) => r.nights_out, { hint: "Out of Order" }),
           countCol("sold_out", "Sold-Out Nights", (r) => r.sold_out_nights),
-          moneyCol("lost", "Up To Lost", (r) => r.lost_up_to, { bar: true }),
-          textCol("since", "Out Since", (r) => r.out_since, { render: (r) => (r.out_since ? momentText(r.out_since) : DASH) }),
+          moneyCol("lost", "Potential Loss", (r) => r.lost_up_to, { bar: true }),
+          textCol("since", "OOO Since", (r) => r.out_since, { hint: "Out of Order", render: (r) => (r.out_since ? momentText(r.out_since) : DASH) }),
         ]}
       />
-      <p className={bodyText} style={mutedTextStyle}>
+      <p className="text-xl text-(--text-color)/68">
         Every room, ranked by what to fix first, is on{" "}
-        <Link href="/hq/decision-support" className="underline font-semibold">Decision Support</Link>.
+        <Link href="/pms/decision-support" className="underline font-semibold">Decision Support</Link>.
       </p>
     </>
   );
@@ -776,7 +775,7 @@ function RepeatGuestsView({ data }) {
         <StatTile label="First stayed at another branch" value={count(t.first_elsewhere)} sub="Returning guests whose first stay was at a different branch" />
       </StatRow>
       {data.stays_without_phone > 0 && (
-        <Notice>{plural(data.stays_without_phone, "stay")} in these dates had no phone number, so can&apos;t be matched to earlier stays and are left out.</Notice>
+        <Remark>{plural(data.stays_without_phone, "stay")} in these dates had no phone number, so can&apos;t be matched to earlier stays and are left out.</Remark>
       )}
       <DataTable
         rows={data.rows}
@@ -804,7 +803,7 @@ function TopGuestsView({ data }) {
         value: (r) => r.guest_name,
         render: (r) => (
           <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span style={mutedTextStyle}>{r.rank}.</span>
+            <span className="font-normal text-(--text-color)/55">{r.rank}.</span>
             <span>{r.guest_name}</span>
             <GuestTagPills tags={r.guest_tags} />
           </span>
@@ -919,7 +918,7 @@ function TopItemsView({ data }) {
         ]}
       />
       {items.length > TOP_ITEMS_SHOWN && (
-        <p className={bodyText} style={mutedTextStyle}>
+        <p className="text-xl text-(--text-color)/68">
           The top {TOP_ITEMS_SHOWN} of {count(items.length)} items.
         </p>
       )}
@@ -945,7 +944,7 @@ function FnbCompView({ data }) {
         <StatTile label="Complimentary" value={naira(t.complimentary.worth)} sub={plural(t.complimentary.items, "item")} />
         <StatTile label="Manager's" value={naira(t.manager.worth)} sub={plural(t.manager.items, "item")} />
       </StatRow>
-      {unpriced > 0 && <Notice>{plural(unpriced, "free order")} had no menu price (typed in, or since taken off the menu), so counted at ₦0.</Notice>}
+      {unpriced > 0 && <Remark>{plural(unpriced, "free order")} had no menu price (typed in, or since taken off the menu), so counted at ₦0.</Remark>}
       <DataTable
         rows={data.rows}
         total={t}
@@ -1071,7 +1070,7 @@ function StaffActivityView({ data, branchOptions }) {
           render: (r) => (
             <span className="flex flex-col">
               <span>{r.staff_name}</span>
-              <span className="text-lg font-normal" style={mutedTextStyle}>
+              <span className="text-lg font-normal text-(--text-color)/68">
                 {roleLabel(r.role)}
                 {r.active === false ? " (deactivated)" : ""}
               </span>
@@ -1173,10 +1172,10 @@ function AdoptionView({ data }) {
         <StatTile label="Branches with nothing recorded" value={count(idle)} sub="No booking, check-in, payment or F&B order" />
       </StatRow>
       {idle > 0 && (
-        <Notice>
+        <Remark>
           {plural(idle, "branch", "branches")} recorded no bookings, check-ins, payments or orders in these dates. Their figures on every other
           metric will read as zero until they use the PMS for their day-to-day work.
-        </Notice>
+        </Remark>
       )}
       <DataTable
         rows={data.rows}

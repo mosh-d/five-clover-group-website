@@ -1,7 +1,7 @@
-import { getPmsToken, getPmsRefreshToken, storePmsSession, clearPmsSession, hasBeenIdleTooLong } from "./session";
+import { getPmsToken, getPmsRefreshToken, storePmsSession, clearPmsSession, hasBeenIdleTooLong, currentBranchId } from "./session";
 
-// The PMS's one way to reach the backend. Plain fetch, as the HQ admin's
-// client (lib/hq-api.js) is - this repo has no axios.
+// The PMS's one way to reach the backend - plain fetch; this repo has no
+// axios.
 // Also where the live socket connects (see PmsLive).
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
 
@@ -120,23 +120,28 @@ export async function pmsDownload(path, params, filename) {
 
 // --- signing in and out ---
 
+// Where a session opens: a branch's id, or HEAD_OFFICE.
+export const HEAD_OFFICE = "head_office";
+const placeBody = (place) => (place === HEAD_OFFICE ? { head_office: true } : place ? { branch_id: Number(place) } : {});
+
 // Either signs in (the session is stored) or, for someone who may open more
-// than one branch, returns { choose_branch: true, branches } to ask which.
-export async function pmsSignIn(username, password, branchId) {
+// than one place, returns { choose_branch: true, branches, head_office } to
+// ask which - `place` is then the choice (a branch id, or HEAD_OFFICE).
+export async function pmsSignIn(username, password, place) {
   const data = await pmsRequest("/api/users/pms-login", {
     method: "POST",
-    body: { username, password, ...(branchId ? { branch_id: Number(branchId) } : {}) },
+    body: { username, password, ...placeBody(place) },
     auth: false,
   });
   if (!data.choose_branch) storePmsSession(data);
   return data;
 }
 
-// A developer's session, moved to another branch.
-export async function pmsSwitchBranch(branchId) {
+// A developer's session, moved to another branch or to Head Office.
+export async function pmsSwitchBranch(place) {
   const data = await pmsRequest("/api/users/pms-switch-branch", {
     method: "POST",
-    body: { branch_id: Number(branchId), refresh_token: getPmsRefreshToken() || undefined },
+    body: { ...placeBody(place), refresh_token: getPmsRefreshToken() || undefined },
   });
   storePmsSession(data);
   return data;
@@ -159,7 +164,9 @@ export async function verifyPmsSession() {
   const check = async () => {
     const token = getPmsToken();
     if (!token) return { ok: false, status: 0 };
-    const res = await fetch(`${API_BASE_URL}/api/users/verify`, { headers: { Authorization: `Bearer ${token}` } });
+    // A Head Office session has no branch, which the branch check refuses.
+    const path = currentBranchId() ? "/api/users/verify" : "/api/users/hq-verify";
+    const res = await fetch(`${API_BASE_URL}${path}`, { headers: { Authorization: `Bearer ${token}` } });
     return { ok: res.ok, status: res.status };
   };
   try {

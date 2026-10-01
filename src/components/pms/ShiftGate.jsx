@@ -5,6 +5,7 @@ import { MotionDiv, panelEnter } from "./motion";
 import { btn, field } from "./ui";
 import { selectCurrentShift } from "@/lib/pms/api/shifts-api";
 import { fetchStaffAccounts } from "@/lib/pms/api/staff-accounts-api";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
 
 // How each rota reads on screen.
 const ROTA = {
@@ -79,7 +80,7 @@ export default function ShiftGate({ role, businessDate, currentName, onSelected,
         {error && <p className={field.error}>{error}</p>}
 
         {staff === null ? (
-          <p className="text-xl text-(--text-color)/68">Loading…</p>
+          <div className="flex justify-center py-6"><LoadingSpinner size="lg" /></div>
         ) : confirming ? (
           <div className="rounded-xl border-2 border-amber-300 bg-amber-50 px-6 py-5 flex flex-col gap-3">
             <p className="text-2xl font-bold text-(--black)">Record {selectedName} as the shift?</p>

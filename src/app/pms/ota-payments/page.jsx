@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { IoBusinessOutline } from "react-icons/io5";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import Modal from "@/components/pms/Modal";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { fetchOtaSettlements, markOtaSettlementPaid } from "@/lib/pms/api/ota-api";
 import { money } from "@/lib/pms/format";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
 
 // OTA Payments - the branch PMS's page (AdminOtaPayments.jsx): money owed by
 // OTAs rather than by guests. It lives on its own page because an OTA
@@ -92,7 +93,7 @@ export default function PmsOtaPaymentsPage() {
       <div className={table.card}>
         <div className={table.scroll}>
           {loading ? (
-            <p className={table.empty}>Loading…</p>
+            <div className={table.empty}><LoadingSpinner /></div>
           ) : settlements.length === 0 ? (
             <p className={table.empty}>{status === "pending" ? "No OTA payments are outstanding." : "No OTA payments have been recorded yet."}</p>
           ) : (

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IoLogOutOutline } from "react-icons/io5";
-import PageHeading from "@/components/admin/PageHeading";
+import PageHeading from "@/components/pms/PageHeading";
 import Modal from "@/components/pms/Modal";
 import DateInput from "@/components/pms/DateInput";
 import GuestName from "@/components/pms/GuestName";
@@ -15,6 +15,7 @@ import { fetchCheckOutList } from "@/lib/pms/api/front-office-api";
 import { checkOutReservation, shortenStayToDeparture } from "@/lib/pms/api/reservations-pms-api";
 import { todayISO, hasPassedNoonCutoff } from "@/lib/pms/dates";
 import { formatDate, money } from "@/lib/pms/format";
+import LoadingSpinner from "@/components/pms/LoadingSpinner";
 
 // Whether this stay's scheduled checkout has actually come due (noon Lagos
 // on check_out) - the date can be browsed forward, so a listed stay isn't
@@ -153,7 +154,7 @@ export default function PmsCheckOutsPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="4" className={table.empty}>Loading…</td></tr>
+                  <tr><td colSpan="4" className={table.empty}><LoadingSpinner /></td></tr>
                 ) : error ? (
                   <tr><td colSpan="4" className={`${table.empty} text-red-600!`}>{error}</td></tr>
                 ) : list.length === 0 ? (
@@ -216,7 +217,7 @@ export default function PmsCheckOutsPage() {
             </div>
           )}
           {folioLoading ? (
-            <p className={`text-xl ${page.muted}`}>Loading…</p>
+            <div className="flex justify-center py-10"><LoadingSpinner size="lg" /></div>
           ) : folio ? (
             <div
               className={`flex justify-between items-center text-xl px-5 py-4 rounded-lg border ${

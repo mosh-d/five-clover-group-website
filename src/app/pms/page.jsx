@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import GroupLogo from "@/assets/five-clover-logo.webp";
-import PasswordField from "@/components/admin/PasswordField";
+import PasswordField from "@/components/pms/PasswordField";
 import BranchPicker from "@/components/pms/BranchPicker";
 import { BRANDS } from "@/components/pms/theme/brands";
 import { pathAfterSignIn } from "@/components/pms/pmsNavItems";
@@ -12,10 +12,11 @@ import { btn, field } from "@/components/pms/ui";
 import { pmsSignIn, PmsApiError } from "@/lib/pms/client";
 import { readPmsSession, markJustSignedIn, hasBeenIdleTooLong, clearPmsSession } from "@/lib/pms/session";
 
-// fivecloverhotels.com/pms - one sign-in for every branch. The account says
-// which branch; someone who may open several (a developer, or a manager with
-// accounts at more than one) is asked which, then lands on that branch in
-// its own brand.
+// fivecloverhotels.com/pms - one sign-in for every branch, and for Head
+// Office (owner, 2026-10-01; it had its own at /hq). The account says where:
+// a Head Office account opens Head Office, someone who may open several
+// places (a developer, or a manager with accounts at more than one) is asked
+// which, then lands there in its brand.
 //
 // ?next= is the page that sent them here (a bookmark, a branch PMS's
 // "moved" card); signing in carries on to it (pathAfterSignIn).
@@ -35,12 +36,12 @@ export default function PmsSignInPage() {
     const session = readPmsSession();
     if (!session) return;
     if (hasBeenIdleTooLong()) clearPmsSession();
-    else router.replace(pathAfterSignIn(session.role, nextParam()));
+    else router.replace(pathAfterSignIn(session.role, nextParam(), session.scope));
   }, [router]);
 
   const enter = (data) => {
     markJustSignedIn();
-    router.push(pathAfterSignIn(data.staff_role, nextParam()));
+    router.push(pathAfterSignIn(data.staff_role, nextParam(), data.branch ? "branch" : "hq"));
   };
 
   const handleSubmit = async (e) => {
@@ -50,7 +51,7 @@ export default function PmsSignInPage() {
       setSubmitting(true);
       setError(null);
       const data = await pmsSignIn(username.trim(), password);
-      if (data.choose_branch) setChoices(data.branches);
+      if (data.choose_branch) setChoices({ branches: data.branches, headOffice: Boolean(data.head_office) });
       else enter(data);
     } catch (err) {
       setError(
@@ -130,10 +131,15 @@ export default function PmsSignInPage() {
 
       {choices && (
         <BranchPicker
-          branches={choices}
-          intro="Your account can open more than one branch. Which one are you working in?"
-          onChoose={async (branchId) => {
-            const data = await pmsSignIn(username.trim(), password, branchId);
+          branches={choices.branches}
+          headOffice={choices.headOffice}
+          intro={
+            choices.headOffice
+              ? "Your account can open Head Office and branches. Where are you working?"
+              : "Your account can open more than one branch. Which one are you working in?"
+          }
+          onChoose={async (place) => {
+            const data = await pmsSignIn(username.trim(), password, place);
             enter(data);
           }}
           onClose={() => setChoices(null)}

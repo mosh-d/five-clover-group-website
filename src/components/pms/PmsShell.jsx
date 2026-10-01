@@ -16,7 +16,7 @@ import { PmsLiveProvider } from "./live/PmsLive";
 import { brandForBranch, themeStyle, GROUP_BRAND } from "./theme/brands";
 import { canOpen, landingPath, navItemForPath, pageTitle } from "./pmsNavItems";
 import { btn, card } from "./ui";
-import { readPmsSession, clearPmsSession, consumeJustSignedIn, setDevRoleOverride, markActivity } from "@/lib/pms/session";
+import { readPmsSession, clearPmsSession, consumeJustSignedIn, setDevRoleOverride, markActivity, hasBeenIdleTooLong } from "@/lib/pms/session";
 import { verifyPmsSession, pmsSignOut, pmsSwitchBranch, SESSION_ENDED_EVENT } from "@/lib/pms/client";
 import { fetchBusinessDate } from "@/lib/pms/api/front-office-api";
 import { applyServerClock, deviceClockDriftMinutes } from "@/lib/pms/dates";
@@ -40,7 +40,13 @@ export default function PmsShell({ children }) {
     if (isSignInPage || session) return;
     let cancelled = false;
     const stored = readPmsSession();
-    const confirmed = !stored ? Promise.resolve(false) : consumeJustSignedIn() ? Promise.resolve(true) : verifyPmsSession();
+    // Opening the PMS after an hour or more away is the same as being idle
+    // that long mid-work: the session is over (owner, 2026-10-01 - a session
+    // from the day before used to open straight in). Checked before anything
+    // can renew it, and before any of this page's own activity counts.
+    const confirmed = !stored || hasBeenIdleTooLong()
+      ? Promise.resolve(false)
+      : consumeJustSignedIn() ? Promise.resolve(true) : verifyPmsSession();
     confirmed.then((ok) => {
       if (cancelled) return;
       if (!ok) {
@@ -65,7 +71,10 @@ export default function PmsShell({ children }) {
   }, []);
 
   // "Still here" is a person touching the screen, never the PMS refetching
-  // on its own - throttled to one stamp a minute.
+  // on its own - throttled to one stamp a minute. Loading the page is NOT
+  // activity: it used to stamp on mount, so reopening a day-old session
+  // counted as being here and renewed it (2026-10-01). Signing in stamps
+  // (storePmsSession); after that only a click or a key does.
   useEffect(() => {
     let last = 0;
     const stamp = () => {
@@ -74,7 +83,6 @@ export default function PmsShell({ children }) {
       last = now;
       markActivity();
     };
-    stamp();
     const events = ["pointerdown", "keydown"];
     events.forEach((e) => window.addEventListener(e, stamp, { passive: true }));
     return () => events.forEach((e) => window.removeEventListener(e, stamp));

@@ -42,6 +42,9 @@ export function storePmsSession(data) {
   if (data.branch) localStorage.setItem(KEYS.branch, JSON.stringify(data.branch));
   // Only a developer's session carries the branch list (for switching).
   if (data.branches) localStorage.setItem(KEYS.branches, JSON.stringify(data.branches));
+  // Signing in is the person being here: the idle clock starts now, not
+  // from a stamp a previous session left behind.
+  localStorage.setItem(KEYS.lastActivity, String(Date.now()));
 }
 
 export function clearPmsSession() {

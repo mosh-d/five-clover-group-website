@@ -10,7 +10,7 @@ import { BRANDS } from "@/components/pms/theme/brands";
 import { pathAfterSignIn } from "@/components/pms/pmsNavItems";
 import { btn, field } from "@/components/pms/ui";
 import { pmsSignIn, PmsApiError } from "@/lib/pms/client";
-import { readPmsSession, markJustSignedIn } from "@/lib/pms/session";
+import { readPmsSession, markJustSignedIn, hasBeenIdleTooLong, clearPmsSession } from "@/lib/pms/session";
 
 // fivecloverhotels.com/pms - one sign-in for every branch. The account says
 // which branch; someone who may open several (a developer, or a manager with
@@ -29,10 +29,13 @@ export default function PmsSignInPage() {
   const [error, setError] = useState(null);
   const [choices, setChoices] = useState(null);
 
-  // Already signed in - straight on.
+  // Already signed in - straight on. A session left untouched past the idle
+  // limit is over, so it is cleared and the form stays (2026-10-01).
   useEffect(() => {
     const session = readPmsSession();
-    if (session) router.replace(pathAfterSignIn(session.role, nextParam()));
+    if (!session) return;
+    if (hasBeenIdleTooLong()) clearPmsSession();
+    else router.replace(pathAfterSignIn(session.role, nextParam()));
   }, [router]);
 
   const enter = (data) => {

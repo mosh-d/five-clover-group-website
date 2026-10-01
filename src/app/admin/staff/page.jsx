@@ -15,6 +15,9 @@ import {
 import PageHeading from "@/components/admin/PageHeading";
 import StatusBadge from "@/components/admin/StatusBadge";
 import Modal from "@/components/admin/Modal";
+import PasswordField from "@/components/admin/PasswordField";
+import ConfirmPanel from "@/components/admin/ConfirmPanel";
+import Notice from "@/components/admin/Notice";
 import {
   mutedTextStyle,
   bodyText,
@@ -23,9 +26,6 @@ import {
   inputStyle,
   primaryButtonClass,
   primaryButtonStyle,
-  secondaryButtonClass,
-  secondaryButtonStyle,
-  dangerButtonClass,
   errorBoxClass,
   tableCardClass,
   tableCardStyle,
@@ -52,22 +52,49 @@ const BRANCH_ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitr
 const HEAD_OFFICE_ASSIGNABLE_ROLES = ["hr"];
 // developer/head_hr accounts now show up in the "Head Office" list (see
 // HqStaffService.list(null)) and any head_hr/hr/developer session can
-// fully manage them here (edit password, deactivate, reactivate) — the
+// fully manage them here (reset password, deactivate, reactivate) — the
 // page itself is already gated to those roles, so there's no extra wall
 // on top. The one thing that stays fixed is their ROLE (excluded from
 // HQ_ASSIGNABLE_ROLES on the backend — can't be promoted/demoted through
-// this tool), so the Edit modal shows it read-only for these two instead
-// of a dropdown.
+// this tool), so they get no Change Role action.
 const CLI_ONLY_ROLES = ["developer", "head_hr"];
 
-const HEAD_OFFICE = "head_office";
+const ROLE_LABELS = {
+  manager: "Manager",
+  receptionist: "Receptionist",
+  accountant: "Accountant",
+  waitron: "Waitron",
+  storekeeper: "Storekeeper",
+  hr: "HR",
+  head_hr: "Head HR",
+  developer: "Developer",
+};
+const roleLabel = (role) => ROLE_LABELS[role] || role;
 
-const emptyEditForm = { role: "receptionist" };
+const HEAD_OFFICE = "head_office";
+const MIN_PASSWORD = 8;
+
+const SERVER_UNREACHABLE = "Could not reach the server. Check your connection and try again.";
+const errorText = (err) => (err instanceof HqApiError ? err.message : SERVER_UNREACHABLE);
+
+// A new password, typed twice: the same checks the server makes, said in
+// plain words before anything is sent.
+function passwordProblem(password, confirm) {
+  if (password.length < MIN_PASSWORD) return `Use at least ${MIN_PASSWORD} characters for the password.`;
+  if (password !== confirm) return "The two passwords don't match. Type the same password in both boxes.";
+  return null;
+}
 
 function formatDate(d) {
   if (!d) return "Never";
   return new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
+
+// Every change to an account goes the same way (owner, 2026-10-01: double
+// confirmation, then feedback either way): fill in the form, review what
+// will happen in words, confirm - then a message at the top of the page
+// says what was done, or the dialog says why it wasn't.
+const EMPTY_DIALOG = null;
 
 export default function AdminStaffPage() {
   const [branches, setBranches] = useState([]);
@@ -77,26 +104,14 @@ export default function AdminStaffPage() {
   const [staff, setStaff] = useState([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
   const [showDeactivated, setShowDeactivated] = useState(false);
 
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({ username: "", role: "receptionist", password: "" });
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState(null);
-
-  const [editTarget, setEditTarget] = useState(null);
-  const [editForm, setEditForm] = useState(emptyEditForm);
-  const [editPassword, setEditPassword] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [editError, setEditError] = useState(null);
-
-  const [transferTarget, setTransferTarget] = useState(null);
-  const [transferBranchId, setTransferBranchId] = useState("");
-  const [transferring, setTransferring] = useState(false);
-  const [transferError, setTransferError] = useState(null);
-
-  const [actionLoadingId, setActionLoadingId] = useState(null);
-  const [deactivateTarget, setDeactivateTarget] = useState(null);
+  // { kind: 'create' | 'role' | 'password' | 'transfer' | 'deactivate' | 'reactivate', account?, step: 'form' | 'confirm' }
+  const [dialog, setDialog] = useState(EMPTY_DIALOG);
+  const [form, setForm] = useState({});
+  const [formError, setFormError] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     fetchBranches()
@@ -134,126 +149,161 @@ export default function AdminStaffPage() {
 
   const isHeadOffice = selectedBranchId === HEAD_OFFICE;
   const assignableRoles = isHeadOffice ? HEAD_OFFICE_ASSIGNABLE_ROLES : BRANCH_ASSIGNABLE_ROLES;
+  const branchName = (id) => {
+    if (id === HEAD_OFFICE || id === null || id === undefined || id === "") return "Head Office";
+    const branch = branches.find((b) => String(b.id) === String(id));
+    return branch ? branch.name : `branch ${id}`;
+  };
+  const here = branchName(selectedBranchId);
 
-  const openCreate = () => {
-    setCreateForm({ username: "", role: assignableRoles[0], password: "" });
-    setCreateError(null);
-    setIsCreateOpen(true);
+  const open = (kind, account = null, initialForm = {}) => {
+    setDialog({ kind, account, step: kind === "deactivate" || kind === "reactivate" ? "confirm" : "form" });
+    setForm(initialForm);
+    setFormError(null);
+  };
+  const close = () => {
+    if (busy) return;
+    setDialog(EMPTY_DIALOG);
+  };
+  const back = () => {
+    setFormError(null);
+    if (dialog.kind === "deactivate" || dialog.kind === "reactivate") close();
+    else setDialog({ ...dialog, step: "form" });
   };
 
-  const handleCreate = async (e) => {
+  // Step 1 -> 2: check the form in plain words before showing the review.
+  const review = (e) => {
     e.preventDefault();
-    if (!createForm.username.trim() || !createForm.password) return;
+    let problem = null;
+    if (dialog.kind === "create") {
+      if (!form.username?.trim()) problem = "Type the person's name as their username.";
+      else problem = passwordProblem(form.password || "", form.confirm || "");
+    } else if (dialog.kind === "role") {
+      if (form.role === dialog.account.role) problem = `"${dialog.account.username}" is already ${roleLabel(form.role)}. Pick a different role to change it.`;
+    } else if (dialog.kind === "password") {
+      problem = passwordProblem(form.password || "", form.confirm || "");
+    } else if (dialog.kind === "transfer") {
+      if (!form.branchId) problem = "Pick the branch to move them to.";
+    }
+    setFormError(problem);
+    if (!problem) setDialog({ ...dialog, step: "confirm" });
+  };
+
+  // Step 2: do it, then say what happened.
+  const confirm = async () => {
+    const { kind, account } = dialog;
     try {
-      setCreating(true);
-      setCreateError(null);
-      await createHqStaff({
-        username: createForm.username.trim(),
-        role: createForm.role,
-        // Head Office roles (hr) have no home branch — omit branch_id
-        // entirely rather than sending the "head_office" sentinel itself,
-        // which is a frontend-only concept the backend never sees.
-        ...(isHeadOffice ? {} : { branch_id: Number(selectedBranchId) }),
-        password: createForm.password,
-      });
-      setIsCreateOpen(false);
+      setBusy(true);
+      setFormError(null);
+      let message;
+      if (kind === "create") {
+        const username = form.username.trim();
+        await createHqStaff({
+          username,
+          role: form.role,
+          // Head Office roles (hr) have no home branch — omit branch_id
+          // entirely rather than sending the "head_office" sentinel itself,
+          // which is a frontend-only concept the backend never sees.
+          ...(isHeadOffice ? {} : { branch_id: Number(selectedBranchId) }),
+          password: form.password,
+        });
+        message = `Created a ${roleLabel(form.role)} account for "${username}" at ${here}. They can sign in now with that username and password.`;
+      } else if (kind === "role") {
+        await updateHqStaff(account.id, { role: form.role });
+        message = `"${account.username}" is now ${roleLabel(form.role)} (was ${roleLabel(account.role)}).`;
+      } else if (kind === "password") {
+        await updateHqStaff(account.id, { password: form.password });
+        message = `"${account.username}"'s password was reset. Any session they had open ends within 30 minutes, and from now on only the new password signs them in.`;
+      } else if (kind === "transfer") {
+        await transferHqStaff(account.id, Number(form.branchId));
+        message = `Moved "${account.username}" from ${branchName(account.branch_id)} to ${branchName(form.branchId)}.`;
+      } else if (kind === "deactivate") {
+        await deactivateHqStaff(account.id);
+        message = `Deactivated "${account.username}". They've been signed out everywhere and can't sign in until the account is reactivated.`;
+      } else if (kind === "reactivate") {
+        await reactivateHqStaff(account.id);
+        message = `Reactivated "${account.username}". They can sign in again with their existing password.`;
+      }
+      setDialog(EMPTY_DIALOG);
+      setNotice(message);
       loadStaff(selectedBranchId);
     } catch (err) {
-      setCreateError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
+      setFormError(errorText(err));
     } finally {
-      setCreating(false);
-    }
-  };
-
-  const openEdit = (account) => {
-    setEditTarget(account);
-    setEditForm({ role: account.role });
-    setEditPassword("");
-    setEditError(null);
-  };
-
-  const handleEdit = async (e) => {
-    e.preventDefault();
-    if (!editTarget) return;
-    try {
-      setSaving(true);
-      setEditError(null);
-      const payload = {};
-      // developer/head_hr's role can't be changed through this tool (see
-      // HQ_ASSIGNABLE_ROLES on the backend) — the modal shows it read-only
-      // for these two, so there's nothing to send here but a password reset.
-      if (!CLI_ONLY_ROLES.includes(editTarget.role)) payload.role = editForm.role;
-      if (editPassword) payload.password = editPassword;
-      await updateHqStaff(editTarget.id, payload);
-      setEditTarget(null);
-      loadStaff(selectedBranchId);
-    } catch (err) {
-      setEditError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Reactivate is immediate — nothing destructive about turning an account
-  // back on. Deactivate goes through confirmDeactivate below instead,
-  // since it revokes the account's active sessions immediately.
-  const handleToggleActive = async (account) => {
-    if (account.is_active) {
-      setDeactivateTarget(account);
-      return;
-    }
-    try {
-      setActionLoadingId(account.id);
-      setError(null);
-      await reactivateHqStaff(account.id);
-      loadStaff(selectedBranchId);
-    } catch (err) {
-      setError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
-  const confirmDeactivate = async () => {
-    if (!deactivateTarget) return;
-    const account = deactivateTarget;
-    try {
-      setActionLoadingId(account.id);
-      setError(null);
-      await deactivateHqStaff(account.id);
-      setDeactivateTarget(null);
-      loadStaff(selectedBranchId);
-    } catch (err) {
-      setError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
-  const openTransfer = (account) => {
-    setTransferTarget(account);
-    setTransferBranchId("");
-    setTransferError(null);
-  };
-
-  const handleTransfer = async (e) => {
-    e.preventDefault();
-    if (!transferTarget || !transferBranchId) return;
-    try {
-      setTransferring(true);
-      setTransferError(null);
-      await transferHqStaff(transferTarget.id, Number(transferBranchId));
-      setTransferTarget(null);
-      loadStaff(selectedBranchId);
-    } catch (err) {
-      setTransferError(err instanceof HqApiError ? err.message : "Could not reach the server. Check your connection and try again.");
-    } finally {
-      setTransferring(false);
+      setBusy(false);
     }
   };
 
   const deactivatedCount = staff.filter((a) => !a.is_active).length;
   const visibleStaff = showDeactivated ? staff : staff.filter((a) => a.is_active);
+
+  // What the review step says, per change.
+  const confirmation = () => {
+    const { kind, account } = dialog;
+    if (kind === "create") {
+      return {
+        question: `Create a ${roleLabel(form.role)} account for "${form.username.trim()}" at ${here}?`,
+        details: ["They'll sign in with this username and the password you typed.", "You can change the role or reset the password later."],
+        confirmLabel: "Yes, create the account",
+        busyLabel: "Creating...",
+      };
+    }
+    if (kind === "role") {
+      return {
+        question: `Change "${account.username}" from ${roleLabel(account.role)} to ${roleLabel(form.role)}?`,
+        details: ["What they can open in the PMS changes the next time their session renews (within 30 minutes)."],
+        confirmLabel: "Yes, change the role",
+        busyLabel: "Saving...",
+      };
+    }
+    if (kind === "password") {
+      return {
+        question: `Reset "${account.username}"'s password?`,
+        details: [
+          "Their old password stops working straight away.",
+          "Any session they have open ends within 30 minutes; they then sign in with the new password.",
+          "Give them the new password yourself — it isn't sent anywhere.",
+        ],
+        confirmLabel: "Yes, reset the password",
+        busyLabel: "Resetting...",
+        danger: true,
+      };
+    }
+    if (kind === "transfer") {
+      return {
+        question: `Move "${account.username}" from ${branchName(account.branch_id)} to ${branchName(form.branchId)}?`,
+        details: ["Their role, username and password stay the same."],
+        confirmLabel: "Yes, move them",
+        busyLabel: "Moving...",
+      };
+    }
+    if (kind === "deactivate") {
+      return {
+        question: `Deactivate "${account.username}"?`,
+        details: ["This signs them out everywhere and blocks further sign-ins.", "Nothing is deleted — you can reactivate the account later."],
+        confirmLabel: "Yes, deactivate",
+        busyLabel: "Deactivating...",
+        danger: true,
+        backLabel: "Cancel",
+      };
+    }
+    return {
+      question: `Reactivate "${account.username}"?`,
+      details: ["They'll be able to sign in again with their existing password."],
+      confirmLabel: "Yes, reactivate",
+      busyLabel: "Reactivating...",
+      backLabel: "Cancel",
+    };
+  };
+
+  const TITLES = {
+    create: "Add Staff Account",
+    role: "Change Role",
+    password: "Reset Password",
+    transfer: "Transfer to Another Branch",
+    deactivate: "Deactivate Account",
+    reactivate: "Reactivate Account",
+  };
 
   return (
     <div className="w-full flex flex-col gap-8">
@@ -285,7 +335,7 @@ export default function AdminStaffPage() {
           )}
         </div>
         <button
-          onClick={openCreate}
+          onClick={() => open("create", null, { username: "", role: assignableRoles[0], password: "", confirm: "" })}
           disabled={!selectedBranchId}
           className={primaryButtonClass}
           style={primaryButtonStyle}
@@ -294,7 +344,8 @@ export default function AdminStaffPage() {
         </button>
       </div>
 
-      {error && <p className={errorBoxClass}>{error}</p>}
+      <Notice message={notice} onDismiss={() => setNotice(null)} />
+      {error && <p className={errorBoxClass} role="alert">{error}</p>}
 
       {selectedBranchId && !loadingStaff && staff.length > 0 && (
         <label className={`${bodyText} flex items-center gap-2 cursor-pointer w-fit`} style={mutedTextStyle}>
@@ -337,27 +388,31 @@ export default function AdminStaffPage() {
                 {visibleStaff.map((account) => (
                   <tr key={account.id} className={tableRowClass} style={tableRowStyle}>
                     <td className={tableTdClass}>{account.username}</td>
-                    <td className={`${tableTdClass} capitalize`}>{account.role}</td>
+                    <td className={tableTdClass}>{roleLabel(account.role)}</td>
                     <td className={tableTdClass}>
                       <StatusBadge status={account.is_active ? "active" : "inactive"} />
                     </td>
                     <td className={tableTdClass}>{formatDate(account.last_login_at)}</td>
                     <td className={tableTdClass}>
                       <div className={tableActionsClass}>
-                        <button onClick={() => openEdit(account)} className={rowButtonPrimaryClass} style={rowButtonPrimaryStyle}>
-                          Edit
+                        {!CLI_ONLY_ROLES.includes(account.role) && (
+                          <button onClick={() => open("role", account, { role: account.role })} className={rowButtonPrimaryClass} style={rowButtonPrimaryStyle}>
+                            Change Role
+                          </button>
+                        )}
+                        <button onClick={() => open("password", account, { password: "", confirm: "" })} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
+                          Reset Password
                         </button>
                         {account.branch_id && (
-                          <button onClick={() => openTransfer(account)} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
+                          <button onClick={() => open("transfer", account, { branchId: "" })} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
                             Transfer
                           </button>
                         )}
                         <button
-                          onClick={() => handleToggleActive(account)}
-                          disabled={actionLoadingId === account.id}
+                          onClick={() => open(account.is_active ? "deactivate" : "reactivate", account)}
                           className={account.is_active ? rowButtonDangerClass : rowButtonSuccessClass}
                         >
-                          {actionLoadingId === account.id ? "..." : account.is_active ? "Deactivate" : "Reactivate"}
+                          {account.is_active ? "Deactivate" : "Reactivate"}
                         </button>
                       </div>
                     </td>
@@ -369,157 +424,109 @@ export default function AdminStaffPage() {
         </div>
       )}
 
-      {isCreateOpen && (
-        <Modal title="Add Staff Account" onClose={() => setIsCreateOpen(false)}>
-          <form onSubmit={handleCreate} className="flex flex-col gap-4">
-            {createError && <p className={errorBoxClass}>{createError}</p>}
-            <div className="flex flex-col gap-2">
-              <label className={labelText} style={mutedTextStyle}>Username</label>
-              <input
-                type="text"
-                value={createForm.username}
-                onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
-                className={inputClass}
-                style={inputStyle}
-                placeholder="e.g. Ada Okafor"
-              />
-              {/* One naming pattern for every account (owner, 2026-09-28):
-                  the username is the only name the system shows for a staff
-                  member - on shifts, reports and the audit trail. */}
-              <p className={bodyText} style={mutedTextStyle}>
-                Use the person&apos;s first name, then last name, e.g. &quot;Ada Okafor&quot;. It&apos;s the name shown on shifts, reports and the audit trail.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={labelText} style={mutedTextStyle}>Role</label>
-              <select
-                value={createForm.role}
-                onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                className={inputClass}
-                style={inputStyle}
-              >
-                {assignableRoles.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={labelText} style={mutedTextStyle}>Initial Password</label>
-              <input
-                type="text"
-                value={createForm.password}
-                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                className={inputClass}
-                style={inputStyle}
-                placeholder="At least 8 characters"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={creating || !createForm.username.trim() || !createForm.password}
-              className={primaryButtonClass}
-              style={primaryButtonStyle}
-            >
-              {creating ? "Creating..." : "Create Account"}
-            </button>
-          </form>
-        </Modal>
-      )}
+      {dialog && (
+        <Modal title={dialog.account ? `${TITLES[dialog.kind]} — ${dialog.account.username}` : TITLES[dialog.kind]} onClose={close}>
+          {dialog.step === "confirm" ? (
+            <ConfirmPanel {...confirmation()} busy={busy} error={formError} onBack={back} onConfirm={confirm} />
+          ) : (
+            <form onSubmit={review} className="flex flex-col gap-4">
+              {formError && <p className={errorBoxClass} role="alert">{formError}</p>}
 
-      {editTarget && (
-        <Modal title={`Edit "${editTarget.username}"`} onClose={() => setEditTarget(null)}>
-          <form onSubmit={handleEdit} className="flex flex-col gap-4">
-            {editError && <p className={errorBoxClass}>{editError}</p>}
-            <div className="flex flex-col gap-2">
-              <label className={labelText} style={mutedTextStyle}>Role</label>
-              {CLI_ONLY_ROLES.includes(editTarget.role) ? (
-                <p className={`${bodyText} capitalize`} style={mutedTextStyle}>
-                  {editTarget.role.replace("_", " ")} (role can only be changed via the server CLI)
-                </p>
-              ) : (
-                <select
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className={inputClass}
-                  style={inputStyle}
-                >
-                  {assignableRoles.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
+              {dialog.kind === "create" && (
+                <>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="staff-username" className={labelText} style={mutedTextStyle}>Username</label>
+                    <input
+                      id="staff-username"
+                      type="text"
+                      value={form.username}
+                      onChange={(e) => setForm({ ...form, username: e.target.value })}
+                      className={inputClass}
+                      style={inputStyle}
+                      placeholder="e.g. Ada Okafor"
+                    />
+                    {/* One naming pattern for every account (owner, 2026-09-28):
+                        the username is the only name the system shows for a staff
+                        member - on shifts, reports and the audit trail. */}
+                    <p className={bodyText} style={mutedTextStyle}>
+                      Use the person&apos;s first name, then last name, e.g. &quot;Ada Okafor&quot;. It&apos;s the name shown on shifts, reports and the audit trail.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="staff-role" className={labelText} style={mutedTextStyle}>Role</label>
+                    <select
+                      id="staff-role"
+                      value={form.role}
+                      onChange={(e) => setForm({ ...form, role: e.target.value })}
+                      className={inputClass}
+                      style={inputStyle}
+                    >
+                      {assignableRoles.map((r) => (
+                        <option key={r} value={r}>{roleLabel(r)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <PasswordField id="staff-password" label="Password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                  <PasswordField id="staff-password-confirm" label="Type the password again" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
+                  <p className={bodyText} style={mutedTextStyle}>At least {MIN_PASSWORD} characters.</p>
+                </>
               )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={labelText} style={mutedTextStyle}>Reset Password (optional)</label>
-              <input
-                type="text"
-                value={editPassword}
-                onChange={(e) => setEditPassword(e.target.value)}
-                className={inputClass}
-                style={inputStyle}
-                placeholder="Leave blank to keep the current password"
-              />
-            </div>
-            <button type="submit" disabled={saving} className={primaryButtonClass} style={primaryButtonStyle}>
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </form>
-        </Modal>
-      )}
 
-      {transferTarget && (
-        <Modal title={`Transfer "${transferTarget.username}"`} onClose={() => setTransferTarget(null)}>
-          <form onSubmit={handleTransfer} className="flex flex-col gap-4">
-            {transferError && <p className={errorBoxClass}>{transferError}</p>}
-            <p className={bodyText} style={mutedTextStyle}>
-              Moves this account to a different branch. Role, username, and password stay the same.
-            </p>
-            <div className="flex flex-col gap-2">
-              <label className={labelText} style={mutedTextStyle}>New Branch</label>
-              <select
-                value={transferBranchId}
-                onChange={(e) => setTransferBranchId(e.target.value)}
-                className={inputClass}
-                style={inputStyle}
-              >
-                <option value="">-- Select a branch --</option>
-                {branches
-                  .filter((b) => String(b.id) !== String(transferTarget.branch_id))
-                  .map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-              </select>
-            </div>
-            <button
-              type="submit"
-              disabled={transferring || !transferBranchId}
-              className={primaryButtonClass}
-              style={primaryButtonStyle}
-            >
-              {transferring ? "Transferring..." : "Transfer"}
-            </button>
-          </form>
-        </Modal>
-      )}
+              {dialog.kind === "role" && (
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="staff-new-role" className={labelText} style={mutedTextStyle}>New role</label>
+                  <select
+                    id="staff-new-role"
+                    value={form.role}
+                    onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    className={inputClass}
+                    style={inputStyle}
+                  >
+                    {assignableRoles.map((r) => (
+                      <option key={r} value={r}>{roleLabel(r)}{r === dialog.account.role ? " (current)" : ""}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-      {deactivateTarget && (
-        <Modal title={`Deactivate "${deactivateTarget.username}"?`} onClose={() => setDeactivateTarget(null)}>
-          <p className={bodyText} style={mutedTextStyle}>
-            This immediately signs them out everywhere and blocks further logins. You can reactivate the
-            account later — nothing is deleted.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <button onClick={() => setDeactivateTarget(null)} className={secondaryButtonClass} style={secondaryButtonStyle}>
-              Cancel
-            </button>
-            <button
-              onClick={confirmDeactivate}
-              disabled={actionLoadingId === deactivateTarget.id}
-              className={dangerButtonClass}
-            >
-              {actionLoadingId === deactivateTarget.id ? "Deactivating..." : "Yes, Deactivate"}
-            </button>
-          </div>
+              {dialog.kind === "password" && (
+                <>
+                  <PasswordField id="reset-password" label="New password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                  <PasswordField id="reset-password-confirm" label="Type the new password again" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
+                  <p className={bodyText} style={mutedTextStyle}>At least {MIN_PASSWORD} characters. You&apos;ll be asked to confirm before anything changes.</p>
+                </>
+              )}
+
+              {dialog.kind === "transfer" && (
+                <>
+                  <p className={bodyText} style={mutedTextStyle}>
+                    Moves this account to a different branch. Role, username, and password stay the same.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="staff-transfer-branch" className={labelText} style={mutedTextStyle}>New branch</label>
+                    <select
+                      id="staff-transfer-branch"
+                      value={form.branchId}
+                      onChange={(e) => setForm({ ...form, branchId: e.target.value })}
+                      className={inputClass}
+                      style={inputStyle}
+                    >
+                      <option value="">-- Select a branch --</option>
+                      {branches
+                        .filter((b) => String(b.id) !== String(dialog.account.branch_id))
+                        .map((b) => (
+                          <option key={b.id} value={b.id}>{b.name}</option>
+                        ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              <button type="submit" className={primaryButtonClass} style={primaryButtonStyle}>
+                Review
+              </button>
+            </form>
+          )}
         </Modal>
       )}
     </div>

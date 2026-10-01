@@ -32,6 +32,10 @@ export const dangerButtonClass =
 
 export const errorBoxClass = `${bodyText} text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3`;
 
+// What just happened, after a change goes through (owner, 2026-10-01: every
+// change says whether it worked) - the success twin of errorBoxClass.
+export const successBoxClass = `${bodyText} text-green-800 bg-green-50 border border-green-200 rounded-lg px-4 py-3`;
+
 // Slightly lighter than --background-color (hsla(38, 38%, 94%, 1)) — same
 // warm cream hue/saturation as the rest of the site, just enough lighter
 // that a card reads as a distinct surface sitting on top of the page

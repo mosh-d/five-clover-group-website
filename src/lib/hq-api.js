@@ -144,4 +144,9 @@ export async function fetchHqAuditStaffOptions(branchId) {
   return hqRequest(`/api/hq/audit-logs/staff?branch_id=${branchId}`);
 }
 
+// The Critical page (2026-10-01): every room out of order, at every branch.
+export async function fetchOutOfOrderRooms() {
+  return hqRequest("/api/hq/critical/out-of-order-rooms");
+}
+
 export { HqApiError };

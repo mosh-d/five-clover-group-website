@@ -268,10 +268,12 @@ export default function AdminCheckInsPage() {
   const otaMax = selected?.check_out ? String(selected.check_out).slice(0, 10) : "";
 
   useEffect(() => {
-    // Defaults to the whole stay, the usual case; narrowing the range leaves
-    // the nights outside it on the guest's bill.
-    setOta({ start: otaMin, end: otaMax, breakfast: false, amount: "" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Off until ticked (2026-10-01). It used to start filled with the whole
+    // stay, so checking in ANY arrival recorded an OTA payment for every
+    // night unless the dates were cleared - and they couldn't be. Ticking
+    // it still fills in the whole stay, the usual case; narrowing the range
+    // leaves the nights outside it on the guest's bill.
+    setOta({ start: "", end: "", breakfast: false, amount: "", on: false });
   }, [selected?.id]);
 
   useEffect(() => {
@@ -1299,45 +1301,66 @@ const EMPTY_FUTURE_BOOKING = {
 // until it does. Left blank, the server fills in the rate for those nights.
 function OtaNightsFields({ value, onChange, minDate, maxDate }) {
   const set = (patch) => onChange({ ...value, ...patch });
-  // The range is the switch: dates filled in mean an OTA is paying for those
-  // nights, blank means nobody is. A checkbox over the whole stay could not
-  // express the common case — three nights booked through an OTA and a fourth
-  // added at the desk, which the guest pays for themselves.
+  // The checkbox switches the whole section on or off (owner, 2026-10-01):
+  // once a date was picked it could not be cleared, so there was no way back
+  // to "no OTA". Off clears every OTA value, so nothing is sent; on shows the
+  // dates. Within it, the date range still says WHICH nights the OTA pays
+  // for - the common case is three nights booked through an OTA and a fourth
+  // added at the desk, which the guest pays for themselves. A form that was
+  // already holding dates opens switched on.
+  const on = value.on === undefined ? Boolean(value.start || value.end) : value.on;
+  // Switching on starts from the whole stay (the usual case) where the stay's
+  // dates are known; the range can then be narrowed.
+  const toggle = (checked) =>
+    onChange(
+      checked
+        ? { ...value, on: true, start: value.start || minDate || "", end: value.end || maxDate || "" }
+        : { start: "", end: "", breakfast: false, amount: "", on: false },
+    );
   const hasRange = Boolean(value.start && value.end && value.end > value.start);
   return (
-    <div className="flex flex-col gap-3 border-t border-(--accent-2) pt-4">
-      <div className="flex flex-col gap-1">
-        <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
-          OTA-paid nights — optional
-        </p>
-        <p className="text-lg text-[color:var(--text-color)]/60">
-          Leave both dates blank if no OTA is involved. Any night outside this range stays on the guest&apos;s own
-          bill, so a guest can add nights and pay for them directly.
-        </p>
-      </div>
-      <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-        <div className="flex flex-col gap-2">
-          <label className={field.label}>OTA covers from</label>
-          <DateInput
-            value={value.start}
-            min={minDate}
-            max={maxDate}
-            onChange={(e) => set({ start: e.target.value })}
-            className={field.input}
-          />
+    <div className="flex flex-col gap-4 rounded-xl border-2 border-[color-mix(in_srgb,var(--emphasis)_35%,white)] bg-[color-mix(in_srgb,var(--emphasis)_7%,white)] p-6">
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">OTA-paid nights</p>
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={on}
+          onChange={(e) => toggle(e.target.checked)}
+          className="w-6 h-6 mt-0.5 shrink-0 cursor-pointer accent-[color:var(--emphasis)]"
+        />
+        <span className="flex flex-col gap-1">
+          <span className="text-xl font-semibold text-[color:var(--black)]">An OTA is paying for some of these nights</span>
+          <span className="text-lg text-[color:var(--text-color)]/68">
+            Tick this for a booking made through an online travel agency, then pick the nights it covers. Any night
+            outside those dates stays on the guest&apos;s own bill, so a guest can add nights and pay for them directly.
+          </span>
+        </span>
+      </label>
+      {on && (
+        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+          <div className="flex flex-col gap-2">
+            <label className={field.label}>OTA covers from</label>
+            <DateInput
+              value={value.start}
+              min={minDate}
+              max={maxDate}
+              onChange={(e) => set({ start: e.target.value })}
+              className={field.input}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className={field.label}>Until</label>
+            <DateInput
+              value={value.end}
+              min={minDate}
+              max={maxDate}
+              onChange={(e) => set({ end: e.target.value })}
+              className={field.input}
+            />
+          </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <label className={field.label}>Until</label>
-          <DateInput
-            value={value.end}
-            min={minDate}
-            max={maxDate}
-            onChange={(e) => set({ end: e.target.value })}
-            className={field.input}
-          />
-        </div>
-      </div>
-      {hasRange && (
+      )}
+      {on && hasRange && (
         <label className="flex items-center gap-2 text-xl cursor-pointer">
           <input
             type="checkbox"
@@ -1348,7 +1371,7 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
           The OTA rate includes breakfast
         </label>
       )}
-      {hasRange && (
+      {on && hasRange && (
         <div className="flex flex-col gap-2">
           <label className={field.label}>Amount the OTA will pay — optional</label>
           <input

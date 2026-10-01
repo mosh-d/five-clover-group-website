@@ -6,6 +6,7 @@ import { hqChangePassword, HqApiError } from "@/lib/hq-api";
 import { getHqUser } from "@/utils/hq-auth";
 import PageHeading from "@/components/admin/PageHeading";
 import PasswordField from "@/components/admin/PasswordField";
+import ConfirmPanel from "@/components/admin/ConfirmPanel";
 import {
   textColorStyle,
   mutedTextStyle,
@@ -25,8 +26,17 @@ export default function AdminAccountPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  // Checked, waiting for a Yes (owner, 2026-10-01: every change confirmed).
+  const [confirming, setConfirming] = useState(false);
 
-  const handleSubmit = async (e) => {
+  // Editing a field after reviewing puts the Yes away again, so what is
+  // confirmed is always what is typed.
+  const update = (patch) => {
+    setForm({ ...form, ...patch });
+    setConfirming(false);
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -43,14 +53,19 @@ export default function AdminAccountPage() {
       setError("New password must be different from your current password.");
       return;
     }
+    setConfirming(true);
+  };
 
+  const changePassword = async () => {
     try {
       setSaving(true);
+      setError(null);
       await hqChangePassword(form.current_password, form.new_password);
-      setSuccess("Your password was updated successfully.");
+      setSuccess("Your password was updated. Use the new one the next time you sign in.");
       setForm(EMPTY_FORM);
+      setConfirming(false);
     } catch (err) {
-      setError(err instanceof HqApiError ? err.message : "Failed to update password.");
+      setError(err instanceof HqApiError ? err.message : "Could not reach the server, so your password was not changed. Check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -76,7 +91,7 @@ export default function AdminAccountPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border p-8 flex flex-col gap-6" style={{ borderColor: "var(--accent-2)" }}>
-          {error && <p className={errorBoxClass}>{error}</p>}
+          {error && <p className={errorBoxClass} role="alert">{error}</p>}
           {success && (
             <p className={`${bodyText} text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3`}>
               {success}
@@ -88,7 +103,7 @@ export default function AdminAccountPage() {
             label="Current Password"
             autoComplete="off"
             value={form.current_password}
-            onChange={(e) => setForm({ ...form, current_password: e.target.value })}
+            onChange={(e) => update({ current_password: e.target.value })}
             required
           />
 
@@ -98,7 +113,7 @@ export default function AdminAccountPage() {
               label="New Password"
               autoComplete="new-password"
               value={form.new_password}
-              onChange={(e) => setForm({ ...form, new_password: e.target.value })}
+              onChange={(e) => update({ new_password: e.target.value })}
               minLength={8}
               required
             />
@@ -107,16 +122,31 @@ export default function AdminAccountPage() {
               label="Confirm New Password"
               autoComplete="new-password"
               value={form.confirm_password}
-              onChange={(e) => setForm({ ...form, confirm_password: e.target.value })}
+              onChange={(e) => update({ confirm_password: e.target.value })}
               minLength={8}
               required
             />
           </div>
           <p className={bodyText} style={mutedTextStyle}>Minimum 8 characters.</p>
 
-          <button type="submit" disabled={saving} className={`${primaryButtonClass} self-start`} style={primaryButtonStyle}>
-            {saving ? "Updating..." : "Update Password"}
-          </button>
+          {confirming ? (
+            <ConfirmPanel
+              question="Change your password?"
+              details={["You'll use the new password the next time you sign in."]}
+              confirmLabel="Yes, change my password"
+              busyLabel="Updating..."
+              busy={saving}
+              onBack={() => {
+                setConfirming(false);
+                setError(null);
+              }}
+              onConfirm={changePassword}
+            />
+          ) : (
+            <button type="submit" className={`${primaryButtonClass} self-start`} style={primaryButtonStyle}>
+              Update Password
+            </button>
+          )}
         </form>
       </section>
     </div>

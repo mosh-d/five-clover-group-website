@@ -155,4 +155,15 @@ export async function fetchOutOfOrderRanking() {
   return hqRequest("/api/hq/decision-support/out-of-order-rooms");
 }
 
+// The Metrics page (2026-10-01): one metric, every branch side by side.
+// Blank values are left off the query.
+export async function fetchHqMetric(metric, params = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") query.set(key, value);
+  });
+  const qs = query.toString();
+  return hqRequest(`/api/hq/metrics/${encodeURIComponent(metric)}${qs ? `?${qs}` : ""}`);
+}
+
 export { HqApiError };

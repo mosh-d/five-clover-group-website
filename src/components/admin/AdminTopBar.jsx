@@ -26,7 +26,7 @@ export default function AdminTopBar() {
 
   const handleSignOut = () => {
     clearHqSession();
-    router.push("/admin");
+    router.push("/hq");
   };
 
   // Full reload, same as the hotel-frontends' own dev role-override —
@@ -44,7 +44,7 @@ export default function AdminTopBar() {
       className="w-full flex items-center justify-between pl-6 pr-30 md:pr-6 py-4 shadow-sm shrink-0"
       style={{ background: "var(--text-color)" }}
     >
-      <Link href="/admin/staff" className="flex flex-col items-center gap-3 shrink-0">
+      <Link href="/hq/critical" className="flex flex-col items-center gap-3 shrink-0">
         <div className="relative size-36">
           <Image src={Logo} alt="Five Clover" fill className="object-contain" />
         </div>

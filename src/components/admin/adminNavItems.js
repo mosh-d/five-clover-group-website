@@ -7,9 +7,9 @@ import { IoPeopleOutline, IoKeyOutline, IoDocumentTextOutline, IoWarningOutline 
 // pages here as they ship.
 export const ADMIN_NAV_ITEMS = [
   // What needs head office's attention across every branch (2026-10-01).
-  // First in the list; signing in still lands on Staff Accounts.
-  { href: "/admin/critical", label: "CRITICAL", icon: IoWarningOutline },
-  { href: "/admin/staff", label: "STAFF ACCOUNTS", icon: IoPeopleOutline },
-  { href: "/admin/audit-logs", label: "AUDIT TRAIL", icon: IoDocumentTextOutline },
-  { href: "/admin/account", label: "ACCOUNT", icon: IoKeyOutline },
+  // First in the list, and where signing in lands (owner, 2026-10-01).
+  { href: "/hq/critical", label: "CRITICAL", icon: IoWarningOutline },
+  { href: "/hq/staff", label: "STAFF ACCOUNTS", icon: IoPeopleOutline },
+  { href: "/hq/audit-logs", label: "AUDIT TRAIL", icon: IoDocumentTextOutline },
+  { href: "/hq/account", label: "ACCOUNT", icon: IoKeyOutline },
 ];

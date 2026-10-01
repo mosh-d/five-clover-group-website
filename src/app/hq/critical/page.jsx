@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
 import { IoWarningOutline } from "react-icons/io5";
-import { fetchOutOfOrderRooms, HqApiError } from "@/lib/hq-api";
+import { fetchOutOfOrderRooms, HqApiError, API_BASE_URL } from "@/lib/hq-api";
 import PageHeading from "@/components/admin/PageHeading";
 import {
   textColorStyle,
@@ -21,9 +22,14 @@ import {
   tableTdClass,
 } from "@/components/admin/adminStyles";
 
-// Every room out of order across the group, oldest first, refreshed each
-// minute so "For" stays true while the page is left open.
-const REFRESH_MS = 60 * 1000;
+// Every room out of order across the group, oldest first. Kept current over
+// the live socket, not by polling (owner, 2026-10-01): the server tells head
+// office when a room goes out of order or comes back at any branch
+// (critical_updated, see RoomsGateway) and only then is the list fetched
+// again. "For" ticks on a local clock - no request involved.
+const CLOCK_TICK_MS = 60 * 1000;
+// One branch action can announce several changes at once; fetch once.
+const REFETCH_DEBOUNCE_MS = 300;
 
 // When it went out of order, on the hotels' own clock.
 const sinceText = (at) =>
@@ -45,6 +51,8 @@ export default function AdminCriticalPage() {
   const [rooms, setRooms] = useState(null);
   const [error, setError] = useState(null);
   const [now, setNow] = useState(() => Date.now());
+  const [live, setLive] = useState(true);
+  const refetchTimer = useRef(null);
 
   const load = useCallback(async () => {
     try {
@@ -60,8 +68,29 @@ export default function AdminCriticalPage() {
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, REFRESH_MS);
-    return () => clearInterval(timer);
+    const socket = io(API_BASE_URL, { transports: ["websocket", "polling"], reconnection: true, query: { hq: "1" } });
+    let wasDisconnected = false;
+    const refetch = () => {
+      clearTimeout(refetchTimer.current);
+      refetchTimer.current = setTimeout(load, REFETCH_DEBOUNCE_MS);
+    };
+    socket.on("critical_updated", refetch);
+    socket.on("connect", () => {
+      setLive(true);
+      // Anything announced while the connection was down was missed.
+      if (wasDisconnected) refetch();
+      wasDisconnected = false;
+    });
+    socket.on("disconnect", () => {
+      wasDisconnected = true;
+      setLive(false);
+    });
+    const clock = setInterval(() => setNow(Date.now()), CLOCK_TICK_MS);
+    return () => {
+      socket.disconnect();
+      clearInterval(clock);
+      clearTimeout(refetchTimer.current);
+    };
   }, [load]);
 
   const branchCount = rooms ? new Set(rooms.map((r) => r.branch_id)).size : 0;
@@ -76,6 +105,11 @@ export default function AdminCriticalPage() {
       </div>
 
       {error && <p className={errorBoxClass} role="alert">{error}</p>}
+      {!live && (
+        <p className={bodyText} style={mutedTextStyle} role="status">
+          Live updates paused - reconnecting. The list will catch up as soon as the connection is back.
+        </p>
+      )}
 
       <section className="flex flex-col gap-4">
         <div>

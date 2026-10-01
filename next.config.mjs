@@ -34,6 +34,16 @@ const nextConfig = {
   
   // Power by header removal for security
   poweredByHeader: false,
+
+  // The HQ admin moved from /admin to /hq (owner, 2026-10-01); old bookmarks
+  // and links land on the same page there. Not permanent, so /admin stays
+  // free to mean something else later without browsers holding on to this.
+  async redirects() {
+    return [
+      { source: '/admin', destination: '/hq', permanent: false },
+      { source: '/admin/:path*', destination: '/hq/:path*', permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;

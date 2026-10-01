@@ -8,7 +8,7 @@ import AdminTopBar from "./AdminTopBar";
 import AdminSidebar from "./AdminSidebar";
 
 // /admin itself is the login page — no shell chrome, no auth requirement.
-// Every other /admin/* route gets the topbar+sidebar shell and is gated
+// Every other /hq/* route gets the topbar+sidebar shell and is gated
 // here once, instead of each page repeating its own redirect-if-signed-out
 // check as more pages ship under this shell.
 //
@@ -32,7 +32,7 @@ import AdminSidebar from "./AdminSidebar";
 // imperatively inside the effect now, never as reactive state.
 //
 // `sessionConfirmed` exists because this layout stays mounted across every
-// client-side navigation within /admin/* (Next.js layouts don't remount on
+// client-side navigation within /hq/* (Next.js layouts don't remount on
 // sibling route changes) — without it, the effect's [pathname] dependency
 // meant EVERY single page-to-page click re-ran the whole verify() round
 // trip and blanked the screen while it waited, not just the first arrival
@@ -45,7 +45,7 @@ import AdminSidebar from "./AdminSidebar";
 export default function AdminShell({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isLoginPage = pathname === "/admin";
+  const isLoginPage = pathname === "/hq";
 
   const [status, setStatus] = useState(isLoginPage ? "login" : "checking");
   const [sessionConfirmed, setSessionConfirmed] = useState(false);
@@ -87,7 +87,7 @@ export default function AdminShell({ children }) {
 
   useEffect(() => {
     if (status === "denied") {
-      router.replace("/admin");
+      router.replace("/hq");
     }
   }, [status, router]);
 

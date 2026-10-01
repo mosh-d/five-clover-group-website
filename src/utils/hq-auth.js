@@ -1,4 +1,4 @@
-// Session storage for the HQ admin (/admin) — same localStorage key/shape
+// Session storage for the HQ admin (/hq) — same localStorage key/shape
 // convention the hotel-frontends already use for their own admin sessions,
 // kept consistent even though this is a different framework. There's no
 // server-side session/middleware here; this is a client-only admin tool.

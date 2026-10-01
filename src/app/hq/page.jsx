@@ -25,7 +25,7 @@ export default function AdminLoginPage() {
 
   // Already signed in — skip straight past the login form.
   useEffect(() => {
-    if (isHqAuthenticated()) router.replace("/admin/staff");
+    if (isHqAuthenticated()) router.replace("/hq/critical");
   }, [router]);
 
   const handleSubmit = async (e) => {
@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
       // AdminShell would otherwise spend an extra round-trip re-verifying
       // it before showing the first protected page for no reason.
       markJustLoggedIn();
-      router.push("/admin/staff");
+      router.push("/hq/critical");
     } catch (err) {
       setError(err instanceof HqApiError ? err.message : "Failed to sign in.");
     } finally {

@@ -2,7 +2,7 @@ import { getHqToken, getHqAuthHeaders, getHqRefreshToken, storeHqSession, clearH
 
 // Plain fetch, not axios — this repo has no axios dependency, unlike the
 // hotel-frontends' admin panels this otherwise mirrors in spirit.
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
 
 class HqApiError extends Error {
   constructor(message, status, data) {

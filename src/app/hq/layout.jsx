@@ -17,7 +17,7 @@ export const viewport = {
 };
 
 // AdminShell (a client component) owns the actual chrome — the topbar +
-// sidebar shown on every /admin/* page except the /admin login page
+// sidebar shown on every /hq/* page except the /hq login page
 // itself, plus the shared "redirect to login if signed out" check. Kept
 // separate from this file because `metadata`/`viewport` exports require a
 // Server Component, and AdminShell needs usePathname/useRouter.

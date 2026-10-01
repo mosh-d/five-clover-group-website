@@ -726,9 +726,11 @@ export default function AdminCheckInsPage() {
                   <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{walkInError}</p>
                 )}
 
-                {/* Date + rooms row */}
+                {/* Date + rooms row. The date field's box has a width of
+                    its own: sized by the field alone, iPhone Safari drew it
+                    wider than it said and it ran over Rooms (2026-10-02). */}
                 <div className="flex gap-4 flex-wrap items-end">
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 w-[22rem] max-w-full">
                     <label className={field.label}>
                       Check-Out Date <span className="text-red-500">*</span>
                     </label>

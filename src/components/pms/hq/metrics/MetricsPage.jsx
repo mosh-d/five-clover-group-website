@@ -173,25 +173,31 @@ export default function MetricsPage() {
                 );
               })}
             </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="metric-from" className={field.label}>From</label>
-              <input
-                id="metric-from"
-                type="date"
-                value={from}
-                onChange={(e) => ISO_DATE.test(e.target.value) && go({ from: e.target.value })}
-                className={`${field.input} w-auto`}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="metric-to" className={field.label}>To</label>
-              <input
-                id="metric-to"
-                type="date"
-                value={to}
-                onChange={(e) => ISO_DATE.test(e.target.value) && go({ to: e.target.value })}
-                className={`${field.input} w-auto`}
-              />
+            {/* From and To in boxes of their own width - two equal halves
+                of the row on a phone - never sized by the date fields
+                themselves, which iPhone Safari draws wider than they say
+                (they overlapped each other and Refresh, 2026-10-02). */}
+            <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
+              <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
+                <label htmlFor="metric-from" className={field.label}>From</label>
+                <input
+                  id="metric-from"
+                  type="date"
+                  value={from}
+                  onChange={(e) => ISO_DATE.test(e.target.value) && go({ from: e.target.value })}
+                  className={field.input}
+                />
+              </div>
+              <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
+                <label htmlFor="metric-to" className={field.label}>To</label>
+                <input
+                  id="metric-to"
+                  type="date"
+                  value={to}
+                  onChange={(e) => ISO_DATE.test(e.target.value) && go({ to: e.target.value })}
+                  className={field.input}
+                />
+              </div>
             </div>
           </>
         )}

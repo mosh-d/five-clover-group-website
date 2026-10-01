@@ -254,6 +254,46 @@ select:focus {
   font-variant-numeric: tabular-nums;
 }
 
+/* The signed-in PMS is an app: one frame exactly the screen's height, its
+   top bar fixed at the top, only the page area inside it scrolling (owner,
+   2026-10-02 - on a phone the whole page scrolled, top bar and all, and on
+   past its end into empty space). 100dvh is the screen as it is right now,
+   browser bars included; 100vh, the fallback, is taller than that on a phone
+   whose bars are showing, which is what let the page move. While the frame
+   is up, the page behind it neither scrolls nor bounces. */
+.pms-frame {
+  height: 100vh;
+  height: 100dvh;
+}
+html:has(.pms-frame),
+html:has(.pms-frame) body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Date fields. iPhone Safari draws one at a width of its own, wider than the
+   box it says it needs, so in a row of fields it spilled over the next one
+   (Check-Out Date over Rooms, From over To; owner, 2026-10-02). There it is
+   drawn like any other text field instead - the iPhone's own date picker
+   still opens - kept to the height of one, since an empty one would
+   otherwise collapse, and never narrower than a date needs, so the box
+   around it always makes room for what is drawn. */
+.admin-root input[type="date"] {
+  min-width: 0;
+}
+@supports (-webkit-touch-callout: none) {
+  .admin-root input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 17rem;
+    min-height: calc(1.34em + 2.4rem + 2px);
+  }
+  .admin-root input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
+}
+
 /* ===================================
    CLICKABLE CURSOR
    =================================== */

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiMenu, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { usePmsSession } from "./PmsSessionContext";
 import { visibleNavItems } from "./pmsNavItems";
 import { usePmsLive } from "./live/PmsLive";
+import { AnimatePresence, MotionDiv, EASE_OUT } from "./motion";
 
 function NavItems({ pathname, role, scope, onNavigate }) {
   const { alertCount, otaPendingCount } = usePmsLive();
@@ -49,40 +50,58 @@ function NavItems({ pathname, role, scope, onNavigate }) {
   );
 }
 
-// The sidebar - for a branch, or for Head Office - listing the
-// pages the signed-in role may open.
-export default function PmsSidebar() {
+// The sidebar - for a branch, or for Head Office - listing the pages the
+// signed-in role may open. On a phone it is a menu that slides in from the
+// right, where its button is in the top bar (owner, 2026-10-02), and slides
+// back out when closed; the backdrop fades with it. The shell's
+// <MotionConfig reducedMotion="user"> drops the slide for anyone who asks
+// their system for less motion.
+export default function PmsSidebar({ mobileOpen = false, onCloseMobile }) {
   const pathname = usePathname();
   const { role, scope } = usePmsSession();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Escape closes the menu, as it closes every dialog.
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const onKey = (e) => e.key === "Escape" && onCloseMobile?.();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [mobileOpen, onCloseMobile]);
 
   return (
     <>
-      <button
-        onClick={() => setIsMobileOpen(true)}
-        className="md:hidden fixed top-5 right-5 mt-13 mr-2 z-40 p-3 rounded-lg shadow-lg cursor-pointer bg-(--emphasis) text-white"
-        aria-label="Open menu"
-      >
-        <FiMenu size={22} />
-      </button>
-
       <nav className="hidden md:flex overflow-y-auto shrink-0 w-sm bg-(--accent-2)">
         <div className="flex flex-col px-4 py-8 gap-2 w-full">
           <NavItems pathname={pathname} role={role} scope={scope} />
         </div>
       </nav>
 
-      {isMobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="w-xl max-w-full h-full p-6 flex flex-col gap-6 shadow-xl overflow-y-auto bg-(--card)">
-            <button onClick={() => setIsMobileOpen(false)} className="self-end cursor-pointer text-(--text-color)" aria-label="Close menu">
-              <FiX size={26} />
-            </button>
-            <NavItems pathname={pathname} role={role} scope={scope} onNavigate={() => setIsMobileOpen(false)} />
+      <AnimatePresence>
+        {mobileOpen && (
+          <div key="mobile-menu" className="md:hidden fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Menu">
+            <MotionDiv
+              className="absolute inset-0 bg-black/40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={onCloseMobile}
+            />
+            <MotionDiv
+              className="absolute top-0 right-0 h-full w-xl max-w-[85vw] p-6 flex flex-col gap-6 shadow-xl overflow-y-auto overscroll-contain bg-(--card)"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ duration: 0.3, ease: EASE_OUT }}
+            >
+              <button type="button" onClick={onCloseMobile} className="self-end cursor-pointer text-(--text-color)" aria-label="Close menu" autoFocus>
+                <FiX size={26} />
+              </button>
+              <NavItems pathname={pathname} role={role} scope={scope} onNavigate={onCloseMobile} />
+            </MotionDiv>
           </div>
-          <div className="flex-1 bg-black/40" onClick={() => setIsMobileOpen(false)} />
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </>
   );
 }

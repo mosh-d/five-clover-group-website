@@ -19,8 +19,11 @@ const KEYS = {
 
 // Roles a developer can "view as", to see exactly what that role's PMS looks
 // like without another login - display only; every request still carries
-// the developer's real token.
+// the developer's real token. A branch's roles in a branch; Head Office's at
+// Head Office (owner, 2026-10-01: Head Office features will be gated per
+// role too).
 export const SIMULATABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper"];
+export const SIMULATABLE_HQ_ROLES = ["head_hr", "hr"];
 
 const hasStorage = () => typeof window !== "undefined";
 
@@ -96,8 +99,10 @@ export function readPmsSession() {
   const realRole = user.staff_role || null;
   const branch = readJson(KEYS.branch);
   const scope = branch ? "branch" : "hq";
-  // "View as" previews a branch role, so it applies inside a branch only.
-  const override = realRole === "developer" && scope === "branch" && hasStorage() ? localStorage.getItem(KEYS.roleOverride) : null;
+  // "View as" previews a role of the place the session is in - a branch
+  // role never applies at Head Office, nor the other way round.
+  const stored = realRole === "developer" && hasStorage() ? localStorage.getItem(KEYS.roleOverride) : null;
+  const override = (scope === "hq" ? SIMULATABLE_HQ_ROLES : SIMULATABLE_ROLES).includes(stored) ? stored : null;
   return {
     user,
     branch,

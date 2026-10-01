@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { MotionConfig } from "motion/react";
@@ -41,9 +41,18 @@ export default function PmsShell({ children }) {
   const isSignInPage = pathname === "/pms";
   const [session, setSession] = useState(null);
   const [sessionEnded, setSessionEnded] = useState(false);
+  // Set while leaving on purpose (signing out, or signing in again after a
+  // session ended): the "not signed in" bounce below must not add ?next=
+  // this page - the next person to sign in on this computer would be taken
+  // to where the last one was (2026-10-01).
+  const leaving = useRef(false);
 
   useEffect(() => {
-    if (isSignInPage || session) return;
+    if (isSignInPage) {
+      leaving.current = false;
+      return;
+    }
+    if (session || leaving.current) return;
     let cancelled = false;
     const stored = readPmsSession();
     // Opening the PMS after an hour or more away is the same as being idle
@@ -96,9 +105,14 @@ export default function PmsShell({ children }) {
 
   // A developer moving to another branch or to Head Office: the page they
   // were on may not open in the new place, so they start from its landing.
+  // A "view as" belongs to the place it was picked in (a branch's manager
+  // means nothing at Head Office), so moving between Head Office and a
+  // branch starts as yourself.
   const switchBranch = useCallback(
     async (place) => {
+      const before = readPmsSession()?.scope;
       await pmsSwitchBranch(place);
+      if (readPmsSession()?.scope !== before) setDevRoleOverride(null);
       const next = readPmsSession();
       setSession(next);
       if (!canOpen(next.role, navItemForPath(window.location.pathname)?.slug, next.scope)) router.replace(landingPath(next.role, next.scope));
@@ -111,13 +125,22 @@ export default function PmsShell({ children }) {
     setSession(readPmsSession());
   }, []);
 
+  // Signed out here whether or not the server heard (pmsSignOut clears this
+  // computer's session either way).
   const signOut = useCallback(async () => {
-    await pmsSignOut();
-    setSession(null);
-    router.replace("/pms");
+    leaving.current = true;
+    try {
+      await pmsSignOut();
+    } catch {
+      // Nothing to show: the session is gone from this computer regardless.
+    } finally {
+      setSession(null);
+      router.replace("/pms");
+    }
   }, [router]);
 
   const signInAgain = useCallback(() => {
+    leaving.current = true;
     clearPmsSession();
     setSessionEnded(false);
     setSession(null);
@@ -164,17 +187,24 @@ export default function PmsShell({ children }) {
 // The chrome every session wears: top bar, sidebar, the page - or, for a
 // page this session may not open, why not. `extras` (a branch's popup and
 // shift gate) sit inside it, so they wear the brand's colours too.
+//
+// An app frame, exactly the screen's height (.pms-frame, globals.css): the
+// top bar stays put and only the page area scrolls - on a phone the whole
+// page used to scroll, top bar and all, and past its end into empty space
+// (owner, 2026-10-02).
 function Frame({ pathname, shifts, banner, extras, children }) {
   const { role, scope, brand } = usePmsSession();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const item = navItemForPath(pathname);
   const refused = item && !canOpen(role, item.slug, scope);
   return (
-    <div className="admin-root h-screen flex flex-col overflow-hidden text-(--text-color)" style={{ ...themeStyle(brand), background: "var(--background-color)" }}>
-      <PmsTopBar shifts={shifts} />
+    <div className="admin-root pms-frame flex flex-col overflow-hidden text-(--text-color)" style={{ ...themeStyle(brand), background: "var(--background-color)" }}>
+      <PmsTopBar shifts={shifts} onOpenMenu={() => setMenuOpen(true)} />
       {banner}
-      <div className="flex flex-1 overflow-hidden">
-        <PmsSidebar />
-        <main className="flex-1 overflow-y-auto px-16 max-sm:px-4 py-16">{refused ? <Refused item={item} /> : children}</main>
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <PmsSidebar mobileOpen={menuOpen} onCloseMobile={closeMenu} />
+        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-16 max-sm:px-4 py-16">{refused ? <Refused item={item} /> : children}</main>
       </div>
       {extras}
     </div>

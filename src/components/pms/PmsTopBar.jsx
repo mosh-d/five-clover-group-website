@@ -4,11 +4,12 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { IoSwapHorizontalOutline } from "react-icons/io5";
+import { FiMenu } from "react-icons/fi";
 import { usePmsSession } from "./PmsSessionContext";
 import BranchPicker from "./BranchPicker";
 import { logoForBranch, branchLocationName } from "./theme/brands";
 import { landingPath } from "./pmsNavItems";
-import { SIMULATABLE_ROLES } from "@/lib/pms/session";
+import { SIMULATABLE_ROLES, SIMULATABLE_HQ_ROLES } from "@/lib/pms/session";
 import { HEAD_OFFICE } from "@/lib/pms/client";
 
 const ROLE_LABELS = {
@@ -44,19 +45,23 @@ function ShiftRow({ shift }) {
 
 // The top bar, wearing the signed-in branch's logo and name - or, at Head
 // Office, the group's logo and "Head Office".
-export default function PmsTopBar({ shifts = [] }) {
+// On a phone the menu button is part of the bar, at its right, so it can
+// never drift from it (owner, 2026-10-02; it used to float over the page).
+export default function PmsTopBar({ shifts = [], onOpenMenu }) {
   const { user, branch, branches, scope, role, realRole, roleOverride, switchBranch, setRoleOverride, signOut } = usePmsSession();
   const [picking, setPicking] = useState(false);
   const isDeveloper = realRole === "developer";
   const placeName = branch?.name || "Head Office";
+  const viewAsRoles = scope === "hq" ? SIMULATABLE_HQ_ROLES : SIMULATABLE_ROLES;
 
   return (
-    <header className="w-full flex items-center justify-between gap-6 pl-6 pr-30 md:pr-6 py-4 shadow-sm shrink-0 bg-(--text-color)">
+    <header className="w-full flex items-center justify-between gap-6 px-6 py-4 shadow-sm shrink-0 bg-(--text-color)">
       <Link href={landingPath(role, scope)} className="flex flex-col items-center gap-3 shrink-0">
         <div className="relative size-36">
           <Image src={logoForBranch(branch)} alt={branch?.name || "Five Clover Hotels"} fill sizes="9rem" className="object-contain" priority />
         </div>
-        <span className="hidden sm:block text-xl font-bold text-white">{branch ? branchLocationName(branch.name) : "Head Office"}</span>
+        {/* Under the logo on every screen, phones included (owner, 2026-10-02). */}
+        <span className="block max-w-[14rem] text-center text-lg sm:text-xl font-bold leading-tight text-white">{branch ? branchLocationName(branch.name) : "Head Office"}</span>
       </Link>
 
       <div className="flex items-center gap-5 flex-wrap justify-end">
@@ -91,8 +96,8 @@ export default function PmsTopBar({ shifts = [] }) {
               <IoSwapHorizontalOutline size={16} />
               <span className="max-w-60 truncate">{placeName}</span>
             </button>
-            {/* "View as" previews a branch role, so it is for a branch only. */}
-            {scope === "branch" && (
+            {/* "View as" previews a role of the place the session is in -
+                a branch's roles in a branch, Head Office's at Head Office. */}
             <label className="flex items-center gap-2 text-base text-white/60">
               <span className="hidden lg:block">Viewing as</span>
               <select
@@ -103,12 +108,11 @@ export default function PmsTopBar({ shifts = [] }) {
                 }`}
               >
                 <option value="" className="text-black">Developer (all access)</option>
-                {SIMULATABLE_ROLES.map((r) => (
+                {viewAsRoles.map((r) => (
                   <option key={r} value={r} className="text-black">{ROLE_LABELS[r]}</option>
                 ))}
               </select>
             </label>
-            )}
           </>
         )}
 
@@ -120,6 +124,15 @@ export default function PmsTopBar({ shifts = [] }) {
           Sign out
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={onOpenMenu}
+        className="md:hidden shrink-0 p-3 rounded-lg shadow-lg cursor-pointer bg-(--emphasis) text-white"
+        aria-label="Open menu"
+      >
+        <FiMenu size={22} />
+      </button>
 
       {picking && (
         <BranchPicker

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
+import { useCallback, useEffect, useState } from "react";
 import { IoWarningOutline } from "react-icons/io5";
-import { fetchOutOfOrderRooms, HqApiError, API_BASE_URL } from "@/lib/hq-api";
+import { fetchOutOfOrderRooms, HqApiError } from "@/lib/hq-api";
+import useHqLive from "@/components/admin/useHqLive";
 import PageHeading from "@/components/admin/PageHeading";
 import {
   textColorStyle,
@@ -28,8 +28,6 @@ import {
 // (critical_updated, see RoomsGateway) and only then is the list fetched
 // again. "For" ticks on a local clock - no request involved.
 const CLOCK_TICK_MS = 60 * 1000;
-// One branch action can announce several changes at once; fetch once.
-const REFETCH_DEBOUNCE_MS = 300;
 
 // When it went out of order, on the hotels' own clock.
 const sinceText = (at) =>
@@ -51,8 +49,6 @@ export default function AdminCriticalPage() {
   const [rooms, setRooms] = useState(null);
   const [error, setError] = useState(null);
   const [now, setNow] = useState(() => Date.now());
-  const [live, setLive] = useState(true);
-  const refetchTimer = useRef(null);
 
   const load = useCallback(async () => {
     try {
@@ -66,31 +62,12 @@ export default function AdminCriticalPage() {
     }
   }, []);
 
+  const live = useHqLive(load);
+
   useEffect(() => {
     load();
-    const socket = io(API_BASE_URL, { transports: ["websocket", "polling"], reconnection: true, query: { hq: "1" } });
-    let wasDisconnected = false;
-    const refetch = () => {
-      clearTimeout(refetchTimer.current);
-      refetchTimer.current = setTimeout(load, REFETCH_DEBOUNCE_MS);
-    };
-    socket.on("critical_updated", refetch);
-    socket.on("connect", () => {
-      setLive(true);
-      // Anything announced while the connection was down was missed.
-      if (wasDisconnected) refetch();
-      wasDisconnected = false;
-    });
-    socket.on("disconnect", () => {
-      wasDisconnected = true;
-      setLive(false);
-    });
     const clock = setInterval(() => setNow(Date.now()), CLOCK_TICK_MS);
-    return () => {
-      socket.disconnect();
-      clearInterval(clock);
-      clearTimeout(refetchTimer.current);
-    };
+    return () => clearInterval(clock);
   }, [load]);
 
   const branchCount = rooms ? new Set(rooms.map((r) => r.branch_id)).size : 0;

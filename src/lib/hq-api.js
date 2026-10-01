@@ -149,4 +149,10 @@ export async function fetchOutOfOrderRooms() {
   return hqRequest("/api/hq/critical/out-of-order-rooms");
 }
 
+// Decision Support (2026-10-01): out-of-order rooms ranked by the bookings
+// they likely cost.
+export async function fetchOutOfOrderRanking() {
+  return hqRequest("/api/hq/decision-support/out-of-order-rooms");
+}
+
 export { HqApiError };

@@ -107,7 +107,7 @@ export default function AdminStaffPage() {
   const [notice, setNotice] = useState(null);
   const [showDeactivated, setShowDeactivated] = useState(false);
 
-  // { kind: 'create' | 'role' | 'password' | 'transfer' | 'deactivate' | 'reactivate', account?, step: 'form' | 'confirm' }
+  // { kind: 'create' | 'rename' | 'role' | 'password' | 'transfer' | 'deactivate' | 'reactivate', account?, step: 'form' | 'confirm' }
   const [dialog, setDialog] = useState(EMPTY_DIALOG);
   const [form, setForm] = useState({});
   const [formError, setFormError] = useState(null);
@@ -178,6 +178,11 @@ export default function AdminStaffPage() {
     if (dialog.kind === "create") {
       if (!form.username?.trim()) problem = "Type the person's name as their username.";
       else problem = passwordProblem(form.password || "", form.confirm || "");
+    } else if (dialog.kind === "rename") {
+      const name = (form.username || "").trim();
+      if (!name) problem = "Type the new username.";
+      else if (name.length > 50) problem = "A username can be at most 50 characters.";
+      else if (name === dialog.account.username) problem = "That's already their username. Type the new one.";
     } else if (dialog.kind === "role") {
       if (form.role === dialog.account.role) problem = `"${dialog.account.username}" is already ${roleLabel(form.role)}. Pick a different role to change it.`;
     } else if (dialog.kind === "password") {
@@ -208,6 +213,10 @@ export default function AdminStaffPage() {
           password: form.password,
         });
         message = `Created a ${roleLabel(form.role)} account for "${username}" at ${here}. They can sign in now with that username and password.`;
+      } else if (kind === "rename") {
+        const name = form.username.trim();
+        await updateHqStaff(account.id, { username: name });
+        message = `Renamed "${account.username}" to "${name}". They sign in as "${name}" from now on; their password hasn't changed.`;
       } else if (kind === "role") {
         await updateHqStaff(account.id, { role: form.role });
         message = `"${account.username}" is now ${roleLabel(form.role)} (was ${roleLabel(account.role)}).`;
@@ -246,6 +255,17 @@ export default function AdminStaffPage() {
         details: ["They'll sign in with this username and the password you typed.", "You can change the role or reset the password later."],
         confirmLabel: "Yes, create the account",
         busyLabel: "Creating...",
+      };
+    }
+    if (kind === "rename") {
+      return {
+        question: `Rename "${account.username}" to "${form.username.trim()}"?`,
+        details: [
+          "They'll sign in with the new username from now on; their password stays the same.",
+          "Shifts and reports show the new name. Earlier audit trail entries keep the name they were made under.",
+        ],
+        confirmLabel: "Yes, rename",
+        busyLabel: "Renaming...",
       };
     }
     if (kind === "role") {
@@ -298,6 +318,7 @@ export default function AdminStaffPage() {
 
   const TITLES = {
     create: "Add Staff Account",
+    rename: "Rename",
     role: "Change Role",
     password: "Reset Password",
     transfer: "Transfer to Another Branch",
@@ -395,6 +416,9 @@ export default function AdminStaffPage() {
                     <td className={tableTdClass}>{formatDate(account.last_login_at)}</td>
                     <td className={tableTdClass}>
                       <div className={tableActionsClass}>
+                        <button onClick={() => open("rename", account, { username: account.username })} className={rowButtonSecondaryClass} style={rowButtonSecondaryStyle}>
+                          Rename
+                        </button>
                         {!CLI_ONLY_ROLES.includes(account.role) && (
                           <button onClick={() => open("role", account, { role: account.role })} className={rowButtonPrimaryClass} style={rowButtonPrimaryStyle}>
                             Change Role
@@ -470,6 +494,25 @@ export default function AdminStaffPage() {
                   <PasswordField id="staff-password-confirm" label="Type the password again" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
                   <p className={bodyText} style={mutedTextStyle}>At least {MIN_PASSWORD} characters.</p>
                 </>
+              )}
+
+              {dialog.kind === "rename" && (
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="staff-new-username" className={labelText} style={mutedTextStyle}>New username</label>
+                  <input
+                    id="staff-new-username"
+                    type="text"
+                    maxLength={50}
+                    value={form.username}
+                    onChange={(e) => setForm({ ...form, username: e.target.value })}
+                    className={inputClass}
+                    style={inputStyle}
+                    placeholder="e.g. Ada Okafor"
+                  />
+                  <p className={bodyText} style={mutedTextStyle}>
+                    Use the person&apos;s first name, then last name, e.g. &quot;Ada Okafor&quot;. It&apos;s the name they sign in with and the name shown on shifts and reports.
+                  </p>
+                </div>
               )}
 
               {dialog.kind === "role" && (

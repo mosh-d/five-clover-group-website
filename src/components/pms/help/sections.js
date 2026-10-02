@@ -74,7 +74,7 @@ export const HELP_SECTIONS = [
       "Room Assignments here supports multiple room numbers per reservation for multi-room bookings.",
       "Early Checkout is for ending an active stay ahead of schedule. It pulls the booked check-out back to the night the guest is actually leaving on, re-prices the stay to only those nights, releases the room, and asks for confirmation first since it can't be undone. Use it rather than a normal Check Out for anyone leaving early — a normal Check Out bills the booked last night, which they never reached.",
       "\"Special Requests\" here is a single field for this one stay (e.g. a note the guest gave at booking) — it's different from the Notes list on In-House, which supports multiple independent notes.",
-      "A guest's tags — Blacklisted, VIP, Corporate, Group, Walk-in — show beside their name here and on every other screen (see Guests below). They're for recognising the guest; they don't block a booking or a check-in.",
+      "A guest's tags — Blacklisted and VIP — show beside their name here and on every other screen (see Guests below). They're for recognising the guest; they don't block a booking or a check-in.",
     ],
   },
   {
@@ -86,7 +86,7 @@ export const HELP_SECTIONS = [
       "A profile is created automatically the first time a reservation under that phone number is confirmed — there's no separate \"add guest\" step.",
       "Total Stays and Total Revenue update automatically on every completed checkout; they're a read-only running history, not something to edit by hand.",
       "Notes here are a list of independent, addable/deletable items about the guest as a person — e.g. \"VIP\", \"Fish allergy\" — and follow the guest across every stay. Compare to In-House's Notes, which are about one specific stay only.",
-      "Status is a checklist: a guest can be several types at once (a Corporate VIP), and a manager can also mark them Blacklisted, with a reason. Every tag shows beside the guest's name on every staff screen — Reservations, Check-Ins, In-House, Guest Folios, the Room Chart, Reports — so staff can recognise them anywhere. Tags don't block a booking or a check-in, and never appear on anything the guest sees.",
+      "Status: tick VIP for a guest who gets special attention, and a manager can also mark a guest Blacklisted, with a reason. How a booking came in (website, walk-in, OTA) is the reservation's own source, not a guest tag. Every tag shows beside the guest's name on every staff screen — Reservations, Check-Ins, In-House, Guest Folios, the Room Chart, Reports — so staff can recognise them anywhere. Tags don't block a booking or a check-in, and never appear on anything the guest sees.",
     ],
   },
   {
@@ -151,6 +151,7 @@ export const HELP_SECTIONS = [
       "A reservation must already be Confirmed (paid) before it can be checked in — a Hold has to be confirmed first (do that from Reservations).",
       "Confirming check-in and assigning room number(s) happens together in one step — supports multiple rooms for a multi-room booking.",
       "Walk-In creates a brand-new reservation and checks it in immediately, for a guest who shows up without booking ahead.",
+      "The hotel day starts at 6am. A walk-in before 6am counts from the night before, so check-out can be that same day — a guest arriving at 1am can be checked out by noon. From 6am, the earliest check-out is tomorrow.",
     ],
   },
   {

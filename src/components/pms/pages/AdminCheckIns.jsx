@@ -354,8 +354,12 @@ export default function AdminCheckInsPage() {
   // 2026-10-02); the server now answers it with none.
   const walkInMinCheckOut = minWalkInCheckOutISO();
   const walkInDateProblem = walkIn.checkOut && walkIn.checkOut < walkInMinCheckOut
-    ? `Check-out has to be ${formatDate(walkInMinCheckOut)} or later — at least one night from today.`
+    ? `Check-out has to be ${formatDate(walkInMinCheckOut)} or later.`
     : "";
+  // Before 6am the hotel day hasn't turned over: the stay counts from the
+  // night before, so today itself is a valid check-out (the 1am arrival
+  // leaving by noon - owner, 2026-10-02).
+  const walkInBeforeSixAm = walkInCheckInISO() < adminTodayISO();
   const walkInRoomsProblem = isWholeCount(walkIn.roomsBooked) ? "" : "Rooms has to be a whole number, 1 or more.";
 
   const handleCheckAvailability = async () => {
@@ -800,6 +804,11 @@ export default function AdminCheckInsPage() {
                 </div>
                 {(walkInDateProblem || walkInRoomsProblem) && (
                   <p className="text-lg text-red-600 -mt-4">{walkInDateProblem || walkInRoomsProblem}</p>
+                )}
+                {walkInBeforeSixAm && !walkInDateProblem && (
+                  <p className="text-lg text-[color:var(--text-color)]/68 -mt-4">
+                    Before 6am a stay counts from the night before, so today ({formatDate(walkInMinCheckOut)}) is a valid check-out.
+                  </p>
                 )}
 
                 {/* Room type selection */}

@@ -65,8 +65,8 @@ const STATUS_FILTERS = [
   ...GUEST_TYPES.map((t) => ({ key: t, label: guestTagLabel(t) })),
 ];
 
-// A guest's types as a checklist - any number at once, a corporate VIP say
-// (2026-09-28). Shared by the edit and the add forms.
+// A guest's types as a checklist (2026-09-28; VIP only since 2026-10-02).
+// Shared by the edit and the add forms.
 function GuestTypeChecklist({ value = [], onChange }) {
   const toggle = (type) =>
     onChange(value.includes(type) ? value.filter((t) => t !== type) : GUEST_TYPES.filter((t) => t === type || value.includes(t)));
@@ -171,7 +171,10 @@ export default function AdminGuestsPage() {
 
   const openGuestDetail = async (guest) => {
     setSelectedGuest(guest);
-    setEditForm({ ...emptyGuestForm, ...guest });
+    // Only the types still offered: a retired one left on the profile
+    // (Corporate, Group, Walk-in - 2026-10-02) would be sent back on Save
+    // and refused.
+    setEditForm({ ...emptyGuestForm, ...guest, guest_types: (guest.guest_types || []).filter((t) => GUEST_TYPES.includes(t)) });
     setSelectedGuestReservations([]);
     setReservationsPage(1);
     setGuestNotes([]);

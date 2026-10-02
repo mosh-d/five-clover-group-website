@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { IoStatsChartOutline, IoRefreshOutline } from "react-icons/io5";
 import PageHeading from "@/components/pms/PageHeading";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import DateInput from "@/components/pms/DateInput";
 import { page, field } from "@/components/pms/ui";
 import { fetchBranches, fetchHqMetric } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
@@ -180,20 +181,23 @@ export default function MetricsPage() {
             <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
               <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
                 <label htmlFor="metric-from" className={field.label}>From</label>
-                <input
+                <DateInput
                   id="metric-from"
-                  type="date"
                   value={from}
-                  onChange={(e) => ISO_DATE.test(e.target.value) && go({ from: e.target.value })}
+                  onChange={(e) => {
+                    // "To" moves along rather than sitting before "from".
+                    const next = e.target.value;
+                    if (ISO_DATE.test(next)) go(next > to ? { from: next, to: next } : { from: next });
+                  }}
                   className={field.input}
                 />
               </div>
               <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
                 <label htmlFor="metric-to" className={field.label}>To</label>
-                <input
+                <DateInput
                   id="metric-to"
-                  type="date"
                   value={to}
+                  min={from}
                   onChange={(e) => ISO_DATE.test(e.target.value) && go({ to: e.target.value })}
                   className={field.input}
                 />

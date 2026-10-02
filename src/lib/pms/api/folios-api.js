@@ -47,11 +47,6 @@ export const closeFolio = async (id) => {
   return response.data;
 };
 
-export const createFolio = async (payload) => {
-  const response = await http.post(`/api/folios`, payload);
-  return response.data;
-};
-
 export const recordPayment = async (payload) => {
   const response = await http.post(`/api/payments`, payload);
   return response.data;

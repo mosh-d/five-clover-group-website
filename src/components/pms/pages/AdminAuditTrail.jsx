@@ -375,7 +375,11 @@ export default function AdminAuditTrail() {
           <label className={field.label}>From</label>
           <DateInput
             value={filterFrom}
-            onChange={(e) => applyFilters({ from: e.target.value })}
+            onChange={(e) => {
+              // "To" never sits before "from": it moves along instead.
+              const from = e.target.value;
+              applyFilters(from && filterTo && from > filterTo ? { from, to: from } : { from });
+            }}
             className={field.input}
           />
         </div>
@@ -384,6 +388,7 @@ export default function AdminAuditTrail() {
           <label className={field.label}>To</label>
           <DateInput
             value={filterTo}
+            min={filterFrom || undefined}
             onChange={(e) => applyFilters({ to: e.target.value })}
             className={field.input}
           />

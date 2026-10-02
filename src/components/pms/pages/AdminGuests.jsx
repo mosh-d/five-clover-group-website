@@ -321,7 +321,10 @@ export default function AdminGuestsPage() {
                   <IoFilter size={22} /> Filters
                 </button>
                 {isFilterOpen && (
-                  <div className='absolute right-0 mt-2 w-96 bg-(--card) border border-(--accent-2) rounded-xl shadow-xl z-20 overflow-hidden font-primary'>
+                  // From the button's left edge on a phone, where it sits at
+                  // the left of the screen - from its right edge the panel
+                  // started off the screen (2026-10-02).
+                  <div className='absolute right-0 max-sm:right-auto max-sm:left-0 mt-2 w-96 max-w-[calc(100vw-2rem)] bg-(--card) border border-(--accent-2) rounded-xl shadow-xl z-20 overflow-hidden font-primary'>
                     <div className='p-6'>
                       <p className='text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-4'>
                         Status

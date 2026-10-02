@@ -23,6 +23,8 @@ import { markOtaSettlementPaid, createOtaSettlement, updateOtaSettlement, previe
 import { fetchInHouse } from "@/lib/pms/api/front-office-api";
 import { formatPaymentMethod, money, formatDate, PAYMENT_METHODS } from "@/lib/pms/format";
 import DateInput from "@/components/pms/DateInput";
+import { adjustmentProblem, adjustmentMax } from "@/lib/pms/validation";
+import { addDaysISO } from "@/lib/pms/dates";
 import {
   fetchFolios,
   fetchPendingFolios,
@@ -30,7 +32,6 @@ import {
   fetchFolioById,
   addFolioItem,
   closeFolio,
-  createFolio,
   recordPayment,
   recordRefund,
   refundDeposit,
@@ -64,7 +65,6 @@ const allowedChargeTypesForRole = (role) => {
 // Both tax and discount can be either a percentage of the charge amount or
 // a flat figure, picked via tax_mode/discount_mode.
 const emptyItemForm = { description: "", amount: "", tax: "0", tax_mode: "fixed", discount: "0", discount_mode: "percentage", item_type: "", notes: "", date: "" };
-const emptyCreateForm = { reservation_id: "", guest_id: "", total_amount: "0", amount_paid: "0" };
 // tax_mode/tax and discount_mode/discount mirror the Add-a-Charge item form
 // above — posted together as one 'adjustment' folio item (the same
 // mechanism already used to discount/correct an already-posted charge, see
@@ -84,10 +84,10 @@ const EMPTY_OTA_FORM = { open: false, id: null, start: "", end: "", breakfast: f
 
 export default function AdminFoliosPage() {
   // Waitstaff only ever posts charges to a folio still open for business
-  // (closed folios reject new items — see FoliosService.addFolioItem), and
-  // never creates one (that's a front-desk task tied to a reservation/
-  // check-in) — so their view of this page is locked to exactly that
-  // slice: no tab/status switching, no "+ Create Folio".
+  // (closed folios reject new items — see FoliosService.addFolioItem), so
+  // their view of this page is locked to exactly that slice: no tab/status
+  // switching. Nobody makes a folio here by hand - confirming a booking opens
+  // one (owner, 2026-10-02: the "+ Create Folio" button is gone).
   const staffRole = getStoredStaffRole();
   const isWaitstaffSession = staffRole === "waitron";
 
@@ -131,10 +131,6 @@ export default function AdminFoliosPage() {
   const [refundForm, setRefundForm] = useState(emptyRefundForm);
   const [recordingRefund, setRecordingRefund] = useState(false);
   const [refundError, setRefundError] = useState(null);
-
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState(emptyCreateForm);
-  const [creating, setCreating] = useState(false);
 
   // Shown right after recording a payment/refund so the reference number is
   // on screen long enough to write down or copy — not an auto-fading toast.
@@ -312,6 +308,8 @@ export default function AdminFoliosPage() {
   };
 
   const hasValidPaymentSplits = paymentForm.splits.length > 0 && paymentForm.splits.every((s) => Number(s.amount) > 0);
+  const paymentAdjustmentProblem = adjustmentProblem("Tax", paymentForm.tax, paymentForm.tax_mode)
+    || adjustmentProblem("Discount", paymentForm.discount, paymentForm.discount_mode);
   // Both computed against the folio's current balance (already on screen) —
   // unlike the Add-a-Charge Tax/Discount above, which are a % of the ONE
   // new charge being posted, these adjust what's already owed overall.
@@ -450,7 +448,7 @@ export default function AdminFoliosPage() {
   };
 
   const handleRecordPayment = async () => {
-    if (!selectedFolio || !hasValidPaymentSplits) return;
+    if (!selectedFolio || !hasValidPaymentSplits || paymentAdjustmentProblem) return;
     setPaymentError(null);
     try {
       setRecordingPayment(true);
@@ -611,27 +609,6 @@ export default function AdminFoliosPage() {
     }
   };
 
-  const handleCreateFolio = async () => {
-    try {
-      setCreating(true);
-      await createFolio({
-        reservation_id: Number(createForm.reservation_id),
-        guest_id: Number(createForm.guest_id),
-        total_amount: Number(createForm.total_amount || 0),
-        amount_paid: Number(createForm.amount_paid || 0),
-      });
-      setSuccessMessage("Folio created.");
-      setTimeout(() => setSuccessMessage(""), 5000);
-      setIsCreateOpen(false);
-      setCreateForm(emptyCreateForm);
-      loadFolios();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to create folio.");
-    } finally {
-      setCreating(false);
-    }
-  };
-
   // Closing is part of finalizing a stay once it's over — a still in-house
   // guest can still incur new charges, so a zero balance alone isn't enough;
   // matches the same precondition the backend's auto-close paths already use.
@@ -648,8 +625,11 @@ export default function AdminFoliosPage() {
   // checked for "filled in", not for "greater than zero".
   const chargeAmountEntered = String(itemForm.amount ?? "").trim() !== "" && !Number.isNaN(Number(itemForm.amount));
   const chargeDescriptionEntered = String(itemForm.description ?? "").trim() !== "";
-  const chargeReady = Boolean(itemForm.item_type) && chargeDescriptionEntered && chargeAmountEntered;
-  const chargeBlockReason = !chargeDescriptionEntered && !chargeAmountEntered
+  // Its tax and discount, unlike the amount, are never negative.
+  const chargeAdjustmentProblem = adjustmentProblem("Tax", itemForm.tax, itemForm.tax_mode)
+    || adjustmentProblem("Discount", itemForm.discount, itemForm.discount_mode);
+  const chargeReady = Boolean(itemForm.item_type) && chargeDescriptionEntered && chargeAmountEntered && !chargeAdjustmentProblem;
+  const chargeBlockReason = chargeAdjustmentProblem ? chargeAdjustmentProblem : !chargeDescriptionEntered && !chargeAmountEntered
     ? "Enter a description and an amount to post this charge."
     : !chargeDescriptionEntered
       ? "Enter a description — it appears on the guest's bill, so it can't be blank."
@@ -693,13 +673,6 @@ export default function AdminFoliosPage() {
       <div data-component="AdminFolios" className="flex flex-col items-start gap-[3rem]">
         <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
           <PageHeading icon={IoReceiptOutline}>Guest Folios</PageHeading>
-          {/* Waitstaff never creates a folio — that's a front-desk task tied
-              to a reservation/check-in, not something a waitron does. */}
-          {!isWaitstaffSession && (
-            <button onClick={() => setIsCreateOpen(true)} className={`${btn.primary} whitespace-nowrap`}>
-              + Create Folio
-            </button>
-          )}
         </div>
 
         <div className="flex gap-3 text-xl flex-wrap items-center w-full">
@@ -1012,8 +985,13 @@ export default function AdminFoliosPage() {
                         <DateInput
                           value={otaForm.start}
                           min={otaMin}
-                          max={otaMax}
-                          onChange={(e) => setOtaForm({ ...otaForm, start: e.target.value, touched: true })}
+                          max={otaMax ? addDaysISO(otaMax, -1) : undefined}
+                          onChange={(e) => {
+                            // At least one night: "until" moves along when "from" reaches it.
+                            const start = e.target.value;
+                            const end = start && otaForm.end && otaForm.end <= start ? addDaysISO(start, 1) : otaForm.end;
+                            setOtaForm({ ...otaForm, start, end, touched: true });
+                          }}
                           className={field.input}
                         />
                       </div>
@@ -1021,7 +999,7 @@ export default function AdminFoliosPage() {
                         <label className={field.label}>Until</label>
                         <DateInput
                           value={otaForm.end}
-                          min={otaMin}
+                          min={otaForm.start ? addDaysISO(otaForm.start, 1) : otaMin ? addDaysISO(otaMin, 1) : undefined}
                           max={otaMax}
                           onChange={(e) => setOtaForm({ ...otaForm, end: e.target.value, touched: true })}
                           className={field.input}
@@ -1050,6 +1028,9 @@ export default function AdminFoliosPage() {
                         Prefilled from the rate for those nights. Change it to use a custom amount for the OTA payment.
                       </p>
                     </div>
+                    {otaForm.start && otaForm.end && otaForm.end <= otaForm.start && (
+                      <p className="text-lg text-red-600">&ldquo;Until&rdquo; has to be at least one night after &ldquo;from&rdquo;.</p>
+                    )}
                     {otaError && (
                       <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{otaError}</p>
                     )}
@@ -1309,7 +1290,7 @@ export default function AdminFoliosPage() {
                             <option value="fixed">Fixed (₦)</option>
                             <option value="percentage">Percentage (%)</option>
                           </select>
-                          <input type="number" value={itemForm.tax} onChange={(e) => setItemForm({ ...itemForm, tax: e.target.value })} className={field.input} />
+                          <input type="number" min="0" max={adjustmentMax(itemForm.tax_mode)} value={itemForm.tax} onChange={(e) => setItemForm({ ...itemForm, tax: e.target.value })} className={field.input} />
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
@@ -1323,7 +1304,7 @@ export default function AdminFoliosPage() {
                             <option value="fixed">Fixed (₦)</option>
                             <option value="percentage">Percentage (%)</option>
                           </select>
-                          <input type="number" value={itemForm.discount} onChange={(e) => setItemForm({ ...itemForm, discount: e.target.value })} className={field.input} />
+                          <input type="number" min="0" max={adjustmentMax(itemForm.discount_mode)} value={itemForm.discount} onChange={(e) => setItemForm({ ...itemForm, discount: e.target.value })} className={field.input} />
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
@@ -1416,6 +1397,8 @@ export default function AdminFoliosPage() {
                             </select>
                             <input
                               type="number"
+                              min="0"
+                              max={adjustmentMax(paymentForm.tax_mode)}
                               value={paymentForm.tax}
                               onChange={(e) => setPaymentForm({ ...paymentForm, tax: e.target.value })}
                               className={field.input}
@@ -1435,6 +1418,8 @@ export default function AdminFoliosPage() {
                             </select>
                             <input
                               type="number"
+                              min="0"
+                              max={adjustmentMax(paymentForm.discount_mode)}
                               value={paymentForm.discount}
                               onChange={(e) => setPaymentForm({ ...paymentForm, discount: e.target.value })}
                               className={field.input}
@@ -1469,9 +1454,10 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                     </div>
-                    <button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits} className={`${btn.success} self-start`}>
+                    <button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits || Boolean(paymentAdjustmentProblem)} className={`${btn.success} self-start`}>
                       {recordingPayment ? "Recording..." : "Record Payment"}
                     </button>
+                    {paymentAdjustmentProblem && <p className="text-lg text-red-600">{paymentAdjustmentProblem}</p>}
                   </div>
                 )}
 
@@ -1531,44 +1517,6 @@ export default function AdminFoliosPage() {
           )}
         </Modal>
       )}
-
-      {/* ==== Create Folio Modal ==== */}
-      {isCreateOpen && (
-        <Modal
-          onClose={() => setIsCreateOpen(false)}
-          title="Create Folio"
-          subtitle="For backfilling a folio onto an existing reservation. New bookings get one automatically on confirmation."
-          size="sm"
-          footer={
-            <>
-              <button onClick={() => setIsCreateOpen(false)} className={btn.secondary}>Cancel</button>
-              <button onClick={handleCreateFolio} disabled={creating || !createForm.reservation_id || !createForm.guest_id} className={btn.primary}>
-                {creating ? "Creating..." : "Create Folio"}
-              </button>
-            </>
-          }
-        >
-          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-            <div className="flex flex-col gap-2">
-              <label className={field.label}>Reservation ID *</label>
-              <input type="number" value={createForm.reservation_id} onChange={(e) => setCreateForm({ ...createForm, reservation_id: e.target.value })} className={field.input} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={field.label}>Guest ID *</label>
-              <input type="number" value={createForm.guest_id} onChange={(e) => setCreateForm({ ...createForm, guest_id: e.target.value })} className={field.input} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={field.label}>Total Amount</label>
-              <input type="number" value={createForm.total_amount} onChange={(e) => setCreateForm({ ...createForm, total_amount: e.target.value })} className={field.input} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={field.label}>Amount Paid</label>
-              <input type="number" value={createForm.amount_paid} onChange={(e) => setCreateForm({ ...createForm, amount_paid: e.target.value })} className={field.input} />
-            </div>
-          </div>
-        </Modal>
-      )}
-
 
       {/* ==== Refund Credit Confirmation ==== */}
       {refundCreditTarget && (

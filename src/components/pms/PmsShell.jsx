@@ -32,9 +32,9 @@ import { applyServerClock, deviceClockDriftMinutes } from "@/lib/pms/dates";
 // branch endpoint would refuse it.
 //
 // On arrival the stored session is checked with the server
-// (verifyPmsSession): renewed for someone who was working in the last 30
-// minutes, sent to sign in after a longer absence. Once confirmed, moving
-// between pages doesn't check again - this layout stays mounted across them.
+// (verifyPmsSession): renewed for someone who was working in the last hour,
+// sent to sign in after a longer absence. Once confirmed, moving between
+// pages doesn't check again - this layout stays mounted across them.
 export default function PmsShell({ children }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -88,20 +88,43 @@ export default function PmsShell({ children }) {
   // "Still here" is a person touching the screen, never the PMS refetching
   // on its own - throttled to one stamp a minute. Loading the page is NOT
   // activity: it used to stamp on mount, so reopening a day-old session
-  // counted as being here and renewed it (2026-10-01). Signing in stamps
-  // (storePmsSession); after that only a click or a key does.
+  // counted as being here and renewed it (2026-10-01). Signing in starts
+  // the clock (startIdleClock); after that only a click or a key moves it.
+  //
+  // An hour untouched ends the session where it stands (owner, 2026-10-02:
+  // used last night, still signed in this morning): checked every half
+  // minute and the moment the tab is looked at again, not left to the next
+  // request that happens to need a renewal. A touch after the hour ran out
+  // ends it too, rather than counting - the F5 that reloads the page
+  // reaches the page first, and used to sign a night-old session back in.
   useEffect(() => {
+    if (!session || isSignInPage) return;
     let last = 0;
-    const stamp = () => {
+    const lapsed = () => {
+      if (!hasBeenIdleTooLong()) return false;
+      setSessionEnded(true);
+      return true;
+    };
+    const touched = () => {
+      if (lapsed()) return;
       const now = Date.now();
       if (now - last < 60000) return;
       last = now;
       markActivity();
     };
+    const timer = window.setInterval(lapsed, 30000);
     const events = ["pointerdown", "keydown"];
-    events.forEach((e) => window.addEventListener(e, stamp, { passive: true }));
-    return () => events.forEach((e) => window.removeEventListener(e, stamp));
-  }, []);
+    events.forEach((e) => window.addEventListener(e, touched, { passive: true }));
+    const returns = ["focus", "pageshow"];
+    returns.forEach((e) => window.addEventListener(e, lapsed));
+    document.addEventListener("visibilitychange", lapsed);
+    return () => {
+      window.clearInterval(timer);
+      events.forEach((e) => window.removeEventListener(e, touched));
+      returns.forEach((e) => window.removeEventListener(e, lapsed));
+      document.removeEventListener("visibilitychange", lapsed);
+    };
+  }, [session, isSignInPage]);
 
   // A developer moving to another branch or to Head Office: the page they
   // were on may not open in the new place, so they start from its landing.

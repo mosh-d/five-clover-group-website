@@ -12,7 +12,7 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import { btn, field, table } from "@/components/pms/ui";
 import { fetchCheckInList } from "@/lib/pms/api/front-office-api";
 import { checkGuestBlacklist, fetchGuests } from "@/lib/pms/api/guests-api";
-import { adminTodayISO, currentBusinessDateISO, minWalkInCheckOutISO } from "@/lib/pms/dates";
+import { addDaysISO, adminTodayISO, currentBusinessDateISO, minWalkInCheckOutISO } from "@/lib/pms/dates";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import RoomAssignmentPicker from "@/components/pms/RoomAssignmentPicker";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
@@ -34,6 +34,7 @@ import { createOtaSettlement, previewOtaAmount } from "@/lib/pms/api/ota-api";
 import { fetchFolios, recordPayment, addFolioItem } from "@/lib/pms/api/folios-api";
 
 import DateInput from "@/components/pms/DateInput";
+import { adjustmentProblem, adjustmentMax } from "@/lib/pms/validation";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
 import { currentBranchId } from "@/lib/pms/session";
 import { formatDate } from "@/lib/pms/format";
@@ -55,6 +56,18 @@ const walkInCheckInISO = () => currentBusinessDateISO();
 // same rule the server enforces (ReservationsService.checkIn).
 const arrivesLater = (r) => String(r.check_in || "").slice(0, 10) > currentBusinessDateISO();
 const fmtCurrency = (amount, symbol = "₦") => `${symbol}${Number(amount || 0).toLocaleString()}`;
+// A rooms count the server can book: a whole number, at least one.
+const isWholeCount = (v) => Number.isInteger(Number(v)) && Number(v) >= 1;
+// What stops an OTA-nights range being saved ("" when nothing does). With
+// the box ticked and no usable range, the OTA used to be skipped without a
+// word, leaving its nights on the guest's own bill (2026-10-02).
+const otaRangeProblem = (ota) => {
+  const on = ota.on === undefined ? Boolean(ota.start || ota.end) : ota.on;
+  if (!on) return "";
+  if (!ota.start || !ota.end) return "Pick the nights the OTA is paying for, or untick the OTA box.";
+  if (ota.end <= ota.start) return "The OTA's \u201cuntil\u201d date has to be at least one night after its \u201cfrom\u201d date.";
+  return "";
+};
 
 const EMPTY_WALK_IN = {
   checkOut: "", roomsBooked: 1, roomTypeId: "", guestFirstName: "", guestLastName: "", phone: "", email: "",
@@ -292,7 +305,7 @@ export default function AdminCheckInsPage() {
   }, [selected?.id, ota.start, ota.end, ota.breakfast]);
 
   const handleCheckIn = async () => {
-    if (!selected) return;
+    if (!selected || otaRangeProblem(ota)) return;
     try {
       setProcessing(true);
       // The Confirm Check In button is disabled until every booked room has
@@ -335,8 +348,18 @@ export default function AdminCheckInsPage() {
     }
   };
 
+  // The picker's own minimum isn't enough: an iPhone offers every date, and
+  // a computer lets one be typed. A check-out on or before today's business
+  // date is a stay that can't happen - rooms showed as free for one (owner,
+  // 2026-10-02); the server now answers it with none.
+  const walkInMinCheckOut = minWalkInCheckOutISO();
+  const walkInDateProblem = walkIn.checkOut && walkIn.checkOut < walkInMinCheckOut
+    ? `Check-out has to be ${formatDate(walkInMinCheckOut)} or later — at least one night from today.`
+    : "";
+  const walkInRoomsProblem = isWholeCount(walkIn.roomsBooked) ? "" : "Rooms has to be a whole number, 1 or more.";
+
   const handleCheckAvailability = async () => {
-    if (!walkIn.checkOut) return;
+    if (!walkIn.checkOut || walkInDateProblem || walkInRoomsProblem) return;
     setAvailLoading(true);
     setAvailability(null);
     setWalkInError(null);
@@ -354,6 +377,15 @@ export default function AdminCheckInsPage() {
     e.preventDefault();
     if (!walkIn.roomTypeId || !walkIn.guestFirstName.trim() || !walkIn.phone.trim() || !walkIn.checkOut) {
       setWalkInError("Guest name, phone, room type, and check-out date are required.");
+      return;
+    }
+    const formProblem = walkInDateProblem || walkInRoomsProblem || otaRangeProblem(walkIn.ota)
+      || adjustmentProblem("The room rate", walkIn.roomRate)
+      || adjustmentProblem("The discount", walkIn.discount, walkIn.discountMode)
+      || adjustmentProblem("The payment's tax", walkIn.paymentTax, walkIn.paymentTaxMode)
+      || adjustmentProblem("The payment's discount", walkIn.paymentDiscount, walkIn.paymentDiscountMode);
+    if (formProblem) {
+      setWalkInError(formProblem);
       return;
     }
     const validRoomNumbers = walkIn.roomNumbers.map((r) => r.trim()).filter(Boolean);
@@ -735,7 +767,7 @@ export default function AdminCheckInsPage() {
                       Check-Out Date <span className="text-red-500">*</span>
                     </label>
                     <DateInput
-                      min={minWalkInCheckOutISO()}
+                      min={walkInMinCheckOut}
                       value={walkIn.checkOut}
                       onChange={(e) => {
                         setWalkIn((p) => ({ ...p, checkOut: e.target.value, roomTypeId: "", roomNumbers: [] }));
@@ -760,12 +792,15 @@ export default function AdminCheckInsPage() {
                   <button
                     type="button"
                     onClick={handleCheckAvailability}
-                    disabled={!walkIn.checkOut || availLoading}
+                    disabled={!walkIn.checkOut || availLoading || Boolean(walkInDateProblem || walkInRoomsProblem)}
                     className={btn.primary}
                   >
                     {availLoading ? "Checking..." : "Check Availability"}
                   </button>
                 </div>
+                {(walkInDateProblem || walkInRoomsProblem) && (
+                  <p className="text-lg text-red-600 -mt-4">{walkInDateProblem || walkInRoomsProblem}</p>
+                )}
 
                 {/* Room type selection */}
                 {availability && (
@@ -826,6 +861,7 @@ export default function AdminCheckInsPage() {
                     <div className="flex items-center gap-4 flex-wrap">
                       <input
                         type="number"
+                        min="0"
                         value={walkIn.roomRate !== "" ? walkIn.roomRate : String(selectedWalkInRoomType?.base_rate ?? "")}
                         onChange={(e) => setWalkIn((p) => ({ ...p, roomRate: e.target.value }))}
                         className={`${field.input} max-w-xs`}
@@ -880,6 +916,8 @@ export default function AdminCheckInsPage() {
                       </select>
                       <input
                         type="number"
+                        min="0"
+                        max={adjustmentMax(walkIn.discountMode)}
                         value={walkIn.discount}
                         onChange={(e) => handleWalkInDiscountChange({ discount: e.target.value })}
                         className={`${field.input} max-w-xs`}
@@ -1123,6 +1161,8 @@ export default function AdminCheckInsPage() {
                         </select>
                         <input
                           type="number"
+                          min="0"
+                          max={adjustmentMax(walkIn.paymentTaxMode)}
                           value={walkIn.paymentTax}
                           onChange={(e) => setWalkIn((p) => ({ ...p, paymentTax: e.target.value }))}
                           className={field.input}
@@ -1142,6 +1182,8 @@ export default function AdminCheckInsPage() {
                         </select>
                         <input
                           type="number"
+                          min="0"
+                          max={adjustmentMax(walkIn.paymentDiscountMode)}
                           value={walkIn.paymentDiscount}
                           onChange={(e) => setWalkIn((p) => ({ ...p, paymentDiscount: e.target.value }))}
                           className={field.input}
@@ -1222,9 +1264,9 @@ export default function AdminCheckInsPage() {
               </button>
               <button
                 onClick={handleCheckIn}
-                disabled={processing || roomNumbers.length < (selected.rooms_booked || 1)}
+                disabled={processing || roomNumbers.length < (selected.rooms_booked || 1) || Boolean(otaRangeProblem(ota))}
                 className={btn.success}
-                title={roomNumbers.length < (selected.rooms_booked || 1) ? "Assign a room number to every room before checking in" : undefined}
+                title={roomNumbers.length < (selected.rooms_booked || 1) ? "Assign a room number to every room before checking in" : otaRangeProblem(ota) || undefined}
               >
                 {processing ? "Checking In..." : "Confirm Check In"}
               </button>
@@ -1320,6 +1362,13 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
         : { start: "", end: "", breakfast: false, amount: "", on: false },
     );
   const hasRange = Boolean(value.start && value.end && value.end > value.start);
+  // At least one night, inside the stay (2026-10-02): "from" stops a night
+  // before check-out, "until" starts the night after "from", and moving
+  // "from" onto or past "until" moves "until" along - as check-in moves
+  // check-out on the booking forms.
+  const lastStart = maxDate ? addDaysISO(maxDate, -1) : undefined;
+  const firstEnd = value.start ? addDaysISO(value.start, 1) : minDate ? addDaysISO(minDate, 1) : undefined;
+  const problem = on && value.start && value.end ? otaRangeProblem(value) : "";
   return (
     <div className="flex flex-col gap-4 rounded-xl border-2 border-[color-mix(in_srgb,var(--emphasis)_35%,white)] bg-[color-mix(in_srgb,var(--emphasis)_7%,white)] p-6">
       <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">OTA-paid nights</p>
@@ -1345,8 +1394,11 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
             <DateInput
               value={value.start}
               min={minDate}
-              max={maxDate}
-              onChange={(e) => set({ start: e.target.value })}
+              max={lastStart}
+              onChange={(e) => {
+                const start = e.target.value;
+                set({ start, end: start && value.end && value.end <= start ? addDaysISO(start, 1) : value.end });
+              }}
               className={field.input}
             />
           </div>
@@ -1354,7 +1406,7 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
             <label className={field.label}>Until</label>
             <DateInput
               value={value.end}
-              min={minDate}
+              min={firstEnd}
               max={maxDate}
               onChange={(e) => set({ end: e.target.value })}
               className={field.input}
@@ -1362,6 +1414,7 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
           </div>
         </div>
       )}
+      {problem && <p className="text-lg text-red-600">{problem}</p>}
       {on && hasRange && (
         <label className="flex items-center gap-2 text-xl cursor-pointer">
           <input
@@ -1406,7 +1459,17 @@ function FutureBookingForm() {
   const [activeGuestField, setActiveGuestField] = useState(null);
 
   const minCheckIn = minWalkInCheckOutISO(); // tomorrow — today's walk-ins use the tab above
-  const bothDates = Boolean(form.checkIn && form.checkOut && form.checkOut > form.checkIn);
+  // Kept the way the guest booking sites keep them (owner, 2026-10-02):
+  // check-in from tomorrow, check-out at least the night after, and moving
+  // check-in onto or past check-out moves check-out along with it.
+  const minCheckOut = addDaysISO(form.checkIn && form.checkIn >= minCheckIn ? form.checkIn : minCheckIn, 1);
+  const datesProblem = form.checkIn && form.checkIn < minCheckIn
+    ? `Check-in has to be ${formatDate(minCheckIn)} or later — a guest arriving today is a Walk-In.`
+    : form.checkIn && form.checkOut && form.checkOut <= form.checkIn
+      ? "Check-out has to be at least one night after check-in."
+      : "";
+  const roomsProblem = isWholeCount(form.roomsBooked) ? "" : "Rooms has to be a whole number, 1 or more.";
+  const bothDates = Boolean(form.checkIn && form.checkOut && !datesProblem);
 
   // Live guest-profile search as the name, phone or email is typed, so a
   // returning guest can be picked instead of re-typed — same behaviour, and
@@ -1512,7 +1575,18 @@ function FutureBookingForm() {
   };
 
   const canSubmit =
-    form.guestFirstName.trim() && form.phone.trim() && form.roomTypeId && bothDates && allRoomsChosen && !submitting;
+    form.guestFirstName.trim() && form.phone.trim() && form.roomTypeId && bothDates && !roomsProblem && allRoomsChosen
+    && !otaRangeProblem(futureOta) && !submitting;
+  // Never leave a disabled button unexplained.
+  const submitBlockReason = !form.guestFirstName.trim() || !form.phone.trim()
+    ? "Enter the guest's first name and phone number."
+    : datesProblem || roomsProblem || (!bothDates
+      ? "Pick the check-in and check-out dates."
+      : !form.roomTypeId
+        ? "Choose a room type."
+        : !allRoomsChosen
+          ? `Choose a different room number for each of the ${form.roomsBooked} room${Number(form.roomsBooked) === 1 ? "" : "s"}.`
+          : otaRangeProblem(futureOta));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1626,28 +1700,43 @@ function FutureBookingForm() {
           {(activeGuestField === "phone" || activeGuestField === "email") && guestMatches.length > 0 && renderGuestMatches()}
         </div>
 
-        <div className="flex gap-4 flex-wrap">
-          <div className="flex flex-col gap-2 flex-1 min-w-48">
+        {/* The two dates share a row - half each - and Rooms takes the next
+            one on a phone. All three in one row there left each date too
+            narrow to show itself, and the iPhone drew them over each other
+            (owner, 2026-10-02). */}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-[1fr_1fr_14rem]">
+          <div className="flex flex-col gap-2 min-w-0">
             <label className={field.label}>Check In <span className="text-red-500">*</span></label>
             <DateInput value={form.checkIn} min={minCheckIn} className={field.input}
-              onChange={(e) => setForm((p) => ({ ...p, checkIn: e.target.value, roomTypeId: "" }))} />
+              onChange={(e) => {
+                const checkIn = e.target.value;
+                setForm((p) => ({
+                  ...p,
+                  checkIn,
+                  checkOut: checkIn && p.checkOut && p.checkOut <= checkIn ? addDaysISO(checkIn, 1) : p.checkOut,
+                  roomTypeId: "",
+                }));
+              }} />
           </div>
-          <div className="flex flex-col gap-2 flex-1 min-w-48">
+          <div className="flex flex-col gap-2 min-w-0">
             <label className={field.label}>Check Out <span className="text-red-500">*</span></label>
-            <DateInput value={form.checkOut} min={form.checkIn || minCheckIn} className={field.input}
+            <DateInput value={form.checkOut} min={minCheckOut} className={field.input}
               onChange={(e) => setForm((p) => ({ ...p, checkOut: e.target.value, roomTypeId: "" }))} />
           </div>
-          <div className="flex flex-col gap-2 flex-1 min-w-48">
+          <div className="flex flex-col gap-2 min-w-0 max-md:w-[14rem] max-md:max-w-full">
             <label className={field.label}>Rooms</label>
-            <input type="number" min={1} value={form.roomsBooked} className={field.input}
+            <input type="number" min={1} step={1} value={form.roomsBooked} className={field.input}
               onChange={(e) => setForm((p) => ({ ...p, roomsBooked: e.target.value, roomTypeId: "" }))} />
           </div>
         </div>
+        {(datesProblem || roomsProblem) && <p className="text-lg text-red-600 -mt-2">{datesProblem || roomsProblem}</p>}
 
         <div className="flex flex-col gap-2">
           <label className={field.label}>Room Type <span className="text-red-500">*</span></label>
           {!bothDates ? (
-            <p className="text-xl text-[color:var(--text-color)]/68">Pick the dates first to see what is free.</p>
+            <p className="text-xl text-[color:var(--text-color)]/68">
+              {datesProblem ? "Fix the dates above to see what is free." : "Pick the dates first to see what is free."}
+            </p>
           ) : checking ? (
             <p className="text-xl text-[color:var(--text-color)]/68">Checking availability...</p>
           ) : roomTypes.length === 0 ? (
@@ -1732,6 +1821,9 @@ function FutureBookingForm() {
         <button type="submit" disabled={!canSubmit} className={`${btn.primary} self-start px-12! py-4!`}>
           {submitting ? "Creating..." : "Create Reservation"}
         </button>
+        {!canSubmit && !submitting && submitBlockReason && (
+          <p className="text-lg text-[color:var(--text-color)]/68 -mt-2">{submitBlockReason}</p>
+        )}
       </form>
     </div>
   );

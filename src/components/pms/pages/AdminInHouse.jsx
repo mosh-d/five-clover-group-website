@@ -27,7 +27,7 @@ import {
 import { fetchFolios } from "@/lib/pms/api/folios-api";
 import { fetchRoomDetails } from "@/lib/pms/api/room-data";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
-import { hasPassedNoonCutoff } from "@/lib/pms/dates";
+import { hasPassedNoonCutoff, addDaysISO } from "@/lib/pms/dates";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
 
 import DateInput from "@/components/pms/DateInput";
@@ -220,8 +220,14 @@ export default function AdminInHousePage() {
     }
   };
 
+  // Extending moves check-out later; the server refuses anything else.
+  const extendMin = selected?.check_out ? addDaysISO(String(selected.check_out).slice(0, 10), 1) : "";
+  const extendProblem = selected && newCheckOutDate && newCheckOutDate < extendMin
+    ? `The new check-out has to be after the current one, ${formatDate(selected.check_out)}.`
+    : "";
+
   const handleExtendStay = async () => {
-    if (!selected || !newCheckOutDate) return;
+    if (!selected || !newCheckOutDate || extendProblem) return;
     try {
       setProcessing(true);
       await extendStay(selected.id, newCheckOutDate);
@@ -668,17 +674,20 @@ export default function AdminInHousePage() {
                 <div className="flex gap-3 flex-nowrap items-center">
                   <DateInput
                     value={newCheckOutDate}
+                    min={extendMin}
+                    aria-label="New check-out date"
                     onChange={(e) => setNewCheckOutDate(e.target.value)}
                     className={field.input}
                   />
                   <button
                     onClick={handleExtendStay}
-                    disabled={processing || !newCheckOutDate}
+                    disabled={processing || !newCheckOutDate || Boolean(extendProblem)}
                     className={`${btn.primary} whitespace-nowrap`}
                   >
                     Extend
                   </button>
                 </div>
+                {extendProblem && <p className="text-lg text-red-600">{extendProblem}</p>}
                 {balanceDue && (
                   <p className="text-lg text-[color:var(--text-color)]/68">
                     This folio has an outstanding balance — extending is still allowed, and the balance will grow with the added nights.

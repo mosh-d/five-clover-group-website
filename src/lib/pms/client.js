@@ -1,4 +1,4 @@
-import { getPmsToken, getPmsRefreshToken, storePmsSession, clearPmsSession, hasBeenIdleTooLong, currentBranchId } from "./session";
+import { getPmsToken, getPmsRefreshToken, storePmsSession, startIdleClock, clearPmsSession, hasBeenIdleTooLong, currentBranchId } from "./session";
 
 // The PMS's one way to reach the backend - plain fetch; this repo has no
 // axios.
@@ -133,7 +133,10 @@ export async function pmsSignIn(username, password, place) {
     body: { username, password, ...placeBody(place) },
     auth: false,
   });
-  if (!data.choose_branch) storePmsSession(data);
+  if (!data.choose_branch) {
+    storePmsSession(data);
+    startIdleClock();
+  }
   return data;
 }
 
@@ -157,9 +160,9 @@ export async function pmsSignOut() {
 }
 
 // Whether the stored session is still good, checked on arrival. A lapsed
-// access token is renewed only for someone who was working in the last 30
-// minutes; a tab reopened after a longer absence is asked to sign in again,
-// not quietly extended for another week - the branch PMS's rule.
+// access token is renewed only for someone who was working in the last hour
+// (IDLE_LIMIT_MS); a tab reopened after a longer absence is asked to sign in
+// again, not quietly extended for another week - the branch PMS's rule.
 export async function verifyPmsSession() {
   const check = async () => {
     const token = getPmsToken();

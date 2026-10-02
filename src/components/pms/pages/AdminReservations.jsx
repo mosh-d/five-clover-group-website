@@ -36,14 +36,15 @@ import {
   changeReservationDates,
   fetchAvailableRoomNumbers,
 } from "@/lib/pms/api/reservations-pms-api";
-import { fetchFolios, createFolio, fetchDeposits, recordDeposit, applyDeposit, refundDeposit, fetchGuestCredit, transferDepositCredit } from "@/lib/pms/api/folios-api";
+import { fetchFolios, fetchDeposits, recordDeposit, applyDeposit, refundDeposit, fetchGuestCredit, transferDepositCredit } from "@/lib/pms/api/folios-api";
 import { fetchInHouse } from "@/lib/pms/api/front-office-api";
 import { canRefund } from "@/lib/pms/auth";
 import { fetchRoomDetails } from "@/lib/pms/api/room-data";
-import { hasPassedNoonCutoff, currentBusinessDateISO } from "@/lib/pms/dates";
+import { hasPassedNoonCutoff, currentBusinessDateISO, addDaysISO } from "@/lib/pms/dates";
 import { formatPaymentMethod, money, formatDate } from "@/lib/pms/format";
 
 import DateInput from "@/components/pms/DateInput";
+import { adjustmentProblem, adjustmentMax } from "@/lib/pms/validation";
 import { currentBranchId } from "@/lib/pms/session";
 import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
@@ -88,7 +89,6 @@ export default function AdminReservationsPage() {
   const [cancelReason, setCancelReason] = useState("");
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [creatingFolio, setCreatingFolio] = useState(false);
 
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -354,6 +354,12 @@ export default function AdminReservationsPage() {
 
   const handleSaveEdit = async () => {
     if (!selectedReservation) return;
+    const problem = adjustmentProblem("The total rate", editFields.total_rate)
+      || adjustmentProblem("The discount", editFields.discount, editFields.discount_mode);
+    if (problem) {
+      setModalError(problem);
+      return;
+    }
     try {
       setSaving(true);
       await updateReservation(selectedReservation.id, buildReservationUpdatePayload());
@@ -441,25 +447,6 @@ export default function AdminReservationsPage() {
       setModalError(err.response?.data?.message || "Failed to reclaim hold.");
     } finally {
       setActionLoading(false);
-    }
-  };
-
-  const handleCreateFolio = async () => {
-    if (!selectedReservation) return;
-    try {
-      setCreatingFolio(true);
-      await createFolio({
-        reservation_id: selectedReservation.id,
-        guest_id: selectedReservation.guest_id || selectedReservation.guest?.id,
-      });
-      const folioResult = await fetchFolios({ reservation_id: selectedReservation.id });
-      setReservationFolio((folioResult.data && folioResult.data[0]) || null);
-      setSuccessMessage("Folio created.");
-      setTimeout(() => setSuccessMessage(""), 5000);
-    } catch (err) {
-      setModalError(err.response?.data?.message || "Failed to create folio.");
-    } finally {
-      setCreatingFolio(false);
     }
   };
 
@@ -665,7 +652,7 @@ export default function AdminReservationsPage() {
   };
 
   const handleExtendStay = async () => {
-    if (!selectedReservation || !newCheckOutDate) return;
+    if (!selectedReservation || !newCheckOutDate || extendProblem) return;
     try {
       setExtending(true);
       await extendStay(selectedReservation.id, newCheckOutDate);
@@ -793,6 +780,10 @@ export default function AdminReservationsPage() {
 
   const handleExport = async () => {
     const statuses = Object.keys(exportStatuses).filter((s) => exportStatuses[s]);
+    if (exportStartDate && exportEndDate && exportEndDate < exportStartDate) {
+      setExportError("The end date can't be before the start date.");
+      return;
+    }
     try {
       setExporting(true);
       setExportError("");
@@ -828,6 +819,11 @@ export default function AdminReservationsPage() {
       : checkInMoved && stayDates.check_in < businessToday
         ? `Check-in can't be earlier than today, ${formatDate(businessToday)}.`
         : "";
+  // Extending moves check-out later; the server refuses anything else.
+  const extendMin = res ? addDaysISO(isoDateOf(res.check_out), 1) : "";
+  const extendProblem = res && newCheckOutDate && newCheckOutDate < extendMin
+    ? `The new check-out has to be after the current one, ${formatDate(res.check_out)}.`
+    : "";
   // Same arithmetic the server uses: the booking's own per-night rate,
   // carried to the new night count, so a negotiated rate stays negotiated.
   const newTotal = res && newNights >= 1
@@ -932,7 +928,11 @@ export default function AdminReservationsPage() {
                 <IoFilter size={22} /> Filters
               </button>
               {isFilterOpen && (
-                <div className="absolute right-0 mt-2 w-[28rem] bg-(--card) border border-(--accent-2) rounded-xl shadow-xl z-20 text-xl overflow-hidden font-primary p-6 flex flex-col gap-5">
+                // Opens from the button's left edge on a phone, where the
+                // button sits at the left of the screen: from its right edge
+                // it started off the screen and the filters were cut off
+                // (2026-10-02).
+                <div className="absolute right-0 max-sm:right-auto max-sm:left-0 mt-2 w-[28rem] max-w-[calc(100vw-2rem)] bg-(--card) border border-(--accent-2) rounded-xl shadow-xl z-20 text-xl overflow-hidden font-primary p-6 flex flex-col gap-5">
                   <div>
                     <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Status</p>
                     <div className="grid grid-cols-3 gap-2">
@@ -951,9 +951,28 @@ export default function AdminReservationsPage() {
                     <input type="text" placeholder="Source" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className={field.input} />
                     <input type="text" placeholder="Booking Channel" value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)} className={field.input} />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <DateInput value={startDate} onChange={(e) => setStartDate(e.target.value)} className={field.input} />
-                    <DateInput value={endDate} onChange={(e) => setEndDate(e.target.value)} className={field.input} />
+                  {/* One under the other, each named: side by side in this
+                      narrow panel, neither date had room to show itself. */}
+                  <div>
+                    <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Dates</p>
+                    <div className="flex flex-col gap-3">
+                      <label className="grid grid-cols-[4rem_1fr] items-center gap-3 text-lg">
+                        <span className="text-[color:var(--text-color)]/68">From</span>
+                        <DateInput
+                          value={startDate}
+                          onChange={(e) => {
+                            const from = e.target.value;
+                            setStartDate(from);
+                            if (from && endDate && from > endDate) setEndDate(from);
+                          }}
+                          className={field.input}
+                        />
+                      </label>
+                      <label className="grid grid-cols-[4rem_1fr] items-center gap-3 text-lg">
+                        <span className="text-[color:var(--text-color)]/68">To</span>
+                        <DateInput value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} className={field.input} />
+                      </label>
+                    </div>
                   </div>
                   <label className="flex items-center gap-3 cursor-pointer text-lg">
                     <input type="checkbox" checked={noShowOnly} onChange={(e) => setNoShowOnly(e.target.checked)} className="w-5 h-5 accent-[var(--emphasis)] cursor-pointer" />
@@ -1177,7 +1196,16 @@ export default function AdminReservationsPage() {
                       <DateInput
                         value={stayDates.check_in}
                         min={businessToday}
-                        onChange={(e) => setStayDates({ ...stayDates, check_in: e.target.value })}
+                        onChange={(e) => {
+                          const checkIn = e.target.value;
+                          // As on the guest booking sites, check-out moves along rather than
+                          // ever sitting on or before check-in (2026-10-02).
+                          setStayDates((p) => ({
+                            ...p,
+                            check_in: checkIn,
+                            check_out: checkIn && p.check_out && p.check_out <= checkIn ? addDaysISO(checkIn, 1) : p.check_out,
+                          }));
+                        }}
                         className={field.input}
                       />
                     </div>
@@ -1185,7 +1213,7 @@ export default function AdminReservationsPage() {
                       <label className={field.label}>Check-Out Date</label>
                       <DateInput
                         value={stayDates.check_out}
-                        min={stayDates.check_in || businessToday}
+                        min={addDaysISO(stayDates.check_in || businessToday, 1)}
                         onChange={(e) => setStayDates({ ...stayDates, check_out: e.target.value })}
                         className={field.input}
                       />
@@ -1247,7 +1275,7 @@ export default function AdminReservationsPage() {
                       </div>
                     ) : (
                       <>
-                        <input type="number" value={editFields.total_rate} onChange={(e) => setEditFields({ ...editFields, total_rate: e.target.value })} className={field.input} />
+                        <input type="number" min="0" value={editFields.total_rate} onChange={(e) => setEditFields({ ...editFields, total_rate: e.target.value })} className={field.input} />
                         {Number(editFields.discount || 0) > 0 && (
                           <p className="text-base text-[color:var(--text-color)]/60">
                             Base {money(discountBaseTotal)} − {editFields.discount_mode === "percentage" ? `${editFields.discount}%` : money(editFields.discount)} discount
@@ -1276,6 +1304,8 @@ export default function AdminReservationsPage() {
                         </select>
                         <input
                           type="number"
+                          min="0"
+                          max={adjustmentMax(editFields.discount_mode)}
                           value={editFields.discount}
                           onChange={(e) => handleDiscountChange({ discount: e.target.value })}
                           className={field.input}
@@ -1298,12 +1328,13 @@ export default function AdminReservationsPage() {
                     <StatusBadge status={reservationFolio.status} />
                   </div>
                 ) : (
-                  <div className="flex justify-between items-center flex-wrap gap-3">
-                    <p className="text-xl text-[color:var(--text-color)]/76">No folio linked to this reservation.</p>
-                    <button onClick={handleCreateFolio} disabled={creatingFolio} className={btn.rowPrimary}>
-                      {creatingFolio ? "Creating..." : "Create Folio"}
-                    </button>
-                  </div>
+                  // Confirming the booking opens its folio; there is no
+                  // making one by hand (owner, 2026-10-02).
+                  <p className="text-xl text-[color:var(--text-color)]/76">
+                    {selectedReservation.status === "hold"
+                      ? "No folio yet. One opens automatically when the booking is confirmed."
+                      : "No folio linked to this reservation."}
+                  </p>
                 )}
               </section>
 
@@ -1556,15 +1587,16 @@ export default function AdminReservationsPage() {
                 <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
                   <h3 className="text-2xl font-bold text-[color:var(--black)]">Extend Stay</h3>
                   <div className="flex gap-3 flex-nowrap items-center">
-                    <DateInput value={newCheckOutDate} onChange={(e) => setNewCheckOutDate(e.target.value)} className={field.input} />
+                    <DateInput value={newCheckOutDate} min={extendMin} aria-label="New check-out date" onChange={(e) => setNewCheckOutDate(e.target.value)} className={field.input} />
                     <button
                       onClick={handleExtendStay}
-                      disabled={extending || !newCheckOutDate}
+                      disabled={extending || !newCheckOutDate || Boolean(extendProblem)}
                       className={`${btn.primary} whitespace-nowrap`}
                     >
                       {extending ? "Extending..." : "Extend"}
                     </button>
                   </div>
+                  {extendProblem && <p className="text-lg text-red-600">{extendProblem}</p>}
                   {hasOutstandingBalance && (
                     <p className="text-lg text-[color:var(--text-color)]/68">
                       This folio has an outstanding balance — extending is still allowed, and the balance will grow with the added nights.
@@ -1682,11 +1714,19 @@ export default function AdminReservationsPage() {
           <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
             <div className="flex flex-col gap-2">
               <label className={field.label}>Start Date</label>
-              <DateInput value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} className={field.input} />
+              <DateInput
+                value={exportStartDate}
+                onChange={(e) => {
+                  const from = e.target.value;
+                  setExportStartDate(from);
+                  if (from && exportEndDate && from > exportEndDate) setExportEndDate(from);
+                }}
+                className={field.input}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <label className={field.label}>End Date</label>
-              <DateInput value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} className={field.input} />
+              <DateInput value={exportEndDate} min={exportStartDate || undefined} onChange={(e) => setExportEndDate(e.target.value)} className={field.input} />
             </div>
           </div>
           <div className="flex flex-col gap-3">

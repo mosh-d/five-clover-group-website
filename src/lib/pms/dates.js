@@ -45,6 +45,14 @@ export const businessDateISO = () => isoOf(businessDayShifted());
 // the cutover); from 6am, TOMORROW.
 export const minWalkInCheckOutISO = () => isoOf(new Date(businessDayShifted().getTime() + 86400000));
 
+// The date `days` after a YYYY-MM-DD date (before it, for a negative count),
+// as YYYY-MM-DD - e.g. the earliest check-out a check-in allows. Worked in
+// UTC, so no device timezone can shift a plain date.
+export const addDaysISO = (iso, days) => {
+  const d = new Date(`${String(iso).slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) ? "" : isoOf(new Date(d.getTime() + days * 86400000));
+};
+
 // The branch PMS's names for the same days (its utils/date-utils.js), which
 // the pages moved over from it use.
 export const adminTodayISO = () => todayISO();

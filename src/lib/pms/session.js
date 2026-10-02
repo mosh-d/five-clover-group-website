@@ -47,8 +47,16 @@ export function storePmsSession(data) {
   else if ("branch" in data) localStorage.removeItem(KEYS.branch);
   // Only a developer's session carries the branch list (for switching).
   if (data.branches) localStorage.setItem(KEYS.branches, JSON.stringify(data.branches));
-  // Signing in is the person being here: the idle clock starts now, not
-  // from a stamp a previous session left behind.
+  // Never touches the idle clock: this also stores every quiet renewal, and
+  // a renewal is the PMS refetching on its own, not the person being here.
+  // It used to stamp, so a tab left open overnight renewed itself every
+  // half hour and was still signed in next morning (2026-10-02).
+}
+
+// Signing in is the person being here: the idle clock starts now, not from
+// a stamp a previous session left behind.
+export function startIdleClock() {
+  if (!hasStorage()) return;
   localStorage.setItem(KEYS.lastActivity, String(Date.now()));
 }
 
@@ -67,8 +75,13 @@ export function clearPmsSession() {
 // and that must not keep an abandoned front-desk terminal signed in.
 export const IDLE_LIMIT_MS = 60 * 60 * 1000;
 
+// A click or a key: the person is still here. Unless the hour has already
+// run out - that session is over, and touching it must not bring it back:
+// the F5 that reloads the page reaches the page first, and stamping it
+// signed a night-old session straight back in (2026-10-02).
 export function markActivity() {
   try {
+    if (hasBeenIdleTooLong()) return;
     localStorage.setItem(KEYS.lastActivity, String(Date.now()));
   } catch {
     // Storage unavailable: treated as active, below.

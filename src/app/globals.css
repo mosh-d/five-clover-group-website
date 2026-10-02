@@ -277,16 +277,18 @@ html:has(.pms-frame) body {
    (Check-Out Date over Rooms, From over To; owner, 2026-10-02). There it is
    drawn like any other text field instead - the iPhone's own date picker
    still opens - kept to the height of one, since an empty one would
-   otherwise collapse, and never narrower than a date needs, so the box
-   around it always makes room for what is drawn. */
+   otherwise collapse. Never wider than the space it is given: a minimum
+   width of its own (17rem, for a while) pushed two dates sharing a row on a
+   phone into each other (Future Booking's Check In over Check Out, owner
+   2026-10-02) - each field's own box sets its width instead. */
 .admin-root input[type="date"] {
   min-width: 0;
+  max-width: 100%;
 }
 @supports (-webkit-touch-callout: none) {
   .admin-root input[type="date"] {
     -webkit-appearance: none;
     appearance: none;
-    min-width: 17rem;
     min-height: calc(1.34em + 2.4rem + 2px);
   }
   .admin-root input[type="date"]::-webkit-date-and-time-value {

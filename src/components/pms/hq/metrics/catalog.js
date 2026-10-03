@@ -70,7 +70,7 @@ export const METRIC_TABS = [
         label: "Out of Order Rooms",
         snapshot: true,
         about: "Rooms out of order now, and the bookings they may have cost while out.",
-        how: "From Decision Support: for each night a room has been out, a sold-out night is one where its room type sold every room it had for sale, so the room could probably have sold too. Potential loss is the most that could have cost: two rooms of a type out on the same night each count it.",
+        how: "From Decision Support: for each night a room has been out, a sold-out night is one where its room type sold every room it had for sale, so the room could probably have sold too. Potential loss is a range: the low end counts one room of each type on each of its sold-out nights, the high end every room out that night.",
       },
     ],
   },

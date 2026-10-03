@@ -35,6 +35,7 @@ import { fetchFolios, recordPayment, addFolioItem } from "@/lib/pms/api/folios-a
 
 import DateInput from "@/components/pms/DateInput";
 import { adjustmentProblem, adjustmentMax } from "@/lib/pms/validation";
+import { AbbrLabel } from "@/components/pms/InfoTip";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
 import { currentBranchId } from "@/lib/pms/session";
 import { formatDate } from "@/lib/pms/format";
@@ -1380,7 +1381,7 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
   const problem = on && value.start && value.end ? otaRangeProblem(value) : "";
   return (
     <div className="flex flex-col gap-4 rounded-xl border-2 border-[color-mix(in_srgb,var(--emphasis)_35%,white)] bg-[color-mix(in_srgb,var(--emphasis)_7%,white)] p-6">
-      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">OTA-paid nights</p>
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68"><AbbrLabel term="OTA" label="OTA-paid nights" /></p>
       <label className="flex items-start gap-3 cursor-pointer">
         <input
           type="checkbox"

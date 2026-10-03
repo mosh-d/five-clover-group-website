@@ -24,6 +24,7 @@ import { fetchInHouse } from "@/lib/pms/api/front-office-api";
 import { formatPaymentMethod, money, formatDate, PAYMENT_METHODS } from "@/lib/pms/format";
 import DateInput from "@/components/pms/DateInput";
 import { adjustmentProblem, adjustmentMax } from "@/lib/pms/validation";
+import { AbbrLabel } from "@/components/pms/InfoTip";
 import { addDaysISO } from "@/lib/pms/dates";
 import {
   fetchFolios,
@@ -930,7 +931,7 @@ export default function AdminFoliosPage() {
               )}
               {(selectedFolio.ota_settlements || []).length > 0 && (
                 <div className="border border-(--accent-2) rounded-lg px-5 py-4 flex flex-col gap-3">
-                  <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">OTA Payments</p>
+                  <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68"><AbbrLabel term="OTA" label="OTA Payments" /></p>
                   {selectedFolio.ota_settlements.map((s) => (
                     <div key={s.id} className="flex items-center justify-between gap-4 flex-wrap border-b border-(--accent-2) last:border-0 pb-3 last:pb-0">
                       <div className="flex flex-col">

@@ -22,6 +22,16 @@ import { PmsApiError } from "@/lib/pms/client";
 
 const DAY = 24 * 60 * 60 * 1000;
 const naira = (n) => `₦${Math.round(Number(n) || 0).toLocaleString("en-NG")}`;
+// Potential loss as a range (owner, 2026-10-02): from one of the rooms out
+// of order selling to all of them - one figure when the two meet.
+const lossRange = (low, high) => (Math.round(low) >= Math.round(high) ? naira(high) : `${naira(low)} – ${naira(high)}`);
+// The low end for some rooms: one of each type on each of the type's
+// sold-out nights (type_sold_out_nights - RoomsService.rankOutOfOrderRooms).
+const lowEnd = (rooms) => {
+  const types = new Map();
+  for (const r of rooms) types.set(`${r.branch_id}|${r.room_type_id}`, (Number(r.type_sold_out_nights) || 0) * (Number(r.price) || 0));
+  return [...types.values()].reduce((s, v) => s + v, 0);
+};
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const daysOut = (since, now) => Math.max(0, Math.floor((now - new Date(since).getTime()) / DAY));
 const dateText = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -52,7 +62,8 @@ function byCategory(rooms, now) {
         ...g,
         rooms: [...g.rooms].sort(byRoomNumber),
         lost: g.rooms.reduce((s, r) => s + Number(r.lost_up_to || 0), 0),
-        soldOut: Math.max(...g.rooms.map((r) => Number(r.sold_out_nights) || 0)),
+        least: lowEnd(g.rooms),
+        soldOut: Math.max(...g.rooms.map((r) => Number(r.type_sold_out_nights) || 0)),
         nightsOut: Math.max(0, ...g.rooms.map((r) => Number(r.nights_out) || 0)),
         longestDays: dated.length ? Math.max(...dated.map((r) => daysOut(r.since, now))) : null,
       };
@@ -65,8 +76,9 @@ function suggestion(group) {
   const which = `${group.room_type_name} at ${group.branch_name}, room${several ? "s" : ""} ${group.rooms.map((r) => r.room_number).join(", ")}`;
   const out = group.longestDays === null ? "out since a date that wasn't recorded" : `out ${several ? "up to " : ""}${plural(group.longestDays, "day")}`;
   if (group.lost > 0) {
-    const nights = several ? `up to ${plural(group.soldOut, "night")}` : `${plural(group.soldOut, "night")} of ${group.nightsOut}`;
-    return `${which}: ${out}; every other ${group.room_type_name} for sale was taken on ${nights}. Potential loss ${naira(group.lost)}, at ${naira(group.price)} a night${several ? " each" : ""}.`;
+    const nights = several ? plural(group.soldOut, "night") : `${plural(group.soldOut, "night")} of ${group.nightsOut}`;
+    const range = several && group.least < group.lost ? " (one of these rooms selling, up to all of them)" : "";
+    return `${which}: ${out}; every other ${group.room_type_name} for sale was taken on ${nights}. Potential loss ${lossRange(group.least, group.lost)}${range}, at ${naira(group.price)} a night${several ? " each" : ""}.`;
   }
   return `${which}: ${out}; the other ${group.room_type_name} rooms have had space every night so far, but ${several ? "each costs" : "it costs"} ${naira(group.price)} a night whenever they fill up.`;
 }
@@ -148,12 +160,12 @@ export default function DecisionSupportPage() {
     }
     return [...map.entries()].sort((a, b) => sum(b[1], "lost_up_to") - sum(a[1], "lost_up_to") || b[1].length - a[1].length);
   };
-  const byBranch = group((r) => r.branch_name).map(([branch, list]) => [branch, list.length, naira(sum(list, "lost_up_to"))]);
+  const byBranch = group((r) => r.branch_name).map(([branch, list]) => [branch, list.length, lossRange(lowEnd(list), sum(list, "lost_up_to"))]);
   const byType = group((r) => `${r.room_type_name} — ${r.branch_name}`).map(([label, list]) => [
     label,
     `${list.length} of ${list[0].rooms_in_type}`,
-    Math.max(...list.map((r) => r.sold_out_nights)),
-    naira(sum(list, "lost_up_to")),
+    Math.max(...list.map((r) => Number(r.type_sold_out_nights) || 0)),
+    lossRange(lowEnd(list), sum(list, "lost_up_to")),
   ]);
 
   return (
@@ -258,9 +270,10 @@ export default function DecisionSupportPage() {
           <p className={`text-lg ${page.muted}`}>
             How this is worked out: for each night a room has been out, its room type&apos;s rooms for sale (less any out of order or set aside) are
             compared with the rooms actually occupied that night. When every room for sale was taken, the room out of order could probably have
-            sold too - a sold-out night, worth the room type&apos;s standard rate. Potential loss is the most it could have cost: when two rooms of
-            the same type are out on the same sold-out night, each counts that night, though only one guest may have been turned away. Rooms out
-            of order or set aside are taken from their current status; earlier status changes aren&apos;t recorded.
+            sold too - a sold-out night, worth the room type&apos;s standard rate. Potential loss is a range. The low end counts one room of each
+            type on each of its sold-out nights - at least one guest turned away. The high end counts every room out that night, as each could
+            have sold; a single room&apos;s own row is its high end. Rooms out of order or set aside are taken from their current status; earlier
+            status changes aren&apos;t recorded.
           </p>
         )}
       </section>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatPaymentMethod } from "@/lib/pms/format";
 import { GuestTagPills } from "@/components/pms/GuestName";
 import { DataTable, HeatGrid, StatRow, StatTile, SectionTitle, StateChip, Remark, Choice } from "./parts";
+import { AbbrLabel, ABBREVIATIONS } from "@/components/pms/InfoTip";
 import {
   DASH,
   naira,
@@ -128,8 +129,8 @@ function AdrRevparView({ data }) {
   return (
     <>
       <StatRow>
-        <StatTile label="Group ADR" value={naira(t.adr)} delta={change(t.adr, t.prev_adr)} vs={vs(data)} sub="Average room rate per room-night sold" />
-        <StatTile label="Group RevPAR" value={naira(t.revpar)} delta={change(t.revpar, t.prev_revpar)} vs={vs(data)} sub="Room revenue per room-night available" />
+        <StatTile label={<AbbrLabel term="ADR" label="Group ADR" />} value={naira(t.adr)} delta={change(t.adr, t.prev_adr)} vs={vs(data)} sub="Average room rate per room-night sold" />
+        <StatTile label={<AbbrLabel term="RevPAR" label="Group RevPAR" />} value={naira(t.revpar)} delta={change(t.revpar, t.prev_revpar)} vs={vs(data)} sub="Room revenue per room-night available" />
         <StatTile label="Room revenue" value={naira(t.room_revenue)} sub={`from ${decimal(t.sold)} room-nights sold`} />
       </StatRow>
       <DataTable
@@ -141,10 +142,10 @@ function AdrRevparView({ data }) {
         columns={[
           moneyCol("room_revenue", "Room Revenue", (r) => r.room_revenue),
           decCol("sold", "Room-Nights Sold", (r) => r.sold),
-          moneyCol("adr", "ADR", (r) => r.adr, { bar: true }),
-          moneyCol("prev_adr", "ADR Before", (r) => r.prev_adr),
-          moneyCol("revpar", "RevPAR", (r) => r.revpar, { bar: true }),
-          moneyCol("prev_revpar", "RevPAR Before", (r) => r.prev_revpar),
+          moneyCol("adr", "ADR", (r) => r.adr, { bar: true, hint: ABBREVIATIONS.ADR }),
+          moneyCol("prev_adr", "ADR Before", (r) => r.prev_adr, { hint: ABBREVIATIONS.ADR }),
+          moneyCol("revpar", "RevPAR", (r) => r.revpar, { bar: true, hint: ABBREVIATIONS.RevPAR }),
+          moneyCol("prev_revpar", "RevPAR Before", (r) => r.prev_revpar, { hint: ABBREVIATIONS.RevPAR }),
           pctCol("occupancy", "Occupancy", (r) => r.occupancy_pct),
         ]}
       />
@@ -157,7 +158,7 @@ function TrevparView({ data }) {
   return (
     <>
       <StatRow>
-        <StatTile label="Group TRevPAR" value={naira(t.trevpar)} delta={change(t.trevpar, t.prev_trevpar)} vs={vs(data)} sub={`RevPAR ${naira(t.revpar)} from rooms alone`} />
+        <StatTile label={<AbbrLabel term="TRevPAR" label="Group TRevPAR" />} value={naira(t.trevpar)} delta={change(t.trevpar, t.prev_trevpar)} vs={vs(data)} sub={`RevPAR ${naira(t.revpar)} from rooms alone`} />
         <StatTile label="Total revenue" value={naira(t.total_revenue)} sub="Everything charged, guests and non-guests" />
         <StatTile label="Beyond rooms" value={percent(t.beyond_rooms_pct)} sub="Share of revenue from breakfast, food, drinks, laundry and other charges" />
       </StatRow>
@@ -170,9 +171,9 @@ function TrevparView({ data }) {
         columns={[
           moneyCol("total_revenue", "Total Revenue", (r) => r.total_revenue),
           moneyCol("room_revenue", "Room Revenue", (r) => r.room_revenue),
-          moneyCol("revpar", "RevPAR", (r) => r.revpar),
-          moneyCol("trevpar", "TRevPAR", (r) => r.trevpar, { bar: true }),
-          moneyCol("prev_trevpar", "TRevPAR Before", (r) => r.prev_trevpar),
+          moneyCol("revpar", "RevPAR", (r) => r.revpar, { hint: ABBREVIATIONS.RevPAR }),
+          moneyCol("trevpar", "TRevPAR", (r) => r.trevpar, { bar: true, hint: ABBREVIATIONS.TRevPAR }),
+          moneyCol("prev_trevpar", "TRevPAR Before", (r) => r.prev_trevpar, { hint: ABBREVIATIONS.TRevPAR }),
           pctCol("beyond", "Beyond Rooms", (r) => r.beyond_rooms_pct),
         ]}
       />
@@ -251,7 +252,7 @@ function StayLengthView({ data }) {
           countCol("week", "Over a Week", (r) => r.all.over_week),
           channel("walk_in", "Walk-In", false),
           channel("website", "Website", true),
-          channel("ota", "OTA", false),
+          { ...channel("ota", "OTA", false), hint: ABBREVIATIONS.OTA },
         ]}
       />
     </>
@@ -276,7 +277,7 @@ function ChannelsView({ data }) {
       <StatRow>
         {tile("walk_in", "Walk-ins")}
         {tile("website", "Website")}
-        {tile("ota", "OTAs")}
+        {tile("ota", <AbbrLabel term="OTA" label="OTAs" />)}
       </StatRow>
       {nothingNote(data.rows, (r) => r.revenue, "any room charges")}
       <DataTable
@@ -288,7 +289,7 @@ function ChannelsView({ data }) {
         columns={[
           channel("walk_in", "Walk-In"),
           channel("website", "Website"),
-          channel("ota", "OTA"),
+          { ...channel("ota", "OTA"), hint: ABBREVIATIONS.OTA },
           moneyCol("revenue", "Room and Breakfast", (r) => r.revenue, { bar: true }),
           countCol("stays", "Stays", (r) => r.stays),
         ]}
@@ -461,13 +462,17 @@ function ComplimentaryView({ data }) {
   );
 }
 
+// From one of the rooms out of order selling to all of them (owner,
+// 2026-10-02) - one figure when the two meet. Sorted by the high end.
+const lossRange = (low, high) => (Math.round(Number(low) || 0) >= Math.round(Number(high) || 0) ? naira(high) : `${naira(low)} – ${naira(high)}`);
+
 function OutOfOrderView({ data }) {
   const t = data.total;
   return (
     <>
       <StatRow>
         <StatTile label="Rooms out of order" value={count(t.rooms_out)} sub={`out for ${plural(t.nights_out, "night")} between them`} />
-        <StatTile label="Potential loss" value={naira(t.lost_up_to)} sub={`Bookings they may have cost, over ${plural(t.sold_out_nights, "sold-out night")}`} />
+        <StatTile label="Potential loss" value={lossRange(t.lost_at_least, t.lost_up_to)} sub={`Bookings they may have cost, over ${plural(t.sold_out_nights, "sold-out night")}`} />
         <StatTile label="Counted to" value={dayText(data.last_night)} sub="The last night that has ended" />
       </StatRow>
       <DataTable
@@ -480,7 +485,7 @@ function OutOfOrderView({ data }) {
           countCol("rooms_out", "Rooms OOO", (r) => r.rooms_out, { hint: "Out of Order" }),
           countCol("nights_out", "Nights OOO", (r) => r.nights_out, { hint: "Out of Order" }),
           countCol("sold_out", "Sold-Out Nights", (r) => r.sold_out_nights),
-          moneyCol("lost", "Potential Loss", (r) => r.lost_up_to, { bar: true }),
+          moneyCol("lost", "Potential Loss", (r) => r.lost_up_to, { bar: true, render: (r) => lossRange(r.lost_at_least, r.lost_up_to) }),
           textCol("since", "OOO Since", (r) => r.out_since, { hint: "Out of Order", render: (r) => (r.out_since ? momentText(r.out_since) : DASH) }),
         ]}
       />
@@ -604,7 +609,7 @@ function OtaView({ data }) {
   return (
     <>
       <StatRow>
-        <StatTile label="OTAs owe now" value={naira(t.waiting.amount)} sub={plural(t.waiting.count, "payment")} />
+        <StatTile label={<AbbrLabel term="OTA" label="OTAs owe now" />} value={naira(t.waiting.amount)} sub={plural(t.waiting.count, "payment")} />
         <StatTile label="Longest wait" value={t.waiting.oldest_days === null ? DASH : plural(t.waiting.oldest_days, "day")} sub="Since the nights an OTA owes for ended" />
         <StatTile
           label="Received in these dates"
@@ -634,7 +639,7 @@ function OtaView({ data }) {
             rowKey={(r) => r.id}
             columns={[
               textCol("branch", "Branch", (r) => r.branch_name),
-              textCol("reference", "OTA Reference", (r) => r.reference),
+              textCol("reference", "OTA Reference", (r) => r.reference, { hint: ABBREVIATIONS.OTA }),
               textCol("nights", "Nights", (r) => r.start_date, { render: (r) => `${shortDay(r.start_date)} – ${shortDay(r.end_date)}` }),
               moneyCol("amount", "Amount", (r) => r.amount),
               countCol("waiting", "Waiting", (r) => r.days_waiting, { render: (r) => (r.days_waiting === null ? "Stay not over" : plural(r.days_waiting, "day")) }),
@@ -719,7 +724,7 @@ function ExceptionsView({ data, branchOptions }) {
       <StatRow>
         <StatTile label="Given back or taken off" value={naira(t.total)} sub="All six kinds together" />
         <StatTile label="Refunds and credit refunds" value={naira(t.refunds + t.credit_refunds)} sub={`${naira(t.refunds)} refunded, ${naira(t.credit_refunds)} credit paid back`} />
-        <StatTile label="Discounts and free F&B" value={naira(t.discounts + t.free_fnb)} sub={`${naira(t.discounts)} in rates, ${naira(t.free_fnb)} in food and drink`} />
+        <StatTile label={<AbbrLabel term="F&B" label="Discounts and free F&B" />} value={naira(t.discounts + t.free_fnb)} sub={`${naira(t.discounts)} in rates, ${naira(t.free_fnb)} in food and drink`} />
       </StatRow>
       <DataTable
         rows={data.by_branch}
@@ -733,7 +738,7 @@ function ExceptionsView({ data, branchOptions }) {
           moneyCol("adjustments", "Adjustments", (r) => r.adjustments),
           moneyCol("corrections", "Corrections", (r) => r.corrections),
           moneyCol("discounts", "Rate Discounts", (r) => r.discounts),
-          moneyCol("free_fnb", "Free F&B", (r) => r.free_fnb),
+          moneyCol("free_fnb", "Free F&B", (r) => r.free_fnb, { hint: ABBREVIATIONS["F&B"] }),
           moneyCol("total", "Total", (r) => r.total, { bar: true }),
         ]}
       />
@@ -755,7 +760,7 @@ function ExceptionsView({ data, branchOptions }) {
           cell("adjustments", "Adjustments", "taken_off"),
           cell("corrections", "Corrections", "taken_off"),
           cell("discounts", "Rate Discounts"),
-          cell("free_fnb", "Free F&B"),
+          { ...cell("free_fnb", "Free F&B"), hint: ABBREVIATIONS["F&B"] },
           moneyCol("total", "Total", (r) => r.total, { bar: true }),
         ]}
       />
@@ -858,7 +863,7 @@ function FnbSalesView({ data }) {
   return (
     <>
       <StatRow>
-        <StatTile label="F&B sales" value={naira(t.total)} sub={`Food ${naira(t.food)}, drinks ${naira(t.drinks)}`} />
+        <StatTile label={<AbbrLabel term="F&B" label="F&B sales" />} value={naira(t.total)} sub={`Food ${naira(t.food)}, drinks ${naira(t.drinks)}`} />
         <StatTile label="Per room-night sold" value={naira(t.per_room_night)} sub={`over ${decimal(t.room_nights)} room-nights`} />
         <StatTile label="From non-guests" value={naira(t.from_non_guests)} sub={`${percent(shareOf(t.from_non_guests, t.total))} of F&B sales`} />
       </StatRow>
@@ -872,7 +877,7 @@ function FnbSalesView({ data }) {
         columns={[
           moneyCol("food", "Food", (r) => r.food, { sub: (r) => (r.food_items ? plural(r.food_items, "item") : "") }),
           moneyCol("drinks", "Drinks", (r) => r.drinks, { sub: (r) => (r.drink_items ? plural(r.drink_items, "item") : "") }),
-          moneyCol("total", "F&B Total", (r) => r.total, { bar: true }),
+          moneyCol("total", "F&B Total", (r) => r.total, { bar: true, hint: ABBREVIATIONS["F&B"] }),
           moneyCol("guests", "From Guests", (r) => r.from_guests),
           moneyCol("non_guests", "From Non-Guests", (r) => r.from_non_guests),
           moneyCol("per", "Per Room-Night", (r) => r.per_room_night),
@@ -955,7 +960,7 @@ function FnbCompView({ data }) {
           cell("complimentary", "Complimentary"),
           cell("manager", "Manager's"),
           moneyCol("worth", "Worth", (r) => r.worth, { bar: true }),
-          pctCol("share", "Against F&B Sales", (r) => r.worth_pct_of_sales),
+          pctCol("share", "Against F&B Sales", (r) => r.worth_pct_of_sales, { hint: ABBREVIATIONS["F&B"] }),
         ]}
       />
     </>
@@ -1085,7 +1090,7 @@ function StaffActivityView({ data, branchOptions }) {
           countCol("check_outs", "Check-Outs", (r) => r.check_outs),
           countCol("payments", "Payments", (r) => r.payments),
           moneyCol("money", "Money Taken", (r) => r.payments_total, { bar: true }),
-          countCol("fnb", "F&B Orders", (r) => r.fnb_orders),
+          countCol("fnb", "F&B Orders", (r) => r.fnb_orders, { hint: ABBREVIATIONS["F&B"] }),
           countCol("shifts", "Shifts", (r) => r.shifts),
         ]}
       />
@@ -1193,7 +1198,7 @@ function AdoptionView({ data }) {
           countCol("bookings", "Bookings", (r) => r.bookings),
           countCol("check_ins", "Check-Ins", (r) => r.check_ins),
           countCol("payments", "Payments", (r) => r.payments),
-          countCol("fnb", "F&B Orders", (r) => r.fnb_orders),
+          countCol("fnb", "F&B Orders", (r) => r.fnb_orders, { hint: ABBREVIATIONS["F&B"] }),
           countCol("actions", "Actions", (r) => r.actions),
           textCol("last", "Last Activity", (r) => r.last_activity, { render: (r) => (r.last_activity ? momentText(r.last_activity) : r.branch_name ? "Never" : DASH) }),
         ]}

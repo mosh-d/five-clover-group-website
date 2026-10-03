@@ -39,8 +39,9 @@ export function FloatingTip({ tip }) {
 }
 
 // A short label with an (i) that says it in full on hover or focus - "OOO"
-// for Out of Order (owner, 2026-10-01).
-export default function InfoTip({ label, text }) {
+// for Out of Order (owner, 2026-10-01). `size` is the (i)'s, for beside a
+// page heading.
+export default function InfoTip({ label, text, size = 17 }) {
   const [tip, setTip] = useState(null);
   const show = (e) => setTip(tipFor(e.currentTarget, text));
   const hide = () => setTip(null);
@@ -57,13 +58,29 @@ export default function InfoTip({ label, text }) {
         onBlur={hide}
         className="inline-flex cursor-help rounded-full text-(--text-color)/55 hover:text-(--emphasis) focus-visible:text-(--emphasis) focus-visible:outline-2 focus-visible:outline-(--emphasis)"
       >
-        <IoInformationCircleOutline size={17} aria-hidden="true" />
+        <IoInformationCircleOutline size={size} aria-hidden="true" />
       </span>
       <FloatingTip tip={tip} />
     </span>
   );
 }
 
-// "OOO" with its (i) - the PMS's one abbreviation for Out of Order. `label`
-// is the whole heading ("Rooms OOO", "OOO For").
-export const OooLabel = ({ label = "OOO" }) => <InfoTip label={label} text="Out of Order" />;
+// What each abbreviation in the PMS stands for, said in full beside it
+// (owner, 2026-10-02: "on abbreviations like ADR, RevPAR, etc, add the same
+// i icon tooltip we have for OOO"). On headings, column titles and tiles -
+// not inside buttons or menu links, where a second control can't sit.
+export const ABBREVIATIONS = {
+  OOO: "Out of Order",
+  ADR: "Average Daily Rate: what a room sold for on average - room revenue ÷ room-nights sold",
+  RevPAR: "Revenue per Available Room: room revenue ÷ every room-night available, sold or not",
+  TRevPAR: "Total Revenue per Available Room: everything charged - rooms, breakfast, food, drinks, laundry - ÷ every room-night available",
+  OTA: "Online Travel Agency: a booking site such as Booking.com or Expedia that sells the hotel's rooms and pays the hotel later",
+  "F&B": "Food and Beverage: the restaurant and bar",
+};
+
+// An abbreviation with its (i). `label` is the whole heading when it is
+// more than the abbreviation ("Group ADR", "OTA Payments").
+export const AbbrLabel = ({ term, label = term }) => <InfoTip label={label} text={ABBREVIATIONS[term]} />;
+
+// "OOO" with its (i). `label` is the whole heading ("Rooms OOO", "OOO For").
+export const OooLabel = ({ label = "OOO" }) => <AbbrLabel term="OOO" label={label} />;

@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { IoFastFoodOutline } from "react-icons/io5";
 import PageHeading from "@/components/pms/PageHeading";
+import { ABBREVIATIONS } from "@/components/pms/InfoTip";
 import PageTabs from "@/components/pms/PageTabs";
 import AdminGuestSales from "./AdminGuestSales";
 import AdminNonGuestSales from "./AdminNonGuestSales";
@@ -31,7 +32,7 @@ export default function AdminFnbSalesPage() {
       data-component="AdminFnbSales"
       className="flex flex-col items-start gap-[3rem]"
     >
-      <PageHeading icon={IoFastFoodOutline}>F&amp;B Sales</PageHeading>
+      <PageHeading icon={IoFastFoodOutline} tip={ABBREVIATIONS["F&B"]}>F&amp;B Sales</PageHeading>
       <PageTabs tabs={TABS} active={tab} onChange={setTab} />
       {/* Mounted only while selected: each half fetches its own menus, folios
           and credits, and the hidden one has no reason to be holding stale

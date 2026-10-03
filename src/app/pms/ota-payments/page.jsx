@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { IoBusinessOutline } from "react-icons/io5";
 import PageHeading from "@/components/pms/PageHeading";
+import { ABBREVIATIONS } from "@/components/pms/InfoTip";
 import Modal from "@/components/pms/Modal";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
@@ -67,7 +68,7 @@ export default function PmsOtaPaymentsPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <PageHeading icon={IoBusinessOutline}>OTA Payments</PageHeading>
+      <PageHeading icon={IoBusinessOutline} tip={ABBREVIATIONS.OTA}>OTA Payments</PageHeading>
       <p className={`text-xl ${page.muted}`}>
         Nights an OTA is paying for instead of the guest. The folio keeps showing them as owing until the money arrives, and the
         guest is never asked for them. Marking one paid records the money against that folio.

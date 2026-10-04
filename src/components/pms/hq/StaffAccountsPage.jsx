@@ -20,6 +20,7 @@ import {
   transferHqStaff,
 } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // Staff Accounts (Head Office): every branch's staff, and Head Office's own.
 //
@@ -294,13 +295,13 @@ export default function StaffAccountsPage() {
   return (
     <div className={page.wrap}>
       <div>
-        <PageHeading icon={IoPeopleOutline}>Staff Accounts</PageHeading>
+        <PageHeading icon={IoPeopleOutline} tipId="staffAccounts.page">Staff Accounts</PageHeading>
         <p className={`text-2xl mt-2 ${page.muted}`}>Manage staff across every branch, and Head Office&apos;s own accounts.</p>
       </div>
 
       <div className="w-full flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2 min-w-[24rem]">
-          <label htmlFor="staff-branch" className={field.label}>Branch</label>
+          <label htmlFor="staff-branch" className={field.label}>Branch<Tip id="staffAccounts.branch" /></label>
           {loadingBranches ? (
             <LoadingSpinner />
           ) : (
@@ -313,14 +314,14 @@ export default function StaffAccountsPage() {
             </select>
           )}
         </div>
-        <button
+        <WithTip id="staffAccounts.add"><button
           type="button"
           onClick={() => open("create", null, { username: "", role: assignableRoles[0], password: "", confirm: "" })}
           disabled={!selectedBranchId}
           className={btn.primary}
         >
           + Add Staff
-        </button>
+        </button></WithTip>
       </div>
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
@@ -331,6 +332,7 @@ export default function StaffAccountsPage() {
           <label className={`text-xl flex items-center gap-2 cursor-pointer w-fit ${page.muted}`}>
             <input type="checkbox" checked={showDeactivated} onChange={(e) => setShowDeactivated(e.target.checked)} className="cursor-pointer" />
             View deactivated accounts{deactivatedCount > 0 ? ` (${deactivatedCount})` : ""}
+            <Tip id="staffAccounts.showDeactivated" />
           </label>
         )}
 
@@ -352,11 +354,11 @@ export default function StaffAccountsPage() {
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>
-                    <th className={`${table.th} ${table.stickyTh}`}>Username</th>
-                    <th className={table.th}>Role</th>
-                    <th className={table.th}>Status</th>
-                    <th className={table.th}>Last Login</th>
-                    <th className={table.th}>Actions</th>
+                    <th className={`${table.th} ${table.stickyTh}`}>Username<Tip id="staffAccounts.col.username" /></th>
+                    <th className={table.th}>Role<Tip id="staffAccounts.col.role" /></th>
+                    <th className={table.th}>Status<Tip id="staffAccounts.col.status" /></th>
+                    <th className={table.th}>Last Login<Tip id="staffAccounts.col.lastLogin" /></th>
+                    <th className={table.th}>Actions<Tip id="staffAccounts.col.actions" /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -415,7 +417,7 @@ export default function StaffAccountsPage() {
               {dialog.kind === "create" && (
                 <>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="staff-username" className={field.label}>Username</label>
+                    <label htmlFor="staff-username" className={field.label}>Username<Tip id="staffAccounts.username" /></label>
                     <input
                       id="staff-username"
                       type="text"
@@ -432,22 +434,22 @@ export default function StaffAccountsPage() {
                     </p>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="staff-role" className={field.label}>Role</label>
+                    <label htmlFor="staff-role" className={field.label}>Role<Tip id="staffAccounts.role" /></label>
                     <select id="staff-role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className={`${field.select} w-full`}>
                       {assignableRoles.map((r) => (
                         <option key={r} value={r}>{roleLabel(r)}</option>
                       ))}
                     </select>
                   </div>
-                  <PasswordField id="staff-password" label="Password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-                  <PasswordField id="staff-password-confirm" label="Type the password again" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
+                  <PasswordField id="staff-password" label="Password" tip="staffAccounts.password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                  <PasswordField id="staff-password-confirm" label="Type the password again" tip="staffAccounts.passwordAgain" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
                   <p className={field.hint}>At least {MIN_PASSWORD} characters.</p>
                 </>
               )}
 
               {dialog.kind === "rename" && (
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="staff-new-username" className={field.label}>New username</label>
+                  <label htmlFor="staff-new-username" className={field.label}>New username<Tip id="staffAccounts.newUsername" /></label>
                   <input
                     id="staff-new-username"
                     type="text"
@@ -465,7 +467,7 @@ export default function StaffAccountsPage() {
 
               {dialog.kind === "role" && (
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="staff-new-role" className={field.label}>New role</label>
+                  <label htmlFor="staff-new-role" className={field.label}>New role<Tip id="staffAccounts.newRole" /></label>
                   <select id="staff-new-role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className={`${field.select} w-full`}>
                     {assignableRoles.map((r) => (
                       <option key={r} value={r}>
@@ -479,8 +481,8 @@ export default function StaffAccountsPage() {
 
               {dialog.kind === "password" && (
                 <>
-                  <PasswordField id="reset-password" label="New password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-                  <PasswordField id="reset-password-confirm" label="Type the new password again" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
+                  <PasswordField id="reset-password" label="New password" tip="staffAccounts.newPassword" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                  <PasswordField id="reset-password-confirm" label="Type the new password again" tip="staffAccounts.passwordAgain" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
                   <p className={field.hint}>At least {MIN_PASSWORD} characters. You&apos;ll be asked to confirm before anything changes.</p>
                 </>
               )}
@@ -489,7 +491,7 @@ export default function StaffAccountsPage() {
                 <>
                   <p className={`text-xl ${page.muted}`}>Moves this account to a different branch. Role, username, and password stay the same.</p>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="staff-transfer-branch" className={field.label}>New branch</label>
+                    <label htmlFor="staff-transfer-branch" className={field.label}>New branch<Tip id="staffAccounts.newBranch" /></label>
                     <select
                       id="staff-transfer-branch"
                       value={form.branchId}
@@ -507,9 +509,9 @@ export default function StaffAccountsPage() {
                 </>
               )}
 
-              <button type="submit" className={`${btn.primary} self-start`}>
+              <WithTip id="staffAccounts.review"><button type="submit" className={`${btn.primary} self-start`}>
                 Review
-              </button>
+              </button></WithTip>
             </form>
           )}
         </Modal>

@@ -12,6 +12,7 @@ import { fetchNightAuditHistory, runNightAudit } from "@/lib/pms/api/night-audit
 import { yesterdayISO } from "@/lib/pms/dates";
 import { formatDate, formatTime, money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 const PAGE_SIZE = 10;
 
@@ -71,15 +72,15 @@ export default function PmsNightAuditPage() {
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
       <div>
-        <PageHeading icon={IoMoonOutline}>Night Audit</PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>Posts nightly room charges to all in-house guest folios. Runs automatically at 2am if not triggered manually.</p>
+        <PageHeading icon={IoMoonOutline} tipId="nightAudit.page">Night Audit</PageHeading>
+        <p className={`text-2xl mt-2 ${page.muted}`}>Posts nightly room charges to all in-house guest folios. Runs automatically at 6am if not triggered manually.</p>
       </div>
 
       <div className={`w-full ${card.surface} p-8 flex flex-col gap-6`}>
-        <h2 className={page.sectionTitle}>Run Audit</h2>
+        <h2 className={page.sectionTitle}>Run Audit<Tip id="nightAudit.run" /></h2>
         <div className="flex flex-wrap items-end gap-6">
           <div className="flex flex-col gap-2">
-            <label htmlFor="audit-date" className={field.label}>Business Date</label>
+            <label htmlFor="audit-date" className={field.label}>Business Date<Tip id="nightAudit.date" /></label>
             <DateInput
               id="audit-date"
               value={auditDate}
@@ -91,9 +92,9 @@ export default function PmsNightAuditPage() {
               }}
             />
           </div>
-          <button onClick={handleRun} disabled={running || !auditDate} className={btn.primary}>
+          <WithTip id="nightAudit.runButton"><button onClick={handleRun} disabled={running || !auditDate} className={btn.primary}>
             {running ? "Running..." : "Run Night Audit"}
-          </button>
+          </button></WithTip>
         </div>
 
         {runError && <p className={field.error}>{runError}</p>}
@@ -101,10 +102,10 @@ export default function PmsNightAuditPage() {
         {result && (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Date Audited" value={formatDate(result.audit.audit_date)} />
-              <StatCard label="Guests Charged" value={result.audit.rooms_charged} accent />
-              <StatCard label="Total Posted" value={money(result.audit.total_posted)} accent />
-              <StatCard label="Skipped" value={result.audit.skipped} warn={result.audit.skipped > 0} />
+              <StatCard label="Date Audited" tip="nightAudit.dateAudited" value={formatDate(result.audit.audit_date)} />
+              <StatCard label="Guests Charged" tip="nightAudit.guestsCharged" value={result.audit.rooms_charged} accent />
+              <StatCard label="Total Posted" tip="nightAudit.totalPosted" value={money(result.audit.total_posted)} accent />
+              <StatCard label="Skipped" tip="nightAudit.skipped" value={result.audit.skipped} warn={result.audit.skipped > 0} />
             </div>
 
             {result.details?.length > 0 && (
@@ -113,11 +114,11 @@ export default function PmsNightAuditPage() {
                   <table className={table.el}>
                     <thead>
                       <tr className={table.headRow}>
-                        <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                        <th className={`${table.th} hidden md:table-cell`}>Room Type</th>
-                        <th className={`${table.th} hidden md:table-cell`}>Folio</th>
-                        <th className={`${table.th} text-right!`}>Charge</th>
-                        <th className={table.th}>Status</th>
+                        <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="nightAudit.col.guest" /></th>
+                        <th className={`${table.th} hidden md:table-cell`}>Room Type<Tip id="nightAudit.col.roomType" /></th>
+                        <th className={`${table.th} hidden md:table-cell`}>Folio<Tip id="nightAudit.col.folio" /></th>
+                        <th className={`${table.th} text-right!`}>Charge<Tip id="nightAudit.col.charge" /></th>
+                        <th className={table.th}>Status<Tip id="nightAudit.col.status" /></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -151,7 +152,7 @@ export default function PmsNightAuditPage() {
       </div>
 
       <div className="w-full flex flex-col gap-4">
-        <h2 className={page.sectionTitle}>Audit History</h2>
+        <h2 className={page.sectionTitle}>Audit History<Tip id="nightAudit.history" /></h2>
         {historyLoading ? (
           <div className="flex justify-center py-10"><LoadingSpinner size="lg" /></div>
         ) : historyError ? (
@@ -165,12 +166,12 @@ export default function PmsNightAuditPage() {
                 <table className={table.el}>
                   <thead>
                     <tr className={table.headRow}>
-                      <th className={`${table.th} ${table.stickyTh}`}>Business Date</th>
-                      <th className={`${table.th} text-right! hidden md:table-cell`}>Guests Charged</th>
-                      <th className={`${table.th} text-right! hidden md:table-cell`}>Skipped</th>
-                      <th className={`${table.th} text-right!`}>Total Posted</th>
-                      <th className={`${table.th} hidden md:table-cell`}>Run At</th>
-                      <th className={`${table.th} hidden md:table-cell`}>Source</th>
+                      <th className={`${table.th} ${table.stickyTh}`}>Business Date<Tip id="nightAudit.col.businessDate" /></th>
+                      <th className={`${table.th} text-right! hidden md:table-cell`}>Guests Charged<Tip id="nightAudit.col.guestsCharged" /></th>
+                      <th className={`${table.th} text-right! hidden md:table-cell`}>Skipped<Tip id="nightAudit.col.skipped" /></th>
+                      <th className={`${table.th} text-right!`}>Total Posted<Tip id="nightAudit.col.totalPosted" /></th>
+                      <th className={`${table.th} hidden md:table-cell`}>Run At<Tip id="nightAudit.col.runAt" /></th>
+                      <th className={`${table.th} hidden md:table-cell`}>Source<Tip id="nightAudit.col.source" /></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -200,10 +201,10 @@ export default function PmsNightAuditPage() {
   );
 }
 
-function StatCard({ label, value, accent, warn }) {
+function StatCard({ label, value, accent, warn, tip }) {
   return (
     <div className={`rounded-xl border p-5 ${accent ? "bg-(--emphasis) border-transparent text-white" : warn ? "bg-orange-50 border-orange-200" : "bg-(--card) border-(--accent-2)"}`}>
-      <p className={`text-xl font-semibold uppercase tracking-wide mb-1 ${accent ? "text-white/70" : "text-(--text-color)/68"}`}>{label}</p>
+      <p className={`text-xl font-semibold uppercase tracking-wide mb-1 ${accent ? "text-white/70" : "text-(--text-color)/68"}`}>{label}{tip && <Tip id={tip} light={accent} />}</p>
       <p className={`text-3xl font-bold ${accent ? "text-white" : warn ? "text-orange-600" : "text-(--black)"}`}>{value}</p>
     </div>
   );

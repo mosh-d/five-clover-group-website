@@ -6,6 +6,7 @@ import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { canOpen } from "@/components/pms/pmsNavItems";
 import { HELP_SECTIONS } from "@/components/pms/help/sections";
 import { card, page } from "@/components/pms/ui";
+import { Tip } from "@/components/pms/Tip";
 
 // Help & Workflow Guide - the branch PMS's Help page. A section describes a
 // page, so it shows exactly when this role can open that page: the guide
@@ -18,8 +19,8 @@ export default function PmsHelpPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <PageHeading icon={IoHelpCircleOutline}>Help &amp; Workflow Guide</PageHeading>
-      <p className={`text-xl -mt-4 ${page.muted}`}>What each page does and how it fits into the daily workflow. Jump to a section:</p>
+      <PageHeading icon={IoHelpCircleOutline} tipId="help.page">Help &amp; Workflow Guide</PageHeading>
+      <p className={`text-xl -mt-4 ${page.muted}`}>What each page does and how it fits into the daily workflow. Jump to a section:<Tip id="help.jump" /></p>
 
       <div className="flex gap-3 text-xl flex-wrap">
         {sections.map((s) => (

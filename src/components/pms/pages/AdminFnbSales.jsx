@@ -5,7 +5,6 @@
 import { useState } from "react";
 import { IoFastFoodOutline } from "react-icons/io5";
 import PageHeading from "@/components/pms/PageHeading";
-import { ABBREVIATIONS } from "@/components/pms/InfoTip";
 import PageTabs from "@/components/pms/PageTabs";
 import AdminGuestSales from "./AdminGuestSales";
 import AdminNonGuestSales from "./AdminNonGuestSales";
@@ -20,8 +19,8 @@ import AdminNonGuestSales from "./AdminNonGuestSales";
 // two competing "this is the thing you came for" points. Plain local state,
 // the same as Check-Ins' and Reports' own tabs.
 const TABS = [
-  { key: "guest", label: "Guest Sales" },
-  { key: "non-guest", label: "Non-Guest Sales" },
+  { key: "guest", label: "Guest Sales", tip: "fnbSales.tab.guest" },
+  { key: "non-guest", label: "Non-Guest Sales", tip: "fnbSales.tab.nonGuest" },
 ];
 
 export default function AdminFnbSalesPage() {
@@ -32,7 +31,7 @@ export default function AdminFnbSalesPage() {
       data-component="AdminFnbSales"
       className="flex flex-col items-start gap-[3rem]"
     >
-      <PageHeading icon={IoFastFoodOutline} tip={ABBREVIATIONS["F&B"]}>F&amp;B Sales</PageHeading>
+      <PageHeading icon={IoFastFoodOutline} tipId="fnbSales.page">F&amp;B Sales</PageHeading>
       <PageTabs tabs={TABS} active={tab} onChange={setTab} />
       {/* Mounted only while selected: each half fetches its own menus, folios
           and credits, and the hidden one has no reason to be holding stale

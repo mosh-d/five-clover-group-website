@@ -5,6 +5,7 @@ import Modal from "./Modal";
 import { BRANDS } from "./theme/brands";
 import { btn, field } from "./ui";
 import { HEAD_OFFICE } from "@/lib/pms/client";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // "Which branch?" - after signing in, for a developer (any branch) or
 // someone with accounts at several; and from the top bar, for a developer
@@ -40,7 +41,7 @@ export default function BranchPicker({ branches, headOffice = false, currentId, 
         {intro && <p className="text-xl text-(--text-color)/68">{intro}</p>}
         {error && <p className={field.error}>{error}</p>}
         <div className="flex flex-col gap-2">
-          <label htmlFor="pms-branch" className={field.label}>{headOffice ? "Open" : "Branch"}</label>
+          <label htmlFor="pms-branch" className={field.label}>{headOffice ? "Open" : "Branch"}<Tip id="branchPicker.place" /></label>
           <select id="pms-branch" value={branchId} onChange={(e) => setBranchId(e.target.value)} className={`${field.select} w-full`} autoFocus>
             <option value="">{headOffice ? "-- Head Office or a branch --" : "-- Select a branch --"}</option>
             {headOffice && <option value={HEAD_OFFICE}>Head Office (every branch)</option>}
@@ -56,9 +57,9 @@ export default function BranchPicker({ branches, headOffice = false, currentId, 
             ))}
           </select>
         </div>
-        <button type="submit" disabled={!branchId || busy || String(branchId) === String(currentId)} className={btn.primary}>
+        <WithTip id="branchPicker.submit"><button type="submit" disabled={!branchId || busy || String(branchId) === String(currentId)} className={btn.primary}>
           {busy ? "Opening..." : confirmLabel}
-        </button>
+        </button></WithTip>
       </form>
     </Modal>
   );

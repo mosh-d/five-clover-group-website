@@ -11,6 +11,7 @@ import { getStoredStaffRole } from "@/lib/pms/auth";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { refundNonGuestCredit } from "@/lib/pms/api/non-guest-folios-api";
+import { Tip } from "@/components/pms/Tip";
 
 // Money the hotel owes back, listed the same way money owed TO the hotel
 // already is. Until now an overpayment on a non-guest bill went into a credit
@@ -53,7 +54,7 @@ export default function NonGuestCreditsPanel({ credits = [], loading = false, on
   return (
     <div className="w-full flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-4 flex-wrap">
-        <h3 className="text-3xl font-bold text-[color:var(--black)]">Unclaimed Credit</h3>
+        <h3 className="text-3xl font-bold text-[color:var(--black)]">Unclaimed Credit<Tip id="credits.unclaimed" /></h3>
         {pending.length > 0 && (
           <span className="text-xl font-bold text-blue-700">{money(total)} on file</span>
         )}
@@ -75,13 +76,13 @@ export default function NonGuestCreditsPanel({ credits = [], loading = false, on
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Customer</th>
-                  <th className={table.th}>From</th>
-                  <th className={table.th}>Type</th>
-                  <th className={table.th}>Date &amp; Time</th>
-                  <th className={table.th}>Amount</th>
-                  <th className={table.th}>Reference</th>
-                  {refundable && <th className={table.th}>Actions</th>}
+                  <th className={`${table.th} ${table.stickyTh}`}>Customer<Tip id="credits.customer" /></th>
+                  <th className={table.th}>From<Tip id="credits.from" /></th>
+                  <th className={table.th}>Type<Tip id="credits.type" /></th>
+                  <th className={table.th}>Date &amp; Time<Tip id="credits.dateTime" /></th>
+                  <th className={table.th}>Amount<Tip id="credits.amount" /></th>
+                  <th className={table.th}>Reference<Tip id="credits.reference" /></th>
+                  {refundable && <th className={table.th}>Actions<Tip id="credits.actions" /></th>}
                 </tr>
               </thead>
               <tbody>

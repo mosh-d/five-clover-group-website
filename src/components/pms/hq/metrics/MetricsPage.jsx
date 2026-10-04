@@ -13,6 +13,7 @@ import { METRIC_TABS, findTab, findMetric, tabOfMetric } from "./catalog";
 import { METRIC_VIEWS } from "./views";
 import { HowCounted, Choice } from "./parts";
 import { RANGE_PRESETS, presetRange, periodText } from "./format";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // Metrics (Head Office, owner 2026-10-01): five tabs like a branch's Reports
 // page, and under each a sub-menu (a dropdown on smaller screens) to pick
@@ -90,7 +91,7 @@ export default function MetricsPage() {
   return (
     <div className={page.wrap}>
       <div>
-        <PageHeading icon={IoStatsChartOutline}>Metrics</PageHeading>
+        <PageHeading icon={IoStatsChartOutline} tipId="metrics.page">Metrics</PageHeading>
         <p className={`text-2xl mt-2 ${page.muted}`}>
           Every branch side by side, one metric at a time, worked out the same way as the branches&apos; own reports.
         </p>
@@ -99,8 +100,8 @@ export default function MetricsPage() {
       <div className="w-full flex flex-col gap-6">
         <div className="flex gap-3 text-xl flex-wrap" role="tablist" aria-label="Metric groups">
           {METRIC_TABS.map((t) => (
+            <WithTip key={t.key} id={`metrics.tab.${t.key}`}>
             <button
-              key={t.key}
               type="button"
               role="tab"
               aria-selected={t.key === tab.key}
@@ -111,6 +112,7 @@ export default function MetricsPage() {
             >
               {t.label}
             </button>
+            </WithTip>
           ))}
         </div>
 
@@ -119,8 +121,8 @@ export default function MetricsPage() {
           {tab.metrics.map((m) => {
             const active = m.key === metric.key;
             return (
+              <WithTip key={m.key} id={`metrics.m.${m.key}`}>
               <button
-                key={m.key}
                 type="button"
                 aria-current={active ? "page" : undefined}
                 onClick={() => go({ tab: tab.key, metric: m.key, branch: "" })}
@@ -130,11 +132,12 @@ export default function MetricsPage() {
               >
                 {m.label}
               </button>
+              </WithTip>
             );
           })}
         </nav>
         <div className="lg:hidden flex flex-col gap-2">
-          <label htmlFor="metric-select" className={field.label}>Metric</label>
+          <label htmlFor="metric-select" className={field.label}>Metric<Tip id="metrics.select" /></label>
           <select
             id="metric-select"
             value={metric.key}
@@ -173,6 +176,7 @@ export default function MetricsPage() {
                   </button>
                 );
               })}
+              <span className="self-center"><Tip id="metrics.presets" /></span>
             </div>
             {/* From and To in boxes of their own width - two equal halves
                 of the row on a phone - never sized by the date fields
@@ -180,7 +184,7 @@ export default function MetricsPage() {
                 (they overlapped each other and Refresh, 2026-10-02). */}
             <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
               <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                <label htmlFor="metric-from" className={field.label}>From</label>
+                <label htmlFor="metric-from" className={field.label}>From<Tip id="metrics.from" /></label>
                 <DateInput
                   id="metric-from"
                   value={from}
@@ -193,7 +197,7 @@ export default function MetricsPage() {
                 />
               </div>
               <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                <label htmlFor="metric-to" className={field.label}>To</label>
+                <label htmlFor="metric-to" className={field.label}>To<Tip id="metrics.to" /></label>
                 <DateInput
                   id="metric-to"
                   value={to}
@@ -206,8 +210,9 @@ export default function MetricsPage() {
           </>
         )}
         {metric.branchFilter && (
-          <Choice id="metric-branch" label="Branch" value={branch} onChange={(v) => go({ branch: v })} options={[{ value: "", label: "All branches" }, ...branches]} />
+          <Choice id="metric-branch" tip="metrics.branchChoice" label="Branch" value={branch} onChange={(v) => go({ branch: v })} options={[{ value: "", label: "All branches" }, ...branches]} />
         )}
+        <WithTip id="metrics.refresh">
         <button
           type="button"
           onClick={() => setRefresh((n) => n + 1)}
@@ -217,6 +222,7 @@ export default function MetricsPage() {
           {loading && shown ? <LoadingSpinner size="sm" /> : <IoRefreshOutline aria-hidden="true" />}
           Refresh
         </button>
+        </WithTip>
       </div>
 
       <section aria-labelledby="metric-title" className="w-full flex flex-col gap-6">

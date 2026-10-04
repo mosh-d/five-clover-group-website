@@ -21,6 +21,7 @@ import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 const emptyRow = { reference_id: "", laundry_service_type: "wash_and_iron", quantity: "1" };
 const emptyOrder = { reservation_id: "", bill_no: "", rows: [{ ...emptyRow }] };
@@ -217,7 +218,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
 
   if (!canAccess) {
     return (
-      <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoShirtOutline} title="Guest Sales" dataComponent="AdminLaundryGuestSales">
+      <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoShirtOutline} title="Guest Sales" tipId="laundryGuestSales.page" dataComponent="AdminLaundryGuestSales">
         <p className="text-2xl text-[color:var(--text-color)]/68">
           You don&apos;t have permission to view this page.
         </p>
@@ -226,7 +227,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
   }
 
   return (
-    <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoShirtOutline} title="Guest Sales" dataComponent="AdminLaundryGuestSales">
+    <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoShirtOutline} title="Guest Sales" tipId="laundryGuestSales.page" dataComponent="AdminLaundryGuestSales">
       <p className="text-xl text-[color:var(--text-color)]/76">
         Laundry for a guest who is in the house — it goes on their room folio and settles with the rest of the stay.
       </p>
@@ -234,11 +235,11 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
       {error && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3 w-full">{error}</p>}
 
       <div className="w-full flex flex-col gap-4 bg-(--card) rounded-xl border border-(--accent-2) p-6">
-        <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">New Guest Laundry</p>
+        <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">New Guest Laundry<Tip id="laundryGuest.new" /></p>
 
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Guest</label>
+            <label className={field.label}>Guest<Tip id="laundryGuest.guest" /></label>
             {loadingGuests ? (
               <LoadingSpinner />
             ) : (
@@ -257,7 +258,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Bill No (optional)</label>
+            <label className={field.label}>Bill No (optional)<Tip id="laundryGuest.billNo" /></label>
             <input
               type="text"
               placeholder="Leave blank to have the system generate one"
@@ -272,7 +273,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
           {order.rows.map((row, index) => (
             <div key={index} className="grid grid-cols-4 gap-4 max-sm:grid-cols-1 items-end">
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Clothes</label>
+                <label className={field.label}>Clothes{index === 0 && <Tip id="laundry.clothes" />}</label>
                 <select
                   value={row.reference_id}
                   className={field.select}
@@ -283,7 +284,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
                 </select>
               </div>
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Type</label>
+                <label className={field.label}>Type{index === 0 && <Tip id="laundry.type" />}</label>
                 <select
                   value={row.laundry_service_type}
                   className={field.select}
@@ -293,7 +294,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
                 </select>
               </div>
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Number of Items</label>
+                <label className={field.label}>Number of Items{index === 0 && <Tip id="laundry.count" />}</label>
                 <input
                   type="number"
                   min={1}
@@ -316,23 +317,23 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
               </div>
             </div>
           ))}
-          <button
+          <WithTip id="laundry.addRow"><button
             type="button"
             className={`${btn.secondary} self-start`}
             onClick={() => setOrder((p) => ({ ...p, rows: [...p.rows, { ...emptyRow }] }))}
           >
             Add another item
-          </button>
+          </button></WithTip>
         </div>
 
         <div className="flex justify-between items-center border-t border-(--accent-2) pt-4">
-          <span className="text-xl font-bold uppercase tracking-wide text-[color:var(--text-color)]/68">Total</span>
+          <span className="text-xl font-bold uppercase tracking-wide text-[color:var(--text-color)]/68">Total<Tip id="laundryGuest.total" /></span>
           <span className="text-2xl font-bold">{money(orderTotal)}</span>
         </div>
 
-        <button onClick={handleSubmit} disabled={submitting || !orderValid} className={`${btn.primary} self-start`}>
+        <WithTip id="laundryGuest.post"><button onClick={handleSubmit} disabled={submitting || !orderValid} className={`${btn.primary} self-start`}>
           {submitting ? "Posting..." : "Post to Folio"}
-        </button>
+        </button></WithTip>
         {/* Never leave a disabled button unexplained. */}
         {!orderValid && !submitting && (
           <p className="text-lg text-[color:var(--text-color)]/68">{orderBlockReason}</p>
@@ -344,12 +345,12 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
           <table className={table.el}>
             <thead>
               <tr className={table.headRow}>
-                <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                <th className={table.th}>Room</th>
-                <th className={table.th}>Folio #</th>
-                <th className={table.th}>Date &amp; Time</th>
-                <th className={table.th}>Status</th>
-                <th className={table.th}>Actions</th>
+                <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="laundryGuest.col.guest" /></th>
+                <th className={table.th}>Room<Tip id="laundryGuest.col.room" /></th>
+                <th className={table.th}>Folio #<Tip id="laundryGuest.col.folio" /></th>
+                <th className={table.th}>Date &amp; Time<Tip id="laundryGuest.col.dateTime" /></th>
+                <th className={table.th}>Status<Tip id="laundryGuest.col.status" /></th>
+                <th className={table.th}>Actions<Tip id="laundryGuest.col.actions" /></th>
               </tr>
             </thead>
             <tbody>

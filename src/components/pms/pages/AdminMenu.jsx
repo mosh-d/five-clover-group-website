@@ -26,6 +26,7 @@ import {
 } from "@/lib/pms/api/menu-api";
 import StatusBadge from "@/components/pms/StatusBadge";
 import { money } from "@/lib/pms/format";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 const EMPTY_LAUNDRY_FORM = { name: "", wash_and_iron_price: "", ironing_only_price: "" };
 
@@ -51,17 +52,18 @@ export default function AdminMenu() {
 
   return (
     <div data-component="AdminMenu" className="flex flex-col items-start gap-[3rem]">
-      <PageHeading icon={IoRestaurantOutline}>Menu</PageHeading>
+      <PageHeading icon={IoRestaurantOutline} tipId="menu.page">Menu</PageHeading>
       <p className="text-xl text-[color:var(--text-color)]/76">
-        Food and drink items a waitron picks from when posting a charge to a folio, or when recording a non-guest sale. Prices set here are what auto-fills — always still editable at the point of charging.
+        Food and drink items a waitron picks from when posting a charge to a folio, or when recording a non-guest sale. Prices set here are what an order charges.
       </p>
 
       <div className="flex gap-3 text-xl flex-wrap">
         {[
-          { key: "food", label: "Food" },
-          { key: "drinks", label: "Drinks" },
-          { key: "laundry", label: "Laundry" },
+          { key: "food", label: "Food", tip: "menu.tab.food" },
+          { key: "drinks", label: "Drinks", tip: "menu.tab.drinks" },
+          { key: "laundry", label: "Laundry", tip: "menu.tab.laundry" },
         ].map((t) => (
+          <WithTip key={t.key} id={t.tip}>
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
@@ -71,6 +73,7 @@ export default function AdminMenu() {
           >
             {t.label}
           </button>
+          </WithTip>
         ))}
       </div>
 
@@ -277,6 +280,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
       <label className="flex items-center gap-3 text-xl cursor-pointer">
         <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="w-5 h-5 cursor-pointer" />
         Show out-of-stock items
+        <Tip id="menu.showInactive" />
       </label>
 
       <div className={table.card}>
@@ -284,12 +288,12 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
           <table className={table.el}>
             <thead>
               <tr className={table.headRow}>
-                <th className={`${table.th} ${table.stickyTh}`}>Name</th>
-                <th className={table.th}>Price (₦)</th>
-                <th className={table.th}>Service Charge (₦)</th>
-                {recordStock && <th className={table.th}>Stock</th>}
-                <th className={table.th}>Status</th>
-                <th className={table.th}>Actions</th>
+                <th className={`${table.th} ${table.stickyTh}`}>Name<Tip id="menu.col.name" /></th>
+                <th className={table.th}>Price (₦)<Tip id="menu.col.price" /></th>
+                <th className={table.th}>Service Charge (₦)<Tip id="menu.col.serviceCharge" /></th>
+                {recordStock && <th className={table.th}>Stock<Tip id="menu.col.stock" /></th>}
+                <th className={table.th}>Status<Tip id="menu.col.status" /></th>
+                <th className={table.th}>Actions<Tip id="menu.col.actions" /></th>
               </tr>
             </thead>
             <tbody>
@@ -379,7 +383,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                           <div className="flex flex-wrap gap-4 items-end">
                             <span className="text-xl font-semibold whitespace-nowrap">Adjust stock — {item.name}</span>
                             <div className="flex flex-col gap-2">
-                              <label className={field.label}>Type</label>
+                              <label className={field.label}>Type<Tip id="menu.stock.type" /></label>
                               <select value={stockForm.movement_type} onChange={(e) => setStockForm({ ...stockForm, movement_type: e.target.value })} className={`${field.select} text-xl!`}>
                                 <option value="added">Added (restock)</option>
                                 <option value="damaged">Damaged (breakage/spillage/expiry)</option>
@@ -387,7 +391,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                               </select>
                             </div>
                             <div className="flex flex-col gap-2">
-                              <label className={field.label}>{stockForm.movement_type === "correction" ? "Actual Count" : "Quantity"}</label>
+                              <label className={field.label}>{stockForm.movement_type === "correction" ? "Actual Count" : "Quantity"}<Tip id="menu.stock.quantity" /></label>
                               <input
                                 type="number"
                                 min="0"
@@ -400,13 +404,13 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                               )}
                             </div>
                             <div className="flex flex-col gap-2 flex-1 min-w-48">
-                              <label className={field.label}>Notes (optional)</label>
+                              <label className={field.label}>Notes (optional)<Tip id="menu.stock.notes" /></label>
                               <AutoGrowTextarea value={stockForm.notes} onChange={(e) => setStockForm({ ...stockForm, notes: e.target.value })} className={`${field.textarea} text-xl!`} />
                             </div>
                             <div className={table.actions}>
-                              <button onClick={() => handleSaveStockAdjust(item.id)} disabled={savingStockId === item.id || !stockQtyValid} className={btn.rowPrimary}>
+                              <WithTip id="menu.stock.save"><button onClick={() => handleSaveStockAdjust(item.id)} disabled={savingStockId === item.id || !stockQtyValid} className={btn.rowPrimary}>
                                 {savingStockId === item.id ? "Saving..." : "Save"}
-                              </button>
+                              </button></WithTip>
                               <button onClick={() => setStockAdjustId(null)} className={btn.rowSecondary}>Cancel</button>
                             </div>
                           </div>
@@ -423,23 +427,23 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
 
       {canEdit && (
         <form onSubmit={handleAdd} className="flex flex-col gap-4 bg-(--card) rounded-xl border border-(--accent-2) p-6 max-w-xl">
-          <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a {label}</p>
+          <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a {label}<Tip id="menu.add" /></p>
           <div className="flex gap-4 flex-wrap items-end">
             <div className="flex flex-col gap-2 flex-1 min-w-48">
-              <label className={field.label}>Name</label>
+              <label className={field.label}>Name<Tip id="menu.add.name" /></label>
               <input type="text" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} className={field.input} />
             </div>
             <div className="flex flex-col gap-2 w-40">
-              <label className={field.label}>Price (₦)</label>
+              <label className={field.label}>Price (₦)<Tip id="menu.add.price" /></label>
               <input type="number" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} className={field.input} />
             </div>
             <div className="flex flex-col gap-2 w-40">
-              <label className={field.label}>Service Charge (₦)</label>
+              <label className={field.label}>Service Charge (₦)<Tip id="menu.add.serviceCharge" /></label>
               <input type="number" value={addForm.service_charge} onChange={(e) => setAddForm({ ...addForm, service_charge: e.target.value })} className={field.input} />
             </div>
-            <button type="submit" disabled={adding || !addForm.name.trim() || !addForm.price} className={btn.primary}>
+            <WithTip id="menu.add.submit"><button type="submit" disabled={adding || !addForm.name.trim() || !addForm.price} className={btn.primary}>
               {adding ? "Adding..." : "Add Item"}
-            </button>
+            </button></WithTip>
           </div>
         </form>
       )}
@@ -519,6 +523,7 @@ function LaundrySection({ canEdit }) {
       <label className="flex items-center gap-2 text-xl cursor-pointer">
         <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="w-5 h-5 cursor-pointer" />
         Show inactive items
+        <Tip id="menu.laundry.showInactive" />
       </label>
 
       {loading ? (
@@ -529,11 +534,11 @@ function LaundrySection({ canEdit }) {
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Clothes</th>
-                  <th className={table.th}>Wash and Iron</th>
-                  <th className={table.th}>Ironing Only</th>
-                  <th className={table.th}>Status</th>
-                  {canEdit && <th className={table.th}>Actions</th>}
+                  <th className={`${table.th} ${table.stickyTh}`}>Clothes<Tip id="menu.laundry.col.clothes" /></th>
+                  <th className={table.th}>Wash and Iron<Tip id="menu.laundry.col.washIron" /></th>
+                  <th className={table.th}>Ironing Only<Tip id="menu.laundry.col.ironOnly" /></th>
+                  <th className={table.th}>Status<Tip id="menu.laundry.col.status" /></th>
+                  {canEdit && <th className={table.th}>Actions<Tip id="menu.laundry.col.actions" /></th>}
                 </tr>
               </thead>
               <tbody>
@@ -597,27 +602,27 @@ function LaundrySection({ canEdit }) {
 
       {canEdit && (
         <div className="w-full bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-col gap-4">
-          <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a clothing item</p>
+          <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a clothing item<Tip id="menu.laundry.add" /></p>
           <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-1">
             <div className="flex flex-col gap-2">
-              <label className={field.label}>Clothes</label>
+              <label className={field.label}>Clothes<Tip id="menu.laundry.add.clothes" /></label>
               <input type="text" placeholder="Shirt" value={addForm.name} className={field.input}
                 onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} />
             </div>
             <div className="flex flex-col gap-2">
-              <label className={field.label}>Wash and Iron</label>
+              <label className={field.label}>Wash and Iron<Tip id="menu.laundry.add.washIron" /></label>
               <input type="number" min={0} value={addForm.wash_and_iron_price} className={field.input}
                 onChange={(e) => setAddForm({ ...addForm, wash_and_iron_price: e.target.value })} />
             </div>
             <div className="flex flex-col gap-2">
-              <label className={field.label}>Ironing Only</label>
+              <label className={field.label}>Ironing Only<Tip id="menu.laundry.add.ironOnly" /></label>
               <input type="number" min={0} value={addForm.ironing_only_price} className={field.input}
                 onChange={(e) => setAddForm({ ...addForm, ironing_only_price: e.target.value })} />
             </div>
           </div>
-          <button disabled={saving || !addValid} onClick={() => submit(() => createLaundryItem(payloadFrom(addForm)))} className={`${btn.primary} self-start`}>
+          <WithTip id="menu.laundry.add.submit"><button disabled={saving || !addValid} onClick={() => submit(() => createLaundryItem(payloadFrom(addForm)))} className={`${btn.primary} self-start`}>
             {saving ? "Saving..." : "Add Item"}
-          </button>
+          </button></WithTip>
         </div>
       )}
     </div>

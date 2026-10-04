@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import { field } from "./ui";
+import { Tip } from "@/components/pms/Tip";
 
 // A password input with a show/hide eye - the sign-in page, Account, and
 // every new password typed on Staff Accounts.
-export default function PasswordField({ id, label, value, onChange, autoComplete, minLength, required }) {
+export default function PasswordField({ id, label, value, onChange, autoComplete, minLength, required, tip }) {
   const [visible, setVisible] = useState(false);
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className={field.label}>{label}</label>
+      <label htmlFor={id} className={field.label}>{label}{tip && <Tip id={tip} />}</label>
       <div className="relative">
         <input
           id={id}

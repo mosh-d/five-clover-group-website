@@ -43,6 +43,7 @@ import {
 import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // No laundry: it is posted from Laundry Sales, a garment at a time and
 // priced from the laundry list, and the server refuses a laundry charge
@@ -673,7 +674,7 @@ export default function AdminFoliosPage() {
 
       <div data-component="AdminFolios" className="flex flex-col items-start gap-[3rem]">
         <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
-          <PageHeading icon={IoReceiptOutline}>Guest Folios</PageHeading>
+          <PageHeading icon={IoReceiptOutline} tipId="folios.page">Guest Folios</PageHeading>
         </div>
 
         <div className="flex gap-3 text-xl flex-wrap items-center w-full">
@@ -681,10 +682,11 @@ export default function AdminFoliosPage() {
               ever post to one that's still open — see FoliosService.addFolioItem),
               so there's nothing for these tab/status controls to switch between. */}
           {!isWaitstaffSession && [
-            { key: "all", label: "All" },
-            { key: "pending", label: "Outstanding Balance" },
-            { key: "overdue", label: "Overdue" },
+            { key: "all", label: "All", tip: "folios.tab.all" },
+            { key: "pending", label: "Outstanding Balance", tip: "folios.tab.pending" },
+            { key: "overdue", label: "Overdue", tip: "folios.tab.overdue" },
           ].map((t) => (
+            <WithTip key={t.key} id={t.tip}>
             <button
               key={t.key}
               onClick={() => { setSubTab(t.key); setSearchInput(""); setSearchTerm(""); }}
@@ -692,6 +694,7 @@ export default function AdminFoliosPage() {
             >
               {t.label}
             </button>
+            </WithTip>
           ))}
           {!isWaitstaffSession && subTab === "all" && !searchTerm && (
             <select
@@ -705,6 +708,9 @@ export default function AdminFoliosPage() {
               <option value="closed">Closed</option>
             </select>
           )}
+          {!isWaitstaffSession && subTab === "all" && !searchTerm && (
+            <Tip id="folios.statusFilter" />
+          )}
 
           <form
             onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); }}
@@ -717,7 +723,7 @@ export default function AdminFoliosPage() {
               placeholder="Search by folio #, guest name, or payment reference (e.g. FOL-D7931B, PAY-3F9A2B)"
               className={`${field.input} w-auto text-xl!`}
             />
-            <button type="submit" className={btn.secondary}>Search</button>
+            <WithTip id="folios.search"><button type="submit" className={btn.secondary}>Search</button></WithTip>
             {searchTerm && (
               <button
                 type="button"
@@ -747,15 +753,15 @@ export default function AdminFoliosPage() {
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                  <th className={table.th}>Folio #</th>
-                  {showGuestStatusColumn && <th className={table.th}>Guest Status</th>}
-                  {showCheckOutDateColumn && <th className={`${table.th} hidden md:table-cell`}>Check-Out Date</th>}
-                  <th className={table.th}>Total</th>
-                  <th className={table.th}>Paid</th>
-                  <th className={table.th}>Balance</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Status</th>
-                  <th className={table.th}>Actions</th>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="folios.col.guest" /></th>
+                  <th className={table.th}>Folio #<Tip id="folios.col.number" /></th>
+                  {showGuestStatusColumn && <th className={table.th}>Guest Status<Tip id="folios.col.guestStatus" /></th>}
+                  {showCheckOutDateColumn && <th className={`${table.th} hidden md:table-cell`}>Check-Out Date<Tip id="folios.col.checkOut" /></th>}
+                  <th className={table.th}>Total<Tip id="folios.col.total" /></th>
+                  <th className={table.th}>Paid<Tip id="folios.col.paid" /></th>
+                  <th className={table.th}>Balance<Tip id="folios.col.balance" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Status<Tip id="folios.col.status" /></th>
+                  <th className={table.th}>Actions<Tip id="folios.col.actions" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -852,7 +858,7 @@ export default function AdminFoliosPage() {
             <>
               <button onClick={closeFolioDetail} className={btn.secondary}>Close</button>
               {selectedFolio.status !== "closed" && (
-                <button
+                <WithTip id="folios.close"><button
                   onClick={handleCloseFolio}
                   disabled={!canCloseFolio || closing}
                   className={btn.primary}
@@ -865,7 +871,7 @@ export default function AdminFoliosPage() {
                   }
                 >
                   {closing ? "Closing..." : "Close Folio"}
-                </button>
+                </button></WithTip>
               )}
             </>
           )}
@@ -878,6 +884,7 @@ export default function AdminFoliosPage() {
               <div className="grid grid-cols-1 gap-4">
                 <SummaryStat
                   label="Guest"
+                  tip="folios.sum.guest"
                   value={
                     <GuestName
                       name={selectedFolio.reservation?.guest_name || (selectedFolio.guest ? `${selectedFolio.guest.first_name} ${selectedFolio.guest.last_name}` : "N/A")}
@@ -890,20 +897,23 @@ export default function AdminFoliosPage() {
                     scheduled says so, rather than passing a plan off as fact. */}
                 <SummaryStat
                   label="Check-In"
+                  tip="folios.sum.checkIn"
                   value={selectedFolio.reservation?.actual_check_in
                     ? formatDate(selectedFolio.reservation.actual_check_in)
                     : `${formatDate(selectedFolio.reservation?.check_in)} (expected)`}
                 />
                 <SummaryStat
                   label="Check-Out"
+                  tip="folios.sum.checkOut"
                   value={selectedFolio.reservation?.actual_check_out
                     ? formatDate(selectedFolio.reservation.actual_check_out)
                     : `${formatDate(selectedFolio.reservation?.check_out)} (expected)`}
                 />
-                <SummaryStat label="Total Charged" value={money(selectedFolio.total_amount)} />
-                <SummaryStat label="Total Paid" value={money(selectedFolio.total_received ?? selectedFolio.amount_paid)} />
+                <SummaryStat label="Total Charged" tip="folios.sum.charged" value={money(selectedFolio.total_amount)} />
+                <SummaryStat label="Total Paid" tip="folios.sum.paid" value={money(selectedFolio.total_received ?? selectedFolio.amount_paid)} />
                 <SummaryStat
                   label="Balance Due"
+                  tip="folios.sum.balance"
                   value={hasOutstandingBalance ? money(selectedFolio.balance) : "Settled"}
                   tone={hasOutstandingBalance ? "danger" : "success"}
                 />
@@ -915,11 +925,11 @@ export default function AdminFoliosPage() {
               {Number(selectedFolio.ota_pending) > 0 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg px-5 py-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <span className="text-amber-800 font-bold text-xl">Awaiting OTA payment:</span>
+                    <span className="text-amber-800 font-bold text-xl">Awaiting OTA payment:<Tip id="folios.otaAwaiting" /></span>
                     <span className="text-amber-800 font-bold text-2xl">{money(selectedFolio.ota_pending)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <span className="text-xl font-bold text-[color:var(--black)]">Guest to pay:</span>
+                    <span className="text-xl font-bold text-[color:var(--black)]">Guest to pay:<Tip id="folios.guestToPay" /></span>
                     <span className="text-2xl font-bold text-[color:var(--black)]">
                       {money(Math.max(Number(selectedFolio.guest_due || 0), 0))}
                     </span>
@@ -945,7 +955,7 @@ export default function AdminFoliosPage() {
                       {s.status === "pending" ? (
                         <div className="flex items-center gap-2 flex-wrap">
                           {canRecordOta && (
-                            <button
+                            <WithTip id="folios.ota.adjust"><button
                               onClick={() => {
                                 setOtaError(null);
                                 setOtaForm({
@@ -961,11 +971,11 @@ export default function AdminFoliosPage() {
                               className={btn.rowSecondary}
                             >
                               Adjust OTA paid nights
-                            </button>
+                            </button></WithTip>
                           )}
-                          <button onClick={() => handleMarkOtaPaid(s.id)} disabled={otaPayingId === s.id} className={btn.rowSuccess}>
+                          <WithTip id="folios.ota.markPaid"><button onClick={() => handleMarkOtaPaid(s.id)} disabled={otaPayingId === s.id} className={btn.rowSuccess}>
                             {otaPayingId === s.id ? "Recording..." : "Mark OTA Paid"}
-                          </button>
+                          </button></WithTip>
                         </div>
                       ) : (
                         <StatusBadge status="paid" />
@@ -979,10 +989,11 @@ export default function AdminFoliosPage() {
                   <div className="border border-(--accent-2) rounded-lg px-5 py-4 flex flex-col gap-4">
                     <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
                       {otaForm.id ? "Adjust OTA paid nights" : "Add an OTA payment"}
+                      <Tip id="folios.ota.form" />
                     </p>
                     <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>OTA covers from</label>
+                        <label className={field.label}>OTA covers from<Tip id="folios.ota.from" /></label>
                         <DateInput
                           value={otaForm.start}
                           min={otaMin}
@@ -997,7 +1008,7 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Until</label>
+                        <label className={field.label}>Until<Tip id="folios.ota.until" /></label>
                         <DateInput
                           value={otaForm.end}
                           min={otaForm.start ? addDaysISO(otaForm.start, 1) : otaMin ? addDaysISO(otaMin, 1) : undefined}
@@ -1015,9 +1026,10 @@ export default function AdminFoliosPage() {
                         className="w-5 h-5 cursor-pointer"
                       />
                       The OTA rate includes breakfast
+                      <Tip id="folios.ota.breakfast" />
                     </label>
                     <div className="flex flex-col gap-2">
-                      <label className={field.label}>Amount the OTA will pay</label>
+                      <label className={field.label}>Amount the OTA will pay<Tip id="folios.ota.amount" /></label>
                       <input
                         type="number"
                         min="0"
@@ -1036,13 +1048,13 @@ export default function AdminFoliosPage() {
                       <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{otaError}</p>
                     )}
                     <div className="flex gap-3 flex-wrap">
-                      <button
+                      <WithTip id="folios.ota.save"><button
                         onClick={handleSaveOta}
                         disabled={addingOta || !otaForm.start || !otaForm.end || otaForm.end <= otaForm.start}
                         className={btn.primary}
                       >
                         {addingOta ? "Saving..." : otaForm.id ? "Adjust OTA paid nights" : "Save OTA payment"}
-                      </button>
+                      </button></WithTip>
                       <button
                         onClick={() => { setOtaForm(EMPTY_OTA_FORM); setOtaError(null); }}
                         className={btn.secondary}
@@ -1052,14 +1064,14 @@ export default function AdminFoliosPage() {
                     </div>
                   </div>
                 ) : (
-                  <button
+                  <WithTip id="folios.ota.open"><button
                     onClick={() => { setOtaError(null); setOtaForm({ ...EMPTY_OTA_FORM, open: true, start: otaMin, end: otaMax }); }}
                     className={`${btn.secondary} self-start`}
                   >
                     {(selectedFolio.ota_settlements || []).length > 0
                       ? "Add another OTA range"
                       : "An OTA is paying for some nights"}
-                  </button>
+                  </button></WithTip>
                 )
               )}
               {/* Money this guest left behind on a DIFFERENT stay — the same
@@ -1069,6 +1081,7 @@ export default function AdminFoliosPage() {
                 <div className="border border-(--accent-2) rounded-lg px-5 py-4 flex flex-col gap-3">
                   <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
                     Credit from a previous stay
+                    <Tip id="folios.previousCredit" />
                   </p>
                   {guestCredit.map((c) => (
                     <div key={c.id} className="flex items-center justify-between gap-4 flex-wrap border-b border-(--accent-2) last:border-0 pb-3 last:pb-0">
@@ -1096,7 +1109,7 @@ export default function AdminFoliosPage() {
               )}
               {hasCreditBalance && (
                 <div className="bg-green-50 border border-green-200 rounded-lg px-5 py-4 flex items-center justify-between">
-                  <span className="text-green-700 font-bold text-xl">Credit Due to Guest:</span>
+                  <span className="text-green-700 font-bold text-xl">Credit Due to Guest:<Tip id="folios.creditDue" /></span>
                   <span className="text-green-700 font-bold text-2xl">{money(Math.abs(Number(selectedFolio.balance)))}</span>
                 </div>
               )}
@@ -1115,6 +1128,7 @@ export default function AdminFoliosPage() {
                   <div className="flex items-center justify-between gap-4 flex-wrap">
                     <span className="text-green-700 font-bold text-xl">
                       Reservation (Credit){Number(selectedFolio.credit_on_file.total) > 0 ? " Available:" : ""}
+                      <Tip id="folios.reservationCredit" />
                     </span>
                     {Number(selectedFolio.credit_on_file.total) > 0 ? (
                       <span className="text-green-700 font-bold text-2xl">{money(selectedFolio.credit_on_file.total)}</span>
@@ -1185,13 +1199,13 @@ export default function AdminFoliosPage() {
                               ))}
                             </select>
                             <div className="flex gap-3 flex-wrap">
-                              <button
+                              <WithTip id="folios.moveCredit"><button
                                 onClick={() => handleTransferCredit(c.id)}
                                 disabled={!transferTo || transferring}
                                 className={btn.rowPrimary}
                               >
                                 {transferring ? "Moving..." : "Move the credit"}
-                              </button>
+                              </button></WithTip>
                               <button onClick={closeTransfer} className={btn.rowSecondary}>Cancel</button>
                             </div>
                           </div>
@@ -1213,7 +1227,7 @@ export default function AdminFoliosPage() {
 
               {/* Charges */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges<Tip id="folios.charges" /></h3>
                 {/* Surfaced so a missing/short room charge doesn't read as a
                     bug — postStayChargesForDay silently excludes a
                     complementary room's own share when it posts. */}
@@ -1259,10 +1273,10 @@ export default function AdminFoliosPage() {
 
                 {selectedFolio.status !== "closed" && (
                   <div className="flex flex-col gap-4 mt-2">
-                    <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a charge</p>
+                    <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a charge<Tip id="folios.addCharge" /></p>
                     <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Charge Type</label>
+                        <label className={field.label}>Charge Type<Tip id="folios.chargeType" /></label>
                         <select
                           value={itemForm.item_type}
                           onChange={(e) => setItemForm({ ...itemForm, item_type: e.target.value, description: "", amount: "" })}
@@ -1272,7 +1286,7 @@ export default function AdminFoliosPage() {
                         </select>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Amount (₦) *</label>
+                        <label className={field.label}>Amount (₦) *<Tip id="folios.amount" /></label>
                         <input
                           type="number"
                           value={itemForm.amount}
@@ -1281,7 +1295,7 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Tax ({itemForm.tax_mode === "percentage" ? "%" : "₦"})</label>
+                        <label className={field.label}>Tax ({itemForm.tax_mode === "percentage" ? "%" : "₦"})<Tip id="folios.tax" /></label>
                         <div className="flex flex-col gap-2">
                           <select
                             value={itemForm.tax_mode}
@@ -1295,7 +1309,7 @@ export default function AdminFoliosPage() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Discount ({itemForm.discount_mode === "percentage" ? "%" : "₦"})</label>
+                        <label className={field.label}>Discount ({itemForm.discount_mode === "percentage" ? "%" : "₦"})<Tip id="folios.discount" /></label>
                         <div className="flex flex-col gap-2">
                           <select
                             value={itemForm.discount_mode}
@@ -1309,12 +1323,12 @@ export default function AdminFoliosPage() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Description *</label>
+                        <label className={field.label}>Description *<Tip id="folios.description" /></label>
                         <AutoGrowTextarea value={itemForm.description} onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })} className={field.textarea} />
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className={field.label}>Remarks (optional)</label>
+                      <label className={field.label}>Remarks (optional)<Tip id="folios.chargeRemarks" /></label>
                       <AutoGrowTextarea value={itemForm.notes} onChange={(e) => setItemForm({ ...itemForm, notes: e.target.value })} className={field.textarea} />
                     </div>
                     {itemForm.item_type === "adjustment" && (
@@ -1324,9 +1338,9 @@ export default function AdminFoliosPage() {
                         (e.g. -3000.00). This keeps the original charge visible for audit.
                       </p>
                     )}
-                    <button onClick={handleAddItem} disabled={addingItem || !chargeReady} className={`${btn.primary} self-start`}>
+                    <WithTip id="folios.addChargeButton"><button onClick={handleAddItem} disabled={addingItem || !chargeReady} className={`${btn.primary} self-start`}>
                       {addingItem ? "Adding..." : "Add Charge"}
-                    </button>
+                    </button></WithTip>
                     {/* Never leave a disabled button unexplained — this one
                         needed a description and never said so, which read as
                         the button being broken (owner, 2026-09-27). */}
@@ -1339,7 +1353,7 @@ export default function AdminFoliosPage() {
 
               {/* Payments */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Payments</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Payments<Tip id="folios.payments" /></h3>
                 {(!selectedFolio.payments || selectedFolio.payments.length === 0) ? (
                   <p className="text-xl text-[color:var(--text-color)]/76">No payments recorded yet.</p>
                 ) : (
@@ -1381,12 +1395,13 @@ export default function AdminFoliosPage() {
                     <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
                       Record a payment
                       {" "}— {hasOutstandingBalance ? `balance due: ${money(selectedFolio.balance)}` : hasCreditBalance ? `credit on account: ${money(Math.abs(Number(selectedFolio.balance)))}` : "balance settled"}
+                      <Tip id="folios.recordPayment" />
                     </p>
                     <PaymentSplitRows splits={paymentForm.splits} setSplits={(splits) => setPaymentForm({ ...paymentForm, splits })} />
                     {hasOutstandingBalance && (
                       <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                         <div className="flex flex-col gap-2">
-                          <label className={field.label}>Tax ({paymentForm.tax_mode === "percentage" ? "%" : "₦"}) — optional</label>
+                          <label className={field.label}>Tax ({paymentForm.tax_mode === "percentage" ? "%" : "₦"}) — optional<Tip id="folios.paymentTax" /></label>
                           <div className="flex flex-col gap-2">
                             <select
                               value={paymentForm.tax_mode}
@@ -1407,7 +1422,7 @@ export default function AdminFoliosPage() {
                           </div>
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className={field.label}>Discount ({paymentForm.discount_mode === "percentage" ? "%" : "₦"}) — optional</label>
+                          <label className={field.label}>Discount ({paymentForm.discount_mode === "percentage" ? "%" : "₦"}) — optional<Tip id="folios.paymentDiscount" /></label>
                           <div className="flex flex-col gap-2">
                             <select
                               value={paymentForm.discount_mode}
@@ -1436,7 +1451,7 @@ export default function AdminFoliosPage() {
                     )}
                     <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Receipt Number</label>
+                        <label className={field.label}>Receipt Number<Tip id="folios.paymentReceipt" /></label>
                         <input
                           type="text"
                           placeholder="e.g. from the receipt book"
@@ -1446,7 +1461,7 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Remarks</label>
+                        <label className={field.label}>Remarks<Tip id="folios.paymentRemarks" /></label>
                         <AutoGrowTextarea
                           placeholder="e.g. cash received at front desk"
                           value={paymentForm.notes}
@@ -1455,9 +1470,9 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                     </div>
-                    <button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits || Boolean(paymentAdjustmentProblem)} className={`${btn.success} self-start`}>
+                    <WithTip id="folios.recordPaymentButton"><button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits || Boolean(paymentAdjustmentProblem)} className={`${btn.success} self-start`}>
                       {recordingPayment ? "Recording..." : "Record Payment"}
-                    </button>
+                    </button></WithTip>
                     {paymentAdjustmentProblem && <p className="text-lg text-red-600">{paymentAdjustmentProblem}</p>}
                   </div>
                 )}
@@ -1470,10 +1485,10 @@ export default function AdminFoliosPage() {
                 {hasCreditBalance && canRefund() && (
                   <div className="flex flex-col gap-4 mt-2 border-t border-(--accent-2) pt-6">
                     {refundError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{refundError}</p>}
-                    <p className="text-lg font-semibold uppercase tracking-wide text-red-600">Record a refund to the guest</p>
+                    <p className="text-lg font-semibold uppercase tracking-wide text-red-600">Record a refund to the guest<Tip id="folios.refund" /></p>
                     <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Amount (₦) *</label>
+                        <label className={field.label}>Amount (₦) *<Tip id="folios.refundAmount" /></label>
                         <input
                           type="number"
                           placeholder={`Credit on account: ${money(Math.abs(Number(selectedFolio.balance)))}`}
@@ -1483,13 +1498,13 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Method *</label>
+                        <label className={field.label}>Method *<Tip id="folios.refundMethod" /></label>
                         <select value={refundForm.payment_method} onChange={(e) => setRefundForm({ ...refundForm, payment_method: e.target.value })} className={field.select}>
                           {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{formatPaymentMethod(m)}</option>)}
                         </select>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Receipt Number</label>
+                        <label className={field.label}>Receipt Number<Tip id="folios.refundReceipt" /></label>
                         <input
                           type="text"
                           placeholder="e.g. from the receipt book"
@@ -1499,7 +1514,7 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                       <div className="col-span-2 max-sm:col-span-1 flex flex-col gap-2">
-                        <label className={field.label}>Remarks</label>
+                        <label className={field.label}>Remarks<Tip id="folios.refundRemarks" /></label>
                         <AutoGrowTextarea
                           placeholder="e.g. cash refunded to guest at checkout"
                           value={refundForm.notes}
@@ -1508,9 +1523,9 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                     </div>
-                    <button onClick={handleRecordRefund} disabled={recordingRefund || !refundForm.amount} className={`${btn.dangerSolid} self-start`}>
+                    <WithTip id="folios.recordRefundButton"><button onClick={handleRecordRefund} disabled={recordingRefund || !refundForm.amount} className={`${btn.dangerSolid} self-start`}>
                       {recordingRefund ? "Recording..." : "Record Refund"}
-                    </button>
+                    </button></WithTip>
                   </div>
                 )}
               </section>
@@ -1544,12 +1559,12 @@ export default function AdminFoliosPage() {
   );
 }
 
-function SummaryStat({ label, value, tone }) {
+function SummaryStat({ label, value, tone, tip }) {
   const valueColor =
     tone === "danger" ? "text-red-600" : tone === "success" ? "text-green-700" : "text-[color:var(--black)]";
   return (
     <div className="bg-[color:var(--text-color)]/5 border-1 border-gray-200 rounded-lg px-5 py-4">
-      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}</p>
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}{tip && <Tip id={tip} />}</p>
       <p className={`text-2xl font-bold ${valueColor} truncate`}>{value}</p>
     </div>
   );

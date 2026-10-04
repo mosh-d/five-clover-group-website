@@ -40,8 +40,8 @@ export function FloatingTip({ tip }) {
 
 // A short label with an (i) that says it in full on hover or focus - "OOO"
 // for Out of Order (owner, 2026-10-01). `size` is the (i)'s, for beside a
-// page heading.
-export default function InfoTip({ label, text, size = 17 }) {
+// page heading; `light` draws it pale, for on a coloured card.
+export default function InfoTip({ label, text, size = 17, light = false }) {
   const [tip, setTip] = useState(null);
   const show = (e) => setTip(tipFor(e.currentTarget, text));
   const hide = () => setTip(null);
@@ -56,7 +56,17 @@ export default function InfoTip({ label, text, size = 17 }) {
         onPointerLeave={hide}
         onFocus={show}
         onBlur={hide}
-        className="inline-flex cursor-help rounded-full text-(--text-color)/55 hover:text-(--emphasis) focus-visible:text-(--emphasis) focus-visible:outline-2 focus-visible:outline-(--emphasis)"
+        // Only ever says what it is: inside a label it must not tick the box,
+        // beside a link or a button it must not follow or press it.
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        className={`inline-flex cursor-help rounded-full focus-visible:outline-2 ${
+          light
+            ? "text-white/70 hover:text-white focus-visible:text-white focus-visible:outline-white"
+            : "text-(--text-color)/55 hover:text-(--emphasis) focus-visible:text-(--emphasis) focus-visible:outline-(--emphasis)"
+        }`}
       >
         <IoInformationCircleOutline size={size} aria-hidden="true" />
       </span>

@@ -8,6 +8,7 @@ import useHqLive from "@/components/pms/live/useHqLive";
 import { page, field, table } from "@/components/pms/ui";
 import { fetchOutOfOrderRooms } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
+import { Tip } from "@/components/pms/Tip";
 
 // Critical (Head Office): every room out of order across the group, oldest
 // first. Kept current over the live socket, not by polling (owner,
@@ -62,7 +63,7 @@ export default function CriticalPage() {
   return (
     <div className={page.wrap}>
       <div>
-        <PageHeading icon={IoWarningOutline}>Critical</PageHeading>
+        <PageHeading icon={IoWarningOutline} tipId="critical.page">Critical</PageHeading>
         <p className={`text-2xl mt-2 ${page.muted}`}>What needs Head Office&apos;s attention across every branch.</p>
       </div>
 
@@ -75,7 +76,7 @@ export default function CriticalPage() {
 
       <section className="w-full flex flex-col gap-4">
         <div>
-          <h2 className={page.sectionTitle}>Out of Order Rooms</h2>
+          <h2 className={page.sectionTitle}>Out of Order Rooms<Tip id="critical.ooo" /></h2>
           {rooms !== null && (
             <p className={`text-xl mt-1 ${page.muted}`}>
               {rooms.length === 0
@@ -97,12 +98,12 @@ export default function CriticalPage() {
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>
-                    <th className={`${table.th} ${table.stickyTh}`}>Room</th>
-                    <th className={table.th}>Branch</th>
-                    <th className={table.th}>Room Type</th>
-                    <th className={table.th}>Out of Order Since</th>
-                    <th className={table.th}>For</th>
-                    <th className={table.th}>Set By</th>
+                    <th className={`${table.th} ${table.stickyTh}`}>Room<Tip id="critical.col.room" /></th>
+                    <th className={table.th}>Branch<Tip id="critical.col.branch" /></th>
+                    <th className={table.th}>Room Type<Tip id="critical.col.roomType" /></th>
+                    <th className={table.th}>Out of Order Since<Tip id="critical.col.since" /></th>
+                    <th className={table.th}>For<Tip id="critical.col.for" /></th>
+                    <th className={table.th}>Set By<Tip id="critical.col.setBy" /></th>
                   </tr>
                 </thead>
                 <tbody>

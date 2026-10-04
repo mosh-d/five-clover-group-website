@@ -16,6 +16,7 @@ import { canManageRooms } from "@/lib/pms/auth";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import ManagerOnlyTag from "@/components/pms/ManagerOnlyTag";
 import { currentBranchId } from "@/lib/pms/session";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // ─── API Setup ────────────────────────────────────────────────────────────────
 
@@ -114,15 +115,15 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
       footer={
         <>
           <button type="button" onClick={onClose} className={btn.secondary}>Cancel</button>
-          <button type="button" onClick={handleSubmit} disabled={submitting} className={btn.primary}>
+          <WithTip id="rooms.add.submit"><button type="button" onClick={handleSubmit} disabled={submitting} className={btn.primary}>
             {submitting ? "Adding..." : "Add Room"}
-          </button>
+          </button></WithTip>
         </>
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Room Type Name *</label>
+          <label className={field.label}>Room Type Name *<Tip id="rooms.add.name" /></label>
           <input
             type="text"
             name="name"
@@ -134,7 +135,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Summary *</label>
+          <label className={field.label}>Summary *<Tip id="rooms.add.summary" /></label>
           <AutoGrowTextarea
             name="summary"
             value={form.summary}
@@ -146,7 +147,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Amenities *</label>
+          <label className={field.label}>Amenities *<Tip id="rooms.add.amenities" /></label>
           <input
             type="text"
             name="amenities"
@@ -159,7 +160,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
 
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Adult Capacity *</label>
+            <label className={field.label}>Adult Capacity *<Tip id="rooms.add.adults" /></label>
             <input
               type="number"
               name="adult_capacity"
@@ -171,7 +172,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Child Capacity *</label>
+            <label className={field.label}>Child Capacity *<Tip id="rooms.add.children" /></label>
             <input
               type="number"
               name="child_capacity"
@@ -186,7 +187,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
 
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Currency Symbol</label>
+            <label className={field.label}>Currency Symbol<Tip id="rooms.add.currency" /></label>
             <input
               type="text"
               name="currency_symbol"
@@ -197,7 +198,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Room Rate/Price *</label>
+            <label className={field.label}>Room Rate/Price *<Tip id="rooms.add.rate" /></label>
             <input
               type="number"
               name="base_rate"
@@ -211,7 +212,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Breakfast Price (₦)</label>
+          <label className={field.label}>Breakfast Price (₦)<Tip id="rooms.add.breakfast" /></label>
           <input
             type="number"
             name="breakfast_rate"
@@ -224,7 +225,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Max Capacity (no. of physical rooms) *</label>
+          <label className={field.label}>Max Capacity (no. of physical rooms) *<Tip id="rooms.add.capacity" /></label>
           <input
             type="number"
             name="max_capacity"
@@ -571,7 +572,7 @@ function ViewRoomModal({
       size="lg"
       footer={
         <>
-          <button
+          <WithTip id="rooms.view.delete"><button
             onClick={() => {
               console.log(
                 `AdminRooms: Delete Room clicked for room_type_id=${room.room_type_id} (${room.room_type_name}) — showing confirmation dialog`
@@ -582,7 +583,7 @@ function ViewRoomModal({
             className={btn.danger}
           >
             Delete Room
-          </button>
+          </button></WithTip>
           {!canManage && <ManagerOnlyTag />}
           <span className="mr-auto" />
           <button onClick={onClose} className={btn.secondary}>Close</button>
@@ -593,25 +594,25 @@ function ViewRoomModal({
           and Amenities are editable via updateRoomTypeDetails (previously
           settable only at creation time). */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <StatCard label="Available Rooms" value={room.available_rooms ?? "N/A"} />
-        <StatCard label="Adult Capacity" value={editingDetails ? "—" : room.adult_capacity ?? "N/A"} />
-        <StatCard label="Child Capacity" value={editingDetails ? "—" : room.child_capacity ?? "N/A"} />
+        <StatCard label="Available Rooms" tip="rooms.view.available" value={room.available_rooms ?? "N/A"} />
+        <StatCard label="Adult Capacity" tip="rooms.view.adults" value={editingDetails ? "—" : room.adult_capacity ?? "N/A"} />
+        <StatCard label="Child Capacity" tip="rooms.view.children" value={editingDetails ? "—" : room.child_capacity ?? "N/A"} />
       </div>
 
       <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
         <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-bold text-[color:var(--black)]">Summary, Amenities & Capacity</h3>
+          <h3 className="text-2xl font-bold text-[color:var(--black)]">Summary, Amenities & Capacity<Tip id="rooms.view.details" /></h3>
           {!canManage ? (
             <ManagerOnlyTag />
           ) : !editingDetails && (
-            <button onClick={() => setEditingDetails(true)} className={btn.secondary}>Edit</button>
+            <WithTip id="rooms.view.edit"><button onClick={() => setEditingDetails(true)} className={btn.secondary}>Edit</button></WithTip>
           )}
         </div>
 
         {editingDetails ? (
           <>
             <div className="flex flex-col gap-2">
-              <label className={field.label}>Summary</label>
+              <label className={field.label}>Summary<Tip id="rooms.view.summary" /></label>
               <AutoGrowTextarea
                 value={detailsForm.summary}
                 onChange={(e) => setDetailsForm({ ...detailsForm, summary: e.target.value })}
@@ -619,7 +620,7 @@ function ViewRoomModal({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className={field.label}>Amenities (comma-separated)</label>
+              <label className={field.label}>Amenities (comma-separated)<Tip id="rooms.view.amenities" /></label>
               <input
                 type="text"
                 placeholder="e.g. Free WiFi, AC, King Size Bed"
@@ -633,7 +634,7 @@ function ViewRoomModal({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Adult Capacity</label>
+                <label className={field.label}>Adult Capacity<Tip id="rooms.view.adultsField" /></label>
                 <input
                   type="number"
                   min="0"
@@ -643,7 +644,7 @@ function ViewRoomModal({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Child Capacity</label>
+                <label className={field.label}>Child Capacity<Tip id="rooms.view.childrenField" /></label>
                 <input
                   type="number"
                   min="0"
@@ -668,9 +669,9 @@ function ViewRoomModal({
               >
                 Cancel
               </button>
-              <button onClick={handleSaveDetails} disabled={savingDetails} className={btn.primary}>
+              <WithTip id="rooms.view.save"><button onClick={handleSaveDetails} disabled={savingDetails} className={btn.primary}>
                 {savingDetails ? "Saving..." : "Save"}
-              </button>
+              </button></WithTip>
             </div>
           </>
         ) : (
@@ -696,16 +697,19 @@ function ViewRoomModal({
           reality; Out of Order / Complementary are the manual flags staff
           set here. */}
       <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
+        <div className="flex items-center gap-2 w-full">
         <button
           type="button"
           onClick={() => setPhysicalRoomsExpanded((v) => !v)}
-          className="flex items-center justify-between w-full cursor-pointer"
+          className="flex items-center justify-between flex-1 cursor-pointer"
         >
           <h3 className="text-2xl font-bold text-[color:var(--black)]">
             Physical Rooms {physicalRooms && <span className="text-lg font-normal text-[color:var(--text-color)]/60">({physicalRooms.length})</span>}
           </h3>
           <span className="text-lg text-[color:var(--text-color)]/60">{physicalRoomsExpanded ? "Hide ▲" : "Show ▼"}</span>
         </button>
+        <Tip id="rooms.view.physical" />
+        </div>
         {physicalRoomsExpanded && (
         loadingStatus ? (
           <LoadingSpinner />
@@ -755,7 +759,7 @@ function ViewRoomModal({
       {/* Editable: Base Price + Breakfast Price */}
       <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
         <div className="flex justify-between items-center gap-3">
-          <h3 className="text-2xl font-bold text-[color:var(--black)]">Base Price (₦)</h3>
+          <h3 className="text-2xl font-bold text-[color:var(--black)]">Base Price (₦)<Tip id="rooms.view.basePrice" /></h3>
           {!canManage && <ManagerOnlyTag />}
         </div>
         {canManage ? (
@@ -768,16 +772,16 @@ function ViewRoomModal({
                 className={field.input}
                 min="0"
               />
-              <button
+              <WithTip id="rooms.view.updatePrice"><button
                 onClick={handleUpdatePrice}
                 disabled={updatingPrice}
                 className={`${btn.primary} whitespace-nowrap`}
               >
                 {updatingPrice ? "..." : "Update"}
-              </button>
+              </button></WithTip>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-lg font-semibold text-[color:var(--text-color)]/76">Breakfast Price (₦)</label>
+              <label className="text-lg font-semibold text-[color:var(--text-color)]/76">Breakfast Price (₦)<Tip id="rooms.view.breakfast" /></label>
               <input
                 type="number"
                 value={breakfastPriceInput}
@@ -798,7 +802,7 @@ function ViewRoomModal({
       {/* Editable: Max Capacity (physical rooms) */}
       <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
         <div className="flex justify-between items-center gap-3">
-          <h3 className="text-2xl font-bold text-[color:var(--black)]">Max Capacity (physical rooms)</h3>
+          <h3 className="text-2xl font-bold text-[color:var(--black)]">Max Capacity (physical rooms)<Tip id="rooms.view.capacity" /></h3>
           {!canManage && <ManagerOnlyTag />}
         </div>
         {!canManage ? (
@@ -813,13 +817,13 @@ function ViewRoomModal({
             disabled={refreshing}
             min="1"
           />
-          <button
+          <WithTip id="rooms.view.updateCapacity"><button
             onClick={handleUpdateCapacity}
             disabled={updatingCapacity || refreshing}
             className={`${btn.primary} whitespace-nowrap`}
           >
             {updatingCapacity ? "..." : refreshing ? "Syncing..." : "Update"}
-          </button>
+          </button></WithTip>
         </div>
         )}
       </section>
@@ -844,9 +848,9 @@ function ViewRoomModal({
             </div>
             <div className="flex gap-4 justify-center pt-2">
               <button onClick={() => setConfirmCapacityDecrease(false)} className={btn.secondary}>Cancel</button>
-              <button onClick={handleUpdateCapacity} disabled={updatingCapacity} className={btn.dangerSolid}>
+              <WithTip id="rooms.confirm.reduce"><button onClick={handleUpdateCapacity} disabled={updatingCapacity} className={btn.dangerSolid}>
                 {updatingCapacity ? "Reducing..." : "Yes, Reduce"}
-              </button>
+              </button></WithTip>
             </div>
           </div>
         </div>
@@ -876,7 +880,7 @@ function ViewRoomModal({
             </div>
             <div className="flex gap-4 justify-center pt-2">
               <button onClick={() => setConfirmStatusChange(null)} className={btn.secondary}>Cancel</button>
-              <button
+              <WithTip id="rooms.confirm.status"><button
                 onClick={() =>
                   // confirmStatusChange is already set, so handleSetRoomStatus's
                   // guard is skipped regardless of what's passed here — this call
@@ -892,7 +896,7 @@ function ViewRoomModal({
                 className={btn.dangerSolid}
               >
                 {statusUpdatingId === confirmStatusChange.roomInventoryId ? "Applying..." : "Yes, Continue"}
-              </button>
+              </button></WithTip>
             </div>
           </div>
         </div>
@@ -950,13 +954,13 @@ function ViewRoomModal({
                 Cancel
               </button>
 
-              <button
+              <WithTip id="rooms.confirm.delete"><button
                 onClick={handleDelete}
                 disabled={deleting}
                 className={btn.dangerSolid}
               >
                 {deleting ? "Deleting..." : "Yes, Delete"}
-              </button>
+              </button></WithTip>
             </div>
           </div>
         </div>
@@ -965,10 +969,10 @@ function ViewRoomModal({
   );
 }
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, tip }) {
   return (
     <div className="bg-[color:var(--text-color)]/3 rounded-lg px-5 py-4">
-      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}</p>
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}{tip && <Tip id={tip} />}</p>
       <p className="text-2xl font-bold text-[color:var(--black)]">{value}</p>
     </div>
   );
@@ -1273,10 +1277,10 @@ export default function AdminRoomsPage() {
         className="flex flex-col items-start gap-[3rem]"
       >
         <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
-          <PageHeading icon={IoBedOutline}>Rooms</PageHeading>
+          <PageHeading icon={IoBedOutline} tipId="rooms.page">Rooms</PageHeading>
           <div className="flex items-center gap-3">
             {!canManage && <ManagerOnlyTag />}
-            <button
+            <WithTip id="rooms.add"><button
               onClick={() => {
                 console.log("AdminRooms: Opening Add Room modal");
                 setShowAddModal(true);
@@ -1285,7 +1289,7 @@ export default function AdminRoomsPage() {
               className={`${btn.primary} whitespace-nowrap`}
             >
               + Add Room
-            </button>
+            </button></WithTip>
           </div>
         </div>
 
@@ -1295,14 +1299,14 @@ export default function AdminRoomsPage() {
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Room Type</th>
+                  <th className={`${table.th} ${table.stickyTh}`}>Room Type<Tip id="rooms.col.roomType" /></th>
                   <th className={`${table.th} hidden md:table-cell`}>
                     <span className="inline-flex items-center gap-3">
                       Price (₦)
                       {!canManage && <ManagerOnlyTag />}
                     </span>
-                  </th>
-                  <th className={table.th}>Actions</th>
+                  <Tip id="rooms.col.price" /></th>
+                  <th className={table.th}>Actions<Tip id="rooms.col.actions" /></th>
                 </tr>
               </thead>
 

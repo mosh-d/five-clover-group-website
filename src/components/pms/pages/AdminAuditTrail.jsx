@@ -19,6 +19,7 @@ import { usePmsSession } from "@/components/pms/PmsSessionContext";
 
 import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
+import { Tip } from "@/components/pms/Tip";
 // Maps a Phase-2 rich entry's entity_type to the deep link that opens it.
 // Two different existing conventions get reused here, each already built
 // for a different page: AdminFolios.jsx/AdminReservations.jsx read ?id=
@@ -289,7 +290,7 @@ export default function AdminAuditTrail() {
   return (
     <div data-component="AdminAuditTrail" className="flex flex-col items-start gap-[3rem]">
       <div>
-        <PageHeading icon={IoDocumentTextOutline}>Audit Trail</PageHeading>
+        <PageHeading icon={IoDocumentTextOutline} tipId="auditTrail.page">Audit Trail</PageHeading>
         <p className="text-2xl text-[color:var(--text-color)]/76 mt-2">
           {isHeadOffice
             ? "A record of actions taken by staff at any branch - or at Head Office, by Head Office's own accounts."
@@ -299,7 +300,7 @@ export default function AdminAuditTrail() {
 
       {isHeadOffice && (
         <div className="flex flex-col gap-2">
-          <label htmlFor="audit-place" className={field.label}>Branch</label>
+          <label htmlFor="audit-place" className={field.label}>Branch<Tip id="auditTrail.branch" /></label>
           <select id="audit-place" value={place} onChange={(e) => choosePlace(e.target.value)} className={field.select}>
             <option value="">-- Select a branch --</option>
             <option value={HEAD_OFFICE}>Head Office</option>
@@ -317,7 +318,7 @@ export default function AdminAuditTrail() {
 
       <div className="w-full flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2 flex-1 min-w-64">
-          <label className={field.label}>Search</label>
+          <label className={field.label}>Search<Tip id="auditTrail.search" /></label>
           <input
             type="text"
             placeholder="Guest name, staff, action…"
@@ -328,7 +329,7 @@ export default function AdminAuditTrail() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Staff</label>
+          <label className={field.label}>Staff<Tip id="auditTrail.staff" /></label>
           <select
             value={filterStaffId}
             onChange={(e) => applyFilters({ staffId: e.target.value })}
@@ -344,7 +345,7 @@ export default function AdminAuditTrail() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Role</label>
+          <label className={field.label}>Role<Tip id="auditTrail.role" /></label>
           <select
             value={filterRole}
             onChange={(e) => applyFilters({ role: e.target.value })}
@@ -358,7 +359,7 @@ export default function AdminAuditTrail() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Action</label>
+          <label className={field.label}>Action<Tip id="auditTrail.action" /></label>
           <select
             value={filterAction}
             onChange={(e) => applyFilters({ action: e.target.value })}
@@ -372,7 +373,7 @@ export default function AdminAuditTrail() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>From</label>
+          <label className={field.label}>From<Tip id="auditTrail.from" /></label>
           <DateInput
             value={filterFrom}
             onChange={(e) => {
@@ -385,7 +386,7 @@ export default function AdminAuditTrail() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>To</label>
+          <label className={field.label}>To<Tip id="auditTrail.to" /></label>
           <DateInput
             value={filterTo}
             min={filterFrom || undefined}
@@ -415,10 +416,10 @@ export default function AdminAuditTrail() {
                 <table className={table.el}>
                   <thead>
                     <tr className={table.headRow}>
-                      <th className={`${table.th} ${table.stickyTh}`}>Staff</th>
-                      <th className={table.th}>When</th>
-                      <th className={`${table.th} hidden md:table-cell`}>Role</th>
-                      <th className={table.th}>Action</th>
+                      <th className={`${table.th} ${table.stickyTh}`}>Staff<Tip id="auditTrail.col.staff" /></th>
+                      <th className={table.th}>When<Tip id="auditTrail.col.when" /></th>
+                      <th className={`${table.th} hidden md:table-cell`}>Role<Tip id="auditTrail.col.role" /></th>
+                      <th className={table.th}>Action<Tip id="auditTrail.col.action" /></th>
                     </tr>
                   </thead>
                   <tbody>

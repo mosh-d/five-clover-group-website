@@ -16,6 +16,7 @@ import { fetchRoomChart } from "@/lib/pms/api/reservations-pms-api";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import { withGuestTags } from "@/lib/pms/guest-tags";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 const DAYS_VISIBLE = 14;
 const DAY_MS = 86400000;
@@ -230,9 +231,10 @@ export default function AdminRoomChartPage() {
       className='flex flex-col items-start gap-[3rem]'
     >
       <div className='w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4'>
-        <PageHeading icon={IoAppsOutline}>Room Chart</PageHeading>
+        <PageHeading icon={IoAppsOutline} tipId="roomChart.page">Room Chart</PageHeading>
 
         <div className='flex flex-col items-start gap-3 flex-wrap'>
+          <div className='flex items-center'>
           <input
             type='date'
             value={isoDate(windowStart)}
@@ -243,25 +245,27 @@ export default function AdminRoomChartPage() {
             className='border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]'
             title='Jump to a date — it becomes the leftmost column'
           />
+          <Tip id="roomChart.date" />
+          </div>
           <div className='flex items-center gap-3'>
-            <button
+            <WithTip id="roomChart.previous"><button
               onClick={() => setWindowStart((d) => addDays(d, -DAYS_VISIBLE))}
               className={`${btn.secondary} flex items-center gap-1`}
             >
               <IoChevronBack size={18} /> Previous
-            </button>
-            <button
+            </button></WithTip>
+            <WithTip id="roomChart.today"><button
               onClick={() => setWindowStart(startOfDay(new Date()))}
               className={btn.secondary}
             >
               Today
-            </button>
-            <button
+            </button></WithTip>
+            <WithTip id="roomChart.next"><button
               onClick={() => setWindowStart((d) => addDays(d, DAYS_VISIBLE))}
               className={`${btn.secondary} flex items-center gap-1`}
             >
               Next <IoChevronForward size={18} />
-            </button>
+            </button></WithTip>
           </div>
         </div>
       </div>
@@ -292,6 +296,7 @@ export default function AdminRoomChartPage() {
           <span className='w-4 h-4 rounded bg-slate-400 inline-block' />{' '}
           Completed
         </span>
+        <Tip id="roomChart.legend" />
       </div>
 
       {loading ?

@@ -9,6 +9,7 @@ import useHqLive from "@/components/pms/live/useHqLive";
 import { page, field, table, card } from "@/components/pms/ui";
 import { fetchOutOfOrderRanking } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
+import { Tip } from "@/components/pms/Tip";
 
 // Decision Support (Head Office, owner 2026-10-01): insights pulled from the
 // branches' own records, each with a plain suggestion of what to do. First
@@ -84,17 +85,17 @@ function suggestion(group) {
 }
 
 // A small ranking table: its first column pinned, as every PMS table's is.
-function FocusTable({ title, head, rows }) {
+function FocusTable({ title, head, rows, tip, headTips = [] }) {
   return (
     <div className="w-full flex flex-col gap-2">
-      <h3 className="text-2xl font-semibold text-(--text-color)">{title}</h3>
+      <h3 className="text-2xl font-semibold text-(--text-color)">{title}{tip && <Tip id={tip} />}</h3>
       <div className={table.card}>
         <div className={table.scroll}>
           <table className={table.el}>
             <thead>
               <tr className={table.headRow}>
                 {head.map((h, i) => (
-                  <th key={i} className={`${table.th} ${i === 0 ? table.stickyTh : ""}`}>{h}</th>
+                  <th key={i} className={`${table.th} ${i === 0 ? table.stickyTh : ""}`}>{h}{headTips[i] && <Tip id={headTips[i]} />}</th>
                 ))}
               </tr>
             </thead>
@@ -171,7 +172,7 @@ export default function DecisionSupportPage() {
   return (
     <div className={page.wrap}>
       <div>
-        <PageHeading icon={IoBulbOutline}>Decision Support</PageHeading>
+        <PageHeading icon={IoBulbOutline} tipId="decisionSupport.page">Decision Support</PageHeading>
         <p className={`text-2xl mt-2 ${page.muted}`}>Key insights from across the branches, with what to do about them.</p>
       </div>
 
@@ -184,7 +185,7 @@ export default function DecisionSupportPage() {
 
       <section className="w-full flex flex-col gap-6">
         <div>
-          <h2 className={page.sectionTitle}>Out of Order Rooms: What to Fix First</h2>
+          <h2 className={page.sectionTitle}>Out of Order Rooms: What to Fix First<Tip id="decisionSupport.ooo" /></h2>
           {data && (
             <p className={`text-xl mt-1 ${page.muted}`}>
               {rooms.length === 0
@@ -202,7 +203,7 @@ export default function DecisionSupportPage() {
 
         {categories.length > 0 && (
           <div className={`${card.surface} border-2 border-(--emphasis) p-8 flex flex-col gap-3`}>
-            <p className="text-xl font-bold uppercase tracking-wide text-(--emphasis)">{costly.length > 0 ? "Suggested: fix these first" : "Suggested"}</p>
+            <p className="text-xl font-bold uppercase tracking-wide text-(--emphasis)">{costly.length > 0 ? "Suggested: fix these first" : "Suggested"}<Tip id="decisionSupport.suggested" /></p>
             {costly.length > 0 ? (
               <ol className="flex flex-col gap-2 list-decimal pl-6">
                 {costly.slice(0, 3).map((g) => (
@@ -221,26 +222,26 @@ export default function DecisionSupportPage() {
           // One above the other: side by side, the room-type table ran
           // wider than its half and hid its last column.
           <div className="w-full flex flex-col gap-6">
-            <FocusTable title="By branch" head={["Branch", <OooLabel key="ooo" label="Rooms OOO" />, "Potential Loss"]} rows={byBranch} />
-            <FocusTable title="By room type" head={["Room Type", <OooLabel key="ooo" />, "Sold-Out Nights", "Potential Loss"]} rows={byType} />
+            <FocusTable title="By branch" tip="decisionSupport.byBranch" head={["Branch", <OooLabel key="ooo" label="Rooms OOO" />, "Potential Loss"]} headTips={["decisionSupport.col.branch", null, "decisionSupport.col.loss"]} rows={byBranch} />
+            <FocusTable title="By room type" tip="decisionSupport.byType" head={["Room Type", <OooLabel key="ooo" />, "Sold-Out Nights", "Potential Loss"]} headTips={["decisionSupport.col.roomType", null, "decisionSupport.col.soldOut", "decisionSupport.col.loss"]} rows={byType} />
           </div>
         )}
 
         {rooms.length > 0 && (
           <div className="w-full flex flex-col gap-2">
-            <h3 className="text-2xl font-semibold text-(--text-color)">Every room out of order, ranked</h3>
+            <h3 className="text-2xl font-semibold text-(--text-color)">Every room out of order, ranked<Tip id="decisionSupport.ranked" /></h3>
             <div className={table.card}>
               <div className={table.scroll}>
                 <table className={table.el}>
                   <thead>
                     <tr className={table.headRow}>
-                      <th className={`${table.th} ${table.stickyTh}`}>Room</th>
-                      <th className={table.th}>Branch</th>
-                      <th className={table.th}>Room Type</th>
-                      <th className={table.th}>Price a Night</th>
+                      <th className={`${table.th} ${table.stickyTh}`}>Room<Tip id="decisionSupport.col.room" /></th>
+                      <th className={table.th}>Branch<Tip id="decisionSupport.col.branch" /></th>
+                      <th className={table.th}>Room Type<Tip id="critical.col.roomType" /></th>
+                      <th className={table.th}>Price a Night<Tip id="decisionSupport.col.price" /></th>
                       <th className={table.th}><OooLabel label="OOO For" /></th>
-                      <th className={table.th}>Sold-Out Nights</th>
-                      <th className={table.th}>Potential Loss</th>
+                      <th className={table.th}>Sold-Out Nights<Tip id="decisionSupport.col.roomSoldOut" /></th>
+                      <th className={table.th}>Potential Loss<Tip id="decisionSupport.col.roomLoss" /></th>
                     </tr>
                   </thead>
                   <tbody>

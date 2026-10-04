@@ -4,6 +4,7 @@
 // Carried over from the branch PMS's components/shared/PaymentSplitRows.jsx (2026-09-28).
 import { field, btn } from "@/components/pms/ui";
 import { formatPaymentMethod, PAYMENT_METHODS } from "@/lib/pms/format";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // A guest can pay/deposit partly with one method and partly with another
 // (e.g. ₦30k cash + ₦20k transfer) in a single action — this renders that as
@@ -21,7 +22,7 @@ export default function PaymentSplitRows({ splits, setSplits }) {
       {splits.map((s, i) => (
         <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end max-sm:grid-cols-1">
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Amount (₦) *</label>
+            <label className={field.label}>Amount (₦) *{i === 0 && <Tip id="split.amount" />}</label>
             <input
               type="number"
               value={s.amount}
@@ -30,7 +31,7 @@ export default function PaymentSplitRows({ splits, setSplits }) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Method *</label>
+            <label className={field.label}>Method *{i === 0 && <Tip id="split.method" />}</label>
             <select value={s.payment_method} onChange={(e) => updateSplit(i, { payment_method: e.target.value })} className={field.select}>
               {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{formatPaymentMethod(m)}</option>)}
             </select>
@@ -42,9 +43,9 @@ export default function PaymentSplitRows({ splits, setSplits }) {
           )}
         </div>
       ))}
-      <button type="button" onClick={addSplit} className={`${btn.secondary} self-start text-lg! px-6! pt-3! pb-3!`}>
+      <WithTip id="split.addMethod"><button type="button" onClick={addSplit} className={`${btn.secondary} self-start text-lg! px-6! pt-3! pb-3!`}>
         + Add another method
-      </button>
+      </button></WithTip>
     </div>
   );
 }

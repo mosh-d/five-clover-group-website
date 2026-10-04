@@ -11,6 +11,7 @@ import { pathAfterSignIn } from "@/components/pms/pmsNavItems";
 import { btn, field } from "@/components/pms/ui";
 import { pmsSignIn, PmsApiError } from "@/lib/pms/client";
 import { readPmsSession, markJustSignedIn, hasBeenIdleTooLong, clearPmsSession } from "@/lib/pms/session";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // fivecloverhotels.com/pms - one sign-in for every branch, and for Head
 // Office (owner, 2026-10-01; it had its own at /hq). The account says where:
@@ -97,14 +98,14 @@ export default function PmsSignInPage() {
       <section className="w-full max-w-lg shrink-0">
         <form onSubmit={handleSubmit} className="w-full max-w-lg flex flex-col gap-7 rounded-2xl p-12 shadow-sm bg-(--card) border border-(--accent-2)">
           <div className="flex flex-col gap-2">
-            <h2 className="font-accent text-5xl font-bold">Sign in</h2>
+            <h2 className="font-accent text-5xl font-bold">Sign in<Tip id="signIn.form" /></h2>
             <p className="text-2xl text-(--text-color)/68">Use your PMS username and password.</p>
           </div>
 
           {error && <p className={field.error}>{error}</p>}
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="username" className={field.label}>Username</label>
+            <label htmlFor="username" className={field.label}>Username<Tip id="signIn.username" /></label>
             <input
               id="username"
               type="text"
@@ -118,14 +119,15 @@ export default function PmsSignInPage() {
           <PasswordField
             id="password"
             label="Password"
+            tip="signIn.password"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button type="submit" disabled={submitting || !username.trim() || !password} className={btn.primary}>
+          <WithTip id="signIn.submit"><button type="submit" disabled={submitting || !username.trim() || !password} className={btn.primary}>
             {submitting ? "Signing in..." : "Sign in"}
-          </button>
+          </button></WithTip>
         </form>
       </section>
 

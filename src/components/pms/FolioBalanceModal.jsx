@@ -10,6 +10,7 @@ import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { chargeTypeLabel, settlementByCharge } from "@/components/pms/folioCharges";
 import { formatDateTime, money } from "@/lib/pms/format";
 import { btn, field } from "@/components/pms/ui";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // Compact — a balance summary + payment form, not the full Folio Detail
 // experience (no tax/discount, refunds, or closing here; that stays
@@ -48,9 +49,9 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
       ) : folioDetail && (
         <>
           <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-1">
-            <FolioStat label="Balance" value={isOutstanding ? money(folioDetail.balance) : isCredit ? `Credit: ${money(Math.abs(balance))}` : "Settled"} tone={isOutstanding ? "danger" : isCredit ? "success" : "default"} />
-            <FolioStat label="Total Charged" value={money(folioDetail.total_amount)} />
-            <FolioStat label="Total Paid" value={money(folioDetail.total_received ?? folioDetail.amount_paid)} />
+            <FolioStat label="Balance" tip="folioModal.balance" value={isOutstanding ? money(folioDetail.balance) : isCredit ? `Credit: ${money(Math.abs(balance))}` : "Settled"} tone={isOutstanding ? "danger" : isCredit ? "success" : "default"} />
+            <FolioStat label="Total Charged" tip="folioModal.charged" value={money(folioDetail.total_amount)} />
+            <FolioStat label="Total Paid" tip="folioModal.paid" value={money(folioDetail.total_received ?? folioDetail.amount_paid)} />
           </div>
 
           {/* The full charge list, same treatment as AdminNonGuestSales'
@@ -58,7 +59,7 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
               only, which hid most of a stay's food and drink and left the
               visible rows unable to account for the Total Charged above. */}
           <div className="flex flex-col gap-3 pt-4 border-t border-(--accent-2)">
-            <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Charges</p>
+            <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Charges<Tip id="folioModal.charges" /></p>
             {!folioDetail.items?.length ? (
               <p className="text-xl text-[color:var(--text-color)]/76">No charges yet.</p>
             ) : (
@@ -96,12 +97,12 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
           </div>
 
           <div className="flex flex-col gap-4 pt-4 border-t border-(--accent-2)">
-            <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Record Payment</p>
+            <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Record Payment<Tip id="folioModal.recordPayment" /></p>
             {paymentError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3 w-full">{paymentError}</p>}
             <PaymentSplitRows splits={paymentForm.splits} setSplits={(splits) => setPaymentForm({ ...paymentForm, splits })} />
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Receipt Number (optional)</label>
+                <label className={field.label}>Receipt Number (optional)<Tip id="folioModal.receipt" /></label>
                 <input
                   type="text"
                   placeholder="Leave blank to have the system generate one"
@@ -111,17 +112,17 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Notes (optional)</label>
+                <label className={field.label}>Notes (optional)<Tip id="folioModal.notes" /></label>
                 <AutoGrowTextarea value={paymentForm.notes} onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })} className={field.textarea} />
               </div>
             </div>
-            <button
+            <WithTip id="folioModal.recordButton"><button
               onClick={onRecordPayment}
               disabled={recordingPayment || !hasValidPaymentSplits}
               className={`${btn.primary} self-start`}
             >
               {recordingPayment ? "Recording..." : "Record Payment"}
-            </button>
+            </button></WithTip>
           </div>
         </>
       )}
@@ -129,11 +130,11 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
   );
 }
 
-function FolioStat({ label, value, tone }) {
+function FolioStat({ label, value, tone, tip }) {
   const valueColor = tone === "danger" ? "text-red-600" : tone === "success" ? "text-green-700" : "text-[color:var(--black)]";
   return (
     <div className="bg-[color:var(--text-color)]/5 border-1 border-gray-200 rounded-lg px-5 py-4">
-      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}</p>
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}{tip && <Tip id={tip} />}</p>
       <p className={`text-2xl font-bold ${valueColor} truncate`}>{value}</p>
     </div>
   );

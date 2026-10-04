@@ -33,6 +33,7 @@ import {
 } from "@/lib/pms/api/non-guest-folios-api";
 import Pagination from "@/components/pms/Pagination";
 import { PAGE_SIZE } from "@/components/pms/usePagedRows";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 const emptyRow = { reference_id: "", laundry_service_type: "wash_and_iron", quantity: 1 };
 const emptyNewFolio = { guest_name: "", guest_phone: "", bill_no: "", rows: [{ ...emptyRow }] };
@@ -183,7 +184,7 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
   const canAccessLaundry = ["receptionist", "manager", "developer"].includes(getStoredStaffRole());
   if (!canAccessLaundry) {
     return (
-      <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoShirtOutline} title={title} dataComponent="AdminLaundrySales">
+      <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoShirtOutline} title={title} tipId="laundryNonGuestSales.page" dataComponent="AdminLaundrySales">
         <p className="text-2xl text-[color:var(--text-color)]/68">
           You don&apos;t have permission to view this page.
         </p>
@@ -192,7 +193,7 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
   }
 
   return (
-    <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoShirtOutline} title={title} dataComponent="AdminLaundrySales">
+    <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoShirtOutline} title={title} tipId="laundryNonGuestSales.page" dataComponent="AdminLaundrySales">
       <p className="text-xl text-[color:var(--text-color)]/76">
         Laundry for a non-guest customer. An in-house guest&apos;s laundry goes on the Guest Sales tab, charged to their own folio.
       </p>
@@ -201,22 +202,22 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
 
       {/* ── New sale ── */}
       <div className="w-full bg-(--card) rounded-xl border border-(--accent-2) p-8 flex flex-col gap-6">
-        <h2 className="text-3xl font-bold text-[color:var(--black)]">New Laundry Sale</h2>
+        <h2 className="text-3xl font-bold text-[color:var(--black)]">New Laundry Sale<Tip id="laundrySales.new" /></h2>
 
         <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-1">
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Customer Name (optional)</label>
+            <label className={field.label}>Customer Name (optional)<Tip id="laundrySales.name" /></label>
             <input type="text" value={newFolio.guest_name} className={field.input}
               placeholder="Not needed to record — add it if the bill might go unpaid a while"
               onChange={(e) => setNewFolio({ ...newFolio, guest_name: e.target.value })} />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Phone (optional)</label>
+            <label className={field.label}>Phone (optional)<Tip id="laundrySales.phone" /></label>
             <PhoneInput value={newFolio.guest_phone} onChange={(v) => setNewFolio({ ...newFolio, guest_phone: v })}
               selectClassName={field.select} inputClassName={field.input} />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Bill No (optional)</label>
+            <label className={field.label}>Bill No (optional)<Tip id="laundrySales.billNo" /></label>
             <input type="text" value={newFolio.bill_no} className={field.input}
               onChange={(e) => setNewFolio({ ...newFolio, bill_no: e.target.value })} />
           </div>
@@ -226,7 +227,7 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
           {newFolio.rows.map((row, index) => (
             <div key={index} className="grid grid-cols-4 gap-4 max-sm:grid-cols-1 items-end">
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Clothes</label>
+                <label className={field.label}>Clothes{index === 0 && <Tip id="laundry.clothes" />}</label>
                 <select value={row.reference_id} className={field.select}
                   onChange={(e) => setRow(index, { reference_id: e.target.value })}>
                   <option value="">-- Select --</option>
@@ -234,14 +235,14 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
                 </select>
               </div>
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Type</label>
+                <label className={field.label}>Type{index === 0 && <Tip id="laundry.type" />}</label>
                 <select value={row.laundry_service_type} className={field.select}
                   onChange={(e) => setRow(index, { laundry_service_type: e.target.value })}>
                   {SERVICE_TYPES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
-                <label className={field.label}>Number of Items</label>
+                <label className={field.label}>Number of Items{index === 0 && <Tip id="laundry.count" />}</label>
                 <input type="number" min={1} value={row.quantity} className={field.input}
                   onChange={(e) => setRow(index, { quantity: e.target.value })} />
               </div>
@@ -256,23 +257,23 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
               </div>
             </div>
           ))}
-          <button type="button" className={`${btn.secondary} self-start`}
+          <WithTip id="laundry.addRow"><button type="button" className={`${btn.secondary} self-start`}
             onClick={() => setNewFolio((p) => ({ ...p, rows: [...p.rows, { ...emptyRow }] }))}>
             Add another item
-          </button>
+          </button></WithTip>
         </div>
 
         <div className="flex justify-between items-center border-t border-(--accent-2) pt-4">
-          <span className="text-2xl font-bold">Total: {money(orderTotal)}</span>
-          <button disabled={!orderValid || submitting} onClick={handleCreate} className={btn.primary}>
+          <span className="text-2xl font-bold">Total: {money(orderTotal)}<Tip id="laundrySales.total" /></span>
+          <WithTip id="laundrySales.record"><button disabled={!orderValid || submitting} onClick={handleCreate} className={btn.primary}>
             {submitting ? "Recording..." : "Record Sale"}
-          </button>
+          </button></WithTip>
         </div>
       </div>
 
       {/* ── Existing folios ── */}
       <div className="w-full flex flex-col gap-4">
-        <h2 className="text-3xl font-bold text-[color:var(--black)]">Laundry Folios</h2>
+        <h2 className="text-3xl font-bold text-[color:var(--black)]">Laundry Folios<Tip id="laundrySales.folios" /></h2>
         {loading ? (
           <LoadingSpinner size="lg" />
         ) : (
@@ -281,14 +282,14 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>
-                    <th className={`${table.th} ${table.stickyTh}`}>Customer</th>
-                    <th className={table.th}>Folio #</th>
-                    <th className={table.th}>Date &amp; Time</th>
-                    <th className={table.th}>Total</th>
-                    <th className={table.th}>Paid</th>
-                    <th className={table.th}>Balance</th>
-                    <th className={`${table.th} hidden md:table-cell`}>Payment Status</th>
-                    <th className={table.th}>Actions</th>
+                    <th className={`${table.th} ${table.stickyTh}`}>Customer<Tip id="laundrySales.col.customer" /></th>
+                    <th className={table.th}>Folio #<Tip id="laundrySales.col.folio" /></th>
+                    <th className={table.th}>Date &amp; Time<Tip id="laundrySales.col.dateTime" /></th>
+                    <th className={table.th}>Total<Tip id="laundrySales.col.total" /></th>
+                    <th className={table.th}>Paid<Tip id="laundrySales.col.paid" /></th>
+                    <th className={table.th}>Balance<Tip id="laundrySales.col.balance" /></th>
+                    <th className={`${table.th} hidden md:table-cell`}>Payment Status<Tip id="laundrySales.col.status" /></th>
+                    <th className={table.th}>Actions<Tip id="laundrySales.col.actions" /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -395,13 +396,13 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
             {note && <p className="text-blue-800 text-xl bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 w-full">{note}</p>}
 
             <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-1">
-              <Stat label="Balance" value={Number(detail.balance) > 0 ? money(detail.balance) : "Settled"} danger={Number(detail.balance) > 0} />
-              <Stat label="Total" value={money(detail.total_amount)} />
-              <Stat label="Paid" value={money(detail.amount_paid)} />
+              <Stat label="Balance" tip="laundrySales.sum.balance" value={Number(detail.balance) > 0 ? money(detail.balance) : "Settled"} danger={Number(detail.balance) > 0} />
+              <Stat label="Total" tip="laundrySales.sum.total" value={money(detail.total_amount)} />
+              <Stat label="Paid" tip="laundrySales.sum.paid" value={money(detail.amount_paid)} />
             </div>
 
             <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-              <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges</h3>
+              <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges<Tip id="laundrySales.charges" /></h3>
               {(!detail.items || detail.items.length === 0) ? (
                 <p className="text-xl text-[color:var(--text-color)]/76">No charges yet.</p>
               ) : (
@@ -426,7 +427,7 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
               {detail.status !== "closed" && (
                 <div className="grid grid-cols-4 gap-4 max-sm:grid-cols-1 items-end mt-2">
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Clothes</label>
+                    <label className={field.label}>Clothes<Tip id="laundry.clothes" /></label>
                     <select value={charge.reference_id} className={field.select}
                       onChange={(e) => setCharge({ ...charge, reference_id: e.target.value })}>
                       <option value="">-- Select --</option>
@@ -434,18 +435,18 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
                     </select>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Type</label>
+                    <label className={field.label}>Type<Tip id="laundry.type" /></label>
                     <select value={charge.laundry_service_type} className={field.select}
                       onChange={(e) => setCharge({ ...charge, laundry_service_type: e.target.value })}>
                       {SERVICE_TYPES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                     </select>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Number of Items</label>
+                    <label className={field.label}>Number of Items<Tip id="laundry.count" /></label>
                     <input type="number" min={1} value={charge.quantity} className={field.input}
                       onChange={(e) => setCharge({ ...charge, quantity: e.target.value })} />
                   </div>
-                  <button disabled={busy || !chargeValid} className={btn.secondary}
+                  <WithTip id="laundrySales.addCharge"><button disabled={busy || !chargeValid} className={btn.secondary}
                     onClick={() => run(async () => {
                       await addNonGuestFolioItem(folio.id, {
                         item_kind: "laundry",
@@ -456,36 +457,36 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
                       setCharge({ ...emptyRow });
                     })}>
                     Add Charge
-                  </button>
+                  </button></WithTip>
                 </div>
               )}
             </section>
 
             <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-              <h3 className="text-2xl font-bold text-[color:var(--black)]">Customer</h3>
+              <h3 className="text-2xl font-bold text-[color:var(--black)]">Customer<Tip id="laundrySales.customer" /></h3>
               <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                 <div className="flex flex-col gap-2">
-                  <label className={field.label}>Name</label>
+                  <label className={field.label}>Name<Tip id="laundrySales.customer.name" /></label>
                   <input type="text" value={guestInfo.guest_name} className={field.input}
                     onChange={(e) => setGuestInfo({ ...guestInfo, guest_name: e.target.value })} />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={field.label}>Phone</label>
+                  <label className={field.label}>Phone<Tip id="laundrySales.customer.phone" /></label>
                   <PhoneInput value={guestInfo.guest_phone} onChange={(v) => setGuestInfo({ ...guestInfo, guest_phone: v })}
                     selectClassName={field.select} inputClassName={field.input} />
                 </div>
               </div>
-              <button
+              <WithTip id="laundrySales.customer.save"><button
                 disabled={busy || (guestInfo.guest_name === (detail.guest_name || "") && guestInfo.guest_phone === (detail.guest_phone || ""))}
                 className={`${btn.secondary} self-start`}
                 onClick={() => run(() => updateNonGuestFolioGuestInfo(folio.id, guestInfo))}>
                 Save Customer Info
-              </button>
+              </button></WithTip>
             </section>
 
             {detail.status !== "closed" && credits.length > 0 && (
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-blue-700">Credit on File</h3>
+                <h3 className="text-2xl font-bold text-blue-700">Credit on File<Tip id="laundrySales.creditOnFile" /></h3>
                 {credits.map((c) => (
                   <div key={c.id} className="flex justify-between items-center gap-4 bg-blue-50 border border-blue-200 rounded-lg px-5 py-3 text-xl">
                     <span>
@@ -509,21 +510,21 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
 
             {detail.status !== "closed" && (
               <section className="flex flex-col gap-4 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Record Payment</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Record Payment<Tip id="laundrySales.recordPayment" /></h3>
                 <PaymentSplitRows splits={payment.splits} setSplits={(splits) => setPayment({ ...payment, splits })} />
                 <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Receipt Number (optional)</label>
+                    <label className={field.label}>Receipt Number (optional)<Tip id="laundrySales.receipt" /></label>
                     <input type="text" value={payment.receipt_number} className={field.input}
                       onChange={(e) => setPayment({ ...payment, receipt_number: e.target.value })} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Notes (optional)</label>
+                    <label className={field.label}>Notes (optional)<Tip id="laundrySales.notes" /></label>
                     <AutoGrowTextarea value={payment.notes} className={field.textarea}
                       onChange={(e) => setPayment({ ...payment, notes: e.target.value })} />
                   </div>
                 </div>
-                <button disabled={busy || validSplits.length === 0} className={`${btn.primary} self-start`}
+                <WithTip id="laundrySales.recordPaymentButton"><button disabled={busy || validSplits.length === 0} className={`${btn.primary} self-start`}
                   onClick={() => run(async () => {
                     const result = await recordNonGuestPayment({
                       non_guest_folio_id: folio.id,
@@ -551,7 +552,7 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
                     });
                   })}>
                   {busy ? "Recording..." : "Record Payment"}
-                </button>
+                </button></WithTip>
               </section>
             )}
           </>
@@ -565,10 +566,10 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
   );
 }
 
-function Stat({ label, value, danger }) {
+function Stat({ label, value, danger, tip }) {
   return (
     <div className="bg-[color:var(--text-color)]/5 border-1 border-gray-200 rounded-lg px-5 py-4">
-      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}</p>
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}{tip && <Tip id={tip} />}</p>
       <p className={`text-2xl font-bold truncate ${danger ? "text-red-600" : "text-[color:var(--black)]"}`}>{value}</p>
     </div>
   );

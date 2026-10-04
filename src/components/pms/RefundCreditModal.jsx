@@ -6,6 +6,7 @@ import { useState } from "react";
 import Modal from "@/components/pms/Modal";
 import { btn, field } from "@/components/pms/ui";
 import { money, formatPaymentMethod, PAYMENT_METHODS } from "@/lib/pms/format";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // Paying a guest's credit back out - confirmed, and recorded with how the
 // money left (2026-09-28). The payout method is what lets the payment
@@ -32,9 +33,9 @@ export default function RefundCreditModal({ credit, reference, guestName, busy, 
           <button onClick={onClose} disabled={busy} className={btn.secondary}>
             Back
           </button>
-          <button onClick={() => onConfirm(method)} disabled={busy || !method} className={btn.dangerSolid}>
+          <WithTip id="refundCredit.confirm"><button onClick={() => onConfirm(method)} disabled={busy || !method} className={btn.dangerSolid}>
             {busy ? "Refunding..." : "Yes, Refund"}
-          </button>
+          </button></WithTip>
         </>
       }
     >
@@ -47,7 +48,7 @@ export default function RefundCreditModal({ credit, reference, guestName, busy, 
         </p>
       )}
       <div className="flex flex-col gap-2">
-        <label className={field.label}>Paid out by *</label>
+        <label className={field.label}>Paid out by *<Tip id="refundCredit.paidOutBy" /></label>
         <select value={method} onChange={(e) => setMethod(e.target.value)} disabled={busy} className={field.select}>
           <option value="">Select how the money left</option>
           {PAYMENT_METHODS.map((m) => (

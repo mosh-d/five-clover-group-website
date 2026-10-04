@@ -30,6 +30,7 @@ import { money } from "@/lib/pms/format";
 import { GuestTagPills } from "@/components/pms/GuestName";
 import { GUEST_TYPES, guestTagLabel } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 const RESERVATIONS_PAGE_SIZE = 5;
 
@@ -301,28 +302,31 @@ export default function AdminGuestsPage() {
         className='flex flex-col items-start gap-[3rem]'
       >
         <div className='w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4'>
-          <PageHeading icon={IoPeopleOutline}>Guests</PageHeading>
+          <PageHeading icon={IoPeopleOutline} tipId="guests.page">Guests</PageHeading>
 
           <div className='relative flex flex-col items-start gap-3'>
-            <input
-              type='text'
-              placeholder='Search by name (partial), or full email/phone...'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`${field.input} text-xl! w-72 max-sm:w-full`}
-            />
+            <div className='flex items-center max-sm:w-full'>
+              <input
+                type='text'
+                placeholder='Search by name (partial), or full email/phone...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`${field.input} text-xl! w-72 max-sm:w-full`}
+              />
+              <Tip id="guests.search" />
+            </div>
             <div className='flex gap-3'>
               <div
                 className='relative'
                 ref={filterDropdownRef}
               >
-                <button
+                <WithTip id="guests.filters"><button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                   className={`bg-(--card) border-1 border-gray-300 rounded-3xl py-2.5 px-6 flex items-center gap-2`}
                   title='Filter'
                 >
                   <IoFilter size={22} /> Filters
-                </button>
+                </button></WithTip>
                 {isFilterOpen && (
                   // From the button's left edge on a phone, where it sits at
                   // the left of the screen - from its right edge the panel
@@ -331,6 +335,7 @@ export default function AdminGuestsPage() {
                     <div className='p-6'>
                       <p className='text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-4'>
                         Status
+                        <Tip id="guests.filter.status" />
                       </p>
                       <div className='grid grid-cols-2 gap-3'>
                         {STATUS_FILTERS.map((opt) => (
@@ -350,12 +355,12 @@ export default function AdminGuestsPage() {
                   </div>
                 )}
               </div>
-              <button
+              <WithTip id="guests.add"><button
                 onClick={() => setIsCreateOpen(true)}
                 className={`${btn.primary} whitespace-nowrap`}
               >
                 + Add Guest
-              </button>
+              </button></WithTip>
             </div>
           </div>
         </div>
@@ -365,12 +370,12 @@ export default function AdminGuestsPage() {
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Name</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Email</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Phone</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Status</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Stays</th>
-                  <th className={table.th}>Actions</th>
+                  <th className={`${table.th} ${table.stickyTh}`}>Name<Tip id="guests.col.name" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Email<Tip id="guests.col.email" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Phone<Tip id="guests.col.phone" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Status<Tip id="guests.col.status" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Stays<Tip id="guests.col.stays" /></th>
+                  <th className={table.th}>Actions<Tip id="guests.col.actions" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -465,13 +470,13 @@ export default function AdminGuestsPage() {
               >
                 Close
               </button>
-              <button
+              <WithTip id="guests.save"><button
                 onClick={handleSaveEdit}
                 disabled={savingEdit}
                 className={btn.primary}
               >
                 {savingEdit ? 'Saving...' : 'Save Changes'}
-              </button>
+              </button></WithTip>
             </>
           }
         >
@@ -482,7 +487,7 @@ export default function AdminGuestsPage() {
               .filter(Boolean);
             return knownNames.length > 0 && (
               <section className='flex flex-col gap-2'>
-                <label className={field.label}>Known Names</label>
+                <label className={field.label}>Known Names<Tip id="guests.knownNames" /></label>
                 <select
                   value=''
                   onChange={(e) => {
@@ -504,36 +509,43 @@ export default function AdminGuestsPage() {
           <section className='grid grid-cols-2 gap-4 max-sm:grid-cols-1'>
             <LabeledInput
               label='First Name'
+              tip='guests.firstName'
               value={editForm.first_name || ''}
               onChange={(v) => setEditForm({ ...editForm, first_name: v })}
             />
             <LabeledInput
               label='Last Name'
+              tip='guests.lastName'
               value={editForm.last_name || ''}
               onChange={(v) => setEditForm({ ...editForm, last_name: v })}
             />
             <LabeledInput
               label='Email'
+              tip='guests.email'
               value={editForm.email || ''}
               onChange={(v) => setEditForm({ ...editForm, email: v })}
             />
             <LabeledPhoneInput
               label='Phone'
+              tip='guests.phone'
               value={editForm.phone || ''}
               onChange={(v) => setEditForm({ ...editForm, phone: v })}
             />
             <LabeledInput
               label='Address'
+              tip='guests.address'
               value={editForm.address || ''}
               onChange={(v) => setEditForm({ ...editForm, address: v })}
             />
             <LabeledInput
               label='City'
+              tip='guests.city'
               value={editForm.city || ''}
               onChange={(v) => setEditForm({ ...editForm, city: v })}
             />
             <LabeledInput
               label='Country'
+              tip='guests.country'
               value={editForm.country || ''}
               onChange={(v) => setEditForm({ ...editForm, country: v })}
             />
@@ -543,7 +555,7 @@ export default function AdminGuestsPage() {
               blacklist, all shown as tags beside their name on every screen.
               Types are front-desk work; the blacklist stays manager-only. */}
           <section className='flex flex-col gap-4 border-t border-(--accent-2) pt-6'>
-            <label className={field.label}>Status</label>
+            <label className={field.label}>Status<Tip id="guests.status" /></label>
             <div className='flex flex-wrap gap-x-8 gap-y-3'>
               <GuestTypeChecklist
                 value={editForm.guest_types}
@@ -564,7 +576,7 @@ export default function AdminGuestsPage() {
             {editForm.is_blacklisted && (
               canManageGuestStatus ? (
                 <div className='flex flex-col gap-2'>
-                  <label className={field.label}>Blacklist Reason</label>
+                  <label className={field.label}>Blacklist Reason<Tip id="guests.blacklistReason" /></label>
                   <AutoGrowTextarea
                     value={editForm.blacklist_reason || ''}
                     onChange={(e) => setEditForm({ ...editForm, blacklist_reason: e.target.value })}
@@ -578,7 +590,7 @@ export default function AdminGuestsPage() {
           </section>
 
           <section className='flex flex-col gap-3 border-t border-(--accent-2) pt-6'>
-            <label className={field.label}>Notes</label>
+            <label className={field.label}>Notes<Tip id="guests.notes" /></label>
             <p className='text-lg text-[color:var(--text-color)]/60 -mt-1'>
               Independent notes about this guest (e.g. "VIP", "Fish allergy") — separate from any single stay's request, which is recorded on the reservation itself and shows in the Manifest report's Notes section.
             </p>
@@ -614,20 +626,21 @@ export default function AdminGuestsPage() {
                 placeholder='e.g. VIP'
                 className={`${field.input} w-auto flex-1 min-w-[16rem]`}
               />
-              <button
+              <WithTip id="guests.addNote"><button
                 type='button'
                 onClick={handleAddNote}
                 disabled={addingNote || !newNoteText.trim()}
                 className={btn.secondary}
               >
                 {addingNote ? 'Adding...' : '+ Add Note'}
-              </button>
+              </button></WithTip>
             </div>
           </section>
 
           <section className='flex flex-col gap-3 border-t border-(--accent-2) pt-6'>
             <h3 className='text-2xl font-bold text-[color:var(--black)]'>
               Reservations
+              <Tip id="guests.reservations" />
             </h3>
             {selectedGuestReservations.length === 0 ?
               <p className='text-xl text-[color:var(--text-color)]/76'>
@@ -689,7 +702,7 @@ export default function AdminGuestsPage() {
               >
                 Cancel
               </button>
-              <button
+              <WithTip id="guests.create.submit"><button
                 onClick={handleCreateGuest}
                 disabled={
                   creating ||
@@ -700,33 +713,37 @@ export default function AdminGuestsPage() {
                 className={btn.primary}
               >
                 {creating ? 'Creating...' : 'Create Guest'}
-              </button>
+              </button></WithTip>
             </>
           }
         >
           <section className='grid grid-cols-2 gap-4 max-sm:grid-cols-1'>
             <LabeledInput
               label='First Name *'
+              tip='guests.create.firstName'
               value={createForm.first_name}
               onChange={(v) => setCreateForm({ ...createForm, first_name: v })}
             />
             <LabeledInput
               label='Last Name *'
+              tip='guests.create.lastName'
               value={createForm.last_name}
               onChange={(v) => setCreateForm({ ...createForm, last_name: v })}
             />
             <LabeledInput
               label='Email'
+              tip='guests.create.email'
               value={createForm.email}
               onChange={(v) => setCreateForm({ ...createForm, email: v })}
             />
             <LabeledPhoneInput
               label='Phone *'
+              tip='guests.create.phone'
               value={createForm.phone}
               onChange={(v) => setCreateForm({ ...createForm, phone: v })}
             />
             <div className='flex flex-col gap-2'>
-              <label className={field.label}>Status</label>
+              <label className={field.label}>Status<Tip id="guests.create.status" /></label>
               <div className='flex flex-wrap gap-x-8 gap-y-3 py-2'>
                 <GuestTypeChecklist
                   value={createForm.guest_types}
@@ -736,6 +753,7 @@ export default function AdminGuestsPage() {
             </div>
             <LabeledInput
               label='Company Name'
+              tip='guests.create.company'
               value={createForm.company_name}
               onChange={(v) =>
                 setCreateForm({ ...createForm, company_name: v })
@@ -752,10 +770,10 @@ export default function AdminGuestsPage() {
 // country code plus a national number — phone is what identifies a guest
 // here, so the format it is captured in decides whether a returning guest
 // matches their existing profile or spawns a duplicate.
-function LabeledPhoneInput({ label, value, onChange }) {
+function LabeledPhoneInput({ label, value, onChange, tip }) {
   return (
     <div className='flex flex-col gap-2'>
-      <label className={field.label}>{label}</label>
+      <label className={field.label}>{label}{tip && <Tip id={tip} />}</label>
       <PhoneInput
         value={value}
         onChange={onChange}
@@ -766,10 +784,10 @@ function LabeledPhoneInput({ label, value, onChange }) {
   );
 }
 
-function LabeledInput({ label, value, onChange, type = 'text' }) {
+function LabeledInput({ label, value, onChange, type = 'text', tip }) {
   return (
     <div className='flex flex-col gap-2'>
-      <label className={field.label}>{label}</label>
+      <label className={field.label}>{label}{tip && <Tip id={tip} />}</label>
       <input
         type={type}
         value={value}

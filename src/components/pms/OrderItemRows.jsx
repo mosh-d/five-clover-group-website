@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { IoChevronDown, IoChevronForward } from "react-icons/io5";
 import { btn, field } from "@/components/pms/ui";
 import { money } from "@/lib/pms/format";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // The item lines of one bill, shared by Guest Sales and Non-Guest Sales —
 // both post the same food/drink lines, and Non-Guest additionally has the
@@ -114,7 +115,7 @@ export default function OrderItemRows({
             {open && (
               <div className="flex flex-col gap-4 px-5 pb-5 pt-1">
                 <div className="flex flex-col gap-2">
-                  <label className={field.label}>Kind</label>
+                  <label className={field.label}>Kind<Tip id="order.kind" /></label>
                   <select
                     value={row.item_kind}
                     onChange={(e) =>
@@ -132,7 +133,7 @@ export default function OrderItemRows({
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={field.label}>Item</label>
+                  <label className={field.label}>Item<Tip id="order.item" /></label>
                   <select
                     value={row.reference_id}
                     onChange={(e) => onUpdate(index, { reference_id: e.target.value })}
@@ -146,7 +147,7 @@ export default function OrderItemRows({
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={field.label}>Quantity</label>
+                  <label className={field.label}>Quantity<Tip id="order.quantity" /></label>
                   <input
                     type="number"
                     min="1"
@@ -165,6 +166,7 @@ export default function OrderItemRows({
                       className="w-5 h-5 cursor-pointer"
                     />
                     Complementary
+                    <Tip id="order.complementary" />
                   </label>
                   {showManagerToggle && (
                     <label className="flex items-center gap-2 text-xl cursor-pointer">
@@ -180,6 +182,7 @@ export default function OrderItemRows({
                         className="w-5 h-5 cursor-pointer"
                       />
                       For Manager
+                      <Tip id="order.forManager" />
                     </label>
                   )}
                 </div>
@@ -191,7 +194,7 @@ export default function OrderItemRows({
           </div>
         );
       })}
-      <button type="button" onClick={onAdd} className={`${btn.rowSecondary} self-start`}>+ Add Item</button>
+      <WithTip id="order.addItem"><button type="button" onClick={onAdd} className={`${btn.rowSecondary} self-start`}>+ Add Item</button></WithTip>
     </div>
   );
 }

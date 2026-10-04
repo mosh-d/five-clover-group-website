@@ -6,17 +6,18 @@ import { pct } from "@/lib/pms/format";
 import { Link } from "@/lib/pms/router";
 import { accessDenial, canViewAuditTrail } from "@/components/pms/pmsNavItems";
 import { table } from "@/components/pms/ui";
+import { Tip } from "@/components/pms/Tip";
 
 // Small render pieces shared by every report tab in AdminReports.jsx —
 // kept in one place so each report looks and behaves identically.
 
 // `footer` sits outside the horizontal scroll area, so a total put there
 // stays in view however far a wide table is scrolled (owner, 2026-09-18).
-export function ReportSection({ title, subtitle, children, footer }) {
+export function ReportSection({ title, subtitle, children, footer, tip }) {
   return (
     <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden w-full">
       <div className="px-6 py-5 border-b border-(--accent-2)">
-        <h2 className="text-3xl font-bold text-[color:var(--black)]">{title}</h2>
+        <h2 className="text-3xl font-bold text-[color:var(--black)]">{title}{tip && <Tip id={tip} />}</h2>
         {subtitle && <p className="text-xl text-[color:var(--text-color)]/68 mt-1">{subtitle}</p>}
       </div>
       <div className="overflow-x-auto">{children}</div>
@@ -30,7 +31,9 @@ export function ReportSection({ title, subtitle, children, footer }) {
 // sat hard-left over right-aligned figures, so an "Amount" column read as
 // two unrelated columns. Matched by label rather than index so inserting a
 // column can't silently shift the alignment onto the wrong one.
-export function TableHead({ cells, rightAlign = [] }) {
+// `tips` maps a column label to its (i) - every report's Action column
+// shares one.
+export function TableHead({ cells, rightAlign = [], tips = {} }) {
   return (
     <thead>
       <tr className={table.headRow}>
@@ -42,6 +45,7 @@ export function TableHead({ cells, rightAlign = [] }) {
             className={`px-6 py-3 ${rightAlign.includes(c) ? "text-right" : "text-left"} text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${i === 0 ? table.stickyTh : ""}`}
           >
             {c}
+            {(tips[c] || (c === "Action" && "reports.col.action")) && <Tip id={tips[c] || "reports.col.action"} />}
           </th>
         ))}
       </tr>
@@ -71,11 +75,12 @@ export function EmptyRow() {
   return <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No data for this period.</p>;
 }
 
-export function SummaryCard({ label, value, sub, accent, warn }) {
+export function SummaryCard({ label, value, sub, accent, warn, tip }) {
   return (
     <div className={`rounded-xl border p-6 ${accent ? "bg-[color:var(--emphasis)] border-transparent text-white" : warn ? "bg-(--card) border-orange-200" : "bg-(--card) border-(--accent-2)"}`}>
       <p className={`text-xl font-semibold uppercase tracking-wide mb-2 ${accent ? "text-white/70" : "text-[color:var(--text-color)]/68"}`}>
         {label}
+        {tip && <Tip id={tip} light={accent} />}
       </p>
       <p className={`text-4xl font-bold ${accent ? "text-white" : warn ? "text-orange-600" : "text-[color:var(--black)]"}`}>
         {value}
@@ -146,25 +151,33 @@ export function AuditLink({ audit }) {
   );
 }
 
+const STAFF_COLUMN_TIPS = {
+  Date: "reports.byStaff.col.date",
+  Staff: "reports.byStaff.col.staff",
+  Guests: "reports.byStaff.col.guests",
+  Count: "reports.byStaff.col.count",
+  Amount: "reports.byStaff.col.amount",
+};
+
 export function StaffActivitySection({ activity, money }) {
   if (!activity) return null;
   const showAudit = canViewAuditTrail();
   const groups = [
-    { key: "check_ins", label: "Check-Ins", unit: "Guests", amount: false },
-    { key: "check_outs", label: "Check-Outs", unit: "Guests", amount: false },
-    { key: "payments", label: "Payments Taken", unit: "Count", amount: true },
+    { key: "check_ins", label: "Check-Ins", unit: "Guests", amount: false, tip: "reports.byStaff.checkIns" },
+    { key: "check_outs", label: "Check-Outs", unit: "Guests", amount: false, tip: "reports.byStaff.checkOuts" },
+    { key: "payments", label: "Payments Taken", unit: "Count", amount: true, tip: "reports.byStaff.payments" },
   ].filter((g) => (activity[g.key] || []).length > 0);
 
   if (groups.length === 0) {
     return (
-      <ReportSection title="By Staff" subtitle="Who handled this day's activity">
+      <ReportSection title="By Staff" subtitle="Who handled this day's activity" tip="reports.byStaff">
         <EmptyRow />
       </ReportSection>
     );
   }
 
   return (
-    <ReportSection title="By Staff" subtitle="Who handled this activity — check-ins, check-outs and payments counted separately">
+    <ReportSection title="By Staff" subtitle="Who handled this activity — check-ins, check-outs and payments counted separately" tip="reports.byStaff">
       <div className="flex flex-col gap-8 p-6">
         {groups.map((g) => {
           const rows = activity[g.key];
@@ -172,9 +185,9 @@ export function StaffActivitySection({ activity, money }) {
           const cells = [...(dated ? ["Date"] : []), "Staff", g.unit, ...(g.amount ? ["Amount"] : []), ...(showAudit ? ["Action"] : [])];
           return (
             <div key={g.key} className="flex flex-col gap-2">
-              <h3 className="text-2xl font-bold text-[color:var(--black)]">{g.label}</h3>
+              <h3 className="text-2xl font-bold text-[color:var(--black)]">{g.label}<Tip id={g.tip} /></h3>
               <table className="w-full text-xl">
-                <TableHead cells={cells} rightAlign={g.amount ? ["Amount"] : []} />
+                <TableHead cells={cells} rightAlign={g.amount ? ["Amount"] : []} tips={STAFF_COLUMN_TIPS} />
                 <tbody>
                   {rows.map((r, i) => (
                     <tr key={i} className={table.row}>

@@ -33,6 +33,7 @@ import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import DateInput from "@/components/pms/DateInput";
 import { money, formatDate } from "@/lib/pms/format";
 import GuestName from "@/components/pms/GuestName";
+import { Tip, WithTip } from "@/components/pms/Tip";
 const roomStatusKey = (roomTypeId, roomNumber) => `${roomTypeId}::${roomNumber}`;
 
 const isOverdue = (checkOut) => checkOut && hasPassedNoonCutoff(checkOut);
@@ -386,7 +387,7 @@ export default function AdminInHousePage() {
 
       <div data-component="AdminInHouse" className="flex flex-col items-start gap-[3rem]">
         <div className="w-full flex flex-wrap items-center justify-between gap-4">
-          <PageHeading icon={IoHomeOutline}>In-House Guests</PageHeading>
+          <PageHeading icon={IoHomeOutline} tipId="inHouse.page">In-House Guests</PageHeading>
           <select
             value={roomTypeFilter}
             onChange={(e) => setRoomTypeFilter(e.target.value)}
@@ -404,11 +405,11 @@ export default function AdminInHousePage() {
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Room(s)</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Checked In</th>
-                  <th className={table.th}>Expected Check-Out</th>
-                  <th className={table.th}>Actions</th>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="inHouse.guest" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Room(s)<Tip id="inHouse.rooms" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Checked In<Tip id="inHouse.checkedIn" /></th>
+                  <th className={table.th}>Expected Check-Out<Tip id="inHouse.expectedCheckOut" /></th>
+                  <th className={table.th}>Actions<Tip id="inHouse.actions" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -475,24 +476,24 @@ export default function AdminInHousePage() {
           footer={selected && (
             <>
               <button onClick={closeDetail} className={btn.secondary}>Close</button>
-              <button
+              <WithTip id="inHouse.goToFolio"><button
                 onClick={() => navigate(`/pms/folios?reservation_id=${selected.id}`)}
                 disabled={!folio}
                 className={btn.secondary}
                 title={!folio ? "No folio linked to this reservation yet" : undefined}
               >
                 Go to Folio
-              </button>
+              </button></WithTip>
               {/* Whichever of these is offered depends on isOverdue (noon
                   Lagos on the scheduled check_out) — never both at once, see
                   handleEarlyCheckout's comment for why the wrong one has a
                   real billing consequence. */}
               {selected && isOverdue(selected.check_out) ? (
-                <button onClick={handleCheckOut} disabled={processing} className={btn.success}>
+                <WithTip id="inHouse.checkOut"><button onClick={handleCheckOut} disabled={processing} className={btn.success}>
                   {processing ? "Processing..." : "Check Out"}
-                </button>
+                </button></WithTip>
               ) : (
-                <button onClick={() => setShowEarlyCheckoutConfirm(true)} disabled={processing} className={btn.danger}>Early Checkout</button>
+                <WithTip id="inHouse.earlyCheckout"><button onClick={() => setShowEarlyCheckoutConfirm(true)} disabled={processing} className={btn.danger}>Early Checkout</button></WithTip>
               )}
             </>
           )}
@@ -508,15 +509,15 @@ export default function AdminInHousePage() {
               <div className="grid grid-cols-1 gap-4">
                 <ContactRow type="email" value={selected.guest_email} />
                 <ContactRow type="phone" value={selected.phone_number} />
-                <DetailRow label="Checked In" value={formatDate(selected.actual_check_in)} />
-                <DetailRow label="Expected Check-Out" value={formatDate(selected.check_out)} />
+                <DetailRow label="Checked In" tip="inHouse.detail.checkedIn" value={formatDate(selected.actual_check_in)} />
+                <DetailRow label="Expected Check-Out" tip="inHouse.detail.expectedCheckOut" value={formatDate(selected.check_out)} />
               </div>
 
               {folioLoading ? (
                 <div className="flex justify-center"><LoadingSpinner /></div>
               ) : folio ? (
                 <div className={`flex justify-between items-center text-xl px-5 py-4 rounded-lg border ${balanceDue ? "bg-red-50 border-red-200 text-red-700" : "bg-green-50 border-green-200 text-green-700"}`}>
-                  <span className="font-bold">Folio Balance</span>
+                  <span className="font-bold">Folio Balance<Tip id="inHouse.balance" /></span>
                   <span className="font-bold text-2xl">{money(folio.balance)}</span>
                 </div>
               ) : (
@@ -529,7 +530,7 @@ export default function AdminInHousePage() {
               )}
 
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Notes</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Notes<Tip id="inHouse.notes" /></h3>
                 <p className="text-lg text-[color:var(--text-color)]/60 -mt-2">
                   Notes for this stay (e.g. "Arriving late") — shows up in the Manifest report's Notes section. Separate from Special Requests on the Reservations page.
                 </p>
@@ -565,19 +566,19 @@ export default function AdminInHousePage() {
                     placeholder="e.g. Arriving late"
                     className={`${field.input} w-auto flex-1 min-w-[16rem]`}
                   />
-                  <button
+                  <WithTip id="inHouse.addNote"><button
                     type="button"
                     onClick={handleAddNote}
                     disabled={addingNote || !newNoteText.trim()}
                     className={btn.secondary}
                   >
                     {addingNote ? "Adding..." : "+ Add Note"}
-                  </button>
+                  </button></WithTip>
                 </div>
               </section>
 
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Room Assignments</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Room Assignments<Tip id="inHouse.roomAssignments" /></h3>
                 <RoomAssignmentPicker
                   reservationId={selected.id}
                   roomTypeId={selected.room_type_id}
@@ -589,7 +590,7 @@ export default function AdminInHousePage() {
               </section>
 
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Change Room Type</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Change Room Type<Tip id="inHouse.changeRoomType" /></h3>
                 <p className="text-lg text-[color:var(--text-color)]/68">
                   Currently {selected.room_type?.name || "—"}. Switching moves the guest to a different room type — any
                   nights already billed keep their original rate; every night from here on bills at the new type's rate.
@@ -648,13 +649,13 @@ export default function AdminInHousePage() {
                           );
                         })}
                         {(!selected.rooms_booked || newTypeRoomSlots.length < selected.rooms_booked) && (
-                          <button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
+                          <WithTip id="inHouse.addRoom"><button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
                             + Add Room
-                          </button>
+                          </button></WithTip>
                         )}
                       </div>
                     ) : null}
-                    <button
+                    <WithTip id="inHouse.changeRoomTypeButton"><button
                       onClick={handleChangeRoomType}
                       disabled={
                         changingRoomType ||
@@ -664,13 +665,13 @@ export default function AdminInHousePage() {
                       className={`${btn.primary} self-start`}
                     >
                       {changingRoomType ? "Changing..." : "Change Room Type"}
-                    </button>
+                    </button></WithTip>
                   </>
                 )}
               </section>
 
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Extend Stay</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Extend Stay<Tip id="inHouse.extendStay" /></h3>
                 <div className="flex gap-3 flex-nowrap items-center">
                   <DateInput
                     value={newCheckOutDate}
@@ -679,13 +680,13 @@ export default function AdminInHousePage() {
                     onChange={(e) => setNewCheckOutDate(e.target.value)}
                     className={field.input}
                   />
-                  <button
+                  <WithTip id="inHouse.extend"><button
                     onClick={handleExtendStay}
                     disabled={processing || !newCheckOutDate || Boolean(extendProblem)}
                     className={`${btn.primary} whitespace-nowrap`}
                   >
                     Extend
-                  </button>
+                  </button></WithTip>
                 </div>
                 {extendProblem && <p className="text-lg text-red-600">{extendProblem}</p>}
                 {balanceDue && (
@@ -710,9 +711,9 @@ export default function AdminInHousePage() {
           footer={
             <>
               <button onClick={() => setShowEarlyCheckoutConfirm(false)} disabled={processing} className={btn.secondary}>Back</button>
-              <button onClick={handleEarlyCheckout} disabled={processing} className={btn.dangerSolid}>
+              <WithTip id="inHouse.confirmEarly"><button onClick={handleEarlyCheckout} disabled={processing} className={btn.dangerSolid}>
                 {processing ? "Processing..." : "Yes, Check Out Early"}
-              </button>
+              </button></WithTip>
             </>
           }
         >
@@ -730,10 +731,10 @@ export default function AdminInHousePage() {
   );
 }
 
-function DetailRow({ label, value }) {
+function DetailRow({ label, value, tip }) {
   return (
     <div className="bg-[color:var(--text-color)]/3 rounded-lg px-5 py-3 text-xl w-full">
-      <span className="block font-semibold text-[color:var(--text-color)]/68 uppercase tracking-wide text-lg">{label}</span>
+      <span className="block font-semibold text-[color:var(--text-color)]/68 uppercase tracking-wide text-lg">{label}{tip && <Tip id={tip} />}</span>
       <span className="block font-medium break-words">{value}</span>
     </div>
   );

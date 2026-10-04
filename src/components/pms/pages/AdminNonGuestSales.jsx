@@ -34,6 +34,7 @@ import {
   applyNonGuestCredit,
 } from "@/lib/pms/api/non-guest-folios-api";
 import Pagination from "@/components/pms/Pagination";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // bill_no lives at the order level now (one receipt number covers the whole
 // order), not per row — see emptyNewFolioForm below. The single-item "Add a
@@ -413,7 +414,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
 
   if (!canAccess) {
     return (
-      <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoCartOutline} title="Non-Guest Sales" dataComponent="AdminNonGuestSales">
+      <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoCartOutline} title="Non-Guest Sales" tipId="nonGuestSales.page" dataComponent="AdminNonGuestSales">
         <p className="text-2xl text-[color:var(--text-color)]/68">
           You don't have permission to view this page.
         </p>
@@ -422,7 +423,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
   }
 
   return (
-    <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoCartOutline} title="Non-Guest Sales" dataComponent="AdminNonGuestSales">
+    <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoCartOutline} title="Non-Guest Sales" tipId="nonGuestSales.page" dataComponent="AdminNonGuestSales">
       <p className="text-xl text-[color:var(--text-color)]/76">
         Record a food/drink order for someone who isn't a hotel guest — name is optional. Payment can be recorded now or later; it closes out automatically once the balance is settled.
       </p>
@@ -432,12 +433,12 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
 
       {/* ==== New folio form ==== */}
       <div className="w-full flex flex-col gap-4 bg-(--card) rounded-xl border border-(--accent-2) p-6">
-        <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">New Non-Guest Order</p>
+        <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">New Non-Guest Order<Tip id="nonGuestSales.newOrder" /></p>
         {createError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{createError}</p>}
 
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Guest Name (optional)</label>
+            <label className={field.label}>Guest Name (optional)<Tip id="nonGuestSales.name" /></label>
             <input
               type="text"
               placeholder="Not needed to order — add it if the bill might go unpaid a while"
@@ -447,7 +448,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Guest Phone (optional)</label>
+            <label className={field.label}>Guest Phone (optional)<Tip id="nonGuestSales.phone" /></label>
             <PhoneInput
               value={newFolio.guest_phone}
               onChange={(v) => setNewFolio({ ...newFolio, guest_phone: v })}
@@ -456,7 +457,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Bill No (optional)</label>
+            <label className={field.label}>Bill No (optional)<Tip id="nonGuestSales.billNo" /></label>
             <input
               type="text"
               placeholder="Leave blank to have the system generate one"
@@ -489,17 +490,17 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
         />
 
         <div className="flex justify-between items-center border-t border-(--accent-2) pt-4">
-          <span className="text-xl font-bold uppercase tracking-wide text-[color:var(--text-color)]/68">Total</span>
+          <span className="text-xl font-bold uppercase tracking-wide text-[color:var(--text-color)]/68">Total<Tip id="nonGuestSales.total" /></span>
           <span className="text-2xl font-bold">{money(newFolioTotal)}</span>
         </div>
 
-        <button
+        <WithTip id="nonGuestSales.open"><button
           onClick={handleCreateFolio}
           disabled={creating || !newFolioRowsValid}
           className={`${btn.primary} self-start`}
         >
           {creating ? "Opening..." : "Open Folio"}
-        </button>
+        </button></WithTip>
         {/* Never leave a disabled button unexplained. */}
         {!newFolioRowsValid && !creating && (
           <p className="text-lg text-[color:var(--text-color)]/68">{newFolioBlockReason}</p>
@@ -509,10 +510,11 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
       {/* ==== Folio list ==== */}
       <div className="flex gap-3 text-xl flex-wrap items-center w-full">
         {[
-          { key: "all", label: "All" },
-          { key: "open", label: "Open" },
-          { key: "closed", label: "Closed" },
+          { key: "all", label: "All", tip: "nonGuestSales.tab.all" },
+          { key: "open", label: "Open", tip: "nonGuestSales.tab.open" },
+          { key: "closed", label: "Closed", tip: "nonGuestSales.tab.closed" },
         ].map((t) => (
+          <WithTip key={t.key} id={t.tip}>
           <button
             key={t.key}
             onClick={() => { setStatusFilter(t.key); setSearchInput(""); setSearchTerm(""); setPage(1); }}
@@ -520,6 +522,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
           >
             {t.label}
           </button>
+          </WithTip>
         ))}
         <form
           onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); setPage(1); }}
@@ -532,7 +535,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
             placeholder="Search by folio #, bill no, or guest name"
             className={`${field.input} w-auto text-xl!`}
           />
-          <button type="submit" className={btn.secondary}>Search</button>
+          <WithTip id="nonGuestSales.search"><button type="submit" className={btn.secondary}>Search</button></WithTip>
           {searchTerm && (
             <button type="button" onClick={() => { setSearchInput(""); setSearchTerm(""); setPage(1); }} className={btn.rowSecondary}>
               Clear
@@ -546,14 +549,14 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
           <table className={table.el}>
             <thead>
               <tr className={table.headRow}>
-                <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                <th className={table.th}>Folio #</th>
-                <th className={table.th}>Date &amp; Time</th>
-                <th className={table.th}>Total</th>
-                <th className={table.th}>Paid</th>
-                <th className={table.th}>Balance</th>
-                <th className={`${table.th} hidden md:table-cell`}>Payment Status</th>
-                <th className={table.th}>Actions</th>
+                <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="nonGuestSales.col.guest" /></th>
+                <th className={table.th}>Folio #<Tip id="nonGuestSales.col.folio" /></th>
+                <th className={table.th}>Date &amp; Time<Tip id="nonGuestSales.col.dateTime" /></th>
+                <th className={table.th}>Total<Tip id="nonGuestSales.col.total" /></th>
+                <th className={table.th}>Paid<Tip id="nonGuestSales.col.paid" /></th>
+                <th className={table.th}>Balance<Tip id="nonGuestSales.col.balance" /></th>
+                <th className={`${table.th} hidden md:table-cell`}>Payment Status<Tip id="nonGuestSales.col.status" /></th>
+                <th className={table.th}>Actions<Tip id="nonGuestSales.col.actions" /></th>
               </tr>
             </thead>
             <tbody>
@@ -612,14 +615,14 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
             <>
               <button onClick={closeFolioDetail} className={btn.secondary}>Close</button>
               {selectedFolio.status !== "closed" && (
-                <button
+                <WithTip id="nonGuestSales.close"><button
                   onClick={handleCloseFolio}
                   disabled={!canCloseFolio || closing}
                   className={btn.primary}
                   title={!canCloseFolio ? "Settle the full balance before closing" : ""}
                 >
                   {closing ? "Closing..." : "Close Folio"}
-                </button>
+                </button></WithTip>
               )}
             </>
           )}
@@ -629,10 +632,11 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
           ) : (
             <>
               <div className="grid grid-cols-1 gap-4">
-                <SummaryStat label="Total Charged" value={money(selectedFolio.total_amount)} />
-                <SummaryStat label="Total Paid" value={money(selectedFolio.amount_paid)} />
+                <SummaryStat label="Total Charged" tip="nonGuestSales.sum.charged" value={money(selectedFolio.total_amount)} />
+                <SummaryStat label="Total Paid" tip="nonGuestSales.sum.paid" value={money(selectedFolio.amount_paid)} />
                 <SummaryStat
                   label="Balance Due"
+                  tip="nonGuestSales.sum.balance"
                   value={hasOutstandingBalance ? money(selectedFolio.balance) : "Settled"}
                   tone={hasOutstandingBalance ? "danger" : "success"}
                 />
@@ -643,11 +647,11 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                   traced back to a person: an unpaid balance, or a credit
                   from an overpayment. */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Guest Info (optional)</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Guest Info (optional)<Tip id="nonGuestSales.guestInfo" /></h3>
                 {guestInfoError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{guestInfoError}</p>}
                 <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Guest Name</label>
+                    <label className={field.label}>Guest Name<Tip id="nonGuestSales.guestInfo.name" /></label>
                     <input
                       type="text"
                       value={guestInfoForm.guest_name}
@@ -656,7 +660,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Guest Phone</label>
+                    <label className={field.label}>Guest Phone<Tip id="nonGuestSales.guestInfo.phone" /></label>
                     <PhoneInput
                       value={guestInfoForm.guest_phone}
                       onChange={(v) => setGuestInfoForm({ ...guestInfoForm, guest_phone: v })}
@@ -665,18 +669,18 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                     />
                   </div>
                 </div>
-                <button
+                <WithTip id="nonGuestSales.guestInfo.save"><button
                   onClick={handleUpdateGuestInfo}
                   disabled={savingGuestInfo || (guestInfoForm.guest_name === (selectedFolio.guest_name || "") && guestInfoForm.guest_phone === (selectedFolio.guest_phone || ""))}
                   className={`${btn.secondary} self-start`}
                 >
                   {savingGuestInfo ? "Saving..." : "Save Guest Info"}
-                </button>
+                </button></WithTip>
               </section>
 
               {/* Charges */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges<Tip id="nonGuestSales.charges" /></h3>
                 {(!selectedFolio.items || selectedFolio.items.length === 0) ? (
                   <p className="text-xl text-[color:var(--text-color)]/76">No charges yet.</p>
                 ) : (
@@ -704,10 +708,10 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                 {selectedFolio.status !== "closed" && (
                   <div className="flex flex-col gap-4 mt-2">
                     {itemError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{itemError}</p>}
-                    <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a charge</p>
+                    <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a charge<Tip id="nonGuestSales.addCharge" /></p>
                     <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Kind</label>
+                        <label className={field.label}>Kind<Tip id="nonGuestSales.kind" /></label>
                         <select
                           value={itemForm.item_kind}
                           onChange={(e) => setItemForm({ ...itemForm, item_kind: e.target.value, reference_id: "", is_complementary: false, is_manager: false })}
@@ -718,18 +722,18 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                         </select>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Item</label>
+                        <label className={field.label}>Item<Tip id="nonGuestSales.item" /></label>
                         <select value={itemForm.reference_id} onChange={(e) => setItemForm({ ...itemForm, reference_id: e.target.value })} className={field.select}>
                           <option value="">Select an item</option>
                           {menuFor(itemForm.item_kind).map((i) => <option key={i.id} value={i.id}>{i.name} — {money(i.price)}</option>)}
                         </select>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Quantity</label>
+                        <label className={field.label}>Quantity<Tip id="nonGuestSales.quantity" /></label>
                         <input type="number" min="1" value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} className={field.input} />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Bill No (optional)</label>
+                        <label className={field.label}>Bill No (optional)<Tip id="nonGuestSales.itemBillNo" /></label>
                         <input
                           type="text"
                           placeholder="Leave blank to have the system generate one"
@@ -749,6 +753,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                           className="w-5 h-5 cursor-pointer"
                         />
                         Complementary
+                        <Tip id="nonGuestSales.complementary" />
                       </label>
                       <label className="flex items-center gap-2 text-xl cursor-pointer">
                         <input
@@ -758,21 +763,22 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                           className="w-5 h-5 cursor-pointer"
                         />
                         For Manager
+                        <Tip id="nonGuestSales.forManager" />
                       </label>
                     </div>
                     {Number(rowServiceCharge(itemForm)) > 0 && (
                       <p className="text-lg text-[color:var(--text-color)]/60">Service Charge: {money(rowServiceCharge(itemForm))}</p>
                     )}
-                    <button onClick={handleAddItem} disabled={addingItem || !itemFormValid} className={`${btn.secondary} self-start`}>
+                    <WithTip id="nonGuestSales.addChargeButton"><button onClick={handleAddItem} disabled={addingItem || !itemFormValid} className={`${btn.secondary} self-start`}>
                       {addingItem ? "Adding..." : "Add Charge"}
-                    </button>
+                    </button></WithTip>
                   </div>
                 )}
               </section>
 
               {/* Payments */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Payments</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Payments<Tip id="nonGuestSales.payments" /></h3>
                 {(!selectedFolio.payments || selectedFolio.payments.length === 0) ? (
                   <p className="text-xl text-[color:var(--text-color)]/76">No payments recorded yet.</p>
                 ) : (
@@ -798,6 +804,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                     {paymentError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{paymentError}</p>}
                     <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
                       Record a payment{hasOutstandingBalance ? ` — balance due: ${money(selectedFolio.balance)}` : ""}
+                      <Tip id="nonGuestSales.recordPayment" />
                     </p>
                     <PaymentSplitRows splits={paymentForm.splits} setSplits={(splits) => setPaymentForm({ ...paymentForm, splits })} />
                     <p className="text-lg text-[color:var(--text-color)]/60">
@@ -805,7 +812,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                     </p>
                     <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Receipt Number</label>
+                        <label className={field.label}>Receipt Number<Tip id="nonGuestSales.receipt" /></label>
                         <input
                           type="text"
                           value={paymentForm.receipt_number}
@@ -814,7 +821,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Remarks</label>
+                        <label className={field.label}>Remarks<Tip id="nonGuestSales.remarks" /></label>
                         <AutoGrowTextarea
                           value={paymentForm.notes}
                           onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
@@ -822,15 +829,15 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                         />
                       </div>
                     </div>
-                    <button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits} className={`${btn.success} self-start`}>
+                    <WithTip id="nonGuestSales.recordPaymentButton"><button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits} className={`${btn.success} self-start`}>
                       {recordingPayment ? "Recording..." : "Record Payment"}
-                    </button>
+                    </button></WithTip>
                   </div>
                 )}
 
                 {selectedFolio.status !== "closed" && folioCredits.length > 0 && (
                   <div className="flex flex-col gap-3 mt-2 border-t border-(--accent-2) pt-6">
-                    <p className="text-lg font-semibold uppercase tracking-wide text-blue-700">Credit on File for {selectedFolio.guest_name}</p>
+                    <p className="text-lg font-semibold uppercase tracking-wide text-blue-700">Credit on File for {selectedFolio.guest_name}<Tip id="nonGuestSales.creditOnFile" /></p>
                     {folioCredits.map((c) => (
                       <div key={c.id} className="flex justify-between items-center gap-4 bg-blue-50 border border-blue-200 rounded-lg px-5 py-3 text-xl">
                         <span>
@@ -876,12 +883,12 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
   );
 }
 
-function SummaryStat({ label, value, tone }) {
+function SummaryStat({ label, value, tone, tip }) {
   const valueColor =
     tone === "danger" ? "text-red-600" : tone === "success" ? "text-green-700" : "text-[color:var(--black)]";
   return (
     <div className="bg-[color:var(--text-color)]/5 border-1 border-gray-200 rounded-lg px-5 py-4">
-      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}</p>
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}{tip && <Tip id={tip} />}</p>
       <p className={`text-2xl font-bold ${valueColor} truncate`}>{value}</p>
     </div>
   );

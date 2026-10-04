@@ -3,6 +3,7 @@
 
 // Carried over from the branch PMS's components/shared/PageOrSection.jsx (2026-09-28).
 import PageHeading from "@/components/pms/PageHeading";
+import { Tip } from "@/components/pms/Tip";
 
 // A sales page renders two ways (owner, 2026-09-24): on its own route with
 // its own page heading, or as one part of a combined page - F&B Sales holds
@@ -14,7 +15,8 @@ import PageHeading from "@/components/pms/PageHeading";
 // 2026-09-25): the selected tab already names what is on screen, so a
 // heading under it would say the same word twice. The section keeps the
 // name for screen readers, which don't get it from the tab.
-export default function PageOrSection({ asSection = false, hideTitle = false, icon, title, dataComponent, children }) {
+// `tipId`: the (i) after the title (lib/pms/tips.js).
+export default function PageOrSection({ asSection = false, hideTitle = false, icon, title, dataComponent, tipId, children }) {
   if (asSection) {
     return (
       <section
@@ -23,7 +25,10 @@ export default function PageOrSection({ asSection = false, hideTitle = false, ic
         className="w-full flex flex-col items-start gap-[3rem]"
       >
         {!hideTitle && (
-          <h2 className="text-4xl font-secondary font-bold text-[color:var(--black)]">{title}</h2>
+          <h2 className="text-4xl font-secondary font-bold text-[color:var(--black)]">
+            {title}
+            {tipId && <Tip id={tipId} />}
+          </h2>
         )}
         {children}
       </section>
@@ -34,7 +39,7 @@ export default function PageOrSection({ asSection = false, hideTitle = false, ic
       data-component={dataComponent}
       className="flex flex-col items-start gap-[3rem]"
     >
-      <PageHeading icon={icon}>{title}</PageHeading>
+      <PageHeading icon={icon} tipId={tipId}>{title}</PageHeading>
       {children}
     </div>
   );

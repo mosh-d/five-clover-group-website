@@ -50,6 +50,7 @@ import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import EmailStatusTag from "@/components/pms/EmailStatusTag";
+import { Tip, WithTip } from "@/components/pms/Tip";
 const STATUSES = ["hold", "confirmed", "active", "completed", "cancelled"];
 // A reservation's check_in/check_out are UTC-midnight markers for a date.
 const isoDateOf = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
@@ -916,17 +917,17 @@ export default function AdminReservationsPage() {
 
       <div data-component="AdminReservations" className="flex flex-col items-start gap-[3rem]">
         <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
-          <PageHeading icon={IoCalendarOutline}>Reservations</PageHeading>
+          <PageHeading icon={IoCalendarOutline} tipId="reservations.page">Reservations</PageHeading>
 
           <div className="flex items-center gap-3">
             <div className="relative" ref={filterDropdownRef}>
-              <button
+              <WithTip id="reservations.filters"><button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                 className={`bg-(--card) border-1 border-gray-300 rounded-3xl py-2.5 px-6 flex items-center gap-2`}
                 title="Filter"
               >
                 <IoFilter size={22} /> Filters
-              </button>
+              </button></WithTip>
               {isFilterOpen && (
                 // Opens from the button's left edge on a phone, where the
                 // button sits at the left of the screen: from its right edge
@@ -934,7 +935,7 @@ export default function AdminReservationsPage() {
                 // (2026-10-02).
                 <div className="absolute right-0 max-sm:right-auto max-sm:left-0 mt-2 w-[28rem] max-w-[calc(100vw-2rem)] bg-(--card) border border-(--accent-2) rounded-xl shadow-xl z-20 text-xl overflow-hidden font-primary p-6 flex flex-col gap-5">
                   <div>
-                    <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Status</p>
+                    <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Status<Tip id="reservations.filter.status" /></p>
                     <div className="grid grid-cols-3 gap-2">
                       {["all", ...STATUSES].map((s) => (
                         <button
@@ -948,13 +949,19 @@ export default function AdminReservationsPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="text" placeholder="Source" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className={field.input} />
-                    <input type="text" placeholder="Booking Channel" value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)} className={field.input} />
+                    <div className="flex items-center min-w-0">
+                      <input type="text" placeholder="Source" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className={`${field.input} min-w-0`} />
+                      <Tip id="reservations.filter.source" />
+                    </div>
+                    <div className="flex items-center min-w-0">
+                      <input type="text" placeholder="Booking Channel" value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)} className={`${field.input} min-w-0`} />
+                      <Tip id="reservations.filter.channel" />
+                    </div>
                   </div>
                   {/* One under the other, each named: side by side in this
                       narrow panel, neither date had room to show itself. */}
                   <div>
-                    <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Dates</p>
+                    <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Dates<Tip id="reservations.filter.dates" /></p>
                     <div className="flex flex-col gap-3">
                       <label className="grid grid-cols-[4rem_1fr] items-center gap-3 text-lg">
                         <span className="text-[color:var(--text-color)]/68">From</span>
@@ -977,11 +984,12 @@ export default function AdminReservationsPage() {
                   <label className="flex items-center gap-3 cursor-pointer text-lg">
                     <input type="checkbox" checked={noShowOnly} onChange={(e) => setNoShowOnly(e.target.checked)} className="w-5 h-5 accent-[var(--emphasis)] cursor-pointer" />
                     No-shows only
+                    <Tip id="reservations.filter.noShows" />
                   </label>
                 </div>
               )}
             </div>
-            <button onClick={() => setIsExportOpen(true)} className={btn.primary}>Export</button>
+            <WithTip id="reservations.export"><button onClick={() => setIsExportOpen(true)} className={btn.primary}>Export</button></WithTip>
           </div>
         </div>
 
@@ -990,12 +998,12 @@ export default function AdminReservationsPage() {
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Check-In</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Check-Out</th>
-                  <th className={table.th}>Status</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Source</th>
-                  <th className={table.th}>Actions</th>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="reservations.col.guest" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Check-In<Tip id="reservations.col.checkIn" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Check-Out<Tip id="reservations.col.checkOut" /></th>
+                  <th className={table.th}>Status<Tip id="reservations.col.status" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Source<Tip id="reservations.col.source" /></th>
+                  <th className={table.th}>Actions<Tip id="reservations.col.actions" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -1076,42 +1084,42 @@ export default function AdminReservationsPage() {
           footer={res && (
             <>
               <button onClick={closeDetail} className={btn.secondary}>Close</button>
-              <button
+              <WithTip id="reservations.goToFolio"><button
                 onClick={() => navigate(`/pms/folios?reservation_id=${res.id}`)}
                 disabled={!reservationFolio}
                 className={btn.secondary}
                 title={!reservationFolio ? "No folio linked to this reservation yet" : undefined}
               >
                 Go to Folio
-              </button>
+              </button></WithTip>
               {res.status === "hold" && (
-                <button
+                <WithTip id="reservations.confirm"><button
                   onClick={() => openConfirmModal(res)}
                   disabled={confirmingId === res.id || Boolean(confirmBlockedReason)}
                   title={confirmBlockedReason || undefined}
                   className={btn.success}
                 >
                   {confirmingId === res.id ? "Confirming..." : "Confirm"}
-                </button>
+                </button></WithTip>
               )}
               {(res.status === "hold" || res.status === "confirmed") && (
-                <button onClick={() => openCancelModal(res)} className={btn.danger}>Cancel</button>
+                <WithTip id="reservations.cancel"><button onClick={() => openCancelModal(res)} className={btn.danger}>Cancel</button></WithTip>
               )}
               {canModify && (
-                <button onClick={handleToggleNoShow} disabled={actionLoading} className={btn.secondary}>
+                <WithTip id="reservations.noShow"><button onClick={handleToggleNoShow} disabled={actionLoading} className={btn.secondary}>
                   {res.is_no_show ? "Undo No-Show" : "Mark No-Show"}
-                </button>
+                </button></WithTip>
               )}
               {canModify && res.is_expired_hold && (
-                <button onClick={handleReclaimExpiredHold} disabled={actionLoading} className={btn.secondary}>
+                <WithTip id="reservations.reclaimHold"><button onClick={handleReclaimExpiredHold} disabled={actionLoading} className={btn.secondary}>
                   Reclaim Hold
-                </button>
+                </button></WithTip>
               )}
               {!res.actual_check_in && canModify && (
                 res.status === "confirmed" && !res.is_no_show && !arrivalAhead ? (
-                  <button onClick={handleCheckIn} disabled={actionLoading} className={btn.success}>Check In</button>
+                  <WithTip id="reservations.checkIn"><button onClick={handleCheckIn} disabled={actionLoading} className={btn.success}>Check In</button></WithTip>
                 ) : (
-                  <button
+                  <WithTip id="reservations.checkIn"><button
                     disabled
                     title={
                       res.is_no_show
@@ -1123,7 +1131,7 @@ export default function AdminReservationsPage() {
                     className={btn.success}
                   >
                     Check In
-                  </button>
+                  </button></WithTip>
                 )
               )}
               {/* Whichever of these is actually appropriate depends on whether
@@ -1138,14 +1146,14 @@ export default function AdminReservationsPage() {
                   bills that night (see emergencyCheckout on the backend). */}
               {res.actual_check_in && !res.actual_check_out && (
                 hasPassedNoonCutoff(res.check_out) ? (
-                  <button onClick={handleCheckOut} disabled={actionLoading} className={btn.success}>Check Out</button>
+                  <WithTip id="reservations.checkOut"><button onClick={handleCheckOut} disabled={actionLoading} className={btn.success}>Check Out</button></WithTip>
                 ) : (
-                  <button onClick={() => setShowEarlyCheckoutConfirm(true)} disabled={actionLoading} className={btn.danger}>Early Checkout</button>
+                  <WithTip id="reservations.earlyCheckout"><button onClick={() => setShowEarlyCheckoutConfirm(true)} disabled={actionLoading} className={btn.danger}>Early Checkout</button></WithTip>
                 )
               )}
-              <button onClick={handleSaveEdit} disabled={saving} className={btn.primary}>
+              <WithTip id="reservations.save"><button onClick={handleSaveEdit} disabled={saving} className={btn.primary}>
                 {saving ? "Saving..." : "Save Changes"}
-              </button>
+              </button></WithTip>
             </>
           )}
         >
@@ -1159,10 +1167,10 @@ export default function AdminReservationsPage() {
 
               {/* Stay summary */}
               <div className="grid grid-cols-1 gap-4">
-                <InfoCard label="Check-In" value={formatDate(res.check_in)} />
-                <InfoCard label="Check-Out" value={formatDate(res.check_out)} />
-                <InfoCard label="Rooms" value={res.rooms_booked} />
-                <InfoCard label="Source" value={res.source_label || res.source || "N/A"} />
+                <InfoCard label="Check-In" tip="reservations.info.checkIn" value={formatDate(res.check_in)} />
+                <InfoCard label="Check-Out" tip="reservations.info.checkOut" value={formatDate(res.check_out)} />
+                <InfoCard label="Rooms" tip="reservations.info.rooms" value={res.rooms_booked} />
+                <InfoCard label="Source" tip="reservations.info.source" value={res.source_label || res.source || "N/A"} />
               </div>
 
               {/* Contact */}
@@ -1175,7 +1183,7 @@ export default function AdminReservationsPage() {
                   changed from In-House (Extend Stay / Early Checkout). */}
               {canChangeDates && (
                 <section className="flex flex-col gap-4">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Stay Dates</h3>
+                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Stay Dates<Tip id="reservations.stayDates" /></h3>
                   {arrivalAhead && res.status === "confirmed" && (
                     <div className="text-xl text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 flex flex-col gap-3 items-start">
                       <p>
@@ -1184,15 +1192,15 @@ export default function AdminReservationsPage() {
                         stay, held for them, and priced at this booking&apos;s own rate.
                       </p>
                       {stayDates.check_in !== businessToday && (
-                        <button type="button" className={btn.secondary} onClick={() => setStayDates((p) => ({ ...p, check_in: businessToday }))}>
+                        <WithTip id="reservations.useToday"><button type="button" className={btn.secondary} onClick={() => setStayDates((p) => ({ ...p, check_in: businessToday }))}>
                           Use today as check-in
-                        </button>
+                        </button></WithTip>
                       )}
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                     <div className="flex flex-col gap-2">
-                      <label className={field.label}>Check-In Date</label>
+                      <label className={field.label}>Check-In Date<Tip id="reservations.checkInDate" /></label>
                       <DateInput
                         value={stayDates.check_in}
                         min={businessToday}
@@ -1210,7 +1218,7 @@ export default function AdminReservationsPage() {
                       />
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className={field.label}>Check-Out Date</label>
+                      <label className={field.label}>Check-Out Date<Tip id="reservations.checkOutDate" /></label>
                       <DateInput
                         value={stayDates.check_out}
                         min={addDaysISO(stayDates.check_in || businessToday, 1)}
@@ -1233,17 +1241,17 @@ export default function AdminReservationsPage() {
                   )}
                   {datesChanged && (
                     <div className="flex gap-3 flex-wrap">
-                      <button onClick={handleChangeDates} disabled={changingDates || Boolean(datesBlockReason)} className={btn.primary}>
+                      <WithTip id="reservations.updateDates"><button onClick={handleChangeDates} disabled={changingDates || Boolean(datesBlockReason)} className={btn.primary}>
                         {changingDates ? "Updating..." : "Update Dates"}
-                      </button>
-                      <button
+                      </button></WithTip>
+                      <WithTip id="reservations.undoDates"><button
                         type="button"
                         onClick={() => { setStayDates(savedDates); setDatesError(""); }}
                         disabled={changingDates}
                         className={btn.secondary}
                       >
                         Undo
-                      </button>
+                      </button></WithTip>
                     </div>
                   )}
                 </section>
@@ -1251,9 +1259,9 @@ export default function AdminReservationsPage() {
 
               {/* Editable fields */}
               <section className="flex flex-col gap-4">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Details</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Details<Tip id="reservations.details" /></h3>
                 <div className="flex flex-col gap-2">
-                  <label className={field.label}>Special Requests</label>
+                  <label className={field.label}>Special Requests<Tip id="reservations.specialRequests" /></label>
                   <AutoGrowTextarea
                     value={editFields.special_requests}
                     onChange={(e) => setEditFields({ ...editFields, special_requests: e.target.value })}
@@ -1262,7 +1270,7 @@ export default function AdminReservationsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Total Rate (₦)</label>
+                    <label className={field.label}>Total Rate (₦)<Tip id="reservations.totalRate" /></label>
                     {reservationFolio ? (
                       // Once a folio exists, the accommodation charge it was
                       // seeded with at confirmation time is already posted —
@@ -1285,14 +1293,14 @@ export default function AdminReservationsPage() {
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Total Reservation Credit (₦)</label>
+                    <label className={field.label}>Total Reservation Credit (₦)<Tip id="reservations.totalCredit" /></label>
                     <div className={`${field.input} bg-[color:var(--text-color)]/3 flex items-center`} title="Set automatically from the Reservation (Credit) ledger below — record it there, not here.">
                       {money(depositsTotal)}
                     </div>
                   </div>
                   {!reservationFolio && (
                     <div className="flex flex-col gap-2">
-                      <label className={field.label}>Discount ({editFields.discount_mode === "percentage" ? "%" : "₦"})</label>
+                      <label className={field.label}>Discount ({editFields.discount_mode === "percentage" ? "%" : "₦"})<Tip id="reservations.discount" /></label>
                       <div className="flex flex-col gap-2">
                         <select
                           value={editFields.discount_mode}
@@ -1318,7 +1326,7 @@ export default function AdminReservationsPage() {
 
               {/* Folio */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Folio</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Folio<Tip id="reservations.folio" /></h3>
                 {reservationFolio ? (
                   <div className="flex justify-between items-center bg-[color:var(--text-color)]/3 border-1 border-gray-200 rounded-lg px-5 py-4 text-xl">
                     <span className="font-medium">
@@ -1343,7 +1351,7 @@ export default function AdminReservationsPage() {
                   here instead of only on the stay that originally paid it. */}
               {guestCredit.length > 0 && (
                 <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Credit from a Previous Stay</h3>
+                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Credit from a Previous Stay<Tip id="reservations.previousCredit" /></h3>
                   <div className="flex flex-col gap-2">
                     {guestCredit.map((c) => (
                       <div key={c.id} className="flex items-center justify-between bg-[color:var(--text-color)]/3 rounded-lg px-5 py-4 gap-4">
@@ -1372,7 +1380,7 @@ export default function AdminReservationsPage() {
 
               {/* Deposits */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Reservation (Credit)</h3>
+                <h3 className="text-2xl font-bold text-[color:var(--black)]">Reservation (Credit)<Tip id="reservations.credit" /></h3>
                 {deposits.length > 0 && (
                   <div className="flex flex-col gap-2">
                     {deposits.map((dep) => (
@@ -1445,13 +1453,13 @@ export default function AdminReservationsPage() {
                               ))}
                             </select>
                             <div className="flex gap-3 flex-wrap">
-                              <button
+                              <WithTip id="reservations.moveCredit"><button
                                 onClick={() => handleTransferCredit(dep.id)}
                                 disabled={!transferTo || depositActionLoading === dep.id}
                                 className={btn.rowPrimary}
                               >
                                 {depositActionLoading === dep.id ? "Moving..." : "Move the credit"}
-                              </button>
+                              </button></WithTip>
                               <button onClick={closeTransfer} className={btn.rowSecondary}>Cancel</button>
                             </div>
                           </div>
@@ -1463,21 +1471,21 @@ export default function AdminReservationsPage() {
                 {depositError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{depositError}</p>}
                 {canModify && (
                   <div className="flex flex-col gap-4">
-                    <p className={field.label}>New Deposit</p>
+                    <p className={field.label}>New Deposit<Tip id="reservations.newDeposit" /></p>
                     <PaymentSplitRows splits={depositForm.splits} setSplits={(splits) => setDepositForm({ ...depositForm, splits })} />
                     <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Receipt Number</label>
+                        <label className={field.label}>Receipt Number<Tip id="reservations.receiptNumber" /></label>
                         <input type="text" placeholder="e.g. from the receipt book" value={depositForm.receipt_number} onChange={(e) => setDepositForm({ ...depositForm, receipt_number: e.target.value })} className={field.input} />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className={field.label}>Remarks (optional)</label>
+                        <label className={field.label}>Remarks (optional)<Tip id="reservations.remarks" /></label>
                         <AutoGrowTextarea value={depositForm.notes} onChange={(e) => setDepositForm({ ...depositForm, notes: e.target.value })} className={field.textarea} />
                       </div>
                     </div>
-                    <button onClick={handleRecordDeposit} disabled={recordingDeposit || !hasValidDepositSplits} className={`${btn.primary} self-start`}>
+                    <WithTip id="reservations.recordCredit"><button onClick={handleRecordDeposit} disabled={recordingDeposit || !hasValidDepositSplits} className={`${btn.primary} self-start`}>
                       {recordingDeposit ? "Recording..." : "Record Reservation Credit"}
-                    </button>
+                    </button></WithTip>
                   </div>
                 )}
               </section>
@@ -1485,7 +1493,7 @@ export default function AdminReservationsPage() {
               {/* Room Assignments */}
               {canModify && (
                 <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Room Assignments</h3>
+                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Room Assignments<Tip id="reservations.roomAssignments" /></h3>
                   <RoomAssignmentPicker
                     reservationId={res.id}
                     roomTypeId={res.room_type_id}
@@ -1501,7 +1509,7 @@ export default function AdminReservationsPage() {
               {/* Change Room Type */}
               {canModify && (
                 <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Change Room Type</h3>
+                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Change Room Type<Tip id="reservations.changeRoomType" /></h3>
                   <p className="text-lg text-[color:var(--text-color)]/68">
                     Currently {res.room_type?.name || "—"}. Switching moves the guest to a different room type — any
                     nights already billed keep their original rate; every night from here on bills at the new type's rate.
@@ -1560,13 +1568,13 @@ export default function AdminReservationsPage() {
                             );
                           })}
                           {(!res.rooms_booked || newTypeRoomSlots.length < res.rooms_booked) && (
-                            <button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
+                            <WithTip id="reservations.addRoom"><button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
                               + Add Room
-                            </button>
+                            </button></WithTip>
                           )}
                         </div>
                       ) : null}
-                      <button
+                      <WithTip id="reservations.changeRoomTypeButton"><button
                         onClick={handleChangeRoomType}
                         disabled={
                           changingRoomType ||
@@ -1576,7 +1584,7 @@ export default function AdminReservationsPage() {
                         className={`${btn.primary} self-start`}
                       >
                         {changingRoomType ? "Changing..." : "Change Room Type"}
-                      </button>
+                      </button></WithTip>
                     </>
                   )}
                 </section>
@@ -1585,16 +1593,16 @@ export default function AdminReservationsPage() {
               {/* Extend Stay */}
               {res.actual_check_in && !res.actual_check_out && (
                 <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Extend Stay</h3>
+                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Extend Stay<Tip id="reservations.extendStay" /></h3>
                   <div className="flex gap-3 flex-nowrap items-center">
                     <DateInput value={newCheckOutDate} min={extendMin} aria-label="New check-out date" onChange={(e) => setNewCheckOutDate(e.target.value)} className={field.input} />
-                    <button
+                    <WithTip id="reservations.extend"><button
                       onClick={handleExtendStay}
                       disabled={extending || !newCheckOutDate || Boolean(extendProblem)}
                       className={`${btn.primary} whitespace-nowrap`}
                     >
                       {extending ? "Extending..." : "Extend"}
-                    </button>
+                    </button></WithTip>
                   </div>
                   {extendProblem && <p className="text-lg text-red-600">{extendProblem}</p>}
                   {hasOutstandingBalance && (
@@ -1620,9 +1628,9 @@ export default function AdminReservationsPage() {
           footer={
             <>
               <button onClick={closeCancelModal} disabled={actionLoading} className={btn.secondary}>Back</button>
-              <button onClick={handleCancel} disabled={actionLoading} className={btn.dangerSolid}>
+              <WithTip id="reservations.confirmCancel"><button onClick={handleCancel} disabled={actionLoading} className={btn.dangerSolid}>
                 {actionLoading ? "Cancelling..." : "Confirm Cancel"}
-              </button>
+              </button></WithTip>
             </>
           }
         >
@@ -1633,7 +1641,7 @@ export default function AdminReservationsPage() {
             Are you sure you want to cancel this guest's reservation? Make sure to alert them about the cancellation if you think they might proceed to make payment.
           </p>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Reason (optional)</label>
+            <label className={field.label}>Reason (optional)<Tip id="reservations.cancelReason" /></label>
             <AutoGrowTextarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} className={field.textarea} />
           </div>
         </Modal>
@@ -1650,9 +1658,9 @@ export default function AdminReservationsPage() {
           footer={
             <>
               <button onClick={closeConfirmModal} disabled={confirmingId === confirmTarget.id} className={btn.secondary}>Back</button>
-              <button onClick={handleQuickConfirm} disabled={confirmingId === confirmTarget.id} className={btn.success}>
+              <WithTip id="reservations.yesConfirm"><button onClick={handleQuickConfirm} disabled={confirmingId === confirmTarget.id} className={btn.success}>
                 {confirmingId === confirmTarget.id ? "Confirming..." : "Yes, Confirm"}
-              </button>
+              </button></WithTip>
             </>
           }
         >
@@ -1676,9 +1684,9 @@ export default function AdminReservationsPage() {
           footer={
             <>
               <button onClick={() => setShowEarlyCheckoutConfirm(false)} disabled={actionLoading} className={btn.secondary}>Back</button>
-              <button onClick={handleEarlyCheckout} disabled={actionLoading} className={btn.dangerSolid}>
+              <WithTip id="reservations.confirmEarly"><button onClick={handleEarlyCheckout} disabled={actionLoading} className={btn.dangerSolid}>
                 {actionLoading ? "Processing..." : "Yes, Check Out Early"}
-              </button>
+              </button></WithTip>
             </>
           }
         >
@@ -1704,7 +1712,7 @@ export default function AdminReservationsPage() {
           footer={
             <>
               <button onClick={() => setIsExportOpen(false)} className={btn.secondary}>Cancel</button>
-              <button onClick={handleExport} disabled={exporting} className={btn.primary}>{exporting ? "Exporting..." : "Export CSV"}</button>
+              <WithTip id="reservations.exportCsv"><button onClick={handleExport} disabled={exporting} className={btn.primary}>{exporting ? "Exporting..." : "Export CSV"}</button></WithTip>
             </>
           }
         >
@@ -1713,7 +1721,7 @@ export default function AdminReservationsPage() {
           )}
           <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
             <div className="flex flex-col gap-2">
-              <label className={field.label}>Start Date</label>
+              <label className={field.label}>Start Date<Tip id="reservations.export.start" /></label>
               <DateInput
                 value={exportStartDate}
                 onChange={(e) => {
@@ -1725,12 +1733,12 @@ export default function AdminReservationsPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className={field.label}>End Date</label>
+              <label className={field.label}>End Date<Tip id="reservations.export.end" /></label>
               <DateInput value={exportEndDate} min={exportStartDate || undefined} onChange={(e) => setExportEndDate(e.target.value)} className={field.input} />
             </div>
           </div>
           <div className="flex flex-col gap-3">
-            <label className={field.label}>Reservation Status</label>
+            <label className={field.label}>Reservation Status<Tip id="reservations.export.status" /></label>
             <div className="flex gap-8">
               {["active", "confirmed"].map((s) => (
                 <label key={s} className="flex items-center gap-3 cursor-pointer text-xl capitalize">
@@ -1772,10 +1780,10 @@ export default function AdminReservationsPage() {
   );
 }
 
-function InfoCard({ label, value, capitalize }) {
+function InfoCard({ label, value, capitalize, tip }) {
   return (
     <div className="bg-[color:var(--text-color)]/5 border-1 border-gray-200 rounded-lg px-5 py-4">
-      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}</p>
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}{tip && <Tip id={tip} />}</p>
       <p className={`text-2xl font-bold text-[color:var(--black)] ${capitalize ? "capitalize" : ""}`}>{value}</p>
     </div>
   );

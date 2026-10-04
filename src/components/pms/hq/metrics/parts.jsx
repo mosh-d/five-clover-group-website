@@ -4,6 +4,8 @@ import { useState } from "react";
 import { IoArrowUp, IoArrowDown, IoRemove, IoAlertCircle, IoCloseCircle, IoTrendingDown } from "react-icons/io5";
 import { card, field, table } from "@/components/pms/ui";
 import InfoTip, { FloatingTip, tipFor } from "@/components/pms/InfoTip";
+import { Tip } from "@/components/pms/Tip";
+import { tipText } from "@/lib/pms/tips";
 import { DASH } from "./format";
 
 // Pieces the Metrics page's views are built from: headline tiles, the
@@ -16,10 +18,14 @@ import { DASH } from "./format";
 
 const muted = "text-(--text-color)/68";
 
-export function SectionTitle({ children, sub }) {
+// `tip`: an entry in lib/pms/tips.js, shown as an (i) after the title.
+export function SectionTitle({ children, sub, tip }) {
   return (
     <div className="flex flex-col gap-1">
-      <h3 className="text-2xl font-semibold text-(--text-color)">{children}</h3>
+      <h3 className="text-2xl font-semibold text-(--text-color)">
+        {children}
+        {tip && <Tip id={tip} />}
+      </h3>
       {sub && <p className={`text-xl ${muted}`}>{sub}</p>}
     </div>
   );
@@ -31,13 +37,17 @@ const DELTA_CLASS = { good: "text-green-800", bad: "text-red-700", neutral: mute
 
 // `delta`: { direction: up|down|flat, text } from format.change(); `upIsGood`
 // says which way is better (true, false, or null when neither is).
-export function StatTile({ label, value, sub, delta, upIsGood = true, vs }) {
+// `tip`: an entry in lib/pms/tips.js, shown as an (i) after the label.
+export function StatTile({ label, value, sub, delta, upIsGood = true, vs, tip }) {
   const tone =
     !delta || delta.direction === "flat" || upIsGood === null ? "neutral" : (delta.direction === "up") === upIsGood ? "good" : "bad";
   const Icon = !delta ? null : delta.direction === "up" ? IoArrowUp : delta.direction === "down" ? IoArrowDown : IoRemove;
   return (
     <div className={`${card.surface} p-6 flex flex-col gap-2 min-w-0`}>
-      <p className={`text-xl font-semibold ${muted}`}>{label}</p>
+      <p className={`text-xl font-semibold ${muted}`}>
+        {label}
+        {tip && <Tip id={tip} />}
+      </p>
       <p className="text-4xl font-semibold leading-tight break-words text-(--text-color)">{value}</p>
       {delta && (
         <p className={`text-lg font-semibold inline-flex items-center gap-1.5 ${DELTA_CLASS[tone]}`}>
@@ -80,14 +90,17 @@ const compareValues = (a, b) => {
 
 /**
  * rows: the data; first: the pinned name column { label, render(row), value(row) };
- * columns: [{ key, label, hint, value(row) -> number|string|null, render(row), sub(row), bar, barMax, align }];
+ * columns: [{ key, label, hint, tip, value(row) -> number|string|null, render(row), sub(row), bar, barMax, align }];
  *   `hint` puts an (i) beside the heading that says it in full ("OOO" -> Out of Order);
+ *   `tip` names an entry in lib/pms/tips.js for the same (i) when there is no hint;
+ * tipPrefix: else a column's tip is "<tipPrefix>.<its key>" ("<tipPrefix>.__first" for the pinned one);
  *   a bar is drawn against `barMax` when set (100 for a percentage, so 3%
  *   never looks full), else against the column's largest value;
  * total: the All Branches row (rendered with the same columns), or null;
  * defaultSort: { key, dir }.
  */
-export function DataTable({ rows, first, columns, total, totalLabel = "All branches", rowKey, defaultSort, empty = "Nothing to show for these dates." }) {
+export function DataTable({ rows, first, columns, total, totalLabel = "All branches", rowKey, defaultSort, empty = "Nothing to show for these dates.", tipPrefix }) {
+  const tipOf = (col, key) => col.hint || tipText(col.tip || (tipPrefix && `${tipPrefix}.${key}`));
   const [sort, setSort] = useState(defaultSort || null);
   const sortCol = sort && (sort.key === "__first" ? { value: first.value || ((r) => String(first.render(r))) } : columns.find((c) => c.key === sort.key));
   const sorted = sortCol
@@ -144,8 +157,8 @@ export function DataTable({ rows, first, columns, total, totalLabel = "All branc
         <table className={table.el}>
           <thead>
             <tr className={table.headRow}>
-              {head("__first", first.label, "left", first.hint, table.stickyTh)}
-              {columns.map((c) => head(c.key, c.label, c.align, c.hint))}
+              {head("__first", first.label, "left", tipOf(first, "__first"), table.stickyTh)}
+              {columns.map((c) => head(c.key, c.label, c.align, tipOf(c, c.key)))}
             </tr>
           </thead>
           <tbody>
@@ -291,10 +304,13 @@ export function HowCounted({ children }) {
 }
 
 // A choice for the lists that take one (a branch; food or drinks).
-export function Choice({ label, value, options, onChange, id }) {
+export function Choice({ label, value, options, onChange, id, tip }) {
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className={field.label}>{label}</label>
+      <label htmlFor={id} className={field.label}>
+        {label}
+        {tip && <Tip id={tip} />}
+      </label>
       <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className={field.select}>
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>

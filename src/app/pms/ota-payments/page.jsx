@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { IoBusinessOutline } from "react-icons/io5";
 import PageHeading from "@/components/pms/PageHeading";
-import { ABBREVIATIONS } from "@/components/pms/InfoTip";
 import Modal from "@/components/pms/Modal";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
@@ -11,6 +10,7 @@ import { btn, field, page, table } from "@/components/pms/ui";
 import { fetchOtaSettlements, markOtaSettlementPaid } from "@/lib/pms/api/ota-api";
 import { money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // OTA Payments - the branch PMS's page (AdminOtaPayments.jsx): money owed by
 // OTAs rather than by guests. It lives on its own page because an OTA
@@ -18,8 +18,8 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 // in-house list. Awaiting Payment is the chase list; Paid is the record of
 // what has landed.
 const TABS = [
-  { key: "pending", label: "Awaiting Payment" },
-  { key: "paid", label: "Paid" },
+  { key: "pending", label: "Awaiting Payment", tip: "otaPayments.tab.pending" },
+  { key: "paid", label: "Paid", tip: "otaPayments.tab.paid" },
 ];
 
 export default function PmsOtaPaymentsPage() {
@@ -68,7 +68,7 @@ export default function PmsOtaPaymentsPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <PageHeading icon={IoBusinessOutline} tip={ABBREVIATIONS.OTA}>OTA Payments</PageHeading>
+      <PageHeading icon={IoBusinessOutline} tipId="otaPayments.page">OTA Payments</PageHeading>
       <p className={`text-xl ${page.muted}`}>
         Nights an OTA is paying for instead of the guest. The folio keeps showing them as owing until the money arrives, and the
         guest is never asked for them. Marking one paid records the money against that folio.
@@ -78,15 +78,17 @@ export default function PmsOtaPaymentsPage() {
 
       <div className="flex gap-3 flex-wrap">
         {TABS.map((tab) => (
-          <button key={tab.key} onClick={() => setStatus(tab.key)} className={status === tab.key ? btn.rowPrimary : btn.rowSecondary}>
-            {tab.label}
-          </button>
+          <WithTip key={tab.key} id={tab.tip}>
+            <button onClick={() => setStatus(tab.key)} className={status === tab.key ? btn.rowPrimary : btn.rowSecondary}>
+              {tab.label}
+            </button>
+          </WithTip>
         ))}
       </div>
 
       {status === "pending" && !loading && settlements.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg px-5 py-4 flex items-center justify-between gap-4 flex-wrap w-full">
-          <span className="text-amber-800 font-bold text-xl">Total awaiting OTA payment:</span>
+          <span className="text-amber-800 font-bold text-xl">Total awaiting OTA payment:<Tip id="otaPayments.awaiting" /></span>
           <span className="text-amber-800 font-bold text-2xl">{money(pendingTotal)}</span>
         </div>
       )}
@@ -101,13 +103,13 @@ export default function PmsOtaPaymentsPage() {
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                  <th className={table.th}>Booking Ref</th>
-                  <th className={table.th}>Nights Covered</th>
-                  <th className={table.th}>Covers</th>
-                  <th className={table.th}>Amount</th>
-                  <th className={table.th}>Status</th>
-                  <th className={table.th}>Action</th>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="otaPayments.col.guest" /></th>
+                  <th className={table.th}>Booking Ref<Tip id="otaPayments.col.bookingRef" /></th>
+                  <th className={table.th}>Nights Covered<Tip id="otaPayments.col.nights" /></th>
+                  <th className={table.th}>Covers<Tip id="otaPayments.col.covers" /></th>
+                  <th className={table.th}>Amount<Tip id="otaPayments.col.amount" /></th>
+                  <th className={table.th}>Status<Tip id="otaPayments.col.status" /></th>
+                  <th className={table.th}>Action<Tip id="otaPayments.col.action" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -155,9 +157,9 @@ export default function PmsOtaPaymentsPage() {
           footer={
             <>
               <button onClick={() => setConfirming(null)} className={btn.secondary}>Cancel</button>
-              <button onClick={confirmPaid} disabled={saving} className={btn.success}>
+              <WithTip id="otaPayments.confirm"><button onClick={confirmPaid} disabled={saving} className={btn.success}>
                 {saving ? "Recording..." : `Yes, ${money(confirming.amount)} received`}
-              </button>
+              </button></WithTip>
             </>
           }
         >
@@ -166,7 +168,7 @@ export default function PmsOtaPaymentsPage() {
             Only do it once the money has actually arrived.
           </p>
           <div className="flex flex-col gap-2">
-            <label htmlFor="ota-reference" className={field.label}>OTA reference (optional)</label>
+            <label htmlFor="ota-reference" className={field.label}>OTA reference (optional)<Tip id="otaPayments.reference" /></label>
             <input
               id="ota-reference"
               type="text"

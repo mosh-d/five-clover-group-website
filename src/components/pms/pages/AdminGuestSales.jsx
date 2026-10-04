@@ -21,6 +21,7 @@ import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 const emptyRow = { item_kind: "food", reference_id: "", quantity: "1", is_complementary: false };
 const emptyOrder = { reservation_id: "", bill_no: "", rows: [{ ...emptyRow }] };
@@ -268,7 +269,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
 
   if (!canAccess) {
     return (
-      <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoFastFoodOutline} title="Guest Sales" dataComponent="AdminGuestSales">
+      <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoFastFoodOutline} title="Guest Sales" tipId="guestSales.page" dataComponent="AdminGuestSales">
         <p className="text-2xl text-[color:var(--text-color)]/68">
           You don't have permission to view this page.
         </p>
@@ -277,7 +278,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
   }
 
   return (
-    <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoFastFoodOutline} title="Guest Sales" dataComponent="AdminGuestSales">
+    <PageOrSection asSection={asSection} hideTitle={hideTitle} icon={IoFastFoodOutline} title="Guest Sales" tipId="guestSales.page" dataComponent="AdminGuestSales">
       <p className="text-xl text-[color:var(--text-color)]/76">
         Post a food/drink order to an in-house guest's room folio and print the receipt.
       </p>
@@ -285,11 +286,11 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
       {error && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3 w-full">{error}</p>}
 
       <div className="w-full flex flex-col gap-4 bg-(--card) rounded-xl border border-(--accent-2) p-6">
-        <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">New Guest Order</p>
+        <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">New Guest Order<Tip id="guestSales.newOrder" /></p>
 
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Guest</label>
+            <label className={field.label}>Guest<Tip id="guestSales.guest" /></label>
             {loadingGuests ? (
               <LoadingSpinner />
             ) : (
@@ -308,7 +309,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Bill No (optional)</label>
+            <label className={field.label}>Bill No (optional)<Tip id="guestSales.billNo" /></label>
             <input
               type="text"
               placeholder="Leave blank to have the system generate one"
@@ -334,17 +335,17 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
         />
 
         <div className="flex justify-between items-center border-t border-(--accent-2) pt-4">
-          <span className="text-xl font-bold uppercase tracking-wide text-[color:var(--text-color)]/68">Total</span>
+          <span className="text-xl font-bold uppercase tracking-wide text-[color:var(--text-color)]/68">Total<Tip id="guestSales.total" /></span>
           <span className="text-2xl font-bold">{money(orderTotal)}</span>
         </div>
 
-        <button
+        <WithTip id="guestSales.post"><button
           onClick={handleSubmit}
           disabled={submitting || !orderValid}
           className={`${btn.primary} self-start`}
         >
           {submitting ? "Posting..." : "Post Order"}
-        </button>
+        </button></WithTip>
         {/* Never leave a disabled button unexplained — that is what made this
             look broken rather than incomplete. */}
         {!orderValid && !submitting && (
@@ -355,9 +356,10 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
       <div className={table.card}>
         <div className="px-8 py-4 border-b border-(--accent-2) flex gap-3 flex-wrap">
           {[
-            { key: "in-house", label: "In-House" },
-            { key: "checked-out", label: "Checked-Out (Owing)" },
+            { key: "in-house", label: "In-House", tip: "guestSales.tab.inHouse" },
+            { key: "checked-out", label: "Checked-Out (Owing)", tip: "guestSales.tab.checkedOut" },
           ].map((t) => (
+            <WithTip key={t.key} id={t.tip}>
             <button
               key={t.key}
               onClick={() => setFolioTab(t.key)}
@@ -367,6 +369,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
             >
               {t.label}
             </button>
+            </WithTip>
           ))}
         </div>
         {folioTab === "in-house" ? (
@@ -374,12 +377,12 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                  <th className={table.th}>Room</th>
-                  <th className={table.th}>Folio #</th>
-                  <th className={table.th}>Date &amp; Time</th>
-                  <th className={table.th}>Status</th>
-                  <th className={table.th}>Actions</th>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="guestSales.col.guest" /></th>
+                  <th className={table.th}>Room<Tip id="guestSales.col.room" /></th>
+                  <th className={table.th}>Folio #<Tip id="guestSales.col.folio" /></th>
+                  <th className={table.th}>Date &amp; Time<Tip id="guestSales.col.dateTime" /></th>
+                  <th className={table.th}>Status<Tip id="guestSales.col.status" /></th>
+                  <th className={table.th}>Actions<Tip id="guestSales.col.actions" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -429,11 +432,11 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                  <th className={table.th}>Folio #</th>
-                  <th className={table.th}>Checked Out</th>
-                  <th className={table.th}>Balance</th>
-                  <th className={table.th}>Actions</th>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="guestSales.col.guest" /></th>
+                  <th className={table.th}>Folio #<Tip id="guestSales.col.folio" /></th>
+                  <th className={table.th}>Checked Out<Tip id="guestSales.col.checkedOut" /></th>
+                  <th className={table.th}>Balance<Tip id="guestSales.col.balance" /></th>
+                  <th className={table.th}>Actions<Tip id="guestSales.col.actions" /></th>
                 </tr>
               </thead>
               <tbody>

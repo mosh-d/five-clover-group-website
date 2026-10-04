@@ -6,6 +6,7 @@ import Modal from "@/components/pms/Modal";
 import { btn } from "@/components/pms/ui";
 import { getStoredBranch, getStoredStaffUsername } from "@/lib/pms/auth";
 import { money } from "@/lib/pms/format";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 const formatDateTime = (d) =>
   new Date(d).toLocaleString("en-US", { timeZone: "Africa/Lagos", dateStyle: "medium", timeStyle: "short" });
@@ -29,7 +30,7 @@ export default function PrintReceiptModal({ billNo, who, items, serviceCharge, t
     <Modal onClose={onClose} title="Receipt" size="sm" footer={
       <>
         <button onClick={onClose} className={btn.secondary}>Close</button>
-        <button onClick={() => window.print()} className={btn.primary}>Print</button>
+        <WithTip id="receipt.print"><button onClick={() => window.print()} className={btn.primary}>Print</button></WithTip>
       </>
     }>
       <div id="print-receipt" className="flex flex-col gap-4 text-xl">

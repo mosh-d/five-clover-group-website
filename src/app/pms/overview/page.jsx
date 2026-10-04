@@ -32,6 +32,7 @@ import { fetchMaintenanceMode } from "@/lib/pms/api/room-data";
 import { todayISO, yesterdayISO, monthStartISO, formatShortDate } from "@/lib/pms/dates";
 import { money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // The branch's day at a glance - the branch PMS's Overview
 // (hotel-frontends admin_pages/AdminOverview.jsx), moved here.
@@ -140,8 +141,9 @@ export default function PmsOverviewPage() {
     <>
       <div className={page.wrap}>
         <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
-          <PageHeading icon={IoGridOutline}>Overview</PageHeading>
+          <PageHeading icon={IoGridOutline} tipId="overview.page">Overview</PageHeading>
           {lastAudit !== undefined && (
+            <WithTip id="overview.nightAudit">
             <button
               onClick={() => go("/pms/night-audit")}
               className={`flex items-center gap-3 px-5 py-2.5 rounded-full text-xl font-semibold cursor-pointer transition-colors ${
@@ -156,11 +158,13 @@ export default function PmsOverviewPage() {
                   ? `Night audit up to date (${formatShortDate(lastAudit.audit_date)})`
                   : `Night audit overdue — last run ${formatShortDate(lastAudit.audit_date)}`}
             </button>
+            </WithTip>
           )}
         </div>
 
         {alertsSummary &&
           (alertTotal > 0 ? (
+            <WithTip id="overview.alerts" className="w-full">
             <button
               onClick={() => go("/pms/alerts")}
               className="w-full flex items-center justify-between gap-12 bg-orange-50 border border-orange-200 rounded-xl px-6 py-4 cursor-pointer hover:bg-orange-100 transition-colors text-left"
@@ -179,10 +183,12 @@ export default function PmsOverviewPage() {
               </span>
               <span className="text-xl font-bold text-orange-700 whitespace-nowrap">View Alerts →</span>
             </button>
+            </WithTip>
           ) : (
             <div className="w-full flex items-center gap-4 bg-green-50 border border-green-200 rounded-xl px-6 py-4 text-xl text-green-700">
               <IoCheckmarkCircleOutline size={24} className="shrink-0" />
               All clear — no outstanding alerts.
+              <Tip id="overview.allClear" />
             </div>
           ))}
 
@@ -194,6 +200,7 @@ export default function PmsOverviewPage() {
                 boldText={`${plural(roomFlags.outOfOrder.length, "room")} out of order`}
                 detail="needs maintenance before it can be sold"
                 color="red"
+                tip="overview.outOfOrder"
                 onClick={() => go(roomLink(roomFlags.outOfOrder[0]))}
               />
             )}
@@ -203,6 +210,7 @@ export default function PmsOverviewPage() {
                 boldText={`${plural(roomFlags.complementary.length, "room")} complementary`}
                 detail="no room charge applied"
                 color="purple"
+                tip="overview.complementary"
                 onClick={() => go(roomLink(roomFlags.complementary[0]))}
               />
             )}
@@ -212,6 +220,7 @@ export default function PmsOverviewPage() {
                 boldText={`${plural(roomFlags.reserved.length, "room")} reserved (${roomFlags.reserved.map((r) => r.number).join(", ")})`}
                 detail="set aside for a branch/zonal manager"
                 color="indigo"
+                tip="overview.reserved"
                 onClick={() => go(roomLink(roomFlags.reserved[0]))}
               />
             )}
@@ -219,12 +228,13 @@ export default function PmsOverviewPage() {
         )}
 
         <MotionDiv className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" variants={staggerParent} initial="hidden" animate="shown">
-          <GlanceCard icon={IoLogInOutline} label="Arrivals Today" value={glance.arrivals} sub="expected check-ins" onClick={() => go("/pms/check-ins")} />
-          <GlanceCard icon={IoLogOutOutline} label="Departures Today" value={glance.departures} sub="expected check-outs" onClick={() => go("/pms/check-outs")} />
-          <GlanceCard icon={IoHomeOutline} label="In-House Now" value={glance.inHouse} sub="guests currently staying" onClick={() => go("/pms/in-house")} />
+          <GlanceCard icon={IoLogInOutline} label="Arrivals Today" tip="overview.arrivals" value={glance.arrivals} sub="expected check-ins" onClick={() => go("/pms/check-ins")} />
+          <GlanceCard icon={IoLogOutOutline} label="Departures Today" tip="overview.departures" value={glance.departures} sub="expected check-outs" onClick={() => go("/pms/check-outs")} />
+          <GlanceCard icon={IoHomeOutline} label="In-House Now" tip="overview.inHouse" value={glance.inHouse} sub="guests currently staying" onClick={() => go("/pms/in-house")} />
           <GlanceCard
             icon={IoBedOutline}
             label="Available Tonight"
+            tip="overview.availableTonight"
             value={isLoading ? null : totalAvailable}
             sub={`of ${totalRooms} rooms · ${occupancyPct}% occupied`}
             onClick={() => go("/pms/rooms")}
@@ -233,10 +243,11 @@ export default function PmsOverviewPage() {
 
         {reportSummary && (
           <MotionDiv className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" variants={staggerParent} initial="hidden" animate="shown">
-            <GlanceCard icon={IoCashOutline} label="Collected This Month" value={money(paymentsCollectedMTD)} sub="payments received MTD" onClick={() => go("/pms/reports")} accent />
+            <GlanceCard icon={IoCashOutline} label="Collected This Month" tip="overview.collected" value={money(paymentsCollectedMTD)} sub="payments received MTD" onClick={() => go("/pms/reports")} accent />
             <GlanceCard
               icon={IoWalletOutline}
               label="Outstanding"
+              tip="overview.outstanding"
               value={money(reportTotals.total_outstanding)}
               sub="balance still owed"
               onClick={() => go("/pms/folios?tab=pending")}
@@ -245,6 +256,7 @@ export default function PmsOverviewPage() {
             <GlanceCard
               icon={IoGridOutline}
               label="Stays This Month"
+              tip="overview.stays"
               value={totalStays}
               sub={`${completedStays} completed`}
               onClick={() => go("/pms/reports")}
@@ -253,17 +265,17 @@ export default function PmsOverviewPage() {
         )}
 
         <div className="w-full flex flex-col gap-4">
-          <h2 className={page.sectionTitle}>House Status</h2>
+          <h2 className={page.sectionTitle}>House Status<Tip id="overview.houseStatus" /></h2>
           <div className={table.card}>
             <div className={table.scroll}>
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>
-                    <th className={`${table.th} ${table.stickyTh}`}>Room Type</th>
-                    <th className={`${table.th} text-right!`}>Total Rooms</th>
-                    <th className={`${table.th} text-right!`}>Occupied / Held</th>
-                    <th className={`${table.th} text-right!`}>Available</th>
-                    <th className={table.th}>Occupancy</th>
+                    <th className={`${table.th} ${table.stickyTh}`}>Room Type<Tip id="overview.house.roomType" /></th>
+                    <th className={`${table.th} text-right!`}>Total Rooms<Tip id="overview.house.total" /></th>
+                    <th className={`${table.th} text-right!`}>Occupied / Held<Tip id="overview.house.occupied" /></th>
+                    <th className={`${table.th} text-right!`}>Available<Tip id="overview.house.available" /></th>
+                    <th className={table.th}>Occupancy<Tip id="overview.house.occupancy" /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -306,19 +318,19 @@ export default function PmsOverviewPage() {
 
         <div className="w-full flex flex-col gap-4">
           <div className="flex justify-between items-center">
-            <h2 className={page.sectionTitle}>Recent Bookings</h2>
-            <button onClick={() => go("/pms/reservations")} className={btn.link}>View all →</button>
+            <h2 className={page.sectionTitle}>Recent Bookings<Tip id="overview.recent" /></h2>
+            <WithTip id="overview.viewAll"><button onClick={() => go("/pms/reservations")} className={btn.link}>View all →</button></WithTip>
           </div>
           <div className={table.card}>
             <div className={table.scroll}>
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>
-                    <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                    <th className={`${table.th} hidden md:table-cell`}>Room Type</th>
-                    <th className={`${table.th} hidden md:table-cell`}>Check-In</th>
-                    <th className={`${table.th} hidden md:table-cell`}>Check-Out</th>
-                    <th className={table.th}>Status</th>
+                    <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="overview.recent.guest" /></th>
+                    <th className={`${table.th} hidden md:table-cell`}>Room Type<Tip id="overview.recent.roomType" /></th>
+                    <th className={`${table.th} hidden md:table-cell`}>Check-In<Tip id="overview.recent.checkIn" /></th>
+                    <th className={`${table.th} hidden md:table-cell`}>Check-Out<Tip id="overview.recent.checkOut" /></th>
+                    <th className={table.th}>Status<Tip id="overview.recent.status" /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -358,13 +370,16 @@ export default function PmsOverviewPage() {
   );
 }
 
-function GlanceCard({ icon: Icon, label, value, sub, onClick, accent, warn }) {
+// `tip`: the (i) in the card's corner - over the card, not inside its
+// button (one control inside another can't be pressed on its own).
+function GlanceCard({ icon: Icon, label, value, sub, onClick, accent, warn, tip }) {
   return (
+    <div className="relative">
     <MotionButton
       variants={staggerChild}
       whileHover={{ y: -2 }}
       onClick={onClick}
-      className={`text-left rounded-xl border p-6 cursor-pointer transition-[box-shadow,scale] hover:shadow-md active:scale-[0.99] ${
+      className={`w-full h-full text-left rounded-xl border p-6 cursor-pointer transition-[box-shadow,scale] hover:shadow-md active:scale-[0.99] ${
         accent ? "bg-(--emphasis) border-transparent text-white" : warn ? "bg-(--card) border-orange-200" : "bg-(--card) border-(--accent-2)"
       }`}
     >
@@ -383,6 +398,12 @@ function GlanceCard({ icon: Icon, label, value, sub, onClick, accent, warn }) {
       </p>
       {sub && <p className={`text-lg mt-1 ${accent ? "text-white/60" : "text-(--text-color)/60"}`}>{sub}</p>}
     </MotionButton>
+    {tip && (
+      <span className={`absolute top-3 right-3 ${accent ? "[&_[role=img]]:text-white/80" : ""}`}>
+        <Tip id={tip} />
+      </span>
+    )}
+    </div>
   );
 }
 
@@ -394,15 +415,22 @@ const BANNER_THEMES = {
   indigo: { box: "bg-indigo-50 border-indigo-200 text-indigo-800 hover:bg-indigo-100", icon: "text-indigo-600" },
 };
 
-function StatusBanner({ icon: Icon, boldText, detail, color, onClick }) {
+function StatusBanner({ icon: Icon, boldText, detail, color, onClick, tip }) {
   const theme = BANNER_THEMES[color];
   return (
-    <button onClick={onClick} className={`flex-1 flex items-center gap-4 border rounded-xl px-6 py-4 text-left text-xl cursor-pointer transition-colors ${theme.box}`}>
+    <div className="relative flex-1 flex">
+    <button onClick={onClick} className={`flex-1 flex items-center gap-4 border rounded-xl pl-6 pr-12 py-4 text-left text-xl cursor-pointer transition-colors ${theme.box}`}>
       <Icon size={24} className={`shrink-0 ${theme.icon}`} />
       <span>
         <strong className="font-bold">{boldText}</strong>
         {detail && <> — {detail}</>}
       </span>
     </button>
+    {tip && (
+      <span className="absolute top-1/2 -translate-y-1/2 right-3">
+        <Tip id={tip} />
+      </span>
+    )}
+    </div>
   );
 }

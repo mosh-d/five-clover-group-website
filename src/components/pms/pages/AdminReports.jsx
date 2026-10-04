@@ -47,6 +47,7 @@ import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBa
 import DateInput from "@/components/pms/DateInput";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
 import GuestName from "@/components/pms/GuestName";
+import { Tip, WithTip } from "@/components/pms/Tip";
 function currentMonthRange() {
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -56,20 +57,20 @@ function currentMonthRange() {
 }
 
 const ALL_TABS = [
-  { key: "dashboard", label: "Dashboard" },
+  { key: "dashboard", label: "Dashboard", tip: "reports.tab.dashboard" },
   // Labels are deliberately crossed against the keys (2026-09-07): the
   // report keyed "manifest" is the arrivals/departures sheet, which the
   // hotel calls the Accommodation report, and the one keyed "accommodation"
   // is the per-room house register, which they call the Manifest. Renaming
   // the keys would mean renaming the API routes and every activeTab branch
   // below for a wording change, so only the display labels moved.
-  { key: "manifest", label: "Accommodation" },
-  { key: "analysis", label: "Analysis" },
-  { key: "pms", label: "PMS Report" },
-  { key: "accommodation", label: "Manifest" },
-  { key: "food-sales", label: "Food Sales" },
-  { key: "drink-sales", label: "Drink Sales" },
-  { key: "bar-stock", label: "Bar Stock" },
+  { key: "manifest", label: "Accommodation", tip: "reports.tab.manifest" },
+  { key: "analysis", label: "Analysis", tip: "reports.tab.analysis" },
+  { key: "pms", label: "PMS Report", tip: "reports.tab.pms" },
+  { key: "accommodation", label: "Manifest", tip: "reports.tab.accommodation" },
+  { key: "food-sales", label: "Food Sales", tip: "reports.tab.foodSales" },
+  { key: "drink-sales", label: "Drink Sales", tip: "reports.tab.drinkSales" },
+  { key: "bar-stock", label: "Bar Stock", tip: "reports.tab.barStock" },
 ];
 
 // Food/Drink Sales and Bar Stock are all F&B-only — a receptionist has no
@@ -133,10 +134,11 @@ export default function AdminReportsPage() {
 
   return (
     <div data-component="AdminReports" className="flex flex-col items-start gap-[3rem]">
-      <PageHeading icon={IoBarChartOutline}>Reports</PageHeading>
+      <PageHeading icon={IoBarChartOutline} tipId="reports.page">Reports</PageHeading>
 
       <div className="flex gap-3 text-xl flex-wrap">
         {visibleTabs().map((t) => (
+          <WithTip key={t.key} id={t.tip}>
           <button
             key={t.key}
             onClick={() => openTab(t.key)}
@@ -146,6 +148,7 @@ export default function AdminReportsPage() {
           >
             {t.label}
           </button>
+          </WithTip>
         ))}
       </div>
 
@@ -172,7 +175,7 @@ export default function AdminReportsPage() {
           since they're not sending anything to themselves. */}
       {!isAccountant() && (
         <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-col gap-2 w-full max-w-sm">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">{shiftLabel}</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">{shiftLabel}<Tip id="reports.shift" /></label>
           <select
             value={shift}
             onChange={(e) => setShift(e.target.value)}
@@ -281,7 +284,7 @@ function DashboardTab() {
       {/* Date range picker */}
       <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
         <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">From</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">From<Tip id="reports.from" /></label>
           <DateInput
             value={from}
             onChange={(e) => {
@@ -294,7 +297,7 @@ function DashboardTab() {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">To</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">To<Tip id="reports.to" /></label>
           <DateInput
             value={to}
             min={from || undefined}
@@ -302,22 +305,22 @@ function DashboardTab() {
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <Button
+        <WithTip id="reports.generate"><Button
           onClick={loadReport}
           disabled={loading}
           variant="emphasis"
           className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
-        <Button
+        </Button></WithTip>
+        <WithTip id="reports.export"><Button
           onClick={handleExport}
           disabled={exporting || !from || !to}
           variant="secondary"
           className={`text-xl! flex items-center gap-2 rounded-xl ${exporting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-        </Button>
+        </Button></WithTip>
         {/* Email Report, parked — see the note by its state above.
         <Button
           onClick={() => setShowEmailForm((v) => !v)}
@@ -386,23 +389,23 @@ function DashboardTab() {
 
           {/* Summary cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <SummaryCard label="Total Billed" value={money(summary.total_billed)} sub="everything charged this period, guests and non-guests" />
-            <SummaryCard label="Payments Received" value={money(totalPaymentsCollected)} sub="collected this period" accent />
+            <SummaryCard label="Total Billed" tip="reports.dash.totalBilled" value={money(summary.total_billed)} sub="everything charged this period, guests and non-guests" />
+            <SummaryCard label="Payments Received" tip="reports.dash.paymentsReceived" value={money(totalPaymentsCollected)} sub="collected this period" accent />
             {/* outstanding_in_period, not total_outstanding: this card is
                 part of a report ABOUT the selected range, and the branch-wide
                 figure ignored the dates entirely — it read the same whatever
                 range was picked, and the same as the Overview page's own
                 Outstanding card. The Overview keeps the branch-wide one,
                 since its card links to the full Folios pending list. */}
-            <SummaryCard label="Outstanding" value={money(summary.outstanding_in_period)} sub="still owed by stays that began this period" warn={Number(summary.outstanding_in_period) > 0} />
-            <SummaryCard label="Completed Stays" value={summary.completed_stays ?? "—"} sub={`of ${summary.total_stays ?? 0} stays that began this period`} />
+            <SummaryCard label="Outstanding" tip="reports.dash.outstanding" value={money(summary.outstanding_in_period)} sub="still owed by stays that began this period" warn={Number(summary.outstanding_in_period) > 0} />
+            <SummaryCard label="Completed Stays" tip="reports.dash.completedStays" value={summary.completed_stays ?? "—"} sub={`of ${summary.total_stays ?? 0} stays that began this period`} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Revenue by room type */}
             <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
               <div className="px-6 py-5 border-b border-(--accent-2)">
-                <h2 className="text-3xl font-bold text-[color:var(--black)]">Revenue by Room Type</h2>
+                <h2 className="text-3xl font-bold text-[color:var(--black)]">Revenue by Room Type<Tip id="reports.dash.revenueByType" /></h2>
                 <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Room and breakfast charged for the nights in this period</p>
               </div>
               {revenueByRoomType.length === 0 ? (
@@ -412,10 +415,10 @@ function DashboardTab() {
                   <table className="w-full text-2xl">
                     <thead>
                       <tr className={table.headRow}>
-                        <th className={`px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${table.stickyTh}`}>Room Type</th>
-                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Stays</th>
-                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Revenue</th>
-                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Avg / Stay</th>
+                        <th className={`px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${table.stickyTh}`}>Room Type<Tip id="reports.dash.col.roomType" /></th>
+                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Stays<Tip id="reports.dash.col.stays" /></th>
+                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Revenue<Tip id="reports.dash.col.revenue" /></th>
+                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Avg / Stay<Tip id="reports.dash.col.avgStay" /></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -436,7 +439,7 @@ function DashboardTab() {
             {/* Payment methods */}
             <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
               <div className="px-6 py-5 border-b border-(--accent-2)">
-                <h2 className="text-3xl font-bold text-[color:var(--black)]">Payments by Method</h2>
+                <h2 className="text-3xl font-bold text-[color:var(--black)]">Payments by Method<Tip id="reports.dash.paymentsByMethod" /></h2>
                 <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Payments and non-guest sales, less payment and credit refunds — the same total as Analysis</p>
               </div>
               {paymentMethods.length === 0 ? (
@@ -446,10 +449,10 @@ function DashboardTab() {
                   <table className="w-full text-2xl">
                     <thead>
                       <tr className={table.headRow}>
-                        <th className={`px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${table.stickyTh}`}>Method</th>
-                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Count</th>
-                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Total</th>
-                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Share</th>
+                        <th className={`px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${table.stickyTh}`}>Method<Tip id="reports.dash.col.method" /></th>
+                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Count<Tip id="reports.dash.col.count" /></th>
+                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Total<Tip id="reports.dash.col.total" /></th>
+                        <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Share<Tip id="reports.dash.col.share" /></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -483,7 +486,7 @@ function DashboardTab() {
           {/* Occupancy */}
           <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
             <div className="px-6 py-5 border-b border-(--accent-2)">
-              <h2 className="text-3xl font-bold text-[color:var(--black)]">Occupancy by Room Type</h2>
+              <h2 className="text-3xl font-bold text-[color:var(--black)]">Occupancy by Room Type<Tip id="reports.dash.occupancy" /></h2>
               <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Room nights booked (no-shows left out) vs available across the selected period</p>
             </div>
             {occupancy.length === 0 ? (
@@ -493,11 +496,11 @@ function DashboardTab() {
                 <table className="w-full text-2xl">
                   <thead>
                     <tr className={table.headRow}>
-                      <th className={`px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${table.stickyTh}`}>Room Type</th>
-                      <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Capacity</th>
-                      <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Avail. Nights</th>
-                      <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Occupied</th>
-                      <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Occ. %</th>
+                      <th className={`px-6 py-3 text-left text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide ${table.stickyTh}`}>Room Type<Tip id="reports.dash.col.roomType" /></th>
+                      <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Capacity<Tip id="reports.dash.col.capacity" /></th>
+                      <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Avail. Nights<Tip id="reports.dash.col.availNights" /></th>
+                      <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Occupied<Tip id="reports.dash.col.occupied" /></th>
+                      <th className="px-6 py-3 text-right text-xl font-semibold text-[color:var(--text-color)]/76 uppercase tracking-wide">Occ. %<Tip id="reports.dash.col.occPct" /></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -535,11 +538,11 @@ function DashboardTab() {
 // one-line note underneath saying what it counts. Left-justified, so a wide
 // table's total is in view without scrolling to its far edge (owner,
 // 2026-09-18).
-function TotalLine({ label, amount, note, emphasis = false }) {
+function TotalLine({ label, amount, note, emphasis = false, tip }) {
   return (
     <div className="flex flex-col items-start gap-1 px-6 py-4 border-t border-(--accent-2)">
       <p className="text-xl">
-        <span className="text-[color:var(--text-color)]/68 uppercase tracking-wide font-semibold">{label}</span>{" "}
+        <span className="text-[color:var(--text-color)]/68 uppercase tracking-wide font-semibold">{label}{tip && <Tip id={tip} />}</span>{" "}
         <span className={`font-bold ml-3 ${emphasis ? "text-[color:var(--emphasis)]" : "text-[color:var(--black)]"}`}>{money(amount)}</span>
       </p>
       {note && <p className="text-lg text-[color:var(--text-color)]/60">{note}</p>}
@@ -553,7 +556,7 @@ function TotalLine({ label, amount, note, emphasis = false }) {
 // why both tables render it struck through). The figure is computed by the
 // backend's sumRoomRevenue so the screen and the Excel export can't drift.
 function RoomRevenueTotal({ amount }) {
-  return <TotalLine label="Total Room Revenue (excluding breakfast)" amount={amount} />;
+  return <TotalLine label="Total Room Revenue (excluding breakfast)" amount={amount} tip="reports.roomRevenueTotal" />;
 }
 
 // ─── Manifest ─────────────────────────────────────────────────────────────────
@@ -611,21 +614,32 @@ function ManifestTab() {
   );
 
   const headers = ["Guest", "Room", "Room Price", "Breakfast Price", "Receipt No.", "Res. Credit", "Arrival", "Check-Out", "Source", ...(showAudit ? ["Action"] : [])];
+  const headerTips = {
+    Guest: "reports.manifest.col.guest",
+    Room: "reports.manifest.col.room",
+    "Room Price": "reports.manifest.col.roomPrice",
+    "Breakfast Price": "reports.manifest.col.breakfast",
+    "Receipt No.": "reports.manifest.col.receipt",
+    "Res. Credit": "reports.manifest.col.resCredit",
+    Arrival: "reports.manifest.col.arrival",
+    "Check-Out": "reports.manifest.col.checkOut",
+    Source: "reports.manifest.col.source",
+  };
 
   return (
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
       <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
         <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
           <DateInput
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
+        </Button></WithTip>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -639,22 +653,23 @@ function ManifestTab() {
               Accommodation report for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
+              <WithTip id="reports.export"><Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
+              </Button></WithTip>
             </div>
           </div>
 
           <ReportSection
             title="Check-Ins"
             subtitle="Everyone due to arrive this business day"
+            tip="reports.manifest.checkIns"
             footer={<RoomRevenueTotal amount={data.check_ins_room_total} />}
           >
             {data.check_ins.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={headers} />
+                <TableHead cells={headers} tips={headerTips} />
                 <tbody>{data.check_ins.map(renderRow)}</tbody>
               </table>
             )}
@@ -663,13 +678,14 @@ function ManifestTab() {
           <ReportSection
             title="Check-Outs"
             subtitle="Everyone due to depart this business day"
+            tip="reports.manifest.checkOuts"
             footer={<RoomRevenueTotal amount={data.check_outs_room_total} />}
           >
             {data.check_outs.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={headers} />
+                <TableHead cells={headers} tips={headerTips} />
                 <tbody>{data.check_outs.map(renderRow)}</tbody>
               </table>
             )}
@@ -738,27 +754,28 @@ function AnalysisTab() {
       {!loading && data && (
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex justify-end gap-3">
-            <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex rounded-xl items-center gap-2">
+            <WithTip id="reports.export"><Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex rounded-xl items-center gap-2">
               <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-            </Button>
+            </Button></WithTip>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-            <SummaryCard label="Collected" value={money(data.total_collected)} sub="guest payments and non-guest sales" accent />
-            <SummaryCard label="Refunded" value={money(data.total_refunded)} sub="payment and credit refunds" warn={data.total_refunded > 0} />
-            <SummaryCard label="Net Total" value={money(data.net_total)} sub="collected minus refunded" />
+            <SummaryCard label="Collected" tip="reports.analysis.collected" value={money(data.total_collected)} sub="guest payments and non-guest sales" accent />
+            <SummaryCard label="Refunded" tip="reports.analysis.refunded" value={money(data.total_refunded)} sub="payment and credit refunds" warn={data.total_refunded > 0} />
+            <SummaryCard label="Net Total" tip="reports.analysis.net" value={money(data.net_total)} sub="collected minus refunded" />
           </div>
 
           <ReportSection
             title="All Payments"
+            tip="reports.analysis.all"
             subtitle={`${data.payments.length} transaction(s)`}
-            footer={data.payments.length > 0 && <TotalLine label="Net Total" amount={data.net_total} />}
+            footer={data.payments.length > 0 && <TotalLine label="Net Total" amount={data.net_total} tip="reports.netTotal" />}
           >
             {data.payments.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
+                <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} tips={{ Room: "reports.analysis.col.room", "Receipt No.": "reports.analysis.col.receipt", Reference: "reports.analysis.col.reference", Guest: "reports.analysis.col.guest", Method: "reports.analysis.col.method", Date: "reports.analysis.col.date", Amount: "reports.analysis.col.amount" }} />
                 <tbody>
                   {/* row_key: rows come from several tables (guest payments,
                       non-guest sales, credit refunds), so their ids can repeat. */}
@@ -842,7 +859,7 @@ function PmsReportTab() {
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
       <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
         <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
           <DateInput
             value={date}
             onChange={(e) => setDate(e.target.value)}
@@ -850,7 +867,7 @@ function PmsReportTab() {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Variant</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Variant<Tip id="reports.pms.variant" /></label>
           <select
             value={variant}
             onChange={(e) => setVariant(e.target.value)}
@@ -860,9 +877,9 @@ function PmsReportTab() {
             <option value="morning">Morning (~7am)</option>
           </select>
         </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
+        </Button></WithTip>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -877,9 +894,9 @@ function PmsReportTab() {
               <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
+              <WithTip id="reports.export"><Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
+              </Button></WithTip>
             </div>
           </div>
 
@@ -891,12 +908,12 @@ function PmsReportTab() {
             </div>
           )}
 
-          <ReportSection title="Stay-Overs" subtitle="Currently in-house, not arriving or departing today">
+          <ReportSection title="Stay-Overs" subtitle="Currently in-house, not arriving or departing today" tip="reports.pms.stayOvers">
             {data.stay_overs.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Guest", "Check-In", "Check-Out"]} />
+                <TableHead cells={["Guest", "Check-In", "Check-Out"]} tips={{ Guest: "reports.pms.col.guest", "Check-In": "reports.pms.col.checkIn", "Check-Out": "reports.pms.col.checkOut" }} />
                 <tbody>
                   {data.stay_overs.map((r) => (
                     <tr key={r.id} className={table.row}>
@@ -914,12 +931,12 @@ function PmsReportTab() {
             )}
           </ReportSection>
 
-          <ReportSection title="Arrivals">
+          <ReportSection title="Arrivals" tip="reports.pms.arrivals">
             {data.arrivals.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Guest", "Status"]} />
+                <TableHead cells={["Guest", "Status"]} tips={{ Guest: "reports.pms.col.guest", Status: "reports.pms.arrivals.status" }} />
                 <tbody>
                   {data.arrivals.map((r) => (
                     <tr key={r.id} className={table.row}>
@@ -936,12 +953,12 @@ function PmsReportTab() {
             )}
           </ReportSection>
 
-          <ReportSection title="Departures">
+          <ReportSection title="Departures" tip="reports.pms.departures">
             {data.departures.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Guest", "Status"]} />
+                <TableHead cells={["Guest", "Status"]} tips={{ Guest: "reports.pms.col.guest", Status: "reports.pms.departures.status" }} />
                 <tbody>
                   {data.departures.map((r) => (
                     <tr key={r.id} className={table.row}>
@@ -958,14 +975,14 @@ function PmsReportTab() {
             )}
           </ReportSection>
 
-          <ReportSection title="Room Status">
+          <ReportSection title="Room Status" tip="reports.pms.roomStatus">
             <div className="flex flex-col gap-4 p-6">
-              <RoomStatusLine label="Vacant" count={data.room_status.vacant.length} rooms={roomNumberList(data.room_status.vacant)} />
-              <RoomStatusLine label="Occupied" count={data.room_status.occupied.length} rooms={roomNumberList(data.room_status.occupied)} />
-              <RoomStatusLine label="Out of Order" count={data.room_status.out_of_order.length} rooms={roomNumberList(data.room_status.out_of_order)} />
-              <RoomStatusLine label="Reserved" count={data.room_status.reserved.length} rooms={roomNumberList(data.room_status.reserved)} />
+              <RoomStatusLine label="Vacant" tip="reports.pms.vacant" count={data.room_status.vacant.length} rooms={roomNumberList(data.room_status.vacant)} />
+              <RoomStatusLine label="Occupied" tip="reports.pms.occupied" count={data.room_status.occupied.length} rooms={roomNumberList(data.room_status.occupied)} />
+              <RoomStatusLine label="Out of Order" tip="reports.pms.ooo" count={data.room_status.out_of_order.length} rooms={roomNumberList(data.room_status.out_of_order)} />
+              <RoomStatusLine label="Reserved" tip="reports.pms.reserved" count={data.room_status.reserved.length} rooms={roomNumberList(data.room_status.reserved)} />
               {/* Complementary always last, per the manual report's convention */}
-              <RoomStatusLine label="Complementary" count={data.room_status.complementary.length} rooms={roomNumberList(data.room_status.complementary)} />
+              <RoomStatusLine label="Complementary" tip="reports.pms.complementary" count={data.room_status.complementary.length} rooms={roomNumberList(data.room_status.complementary)} />
             </div>
           </ReportSection>
 
@@ -1029,16 +1046,16 @@ function AccommodationReportTab({ shift }) {
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
       <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
         <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
           <DateInput
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
+        </Button></WithTip>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -1052,7 +1069,7 @@ function AccommodationReportTab({ shift }) {
               Manifest for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <Button
+              <WithTip id="reports.export"><Button
                 onClick={handleExport}
                 disabled={exporting || (shiftRequired && !shift)}
                 variant="secondary"
@@ -1060,7 +1077,7 @@ function AccommodationReportTab({ shift }) {
                 title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
+              </Button></WithTip>
             </div>
           </div>
 
@@ -1084,9 +1101,11 @@ function AccommodationReportTab({ shift }) {
               count it twice (owner, 2026-09-18). */}
           <ReportSection
             title="Rooms in Use"
+            tip="reports.acc.rooms"
             footer={
               <TotalLine
                 label="Manifest Total (excluding breakfast)"
+                tip="reports.acc.manifestTotal"
                 amount={data.manifest_total}
                 note="The sum of Counted in Total: room money guests paid today. Paid Before (PB) is counted under Reservation (Credit), on the day it was paid."
               />
@@ -1101,7 +1120,7 @@ function AccommodationReportTab({ shift }) {
                     Arrival and checkout each give a date and a time from the same
                     real moment; Checkout Time is blank until the guest has left
                     (owner, 2026-09-18). */}
-                <TableHead cells={["Guest", "Room Type", "Room No.", "Arrival Date", "Arrival Time", "Checkout Date", "Checkout Time", "Room Tariff", "Payment Mode", "Payment Status", "Receipt No.", "Paid Today", "Counted in Total", "Refund", "Guest Status", "Remarks", ...(showAudit ? ["Action"] : [])]} />
+                <TableHead cells={["Guest", "Room Type", "Room No.", "Arrival Date", "Arrival Time", "Checkout Date", "Checkout Time", "Room Tariff", "Payment Mode", "Payment Status", "Receipt No.", "Paid Today", "Counted in Total", "Refund", "Guest Status", "Remarks", ...(showAudit ? ["Action"] : [])]} tips={{ "Guest": "reports.acc.col.guest", "Room Type": "reports.acc.col.roomType", "Room No.": "reports.acc.col.roomNo", "Arrival Date": "reports.acc.col.arrivalDate", "Arrival Time": "reports.acc.col.arrivalTime", "Checkout Date": "reports.acc.col.checkoutDate", "Checkout Time": "reports.acc.col.checkoutTime", "Room Tariff": "reports.acc.col.tariff", "Payment Mode": "reports.acc.col.paymentMode", "Payment Status": "reports.acc.col.paymentStatus", "Receipt No.": "reports.acc.col.receipt", "Paid Today": "reports.acc.col.paidToday", "Counted in Total": "reports.acc.col.counted", "Refund": "reports.acc.col.refund", "Guest Status": "reports.acc.col.guestStatus", "Remarks": "reports.acc.col.remarks" }} />
                 <tbody>
                   {data.rows.map((r, i) => (
                     <tr key={`${r.reservation_id}-${r.room_number}-${i}`} className={table.row}>
@@ -1155,12 +1174,12 @@ function AccommodationReportTab({ shift }) {
               and any room set aside for a manager. Managers are never checked in,
               so there is no guest record to name; the row just says "Manager".
               Out-of-order rooms are not listed, since nobody stayed in them. */}
-          <ReportSection title="Non-Revenue Rooms" subtitle="Complementary stays and manager's rooms">
+          <ReportSection title="Non-Revenue Rooms" subtitle="Complementary stays and manager's rooms" tip="reports.acc.nonRevenue">
             {(data.non_revenue_rooms || []).length === 0 ? (
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No complementary rooms or manager rooms in use.</p>
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Room No.", "Name", "Status", ...(showAudit ? ["Action"] : [])]} />
+                <TableHead cells={["Room No.", "Name", "Status", ...(showAudit ? ["Action"] : [])]} tips={{ "Room No.": "reports.acc.nonRevenue.col.room", Name: "reports.acc.nonRevenue.col.name", Status: "reports.acc.nonRevenue.col.status" }} />
                 <tbody>
                   {data.non_revenue_rooms.map((r) => (
                     <tr key={`${r.room_number}-${r.status}`} className={table.row}>
@@ -1182,7 +1201,7 @@ function AccommodationReportTab({ shift }) {
               refund stays listed under its method, tagged, and is netted out
               of that method's total. */}
           {(data.payments_by_method || []).length === 0 ? (
-            <ReportSection title="Payments by Method" subtitle="Every payment, non-guest sale, refund and credit refund this business day, grouped">
+            <ReportSection title="Payments by Method" subtitle="Every payment, non-guest sale, refund and credit refund this business day, grouped" tip="reports.acc.byMethod">
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No payments recorded for this business day.</p>
             </ReportSection>
           ) : (
@@ -1190,10 +1209,11 @@ function AccommodationReportTab({ shift }) {
               <ReportSection
                 key={group.payment_method}
                 title={`Payments — ${formatPaymentMethod(group.payment_method)}`}
+                tip="reports.acc.byMethod"
                 subtitle={`${group.count} transaction(s) · ${money(group.total)}`}
               >
                 <table className="w-full text-xl">
-                  <TableHead cells={["Guest", "Room", "Amount", "Receipt No.", "Time", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
+                  <TableHead cells={["Guest", "Room", "Amount", "Receipt No.", "Time", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} tips={{ Guest: "reports.acc.byMethod.col.guest", Room: "reports.acc.byMethod.col.room", Amount: "reports.acc.byMethod.col.amount", "Receipt No.": "reports.acc.byMethod.col.receipt", Time: "reports.acc.byMethod.col.time" }} />
                   <tbody>
                     {group.payments.map((pmt) => (
                       <tr key={pmt.row_key || pmt.id} className={table.row}>
@@ -1226,10 +1246,11 @@ function AccommodationReportTab({ shift }) {
           <ReportSection
             title="Reservation (Credit)"
             subtitle="Advance payments recorded this business day"
+            tip="reports.acc.reservation"
             footer={
               <>
-                <TotalLine label="Reservation Total" amount={data.reservation_total} />
-                <TotalLine label="Manifest Total plus Reservation" amount={data.manifest_plus_reservation_total} emphasis />
+                <TotalLine label="Reservation Total" amount={data.reservation_total} tip="reports.acc.reservationTotal" />
+                <TotalLine label="Manifest Total plus Reservation" amount={data.manifest_plus_reservation_total} emphasis tip="reports.acc.manifestPlusReservation" />
               </>
             }
           >
@@ -1237,7 +1258,7 @@ function AccommodationReportTab({ shift }) {
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Guest", "Room", "Amount", "Method", "Status", "Receipt No.", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} />
+                <TableHead cells={["Guest", "Room", "Amount", "Method", "Status", "Receipt No.", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} tips={{ Guest: "reports.acc.reservation.col.guest", Room: "reports.acc.reservation.col.room", Amount: "reports.acc.reservation.col.amount", Method: "reports.acc.reservation.col.method", Status: "reports.acc.reservation.col.status", "Receipt No.": "reports.acc.reservation.col.receipt" }} />
                 <tbody>
                   {data.paid_before.map((d) => (
                     <tr key={d.id} className={table.row}>
@@ -1258,13 +1279,14 @@ function AccommodationReportTab({ shift }) {
           <ReportSection
             title="Debt Recovery"
             subtitle="Old debt cleared by a payment received this business day"
-            footer={<TotalLine label="Debt Recovery Total" amount={data.debt_recovery_total} />}
+            tip="reports.acc.debt"
+            footer={<TotalLine label="Debt Recovery Total" amount={data.debt_recovery_total} tip="reports.acc.debtTotal" />}
           >
             {data.debt_recovery.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Guest", "Room", "Date Owed", "Total Owed", "Total Paid", "Method", "Reference", ...(showAudit ? ["Action"] : [])]} rightAlign={["Total Owed", "Total Paid"]} />
+                <TableHead cells={["Guest", "Room", "Date Owed", "Total Owed", "Total Paid", "Method", "Reference", ...(showAudit ? ["Action"] : [])]} rightAlign={["Total Owed", "Total Paid"]} tips={{ Guest: "reports.acc.debt.col.guest", Room: "reports.acc.debt.col.room", "Date Owed": "reports.acc.debt.col.dateOwed", "Total Owed": "reports.acc.debt.col.owed", "Total Paid": "reports.acc.debt.col.paid", Method: "reports.acc.debt.col.method", Reference: "reports.acc.debt.col.reference" }} />
                 <tbody>
                   {data.debt_recovery.map((d, i) => (
                     <tr key={i} className={table.row}>
@@ -1286,15 +1308,15 @@ function AccommodationReportTab({ shift }) {
           {/* One figure: the Manifest Total, advance money taken today
               (Reservation) and old debt paid off today (Debt Recovery),
               added together (owner, 2026-09-18). */}
-          <ReportSection title="Grand Total" subtitle="Manifest Total + Reservation Total + Debt Recovery Total">
-            <TotalLine label="Manifest + Reservation + Debt Recovery" amount={data.grand_total} emphasis />
+          <ReportSection title="Grand Total" subtitle="Manifest Total + Reservation Total + Debt Recovery Total" tip="reports.acc.grand">
+            <TotalLine label="Manifest + Reservation + Debt Recovery" amount={data.grand_total} emphasis tip="reports.acc.grandLine" />
           </ReportSection>
 
           {/* Notes: everything charged today that is neither a room night nor
               food and drink — laundry, penalties, adjustments, corrections —
               with the description and remark it was posted with, followed by
               the guests' own notes (owner's ask, 2026-09-14). */}
-          <ReportSection title="Notes">
+          <ReportSection title="Notes" tip="reports.acc.notes">
             {(data.other_charges || []).length === 0 && data.notes.length === 0 ? (
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No other charges or guest notes for this business day.</p>
             ) : (
@@ -1304,6 +1326,7 @@ function AccommodationReportTab({ shift }) {
                     <TableHead
                       cells={["Guest", "Room", "Type", "Description", "Remarks", "Amount", ...(showAudit ? ["Action"] : [])]}
                       rightAlign={["Amount"]}
+                      tips={{ Guest: "reports.acc.notes.col.guest", Room: "reports.acc.notes.col.room", Type: "reports.acc.notes.col.type", Description: "reports.acc.notes.col.description", Remarks: "reports.acc.notes.col.remarks", Amount: "reports.acc.notes.col.amount" }}
                     />
                     <tbody>
                       {data.other_charges.map((c) => (
@@ -1358,11 +1381,12 @@ function SalesTotals({ data }) {
   return (
     <>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <SummaryCard label="Total" value={money(data.total)} accent />
+        <SummaryCard label="Total" value={money(data.total)} accent tip="reports.sales.total" />
         {data.payment_breakdown.map((p, i) => (
           <SummaryCard
             key={i}
             label={formatPaymentMethod(p.payment_method)}
+            tip="reports.sales.method"
             value={money(p.total)}
             sub={p.payment_method === "charged_to_room" ? undefined : `${p.count} sale${p.count === 1 ? "" : "s"}`}
           />
@@ -1385,10 +1409,10 @@ function SalesTotals({ data }) {
 function SalesByStaff({ data }) {
   const showAudit = canViewAuditTrail();
   return (
-    <ReportSection title="By Staff" subtitle="Who posted each charge">
+    <ReportSection title="By Staff" subtitle="Who posted each charge" tip="reports.sales.byStaff">
       {data.staff_breakdown.length === 0 ? <EmptyRow /> : (
         <table className="w-full text-xl">
-          <TableHead cells={["Staff", "Total", ...(showAudit ? ["Action"] : [])]} rightAlign={["Total"]} />
+          <TableHead cells={["Staff", "Total", ...(showAudit ? ["Action"] : [])]} rightAlign={["Total"]} tips={{ Staff: "reports.sales.byStaff.col.staff", Total: "reports.sales.byStaff.col.total" }} />
           <tbody>
             {data.staff_breakdown.map((s, i) => (
               <tr key={i} className={table.row}>
@@ -1404,6 +1428,18 @@ function SalesByStaff({ data }) {
   );
 }
 
+const SALES_COLUMN_TIPS = {
+  Customer: "reports.sales.col.customer",
+  Qty: "reports.sales.col.qty",
+  "Bill No": "reports.sales.col.billNo",
+  Description: "reports.sales.col.description",
+  Amount: "reports.sales.col.amount",
+  "Service Charge": "reports.sales.col.serviceCharge",
+  Status: "reports.sales.col.status",
+  "Payment Method": "reports.sales.col.method",
+  Remarks: "reports.sales.col.remarks",
+};
+
 function SalesNotes({ data }) {
   const rows = data.rows || [];
   const lineTotal = (r) => Number(r.amount) + Number(r.service_charge);
@@ -1414,7 +1450,7 @@ function SalesNotes({ data }) {
 
   return (
     <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-col gap-3 w-full">
-      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Notes</p>
+      <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Notes<Tip id="reports.sales.notes" /></p>
       <ul className="flex flex-col gap-2 text-xl text-[color:var(--text-color)]/84 list-disc pl-6">
         <li>
           Payment methods: {data.payment_breakdown.length === 0 ? "none" : data.payment_breakdown.map((p, i) => (
@@ -1481,16 +1517,16 @@ function FoodSalesReportTab({ shift }) {
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
       <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
         <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
           <DateInput
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
+        </Button></WithTip>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -1504,7 +1540,7 @@ function FoodSalesReportTab({ shift }) {
               Food sales for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <Button
+              <WithTip id="reports.export"><Button
                 onClick={handleExport}
                 disabled={exporting || (shiftRequired && !shift)}
                 variant="secondary"
@@ -1512,18 +1548,18 @@ function FoodSalesReportTab({ shift }) {
                 title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
+              </Button></WithTip>
             </div>
           </div>
 
           <SalesTotals data={data} />
 
-          <ReportSection title="Food Orders">
+          <ReportSection title="Food Orders" tip="reports.sales.food">
             {data.rows.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Customer", "Qty", "Bill No", "Description", "Amount", "Service Charge", "Status", "Payment Method", "Remarks", ...(showAudit ? ["Action"] : [])]} />
+                <TableHead cells={["Customer", "Qty", "Bill No", "Description", "Amount", "Service Charge", "Status", "Payment Method", "Remarks", ...(showAudit ? ["Action"] : [])]} tips={SALES_COLUMN_TIPS} />
                 <tbody>
                   {data.rows.map((r, i) => (
                     <tr key={i} className={table.row}>
@@ -1599,16 +1635,16 @@ function DrinkSalesReportTab({ shift }) {
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
       <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
         <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
           <DateInput
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
+        </Button></WithTip>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -1622,7 +1658,7 @@ function DrinkSalesReportTab({ shift }) {
               Drink sales for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <Button
+              <WithTip id="reports.export"><Button
                 onClick={handleExport}
                 disabled={exporting || (shiftRequired && !shift)}
                 variant="secondary"
@@ -1630,18 +1666,18 @@ function DrinkSalesReportTab({ shift }) {
                 title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
+              </Button></WithTip>
             </div>
           </div>
 
           <SalesTotals data={data} />
 
-          <ReportSection title="Drink Orders">
+          <ReportSection title="Drink Orders" tip="reports.sales.drink">
             {data.rows.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Customer", "Qty", "Bill No", "Description", "Amount", "Service Charge", "Status", "Payment Method", "Remarks", ...(showAudit ? ["Action"] : [])]} />
+                <TableHead cells={["Customer", "Qty", "Bill No", "Description", "Amount", "Service Charge", "Status", "Payment Method", "Remarks", ...(showAudit ? ["Action"] : [])]} tips={SALES_COLUMN_TIPS} />
                 <tbody>
                   {data.rows.map((r, i) => (
                     <tr key={i} className={table.row}>
@@ -1720,16 +1756,16 @@ function BarStockReportTab({ shift }) {
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
       <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
         <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date</label>
+          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
           <DateInput
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
+        </Button></WithTip>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -1743,7 +1779,7 @@ function BarStockReportTab({ shift }) {
               Bar stock for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <Button
+              <WithTip id="reports.export"><Button
                 onClick={handleExport}
                 disabled={exporting || (shiftRequired && !shift)}
                 variant="secondary"
@@ -1751,21 +1787,21 @@ function BarStockReportTab({ shift }) {
                 title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
+              </Button></WithTip>
             </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            <SummaryCard label="Total Sold Stock" value={totalSold} accent />
-            <SummaryCard label="Total Amount" value={money(totalAmount)} />
+            <SummaryCard label="Total Sold Stock" value={totalSold} accent tip="reports.bar.totalSold" />
+            <SummaryCard label="Total Amount" value={money(totalAmount)} tip="reports.bar.totalAmount" />
           </div>
 
-          <ReportSection title="Stock">
+          <ReportSection title="Stock" tip="reports.bar.stock">
             {data.rows.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Stock", "Opening", "Added", "Total (before sales)", "Damaged", "Sold", "Unit Cost Price", "Total Amount", "Closing", "Service Charge", "Remark", ...(showAudit ? ["Action"] : [])]} />
+                <TableHead cells={["Stock", "Opening", "Added", "Total (before sales)", "Damaged", "Sold", "Unit Cost Price", "Total Amount", "Closing", "Service Charge", "Remark", ...(showAudit ? ["Action"] : [])]} tips={{ "Stock": "reports.bar.col.stock", "Opening": "reports.bar.col.opening", "Added": "reports.bar.col.added", "Total (before sales)": "reports.bar.col.totalBefore", "Damaged": "reports.bar.col.damaged", "Sold": "reports.bar.col.sold", "Unit Cost Price": "reports.bar.col.unitPrice", "Total Amount": "reports.bar.col.totalAmount", "Closing": "reports.bar.col.closing", "Service Charge": "reports.bar.col.serviceCharge", "Remark": "reports.bar.col.remark" }} />
                 <tbody>
                   {data.rows.map((r) => (
                     <tr key={r.drink_item_id} className={table.row}>
@@ -1789,20 +1825,20 @@ function BarStockReportTab({ shift }) {
           </ReportSection>
 
           {data.summary && (
-            <ReportSection title="Daily Totals" subtitle="Combined Food + Drink figures for this business day">
+            <ReportSection title="Daily Totals" subtitle="Combined Food + Drink figures for this business day" tip="reports.bar.daily">
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-                <SummaryCard label="Food" value={money(data.summary.food)} />
-                <SummaryCard label="Drink" value={money(data.summary.drink)} />
-                <SummaryCard label="Service Charge" value={money(data.summary.service_charge)} />
-                <SummaryCard label="Debt Recovered" value={money(data.summary.debt_recovered)} />
-                <SummaryCard label="Cash" value={money(data.summary.cash)} />
-                <SummaryCard label="POS" value={money(data.summary.pos)} />
-                <SummaryCard label="Transfer" value={money(data.summary.transfer)} />
-                <SummaryCard label="Charged to Room" value={money(data.summary.charged_to_room)} sub="billed to a guest folio" />
-                <SummaryCard label="Reservation (Credit)" value={money(data.summary.reservation_credit)} sub="taken today, for future use" />
-                <SummaryCard label="Debt" value={money(data.summary.debt)} warn={data.summary.debt > 0} />
-                <SummaryCard label="Paid Before" value={money(data.summary.paid_before)} />
-                <SummaryCard label="Total" value={money(data.summary.total)} sub="actually collected today" accent />
+                <SummaryCard label="Food" tip="reports.bar.food" value={money(data.summary.food)} />
+                <SummaryCard label="Drink" tip="reports.bar.drink" value={money(data.summary.drink)} />
+                <SummaryCard label="Service Charge" tip="reports.bar.serviceCharge" value={money(data.summary.service_charge)} />
+                <SummaryCard label="Debt Recovered" tip="reports.bar.debtRecovered" value={money(data.summary.debt_recovered)} />
+                <SummaryCard label="Cash" tip="reports.bar.cash" value={money(data.summary.cash)} />
+                <SummaryCard label="POS" tip="reports.bar.pos" value={money(data.summary.pos)} />
+                <SummaryCard label="Transfer" tip="reports.bar.transfer" value={money(data.summary.transfer)} />
+                <SummaryCard label="Charged to Room" tip="reports.bar.chargedToRoom" value={money(data.summary.charged_to_room)} sub="billed to a guest folio" />
+                <SummaryCard label="Reservation (Credit)" tip="reports.bar.reservationCredit" value={money(data.summary.reservation_credit)} sub="taken today, for future use" />
+                <SummaryCard label="Debt" tip="reports.bar.debt" value={money(data.summary.debt)} warn={data.summary.debt > 0} />
+                <SummaryCard label="Paid Before" tip="reports.bar.paidBefore" value={money(data.summary.paid_before)} />
+                <SummaryCard label="Total" tip="reports.bar.total" value={money(data.summary.total)} sub="actually collected today" accent />
               </div>
             </ReportSection>
           )}
@@ -1818,10 +1854,10 @@ function BarStockReportTab({ shift }) {
   );
 }
 
-function RoomStatusLine({ label, count, rooms }) {
+function RoomStatusLine({ label, count, rooms, tip }) {
   return (
     <div className="flex flex-col gap-1">
-      <p className="text-xl font-bold text-[color:var(--black)]">{label} ({count})</p>
+      <p className="text-xl font-bold text-[color:var(--black)]">{label} ({count}){tip && <Tip id={tip} />}</p>
       <p className="text-xl text-[color:var(--text-color)]/76">{rooms}</p>
     </div>
   );
@@ -1833,7 +1869,7 @@ function RangePicker({ from, to, setFrom, setTo, onGenerate, loading }) {
   return (
     <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
       <div className="flex flex-col gap-2">
-        <label className="text-xl font-semibold text-[color:var(--text-color)]/76">From</label>
+        <label className="text-xl font-semibold text-[color:var(--text-color)]/76">From<Tip id="reports.from" /></label>
         <DateInput
           value={from}
           onChange={(e) => {
@@ -1845,7 +1881,7 @@ function RangePicker({ from, to, setFrom, setTo, onGenerate, loading }) {
         />
       </div>
       <div className="flex flex-col gap-2">
-        <label className="text-xl font-semibold text-[color:var(--text-color)]/76">To</label>
+        <label className="text-xl font-semibold text-[color:var(--text-color)]/76">To<Tip id="reports.to" /></label>
         <DateInput
           value={to}
           min={from || undefined}
@@ -1853,9 +1889,9 @@ function RangePicker({ from, to, setFrom, setTo, onGenerate, loading }) {
           className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
         />
       </div>
-      <Button onClick={onGenerate} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+      <WithTip id="reports.generate"><Button onClick={onGenerate} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
         <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-      </Button>
+      </Button></WithTip>
     </div>
   );
 }

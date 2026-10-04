@@ -16,6 +16,7 @@ import { checkOutReservation, shortenStayToDeparture } from "@/lib/pms/api/reser
 import { todayISO, hasPassedNoonCutoff } from "@/lib/pms/dates";
 import { formatDate, money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import { Tip, WithTip } from "@/components/pms/Tip";
 
 // Whether this stay's scheduled checkout has actually come due (noon Lagos
 // on check_out) - the date can be browsed forward, so a listed stay isn't
@@ -137,8 +138,11 @@ export default function PmsCheckOutsPage() {
 
       <div className={`${page.wrap} gap-[3rem]!`}>
         <div className="flex flex-col items-start gap-4">
-          <PageHeading icon={IoLogOutOutline}>Check-Out List</PageHeading>
-          <DateInput value={date} onChange={(e) => setDate(e.target.value)} className={`${field.input} w-auto! text-xl!`} aria-label="Departure date" />
+          <PageHeading icon={IoLogOutOutline} tipId="checkOuts.page">Check-Out List</PageHeading>
+          <div className="flex items-center">
+            <DateInput value={date} onChange={(e) => setDate(e.target.value)} className={`${field.input} w-auto! text-xl!`} aria-label="Departure date" />
+            <Tip id="checkOuts.date" />
+          </div>
         </div>
 
         <div className={table.card}>
@@ -146,10 +150,10 @@ export default function PmsCheckOutsPage() {
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Room Type</th>
-                  <th className={`${table.th} hidden md:table-cell`}>Checked In</th>
-                  <th className={table.th}>Actions</th>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="checkOuts.guest" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Room Type<Tip id="checkOuts.roomType" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Checked In<Tip id="checkOuts.checkedIn" /></th>
+                  <th className={table.th}>Actions<Tip id="checkOuts.actions" /></th>
                 </tr>
               </thead>
               <tbody>
@@ -195,13 +199,13 @@ export default function PmsCheckOutsPage() {
             <>
               <button onClick={() => setSelected(null)} className={btn.secondary}>Cancel</button>
               {selectedDepartsEarly ? (
-                <button onClick={handleAdjustDate} disabled={adjustingDate || processing} className={btn.primary}>
+                <WithTip id="checkOuts.setToday"><button onClick={handleAdjustDate} disabled={adjustingDate || processing} className={btn.primary}>
                   {adjustingDate ? "Adjusting..." : "Set Checkout Date to Today"}
-                </button>
+                </button></WithTip>
               ) : (
-                <button onClick={handleCheckOut} disabled={processing} className={btn.success}>
+                <WithTip id="checkOuts.confirm"><button onClick={handleCheckOut} disabled={processing} className={btn.success}>
                   {processing ? "Checking Out..." : "Confirm Check Out"}
-                </button>
+                </button></WithTip>
               )}
             </>
           }
@@ -224,7 +228,7 @@ export default function PmsCheckOutsPage() {
                 balanceDue ? "bg-red-50 border-red-200 text-red-700" : "bg-green-50 border-green-200 text-green-700"
               }`}
             >
-              <span className="font-bold">Folio Balance</span>
+              <span className="font-bold">Folio Balance<Tip id="checkOuts.balance" /></span>
               <span className="font-bold text-2xl">{money(folio.balance)}</span>
             </div>
           ) : (
@@ -235,9 +239,9 @@ export default function PmsCheckOutsPage() {
               <p className="text-xl text-orange-600 bg-orange-50 border border-orange-200 rounded-lg px-5 py-4">
                 ⚠ Outstanding balance — consider settling payment before checkout.
               </p>
-              <button type="button" onClick={() => router.push(`/pms/folios?reservation_id=${selected.id}`)} className={`${btn.secondary} self-start`}>
+              <WithTip id="checkOuts.goToFolio"><button type="button" onClick={() => router.push(`/pms/folios?reservation_id=${selected.id}`)} className={`${btn.secondary} self-start`}>
                 Go to Folio to Record Payment
-              </button>
+              </button></WithTip>
             </div>
           )}
         </Modal>

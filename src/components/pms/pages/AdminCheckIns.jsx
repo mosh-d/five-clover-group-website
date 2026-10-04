@@ -42,6 +42,7 @@ import { formatDate } from "@/lib/pms/format";
 import GuestName from "@/components/pms/GuestName";
 import { GuestTagPills } from "@/components/pms/GuestName";
 import EmailStatusTag from "@/components/pms/EmailStatusTag";
+import { Tip, WithTip } from "@/components/pms/Tip";
 const todayISO = () => adminTodayISO();
 // A Walk-In's check-in is always "right now" — but the reservation it
 // creates must be dated by the hotel's business day (6am Lagos cutover, see
@@ -636,20 +637,20 @@ export default function AdminCheckInsPage() {
       )}
 
       <div data-component="AdminCheckIns" className="flex flex-col items-start gap-[3rem]">
-        <PageHeading icon={IoLogInOutline}>Check-Ins</PageHeading>
+        <PageHeading icon={IoLogInOutline} tipId="checkIns.page">Check-Ins</PageHeading>
 
         {/* Tabs - the same wrapping pills as Reports' tabs. Underlined in
             one row, their labels broke mid-word on a phone ("Walk- / In"). */}
         <div className="flex flex-wrap gap-3 w-full">
           {[
-            { key: "arrivals", label: "Expected Arrivals" },
-            { key: "walkin", label: "Walk-In" },
+            { key: "arrivals", label: "Expected Arrivals", tip: "checkIns.tab.arrivals" },
+            { key: "walkin", label: "Walk-In", tip: "checkIns.tab.walkIn" },
             // A walk-in who wants a LATER date, not a room tonight — see
             // FutureBookingForm for why this can't reuse the Walk-In form.
-            { key: "future", label: "Future Booking" },
-          ].map(({ key, label }) => (
+            { key: "future", label: "Future Booking", tip: "checkIns.tab.future" },
+          ].map(({ key, label, tip }) => (
+            <WithTip key={key} id={tip}>
             <button
-              key={key}
               onClick={() => setTab(key)}
               className={`px-6 py-3 rounded-lg text-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
                 tab === key
@@ -659,6 +660,7 @@ export default function AdminCheckInsPage() {
             >
               {label}
             </button>
+            </WithTip>
           ))}
         </div>
 
@@ -672,23 +674,24 @@ export default function AdminCheckInsPage() {
         {/* EXPECTED ARRIVALS */}
         {tab === "arrivals" && (
           <>
-            <div className="w-auto flex justify-end">
+            <div className="w-auto flex items-center justify-end">
               <DateInput
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 className={`${field.input} w-auto text-xl!`}
               />
+              <Tip id="checkIns.arrivals.date" />
             </div>
             <div className={table.card}>
               <div className={table.scroll}>
                 <table className={table.el}>
                   <thead>
                     <tr className={table.headRow}>
-                      <th className={`${table.th} ${table.stickyTh}`}>Guest</th>
-                      <th className={`${table.th} hidden md:table-cell`}>Room Type</th>
-                      <th className={`${table.th} hidden md:table-cell`}>Check-Out</th>
-                      <th className={table.th}>Status</th>
-                      <th className={table.th}>Actions</th>
+                      <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="checkIns.arrivals.guest" /></th>
+                      <th className={`${table.th} hidden md:table-cell`}>Room Type<Tip id="checkIns.arrivals.roomType" /></th>
+                      <th className={`${table.th} hidden md:table-cell`}>Check-Out<Tip id="checkIns.arrivals.checkOut" /></th>
+                      <th className={table.th}>Status<Tip id="checkIns.arrivals.status" /></th>
+                      <th className={table.th}>Actions<Tip id="checkIns.arrivals.actions" /></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -755,7 +758,7 @@ export default function AdminCheckInsPage() {
                 {walkInPaymentWarning && (
                   <p className="text-orange-700 text-xl bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 max-w-lg">{walkInPaymentWarning}</p>
                 )}
-                <button onClick={resetWalkIn} className={`${btn.primary} mt-4`}>New Walk-In</button>
+                <WithTip id="checkIns.walkIn.new"><button onClick={resetWalkIn} className={`${btn.primary} mt-4`}>New Walk-In</button></WithTip>
               </div>
             ) : (
               <form onSubmit={handleWalkIn} className="w-full flex flex-col gap-8 bg-(--card) rounded-xl border border-(--accent-2) p-8">
@@ -770,7 +773,7 @@ export default function AdminCheckInsPage() {
                   <div className="flex flex-col gap-2 w-[22rem] max-w-full">
                     <label className={field.label}>
                       Check-Out Date <span className="text-red-500">*</span>
-                    </label>
+                    <Tip id="checkIns.walkIn.checkOut" /></label>
                     <DateInput
                       min={walkInMinCheckOut}
                       value={walkIn.checkOut}
@@ -782,7 +785,7 @@ export default function AdminCheckInsPage() {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Rooms</label>
+                    <label className={field.label}>Rooms<Tip id="checkIns.walkIn.rooms" /></label>
                     <input
                       type="number"
                       min="1"
@@ -794,14 +797,14 @@ export default function AdminCheckInsPage() {
                       className={`${field.input} w-28`}
                     />
                   </div>
-                  <button
+                  <WithTip id="checkIns.walkIn.checkAvailability"><button
                     type="button"
                     onClick={handleCheckAvailability}
                     disabled={!walkIn.checkOut || availLoading || Boolean(walkInDateProblem || walkInRoomsProblem)}
                     className={btn.primary}
                   >
                     {availLoading ? "Checking..." : "Check Availability"}
-                  </button>
+                  </button></WithTip>
                 </div>
                 {(walkInDateProblem || walkInRoomsProblem) && (
                   <p className="text-lg text-red-600 -mt-4">{walkInDateProblem || walkInRoomsProblem}</p>
@@ -817,7 +820,7 @@ export default function AdminCheckInsPage() {
                   <div className="flex flex-col gap-3">
                     <label className={field.label}>
                       Room Type <span className="text-red-500">*</span>
-                    </label>
+                    <Tip id="checkIns.walkIn.roomType" /></label>
                     {availableTypes.length === 0 ? (
                       <p className="text-red-600 text-xl">
                         No rooms available for {walkIn.roomsBooked} room(s) on those dates.
@@ -867,7 +870,7 @@ export default function AdminCheckInsPage() {
                     total for the whole stay, updating live as it's overridden. */}
                 {walkIn.roomTypeId && (
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Room Rate (₦/night)</label>
+                    <label className={field.label}>Room Rate (₦/night)<Tip id="checkIns.walkIn.roomRate" /></label>
                     <div className="flex items-center gap-4 flex-wrap">
                       <input
                         type="number"
@@ -914,7 +917,7 @@ export default function AdminCheckInsPage() {
                     updates live the same way overriding it directly would. */}
                 {walkIn.roomTypeId && (
                   <div className="flex flex-col gap-2">
-                    <label className={field.label}>Discount ({walkIn.discountMode === "percentage" ? "%" : "₦/night"})</label>
+                    <label className={field.label}>Discount ({walkIn.discountMode === "percentage" ? "%" : "₦/night"})<Tip id="checkIns.walkIn.discount" /></label>
                     <div className="flex items-center gap-3 flex-wrap">
                       <select
                         value={walkIn.discountMode}
@@ -948,7 +951,7 @@ export default function AdminCheckInsPage() {
                   />
                   <label htmlFor="walkin-without-breakfast" className={`${field.label} cursor-pointer`}>
                     Without Breakfast
-                  </label>
+                  <Tip id="checkIns.walkIn.withoutBreakfast" /></label>
                 </div>
 
                 {/* Complementary — flags the assigned room(s) complementary the
@@ -969,14 +972,14 @@ export default function AdminCheckInsPage() {
                   />
                   <label htmlFor="walkin-complementary" className={`${field.label} cursor-pointer`}>
                     Complementary (no room charge, sets room status)
-                  </label>
+                  <Tip id="checkIns.walkIn.complementary" /></label>
                 </div>
 
                 {/* Guest details */}
                 <div className="flex flex-col gap-6">
                   {walkInKnownNames.length > 0 && (
                     <div className="flex flex-col gap-2">
-                      <label className={field.label}>Known Names</label>
+                      <label className={field.label}>Known Names<Tip id="checkIns.walkIn.knownNames" /></label>
                       <select
                         value=""
                         onChange={(e) => {
@@ -998,7 +1001,7 @@ export default function AdminCheckInsPage() {
                       <div className="flex flex-col gap-2 flex-1 min-w-48">
                         <label className={field.label}>
                           First Name <span className="text-red-500">*</span>
-                        </label>
+                        <Tip id="checkIns.walkIn.firstName" /></label>
                         <input
                           type="text"
                           placeholder="First name"
@@ -1010,7 +1013,7 @@ export default function AdminCheckInsPage() {
                         />
                       </div>
                       <div className="flex flex-col gap-2 flex-1 min-w-48">
-                        <label className={field.label}>Last Name</label>
+                        <label className={field.label}>Last Name<Tip id="checkIns.walkIn.lastName" /></label>
                         <input
                           type="text"
                           placeholder="Last name"
@@ -1033,7 +1036,7 @@ export default function AdminCheckInsPage() {
                         <label className={field.label}>
                           Phone <span className="text-red-500">*</span>
                           <GuestTagPills tags={walkInTags} className="ml-3" />
-                        </label>
+                        <Tip id="checkIns.walkIn.phone" /></label>
                         <PhoneInput
                           value={walkIn.phone}
                           onChange={(v) => setWalkIn((p) => ({ ...p, phone: v }))}
@@ -1046,7 +1049,7 @@ export default function AdminCheckInsPage() {
                       <div className="flex flex-col gap-2 flex-1 min-w-48">
                         <label className={field.label}>
                           Email
-                        </label>
+                        <Tip id="checkIns.walkIn.email" /></label>
                         <input
                           type="email"
                           placeholder="guest@example.com"
@@ -1063,7 +1066,7 @@ export default function AdminCheckInsPage() {
                   <div className="flex flex-col gap-2">
                     <label className={field.label}>
                       Room Number{Number(walkIn.roomsBooked) > 1 ? "s" : ""}
-                    </label>
+                    <Tip id="checkIns.walkIn.roomNumbers" /></label>
                     {!walkIn.roomTypeId ? (
                       <p className="text-lg text-[color:var(--text-color)]/60">Select a room type first.</p>
                     ) : walkInRoomsLoading ? (
@@ -1127,7 +1130,7 @@ export default function AdminCheckInsPage() {
                     folio opens exactly as it would without this section. */}
                 <div className="flex flex-col gap-4 border-t border-(--accent-2) pt-6">
                   <div>
-                    <label className={field.label}>Payment (optional)</label>
+                    <label className={field.label}>Payment (optional)<Tip id="checkIns.walkIn.payment" /></label>
                     <p className="text-lg text-[color:var(--text-color)]/68 mt-1">
                       If the guest is paying now, record it here — leave the amount blank to skip and record it later from the folio.
                     </p>
@@ -1159,7 +1162,7 @@ export default function AdminCheckInsPage() {
                   />
                   <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                     <div className="flex flex-col gap-2">
-                      <label className={field.label}>Tax ({walkIn.paymentTaxMode === "percentage" ? "%" : "₦"}) — optional</label>
+                      <label className={field.label}>Tax ({walkIn.paymentTaxMode === "percentage" ? "%" : "₦"}) — optional<Tip id="checkIns.walkIn.paymentTax" /></label>
                       <div className="flex flex-col gap-2">
                         <select
                           value={walkIn.paymentTaxMode}
@@ -1180,7 +1183,7 @@ export default function AdminCheckInsPage() {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className={field.label}>Discount ({walkIn.paymentDiscountMode === "percentage" ? "%" : "₦"}) — optional</label>
+                      <label className={field.label}>Discount ({walkIn.paymentDiscountMode === "percentage" ? "%" : "₦"}) — optional<Tip id="checkIns.walkIn.paymentDiscount" /></label>
                       <div className="flex flex-col gap-2">
                         <select
                           value={walkIn.paymentDiscountMode}
@@ -1208,7 +1211,7 @@ export default function AdminCheckInsPage() {
                   </div>
                   <div className="flex gap-4 flex-wrap">
                     <div className="flex flex-col gap-2 flex-1 min-w-48">
-                      <label className={field.label}>Receipt Number</label>
+                      <label className={field.label}>Receipt Number<Tip id="checkIns.walkIn.receipt" /></label>
                       <input
                         type="text"
                         placeholder="e.g. from the receipt book"
@@ -1218,7 +1221,7 @@ export default function AdminCheckInsPage() {
                       />
                     </div>
                     <div className="flex flex-col gap-2 flex-1 min-w-48">
-                      <label className={field.label}>Remarks</label>
+                      <label className={field.label}>Remarks<Tip id="checkIns.walkIn.remarks" /></label>
                       <AutoGrowTextarea
                         placeholder="e.g. cash received at check-in"
                         value={walkIn.paymentNotes}
@@ -1229,7 +1232,7 @@ export default function AdminCheckInsPage() {
                   </div>
                 </div>
 
-                <button
+                <WithTip id="checkIns.walkIn.submit"><button
                   type="submit"
                   disabled={
                     walkInProcessing ||
@@ -1241,7 +1244,7 @@ export default function AdminCheckInsPage() {
                   className={`${btn.primary} self-start px-12! py-4!`}
                 >
                   {walkInProcessing ? "Processing..." : "Check In Guest"}
-                </button>
+                </button></WithTip>
               </form>
             )}
           </div>
@@ -1269,32 +1272,32 @@ export default function AdminCheckInsPage() {
           footer={
             <>
               <button onClick={() => setSelected(null)} className={btn.secondary}>Cancel</button>
-              <button onClick={() => navigate(`/pms/folios?reservation_id=${selected.id}`)} className={btn.secondary}>
+              <WithTip id="checkIns.checkIn.goToFolio"><button onClick={() => navigate(`/pms/folios?reservation_id=${selected.id}`)} className={btn.secondary}>
                 Go to Folio
-              </button>
-              <button
+              </button></WithTip>
+              <WithTip id="checkIns.checkIn.confirm"><button
                 onClick={handleCheckIn}
                 disabled={processing || roomNumbers.length < (selected.rooms_booked || 1) || Boolean(otaRangeProblem(ota))}
                 className={btn.success}
                 title={roomNumbers.length < (selected.rooms_booked || 1) ? "Assign a room number to every room before checking in" : otaRangeProblem(ota) || undefined}
               >
                 {processing ? "Checking In..." : "Confirm Check In"}
-              </button>
+              </button></WithTip>
             </>
           }
         >
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[color:var(--text-color)]/3 rounded-lg px-5 py-4">
-              <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">Room Type</p>
+              <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">Room Type<Tip id="checkIns.checkIn.roomType" /></p>
               <p className="text-2xl font-bold text-[color:var(--black)]">{selected.room_type?.name || "N/A"}</p>
             </div>
             <div className="bg-[color:var(--text-color)]/3 rounded-lg px-5 py-4">
-              <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">Rooms Booked</p>
+              <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">Rooms Booked<Tip id="checkIns.checkIn.roomsBooked" /></p>
               <p className="text-2xl font-bold text-[color:var(--black)]">{selected.rooms_booked}</p>
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Room{selected.rooms_booked > 1 ? "s" : ""}</label>
+            <label className={field.label}>Room{selected.rooms_booked > 1 ? "s" : ""}<Tip id="checkIns.checkIn.rooms" /></label>
             <RoomAssignmentPicker
               reservationId={selected.id}
               roomTypeId={selected.room_type_id}
@@ -1390,7 +1393,7 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
           className="w-6 h-6 mt-0.5 shrink-0 cursor-pointer accent-[color:var(--emphasis)]"
         />
         <span className="flex flex-col gap-1">
-          <span className="text-xl font-semibold text-[color:var(--black)]">An OTA is paying for some of these nights</span>
+          <span className="text-xl font-semibold text-[color:var(--black)]">An OTA is paying for some of these nights<Tip id="checkIns.ota.on" /></span>
           <span className="text-lg text-[color:var(--text-color)]/68">
             Tick this for a booking made through an online travel agency, then pick the nights it covers. Any night
             outside those dates stays on the guest&apos;s own bill, so a guest can add nights and pay for them directly.
@@ -1400,7 +1403,7 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
       {on && (
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
           <div className="flex flex-col gap-2">
-            <label className={field.label}>OTA covers from</label>
+            <label className={field.label}>OTA covers from<Tip id="checkIns.ota.from" /></label>
             <DateInput
               value={value.start}
               min={minDate}
@@ -1413,7 +1416,7 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={field.label}>Until</label>
+            <label className={field.label}>Until<Tip id="checkIns.ota.until" /></label>
             <DateInput
               value={value.end}
               min={firstEnd}
@@ -1434,11 +1437,11 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
             className="w-5 h-5 cursor-pointer"
           />
           The OTA rate includes breakfast
-        </label>
+        <Tip id="checkIns.ota.breakfast" /></label>
       )}
       {on && hasRange && (
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Amount the OTA will pay — optional</label>
+          <label className={field.label}>Amount the OTA will pay — optional<Tip id="checkIns.ota.amount" /></label>
           <input
             type="number"
             min="0"
@@ -1654,7 +1657,7 @@ function FutureBookingForm() {
   return (
     <div className="w-full bg-(--card) rounded-xl border border-(--accent-2) p-8 flex flex-col gap-6">
       <div>
-        <h2 className="text-3xl font-bold text-[color:var(--black)]">Future Booking</h2>
+        <h2 className="text-3xl font-bold text-[color:var(--black)]">Future Booking<Tip id="checkIns.future.heading" /></h2>
         <p className="text-xl text-[color:var(--text-color)]/76 mt-1">
           For a guest booking a later date in person. A room number is required — it holds a real room for those
           dates, and can be reassigned any time before the guest arrives.
@@ -1673,14 +1676,14 @@ function FutureBookingForm() {
         <div className="relative">
           <div className="flex gap-4 flex-wrap">
             <div className="flex flex-col gap-2 flex-1 min-w-48">
-              <label className={field.label}>First Name <span className="text-red-500">*</span></label>
+              <label className={field.label}>First Name <span className="text-red-500">*</span><Tip id="checkIns.future.firstName" /></label>
               <input type="text" value={form.guestFirstName} className={field.input}
                 onFocus={() => setActiveGuestField("name")}
                 onBlur={() => setActiveGuestField(null)}
                 onChange={(e) => setForm((p) => ({ ...p, guestFirstName: e.target.value }))} />
             </div>
             <div className="flex flex-col gap-2 flex-1 min-w-48">
-              <label className={field.label}>Last Name</label>
+              <label className={field.label}>Last Name<Tip id="checkIns.future.lastName" /></label>
               <input type="text" value={form.guestLastName} className={field.input}
                 onFocus={() => setActiveGuestField("name")}
                 onBlur={() => setActiveGuestField(null)}
@@ -1693,14 +1696,14 @@ function FutureBookingForm() {
         <div className="relative">
           <div className="flex gap-4 flex-wrap">
             <div className="flex flex-col gap-2 flex-1 min-w-48">
-              <label className={field.label}>Phone <span className="text-red-500">*</span></label>
+              <label className={field.label}>Phone <span className="text-red-500">*</span><Tip id="checkIns.future.phone" /></label>
               <PhoneInput value={form.phone} onChange={(v) => setForm((p) => ({ ...p, phone: v }))}
                 onFocus={() => setActiveGuestField("phone")}
                 onBlur={() => setActiveGuestField(null)}
                 selectClassName={field.select} inputClassName={field.input} />
             </div>
             <div className="flex flex-col gap-2 flex-1 min-w-48">
-              <label className={field.label}>Email</label>
+              <label className={field.label}>Email<Tip id="checkIns.future.email" /></label>
               <input type="email" value={form.email} className={field.input}
                 onFocus={() => setActiveGuestField("email")}
                 onBlur={() => setActiveGuestField(null)}
@@ -1716,7 +1719,7 @@ function FutureBookingForm() {
             (owner, 2026-10-02). */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-[1fr_1fr_14rem]">
           <div className="flex flex-col gap-2 min-w-0">
-            <label className={field.label}>Check In <span className="text-red-500">*</span></label>
+            <label className={field.label}>Check In <span className="text-red-500">*</span><Tip id="checkIns.future.checkIn" /></label>
             <DateInput value={form.checkIn} min={minCheckIn} className={field.input}
               onChange={(e) => {
                 const checkIn = e.target.value;
@@ -1729,12 +1732,12 @@ function FutureBookingForm() {
               }} />
           </div>
           <div className="flex flex-col gap-2 min-w-0">
-            <label className={field.label}>Check Out <span className="text-red-500">*</span></label>
+            <label className={field.label}>Check Out <span className="text-red-500">*</span><Tip id="checkIns.future.checkOut" /></label>
             <DateInput value={form.checkOut} min={minCheckOut} className={field.input}
               onChange={(e) => setForm((p) => ({ ...p, checkOut: e.target.value, roomTypeId: "" }))} />
           </div>
           <div className="flex flex-col gap-2 min-w-0 max-md:w-[14rem] max-md:max-w-full">
-            <label className={field.label}>Rooms</label>
+            <label className={field.label}>Rooms<Tip id="checkIns.future.rooms" /></label>
             <input type="number" min={1} step={1} value={form.roomsBooked} className={field.input}
               onChange={(e) => setForm((p) => ({ ...p, roomsBooked: e.target.value, roomTypeId: "" }))} />
           </div>
@@ -1742,7 +1745,7 @@ function FutureBookingForm() {
         {(datesProblem || roomsProblem) && <p className="text-lg text-red-600 -mt-2">{datesProblem || roomsProblem}</p>}
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Room Type <span className="text-red-500">*</span></label>
+          <label className={field.label}>Room Type <span className="text-red-500">*</span><Tip id="checkIns.future.roomType" /></label>
           {!bothDates ? (
             <p className="text-xl text-[color:var(--text-color)]/68">
               {datesProblem ? "Fix the dates above to see what is free." : "Pick the dates first to see what is free."}
@@ -1793,7 +1796,7 @@ function FutureBookingForm() {
           <div className="flex flex-col gap-2">
             <label className={field.label}>
               Room Number{Number(form.roomsBooked) > 1 ? "s" : ""} <span className="text-red-500">*</span>
-            </label>
+            <Tip id="checkIns.future.roomNumbers" /></label>
             <p className="text-lg text-[color:var(--text-color)]/68">
               Free across these dates. Reassign any time before the guest arrives.
             </p>
@@ -1828,9 +1831,9 @@ function FutureBookingForm() {
           maxDate={form.checkOut}
         />
 
-        <button type="submit" disabled={!canSubmit} className={`${btn.primary} self-start px-12! py-4!`}>
+        <WithTip id="checkIns.future.create"><button type="submit" disabled={!canSubmit} className={`${btn.primary} self-start px-12! py-4!`}>
           {submitting ? "Creating..." : "Create Reservation"}
-        </button>
+        </button></WithTip>
         {!canSubmit && !submitting && submitBlockReason && (
           <p className="text-lg text-[color:var(--text-color)]/68 -mt-2">{submitBlockReason}</p>
         )}

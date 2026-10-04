@@ -1,35 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { IoInformationCircleOutline } from "react-icons/io5";
 
-// Where a tip goes for an element: above it, opening inwards near either
-// edge of the screen so it is never squeezed against one. Drawn into the
+// Kept clear of the window's edges, and between a tip and its (i), in px.
+const EDGE = 8;
+const GAP = 8;
+
+// Where a tip is for: the box of the element it describes. Drawn into the
 // page's own root, which carries the brand's colours (a tip in <body> would
 // have none), over everything, so a table's scrolling card can't clip it.
 export function tipFor(el, text) {
   const r = el.getBoundingClientRect();
-  const w = window.innerWidth;
-  const centre = r.left + r.width / 2;
-  const place = centre > (w * 2) / 3 ? { right: w - r.right } : centre < w / 3 ? { left: r.left } : { left: centre, shift: "-50%" };
-  return { text, top: r.top, root: el.closest(".admin-root") || document.body, ...place };
+  return { text, anchor: { left: r.left, right: r.right, top: r.top, bottom: r.bottom }, root: el.closest(".admin-root") || document.body };
 }
 
-// A small dark label floating above whatever it describes (see tipFor).
+// A small dark label floating by whatever it describes (see tipFor). Never
+// wider than the window, its text wrapping to fit; centred on its (i), then
+// slid back inside the window wherever that would cut it off; above the (i),
+// or below it when there is no room above (owner, 2026-10-04: long tips ran
+// off the side of a phone, and the top bar's off the top of the screen).
+// Placed once measured, before it is painted, so it never shows out of place.
 export function FloatingTip({ tip }) {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const box = ref.current;
+    if (!box || !tip) return;
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const { width, height } = box.getBoundingClientRect();
+    const a = tip.anchor;
+    const left = Math.min(Math.max((a.left + a.right) / 2 - width / 2, EDGE), Math.max(EDGE, vw - EDGE - width));
+    const above = a.top - GAP - height;
+    const below = a.bottom + GAP;
+    const top = above >= EDGE ? above : below + height <= vh - EDGE ? below : Math.max(EDGE, Math.min(above, vh - EDGE - height));
+    box.style.left = `${left}px`;
+    box.style.top = `${top}px`;
+    box.style.visibility = "visible";
+  }, [tip]);
   if (!tip?.text) return null;
   return createPortal(
     <div
+      ref={ref}
       role="tooltip"
-      className="fixed z-[2000] pointer-events-none rounded-lg px-3 py-2 text-lg font-normal normal-case tracking-normal shadow-lg bg-(--text-color) text-white"
+      className="fixed z-[2000] pointer-events-none rounded-lg px-3 py-2 text-lg font-normal normal-case tracking-normal text-left whitespace-normal break-words shadow-lg bg-(--text-color) text-white"
       style={{
-        left: tip.left,
-        right: tip.right,
-        top: tip.top - 8,
-        transform: `translate(${tip.shift || "0"}, -100%)`,
+        left: 0,
+        top: 0,
+        visibility: "hidden",
         width: "max-content",
-        maxWidth: "min(44rem, calc(100vw - 1.6rem))",
+        maxWidth: `min(44rem, calc(100vw - ${EDGE * 2}px))`,
       }}
     >
       {tip.text}
@@ -40,10 +61,10 @@ export function FloatingTip({ tip }) {
 
 // A short label with an (i) that says it in full on hover or focus - "OOO"
 // for Out of Order (owner, 2026-10-01). `size` is the (i)'s, for beside a
-// page heading; `light` draws it pale, for on a coloured card. 12px, 30%
-// under the first 17 (owner, 2026-10-04: with one on every control, the
-// bigger ones cluttered the page).
-export default function InfoTip({ label, text, size = 12, light = false }) {
+// page heading; `light` draws it pale, for on a coloured card. At 30% until
+// pointed at (owner, 2026-10-04: with one on every control, they cluttered
+// the page).
+export default function InfoTip({ label, text, size = 17, light = false }) {
   const [tip, setTip] = useState(null);
   const show = (e) => setTip(tipFor(e.currentTarget, text));
   const hide = () => setTip(null);
@@ -66,8 +87,8 @@ export default function InfoTip({ label, text, size = 12, light = false }) {
         }}
         className={`inline-flex cursor-help rounded-full focus-visible:outline-2 ${
           light
-            ? "text-white/70 hover:text-white focus-visible:text-white focus-visible:outline-white"
-            : "text-(--text-color)/55 hover:text-(--emphasis) focus-visible:text-(--emphasis) focus-visible:outline-(--emphasis)"
+            ? "text-white/30 hover:text-white focus-visible:text-white focus-visible:outline-white"
+            : "text-(--text-color)/30 hover:text-(--emphasis) focus-visible:text-(--emphasis) focus-visible:outline-(--emphasis)"
         }`}
       >
         <IoInformationCircleOutline size={size} aria-hidden="true" />

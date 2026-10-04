@@ -17,7 +17,7 @@ export default function PageHeading({ icon: Icon, children, badge, tipId, classN
         </span>
       )}
       <h1 className="font-accent text-6xl font-bold leading-none text-(--text-color)">{children}</h1>
-      {tip && <InfoTip text={tip} size={22} />}
+      {tip && <InfoTip text={tip} size={15} />}
       {badge}
     </div>
   );

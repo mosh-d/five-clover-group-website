@@ -40,8 +40,10 @@ export function FloatingTip({ tip }) {
 
 // A short label with an (i) that says it in full on hover or focus - "OOO"
 // for Out of Order (owner, 2026-10-01). `size` is the (i)'s, for beside a
-// page heading; `light` draws it pale, for on a coloured card.
-export default function InfoTip({ label, text, size = 17, light = false }) {
+// page heading; `light` draws it pale, for on a coloured card. 12px, 30%
+// under the first 17 (owner, 2026-10-04: with one on every control, the
+// bigger ones cluttered the page).
+export default function InfoTip({ label, text, size = 12, light = false }) {
   const [tip, setTip] = useState(null);
   const show = (e) => setTip(tipFor(e.currentTarget, text));
   const hide = () => setTip(null);

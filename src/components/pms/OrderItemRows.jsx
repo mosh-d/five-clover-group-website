@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { IoChevronDown, IoChevronForward } from "react-icons/io5";
 import { btn, field } from "@/components/pms/ui";
 import { money } from "@/lib/pms/format";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // The item lines of one bill, shared by Guest Sales and Non-Guest Sales —
 // both post the same food/drink lines, and Non-Guest additionally has the
@@ -194,7 +194,7 @@ export default function OrderItemRows({
           </div>
         );
       })}
-      <WithTip id="order.addItem"><button type="button" onClick={onAdd} className={`${btn.rowSecondary} self-start`}>+ Add Item</button></WithTip>
+      <button type="button" onClick={onAdd} className={`${btn.rowSecondary} self-start`}>+ Add Item</button>
     </div>
   );
 }

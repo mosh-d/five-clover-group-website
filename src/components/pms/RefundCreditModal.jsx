@@ -6,7 +6,7 @@ import { useState } from "react";
 import Modal from "@/components/pms/Modal";
 import { btn, field } from "@/components/pms/ui";
 import { money, formatPaymentMethod, PAYMENT_METHODS } from "@/lib/pms/format";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // Paying a guest's credit back out - confirmed, and recorded with how the
 // money left (2026-09-28). The payout method is what lets the payment
@@ -33,9 +33,9 @@ export default function RefundCreditModal({ credit, reference, guestName, busy, 
           <button onClick={onClose} disabled={busy} className={btn.secondary}>
             Back
           </button>
-          <WithTip id="refundCredit.confirm"><button onClick={() => onConfirm(method)} disabled={busy || !method} className={btn.dangerSolid}>
+          <button onClick={() => onConfirm(method)} disabled={busy || !method} className={btn.dangerSolid}>
             {busy ? "Refunding..." : "Yes, Refund"}
-          </button></WithTip>
+          </button>
         </>
       }
     >

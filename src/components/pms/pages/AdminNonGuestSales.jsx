@@ -34,7 +34,7 @@ import {
   applyNonGuestCredit,
 } from "@/lib/pms/api/non-guest-folios-api";
 import Pagination from "@/components/pms/Pagination";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // bill_no lives at the order level now (one receipt number covers the whole
 // order), not per row — see emptyNewFolioForm below. The single-item "Add a
@@ -494,13 +494,13 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
           <span className="text-2xl font-bold">{money(newFolioTotal)}</span>
         </div>
 
-        <WithTip id="nonGuestSales.open"><button
+        <button
           onClick={handleCreateFolio}
           disabled={creating || !newFolioRowsValid}
           className={`${btn.primary} self-start`}
         >
           {creating ? "Opening..." : "Open Folio"}
-        </button></WithTip>
+        </button>
         {/* Never leave a disabled button unexplained. */}
         {!newFolioRowsValid && !creating && (
           <p className="text-lg text-[color:var(--text-color)]/68">{newFolioBlockReason}</p>
@@ -510,11 +510,10 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
       {/* ==== Folio list ==== */}
       <div className="flex gap-3 text-xl flex-wrap items-center w-full">
         {[
-          { key: "all", label: "All", tip: "nonGuestSales.tab.all" },
-          { key: "open", label: "Open", tip: "nonGuestSales.tab.open" },
-          { key: "closed", label: "Closed", tip: "nonGuestSales.tab.closed" },
+          { key: "all", label: "All" },
+          { key: "open", label: "Open" },
+          { key: "closed", label: "Closed" },
         ].map((t) => (
-          <WithTip key={t.key} id={t.tip}>
           <button
             key={t.key}
             onClick={() => { setStatusFilter(t.key); setSearchInput(""); setSearchTerm(""); setPage(1); }}
@@ -522,7 +521,6 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
           >
             {t.label}
           </button>
-          </WithTip>
         ))}
         <form
           onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); setPage(1); }}
@@ -535,7 +533,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
             placeholder="Search by folio #, bill no, or guest name"
             className={`${field.input} w-auto text-xl!`}
           />
-          <WithTip id="nonGuestSales.search"><button type="submit" className={btn.secondary}>Search</button></WithTip>
+          <button type="submit" className={btn.secondary}>Search</button>
           {searchTerm && (
             <button type="button" onClick={() => { setSearchInput(""); setSearchTerm(""); setPage(1); }} className={btn.rowSecondary}>
               Clear
@@ -615,14 +613,14 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
             <>
               <button onClick={closeFolioDetail} className={btn.secondary}>Close</button>
               {selectedFolio.status !== "closed" && (
-                <WithTip id="nonGuestSales.close"><button
+                <button
                   onClick={handleCloseFolio}
                   disabled={!canCloseFolio || closing}
                   className={btn.primary}
                   title={!canCloseFolio ? "Settle the full balance before closing" : ""}
                 >
                   {closing ? "Closing..." : "Close Folio"}
-                </button></WithTip>
+                </button>
               )}
             </>
           )}
@@ -669,13 +667,13 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                     />
                   </div>
                 </div>
-                <WithTip id="nonGuestSales.guestInfo.save"><button
+                <button
                   onClick={handleUpdateGuestInfo}
                   disabled={savingGuestInfo || (guestInfoForm.guest_name === (selectedFolio.guest_name || "") && guestInfoForm.guest_phone === (selectedFolio.guest_phone || ""))}
                   className={`${btn.secondary} self-start`}
                 >
                   {savingGuestInfo ? "Saving..." : "Save Guest Info"}
-                </button></WithTip>
+                </button>
               </section>
 
               {/* Charges */}
@@ -769,9 +767,9 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                     {Number(rowServiceCharge(itemForm)) > 0 && (
                       <p className="text-lg text-[color:var(--text-color)]/60">Service Charge: {money(rowServiceCharge(itemForm))}</p>
                     )}
-                    <WithTip id="nonGuestSales.addChargeButton"><button onClick={handleAddItem} disabled={addingItem || !itemFormValid} className={`${btn.secondary} self-start`}>
+                    <button onClick={handleAddItem} disabled={addingItem || !itemFormValid} className={`${btn.secondary} self-start`}>
                       {addingItem ? "Adding..." : "Add Charge"}
-                    </button></WithTip>
+                    </button>
                   </div>
                 )}
               </section>
@@ -829,9 +827,9 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                         />
                       </div>
                     </div>
-                    <WithTip id="nonGuestSales.recordPaymentButton"><button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits} className={`${btn.success} self-start`}>
+                    <button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits} className={`${btn.success} self-start`}>
                       {recordingPayment ? "Recording..." : "Record Payment"}
-                    </button></WithTip>
+                    </button>
                   </div>
                 )}
 

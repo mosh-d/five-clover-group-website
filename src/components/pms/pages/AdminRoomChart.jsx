@@ -16,7 +16,7 @@ import { fetchRoomChart } from "@/lib/pms/api/reservations-pms-api";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import { withGuestTags } from "@/lib/pms/guest-tags";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const DAYS_VISIBLE = 14;
 const DAY_MS = 86400000;
@@ -248,24 +248,24 @@ export default function AdminRoomChartPage() {
           <Tip id="roomChart.date" />
           </div>
           <div className='flex items-center gap-3'>
-            <WithTip id="roomChart.previous"><button
+            <button
               onClick={() => setWindowStart((d) => addDays(d, -DAYS_VISIBLE))}
               className={`${btn.secondary} flex items-center gap-1`}
             >
               <IoChevronBack size={18} /> Previous
-            </button></WithTip>
-            <WithTip id="roomChart.today"><button
+            </button>
+            <button
               onClick={() => setWindowStart(startOfDay(new Date()))}
               className={btn.secondary}
             >
               Today
-            </button></WithTip>
-            <WithTip id="roomChart.next"><button
+            </button>
+            <button
               onClick={() => setWindowStart((d) => addDays(d, DAYS_VISIBLE))}
               className={`${btn.secondary} flex items-center gap-1`}
             >
               Next <IoChevronForward size={18} />
-            </button></WithTip>
+            </button>
           </div>
         </div>
       </div>

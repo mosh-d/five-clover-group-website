@@ -30,7 +30,7 @@ import { money } from "@/lib/pms/format";
 import { GuestTagPills } from "@/components/pms/GuestName";
 import { GUEST_TYPES, guestTagLabel } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const RESERVATIONS_PAGE_SIZE = 5;
 
@@ -320,13 +320,13 @@ export default function AdminGuestsPage() {
                 className='relative'
                 ref={filterDropdownRef}
               >
-                <WithTip id="guests.filters"><button
+                <button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                   className={`bg-(--card) border-1 border-gray-300 rounded-3xl py-2.5 px-6 flex items-center gap-2`}
                   title='Filter'
                 >
                   <IoFilter size={22} /> Filters
-                </button></WithTip>
+                </button>
                 {isFilterOpen && (
                   // From the button's left edge on a phone, where it sits at
                   // the left of the screen - from its right edge the panel
@@ -355,12 +355,12 @@ export default function AdminGuestsPage() {
                   </div>
                 )}
               </div>
-              <WithTip id="guests.add"><button
+              <button
                 onClick={() => setIsCreateOpen(true)}
                 className={`${btn.primary} whitespace-nowrap`}
               >
                 + Add Guest
-              </button></WithTip>
+              </button>
             </div>
           </div>
         </div>
@@ -470,13 +470,13 @@ export default function AdminGuestsPage() {
               >
                 Close
               </button>
-              <WithTip id="guests.save"><button
+              <button
                 onClick={handleSaveEdit}
                 disabled={savingEdit}
                 className={btn.primary}
               >
                 {savingEdit ? 'Saving...' : 'Save Changes'}
-              </button></WithTip>
+              </button>
             </>
           }
         >
@@ -626,14 +626,14 @@ export default function AdminGuestsPage() {
                 placeholder='e.g. VIP'
                 className={`${field.input} w-auto flex-1 min-w-[16rem]`}
               />
-              <WithTip id="guests.addNote"><button
+              <button
                 type='button'
                 onClick={handleAddNote}
                 disabled={addingNote || !newNoteText.trim()}
                 className={btn.secondary}
               >
                 {addingNote ? 'Adding...' : '+ Add Note'}
-              </button></WithTip>
+              </button>
             </div>
           </section>
 
@@ -702,7 +702,7 @@ export default function AdminGuestsPage() {
               >
                 Cancel
               </button>
-              <WithTip id="guests.create.submit"><button
+              <button
                 onClick={handleCreateGuest}
                 disabled={
                   creating ||
@@ -713,7 +713,7 @@ export default function AdminGuestsPage() {
                 className={btn.primary}
               >
                 {creating ? 'Creating...' : 'Create Guest'}
-              </button></WithTip>
+              </button>
             </>
           }
         >

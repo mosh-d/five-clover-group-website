@@ -16,7 +16,7 @@ import { checkOutReservation, shortenStayToDeparture } from "@/lib/pms/api/reser
 import { todayISO, hasPassedNoonCutoff } from "@/lib/pms/dates";
 import { formatDate, money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // Whether this stay's scheduled checkout has actually come due (noon Lagos
 // on check_out) - the date can be browsed forward, so a listed stay isn't
@@ -199,13 +199,13 @@ export default function PmsCheckOutsPage() {
             <>
               <button onClick={() => setSelected(null)} className={btn.secondary}>Cancel</button>
               {selectedDepartsEarly ? (
-                <WithTip id="checkOuts.setToday"><button onClick={handleAdjustDate} disabled={adjustingDate || processing} className={btn.primary}>
+                <button onClick={handleAdjustDate} disabled={adjustingDate || processing} className={btn.primary}>
                   {adjustingDate ? "Adjusting..." : "Set Checkout Date to Today"}
-                </button></WithTip>
+                </button>
               ) : (
-                <WithTip id="checkOuts.confirm"><button onClick={handleCheckOut} disabled={processing} className={btn.success}>
+                <button onClick={handleCheckOut} disabled={processing} className={btn.success}>
                   {processing ? "Checking Out..." : "Confirm Check Out"}
-                </button></WithTip>
+                </button>
               )}
             </>
           }
@@ -239,9 +239,9 @@ export default function PmsCheckOutsPage() {
               <p className="text-xl text-orange-600 bg-orange-50 border border-orange-200 rounded-lg px-5 py-4">
                 ⚠ Outstanding balance — consider settling payment before checkout.
               </p>
-              <WithTip id="checkOuts.goToFolio"><button type="button" onClick={() => router.push(`/pms/folios?reservation_id=${selected.id}`)} className={`${btn.secondary} self-start`}>
+              <button type="button" onClick={() => router.push(`/pms/folios?reservation_id=${selected.id}`)} className={`${btn.secondary} self-start`}>
                 Go to Folio to Record Payment
-              </button></WithTip>
+              </button>
             </div>
           )}
         </Modal>

@@ -20,7 +20,7 @@ import {
   transferHqStaff,
 } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // Staff Accounts (Head Office): every branch's staff, and Head Office's own.
 //
@@ -314,14 +314,14 @@ export default function StaffAccountsPage() {
             </select>
           )}
         </div>
-        <WithTip id="staffAccounts.add"><button
+        <button
           type="button"
           onClick={() => open("create", null, { username: "", role: assignableRoles[0], password: "", confirm: "" })}
           disabled={!selectedBranchId}
           className={btn.primary}
         >
           + Add Staff
-        </button></WithTip>
+        </button>
       </div>
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
@@ -509,9 +509,9 @@ export default function StaffAccountsPage() {
                 </>
               )}
 
-              <WithTip id="staffAccounts.review"><button type="submit" className={`${btn.primary} self-start`}>
+              <button type="submit" className={`${btn.primary} self-start`}>
                 Review
-              </button></WithTip>
+              </button>
             </form>
           )}
         </Modal>

@@ -10,7 +10,7 @@ import { btn, field, page, table } from "@/components/pms/ui";
 import { fetchOtaSettlements, markOtaSettlementPaid } from "@/lib/pms/api/ota-api";
 import { money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // OTA Payments - the branch PMS's page (AdminOtaPayments.jsx): money owed by
 // OTAs rather than by guests. It lives on its own page because an OTA
@@ -18,8 +18,8 @@ import { Tip, WithTip } from "@/components/pms/Tip";
 // in-house list. Awaiting Payment is the chase list; Paid is the record of
 // what has landed.
 const TABS = [
-  { key: "pending", label: "Awaiting Payment", tip: "otaPayments.tab.pending" },
-  { key: "paid", label: "Paid", tip: "otaPayments.tab.paid" },
+  { key: "pending", label: "Awaiting Payment" },
+  { key: "paid", label: "Paid" },
 ];
 
 export default function PmsOtaPaymentsPage() {
@@ -78,11 +78,9 @@ export default function PmsOtaPaymentsPage() {
 
       <div className="flex gap-3 flex-wrap">
         {TABS.map((tab) => (
-          <WithTip key={tab.key} id={tab.tip}>
-            <button onClick={() => setStatus(tab.key)} className={status === tab.key ? btn.rowPrimary : btn.rowSecondary}>
+            <button key={tab.key} onClick={() => setStatus(tab.key)} className={status === tab.key ? btn.rowPrimary : btn.rowSecondary}>
               {tab.label}
             </button>
-          </WithTip>
         ))}
       </div>
 
@@ -157,9 +155,9 @@ export default function PmsOtaPaymentsPage() {
           footer={
             <>
               <button onClick={() => setConfirming(null)} className={btn.secondary}>Cancel</button>
-              <WithTip id="otaPayments.confirm"><button onClick={confirmPaid} disabled={saving} className={btn.success}>
+              <button onClick={confirmPaid} disabled={saving} className={btn.success}>
                 {saving ? "Recording..." : `Yes, ${money(confirming.amount)} received`}
-              </button></WithTip>
+              </button>
             </>
           }
         >

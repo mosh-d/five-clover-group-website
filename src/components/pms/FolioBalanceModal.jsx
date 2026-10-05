@@ -10,7 +10,7 @@ import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { chargeTypeLabel, settlementByCharge } from "@/components/pms/folioCharges";
 import { formatDateTime, money } from "@/lib/pms/format";
 import { btn, field } from "@/components/pms/ui";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // Compact — a balance summary + payment form, not the full Folio Detail
 // experience (no tax/discount, refunds, or closing here; that stays
@@ -116,13 +116,13 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
                 <AutoGrowTextarea value={paymentForm.notes} onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })} className={field.textarea} />
               </div>
             </div>
-            <WithTip id="folioModal.recordButton"><button
+            <button
               onClick={onRecordPayment}
               disabled={recordingPayment || !hasValidPaymentSplits}
               className={`${btn.primary} self-start`}
             >
               {recordingPayment ? "Recording..." : "Record Payment"}
-            </button></WithTip>
+            </button>
           </div>
         </>
       )}

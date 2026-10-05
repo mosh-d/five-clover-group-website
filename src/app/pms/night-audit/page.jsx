@@ -12,7 +12,7 @@ import { fetchNightAuditHistory, runNightAudit } from "@/lib/pms/api/night-audit
 import { yesterdayISO } from "@/lib/pms/dates";
 import { formatDate, formatTime, money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const PAGE_SIZE = 10;
 
@@ -92,9 +92,9 @@ export default function PmsNightAuditPage() {
               }}
             />
           </div>
-          <WithTip id="nightAudit.runButton"><button onClick={handleRun} disabled={running || !auditDate} className={btn.primary}>
+          <button onClick={handleRun} disabled={running || !auditDate} className={btn.primary}>
             {running ? "Running..." : "Run Night Audit"}
-          </button></WithTip>
+          </button>
         </div>
 
         {runError && <p className={field.error}>{runError}</p>}

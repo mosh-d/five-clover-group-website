@@ -21,7 +21,7 @@ import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const emptyRow = { item_kind: "food", reference_id: "", quantity: "1", is_complementary: false };
 const emptyOrder = { reservation_id: "", bill_no: "", rows: [{ ...emptyRow }] };
@@ -339,13 +339,13 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
           <span className="text-2xl font-bold">{money(orderTotal)}</span>
         </div>
 
-        <WithTip id="guestSales.post"><button
+        <button
           onClick={handleSubmit}
           disabled={submitting || !orderValid}
           className={`${btn.primary} self-start`}
         >
           {submitting ? "Posting..." : "Post Order"}
-        </button></WithTip>
+        </button>
         {/* Never leave a disabled button unexplained — that is what made this
             look broken rather than incomplete. */}
         {!orderValid && !submitting && (
@@ -356,10 +356,9 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
       <div className={table.card}>
         <div className="px-8 py-4 border-b border-(--accent-2) flex gap-3 flex-wrap">
           {[
-            { key: "in-house", label: "In-House", tip: "guestSales.tab.inHouse" },
-            { key: "checked-out", label: "Checked-Out (Owing)", tip: "guestSales.tab.checkedOut" },
+            { key: "in-house", label: "In-House" },
+            { key: "checked-out", label: "Checked-Out (Owing)" },
           ].map((t) => (
-            <WithTip key={t.key} id={t.tip}>
             <button
               key={t.key}
               onClick={() => setFolioTab(t.key)}
@@ -369,7 +368,6 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
             >
               {t.label}
             </button>
-            </WithTip>
           ))}
         </div>
         {folioTab === "in-house" ? (

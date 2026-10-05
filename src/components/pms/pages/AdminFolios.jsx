@@ -43,7 +43,7 @@ import {
 import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // No laundry: it is posted from Laundry Sales, a garment at a time and
 // priced from the laundry list, and the server refuses a laundry charge
@@ -682,11 +682,10 @@ export default function AdminFoliosPage() {
               ever post to one that's still open — see FoliosService.addFolioItem),
               so there's nothing for these tab/status controls to switch between. */}
           {!isWaitstaffSession && [
-            { key: "all", label: "All", tip: "folios.tab.all" },
-            { key: "pending", label: "Outstanding Balance", tip: "folios.tab.pending" },
-            { key: "overdue", label: "Overdue", tip: "folios.tab.overdue" },
+            { key: "all", label: "All" },
+            { key: "pending", label: "Outstanding Balance" },
+            { key: "overdue", label: "Overdue" },
           ].map((t) => (
-            <WithTip key={t.key} id={t.tip}>
             <button
               key={t.key}
               onClick={() => { setSubTab(t.key); setSearchInput(""); setSearchTerm(""); }}
@@ -694,7 +693,6 @@ export default function AdminFoliosPage() {
             >
               {t.label}
             </button>
-            </WithTip>
           ))}
           {!isWaitstaffSession && subTab === "all" && !searchTerm && (
             <select
@@ -723,7 +721,7 @@ export default function AdminFoliosPage() {
               placeholder="Search by folio #, guest name, or payment reference (e.g. FOL-D7931B, PAY-3F9A2B)"
               className={`${field.input} w-auto text-xl!`}
             />
-            <WithTip id="folios.search"><button type="submit" className={btn.secondary}>Search</button></WithTip>
+            <button type="submit" className={btn.secondary}>Search</button>
             {searchTerm && (
               <button
                 type="button"
@@ -858,7 +856,7 @@ export default function AdminFoliosPage() {
             <>
               <button onClick={closeFolioDetail} className={btn.secondary}>Close</button>
               {selectedFolio.status !== "closed" && (
-                <WithTip id="folios.close"><button
+                <button
                   onClick={handleCloseFolio}
                   disabled={!canCloseFolio || closing}
                   className={btn.primary}
@@ -871,7 +869,7 @@ export default function AdminFoliosPage() {
                   }
                 >
                   {closing ? "Closing..." : "Close Folio"}
-                </button></WithTip>
+                </button>
               )}
             </>
           )}
@@ -955,7 +953,7 @@ export default function AdminFoliosPage() {
                       {s.status === "pending" ? (
                         <div className="flex items-center gap-2 flex-wrap">
                           {canRecordOta && (
-                            <WithTip id="folios.ota.adjust"><button
+                            <button
                               onClick={() => {
                                 setOtaError(null);
                                 setOtaForm({
@@ -971,11 +969,11 @@ export default function AdminFoliosPage() {
                               className={btn.rowSecondary}
                             >
                               Adjust OTA paid nights
-                            </button></WithTip>
+                            </button>
                           )}
-                          <WithTip id="folios.ota.markPaid"><button onClick={() => handleMarkOtaPaid(s.id)} disabled={otaPayingId === s.id} className={btn.rowSuccess}>
+                          <button onClick={() => handleMarkOtaPaid(s.id)} disabled={otaPayingId === s.id} className={btn.rowSuccess}>
                             {otaPayingId === s.id ? "Recording..." : "Mark OTA Paid"}
-                          </button></WithTip>
+                          </button>
                         </div>
                       ) : (
                         <StatusBadge status="paid" />
@@ -1048,13 +1046,13 @@ export default function AdminFoliosPage() {
                       <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{otaError}</p>
                     )}
                     <div className="flex gap-3 flex-wrap">
-                      <WithTip id="folios.ota.save"><button
+                      <button
                         onClick={handleSaveOta}
                         disabled={addingOta || !otaForm.start || !otaForm.end || otaForm.end <= otaForm.start}
                         className={btn.primary}
                       >
                         {addingOta ? "Saving..." : otaForm.id ? "Adjust OTA paid nights" : "Save OTA payment"}
-                      </button></WithTip>
+                      </button>
                       <button
                         onClick={() => { setOtaForm(EMPTY_OTA_FORM); setOtaError(null); }}
                         className={btn.secondary}
@@ -1064,14 +1062,14 @@ export default function AdminFoliosPage() {
                     </div>
                   </div>
                 ) : (
-                  <WithTip id="folios.ota.open"><button
+                  <button
                     onClick={() => { setOtaError(null); setOtaForm({ ...EMPTY_OTA_FORM, open: true, start: otaMin, end: otaMax }); }}
                     className={`${btn.secondary} self-start`}
                   >
                     {(selectedFolio.ota_settlements || []).length > 0
                       ? "Add another OTA range"
                       : "An OTA is paying for some nights"}
-                  </button></WithTip>
+                  </button>
                 )
               )}
               {/* Money this guest left behind on a DIFFERENT stay — the same
@@ -1199,13 +1197,13 @@ export default function AdminFoliosPage() {
                               ))}
                             </select>
                             <div className="flex gap-3 flex-wrap">
-                              <WithTip id="folios.moveCredit"><button
+                              <button
                                 onClick={() => handleTransferCredit(c.id)}
                                 disabled={!transferTo || transferring}
                                 className={btn.rowPrimary}
                               >
                                 {transferring ? "Moving..." : "Move the credit"}
-                              </button></WithTip>
+                              </button>
                               <button onClick={closeTransfer} className={btn.rowSecondary}>Cancel</button>
                             </div>
                           </div>
@@ -1338,9 +1336,9 @@ export default function AdminFoliosPage() {
                         (e.g. -3000.00). This keeps the original charge visible for audit.
                       </p>
                     )}
-                    <WithTip id="folios.addChargeButton"><button onClick={handleAddItem} disabled={addingItem || !chargeReady} className={`${btn.primary} self-start`}>
+                    <button onClick={handleAddItem} disabled={addingItem || !chargeReady} className={`${btn.primary} self-start`}>
                       {addingItem ? "Adding..." : "Add Charge"}
-                    </button></WithTip>
+                    </button>
                     {/* Never leave a disabled button unexplained — this one
                         needed a description and never said so, which read as
                         the button being broken (owner, 2026-09-27). */}
@@ -1470,9 +1468,9 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                     </div>
-                    <WithTip id="folios.recordPaymentButton"><button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits || Boolean(paymentAdjustmentProblem)} className={`${btn.success} self-start`}>
+                    <button onClick={handleRecordPayment} disabled={recordingPayment || !hasValidPaymentSplits || Boolean(paymentAdjustmentProblem)} className={`${btn.success} self-start`}>
                       {recordingPayment ? "Recording..." : "Record Payment"}
-                    </button></WithTip>
+                    </button>
                     {paymentAdjustmentProblem && <p className="text-lg text-red-600">{paymentAdjustmentProblem}</p>}
                   </div>
                 )}
@@ -1523,9 +1521,9 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                     </div>
-                    <WithTip id="folios.recordRefundButton"><button onClick={handleRecordRefund} disabled={recordingRefund || !refundForm.amount} className={`${btn.dangerSolid} self-start`}>
+                    <button onClick={handleRecordRefund} disabled={recordingRefund || !refundForm.amount} className={`${btn.dangerSolid} self-start`}>
                       {recordingRefund ? "Recording..." : "Record Refund"}
-                    </button></WithTip>
+                    </button>
                   </div>
                 )}
               </section>

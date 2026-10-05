@@ -19,8 +19,8 @@ import AdminNonGuestSales from "./AdminNonGuestSales";
 // two competing "this is the thing you came for" points. Plain local state,
 // the same as Check-Ins' and Reports' own tabs.
 const TABS = [
-  { key: "guest", label: "Guest Sales", tip: "fnbSales.tab.guest" },
-  { key: "non-guest", label: "Non-Guest Sales", tip: "fnbSales.tab.nonGuest" },
+  { key: "guest", label: "Guest Sales" },
+  { key: "non-guest", label: "Non-Guest Sales" },
 ];
 
 export default function AdminFnbSalesPage() {

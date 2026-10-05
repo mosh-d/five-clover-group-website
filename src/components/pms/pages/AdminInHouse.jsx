@@ -33,7 +33,7 @@ import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import DateInput from "@/components/pms/DateInput";
 import { money, formatDate } from "@/lib/pms/format";
 import GuestName from "@/components/pms/GuestName";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 const roomStatusKey = (roomTypeId, roomNumber) => `${roomTypeId}::${roomNumber}`;
 
 const isOverdue = (checkOut) => checkOut && hasPassedNoonCutoff(checkOut);
@@ -476,24 +476,24 @@ export default function AdminInHousePage() {
           footer={selected && (
             <>
               <button onClick={closeDetail} className={btn.secondary}>Close</button>
-              <WithTip id="inHouse.goToFolio"><button
+              <button
                 onClick={() => navigate(`/pms/folios?reservation_id=${selected.id}`)}
                 disabled={!folio}
                 className={btn.secondary}
                 title={!folio ? "No folio linked to this reservation yet" : undefined}
               >
                 Go to Folio
-              </button></WithTip>
+              </button>
               {/* Whichever of these is offered depends on isOverdue (noon
                   Lagos on the scheduled check_out) — never both at once, see
                   handleEarlyCheckout's comment for why the wrong one has a
                   real billing consequence. */}
               {selected && isOverdue(selected.check_out) ? (
-                <WithTip id="inHouse.checkOut"><button onClick={handleCheckOut} disabled={processing} className={btn.success}>
+                <button onClick={handleCheckOut} disabled={processing} className={btn.success}>
                   {processing ? "Processing..." : "Check Out"}
-                </button></WithTip>
+                </button>
               ) : (
-                <WithTip id="inHouse.earlyCheckout"><button onClick={() => setShowEarlyCheckoutConfirm(true)} disabled={processing} className={btn.danger}>Early Checkout</button></WithTip>
+                <button onClick={() => setShowEarlyCheckoutConfirm(true)} disabled={processing} className={btn.danger}>Early Checkout</button>
               )}
             </>
           )}
@@ -566,14 +566,14 @@ export default function AdminInHousePage() {
                     placeholder="e.g. Arriving late"
                     className={`${field.input} w-auto flex-1 min-w-[16rem]`}
                   />
-                  <WithTip id="inHouse.addNote"><button
+                  <button
                     type="button"
                     onClick={handleAddNote}
                     disabled={addingNote || !newNoteText.trim()}
                     className={btn.secondary}
                   >
                     {addingNote ? "Adding..." : "+ Add Note"}
-                  </button></WithTip>
+                  </button>
                 </div>
               </section>
 
@@ -649,13 +649,13 @@ export default function AdminInHousePage() {
                           );
                         })}
                         {(!selected.rooms_booked || newTypeRoomSlots.length < selected.rooms_booked) && (
-                          <WithTip id="inHouse.addRoom"><button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
+                          <button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
                             + Add Room
-                          </button></WithTip>
+                          </button>
                         )}
                       </div>
                     ) : null}
-                    <WithTip id="inHouse.changeRoomTypeButton"><button
+                    <button
                       onClick={handleChangeRoomType}
                       disabled={
                         changingRoomType ||
@@ -665,7 +665,7 @@ export default function AdminInHousePage() {
                       className={`${btn.primary} self-start`}
                     >
                       {changingRoomType ? "Changing..." : "Change Room Type"}
-                    </button></WithTip>
+                    </button>
                   </>
                 )}
               </section>
@@ -680,13 +680,13 @@ export default function AdminInHousePage() {
                     onChange={(e) => setNewCheckOutDate(e.target.value)}
                     className={field.input}
                   />
-                  <WithTip id="inHouse.extend"><button
+                  <button
                     onClick={handleExtendStay}
                     disabled={processing || !newCheckOutDate || Boolean(extendProblem)}
                     className={`${btn.primary} whitespace-nowrap`}
                   >
                     Extend
-                  </button></WithTip>
+                  </button>
                 </div>
                 {extendProblem && <p className="text-lg text-red-600">{extendProblem}</p>}
                 {balanceDue && (
@@ -711,9 +711,9 @@ export default function AdminInHousePage() {
           footer={
             <>
               <button onClick={() => setShowEarlyCheckoutConfirm(false)} disabled={processing} className={btn.secondary}>Back</button>
-              <WithTip id="inHouse.confirmEarly"><button onClick={handleEarlyCheckout} disabled={processing} className={btn.dangerSolid}>
+              <button onClick={handleEarlyCheckout} disabled={processing} className={btn.dangerSolid}>
                 {processing ? "Processing..." : "Yes, Check Out Early"}
-              </button></WithTip>
+              </button>
             </>
           }
         >

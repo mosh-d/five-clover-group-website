@@ -8,7 +8,7 @@ import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { btn, card, field, page } from "@/components/pms/ui";
 import { changePassword } from "@/lib/pms/api/auth-api";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const EMPTY = { current_password: "", new_password: "", confirm_password: "" };
 const ROLE_LABELS = {
@@ -144,9 +144,9 @@ export default function PmsAccountPage() {
               onConfirm={confirmChange}
             />
           ) : (
-            <WithTip id="account.update"><button type="submit" className={`${btn.primary} self-start`}>
+            <button type="submit" className={`${btn.primary} self-start`}>
               Update Password
-            </button></WithTip>
+            </button>
           )}
         </form>
       </section>

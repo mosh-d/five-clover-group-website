@@ -50,7 +50,7 @@ import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import EmailStatusTag from "@/components/pms/EmailStatusTag";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 const STATUSES = ["hold", "confirmed", "active", "completed", "cancelled"];
 // A reservation's check_in/check_out are UTC-midnight markers for a date.
 const isoDateOf = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
@@ -921,13 +921,13 @@ export default function AdminReservationsPage() {
 
           <div className="flex items-center gap-3">
             <div className="relative" ref={filterDropdownRef}>
-              <WithTip id="reservations.filters"><button
+              <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                 className={`bg-(--card) border-1 border-gray-300 rounded-3xl py-2.5 px-6 flex items-center gap-2`}
                 title="Filter"
               >
                 <IoFilter size={22} /> Filters
-              </button></WithTip>
+              </button>
               {isFilterOpen && (
                 // Opens from the button's left edge on a phone, where the
                 // button sits at the left of the screen: from its right edge
@@ -989,7 +989,7 @@ export default function AdminReservationsPage() {
                 </div>
               )}
             </div>
-            <WithTip id="reservations.export"><button onClick={() => setIsExportOpen(true)} className={btn.primary}>Export</button></WithTip>
+            <button onClick={() => setIsExportOpen(true)} className={btn.primary}>Export</button>
           </div>
         </div>
 
@@ -1084,42 +1084,42 @@ export default function AdminReservationsPage() {
           footer={res && (
             <>
               <button onClick={closeDetail} className={btn.secondary}>Close</button>
-              <WithTip id="reservations.goToFolio"><button
+              <button
                 onClick={() => navigate(`/pms/folios?reservation_id=${res.id}`)}
                 disabled={!reservationFolio}
                 className={btn.secondary}
                 title={!reservationFolio ? "No folio linked to this reservation yet" : undefined}
               >
                 Go to Folio
-              </button></WithTip>
+              </button>
               {res.status === "hold" && (
-                <WithTip id="reservations.confirm"><button
+                <button
                   onClick={() => openConfirmModal(res)}
                   disabled={confirmingId === res.id || Boolean(confirmBlockedReason)}
                   title={confirmBlockedReason || undefined}
                   className={btn.success}
                 >
                   {confirmingId === res.id ? "Confirming..." : "Confirm"}
-                </button></WithTip>
+                </button>
               )}
               {(res.status === "hold" || res.status === "confirmed") && (
-                <WithTip id="reservations.cancel"><button onClick={() => openCancelModal(res)} className={btn.danger}>Cancel</button></WithTip>
+                <button onClick={() => openCancelModal(res)} className={btn.danger}>Cancel</button>
               )}
               {canModify && (
-                <WithTip id="reservations.noShow"><button onClick={handleToggleNoShow} disabled={actionLoading} className={btn.secondary}>
+                <button onClick={handleToggleNoShow} disabled={actionLoading} className={btn.secondary}>
                   {res.is_no_show ? "Undo No-Show" : "Mark No-Show"}
-                </button></WithTip>
+                </button>
               )}
               {canModify && res.is_expired_hold && (
-                <WithTip id="reservations.reclaimHold"><button onClick={handleReclaimExpiredHold} disabled={actionLoading} className={btn.secondary}>
+                <button onClick={handleReclaimExpiredHold} disabled={actionLoading} className={btn.secondary}>
                   Reclaim Hold
-                </button></WithTip>
+                </button>
               )}
               {!res.actual_check_in && canModify && (
                 res.status === "confirmed" && !res.is_no_show && !arrivalAhead ? (
-                  <WithTip id="reservations.checkIn"><button onClick={handleCheckIn} disabled={actionLoading} className={btn.success}>Check In</button></WithTip>
+                  <button onClick={handleCheckIn} disabled={actionLoading} className={btn.success}>Check In</button>
                 ) : (
-                  <WithTip id="reservations.checkIn"><button
+                  <button
                     disabled
                     title={
                       res.is_no_show
@@ -1131,7 +1131,7 @@ export default function AdminReservationsPage() {
                     className={btn.success}
                   >
                     Check In
-                  </button></WithTip>
+                  </button>
                 )
               )}
               {/* Whichever of these is actually appropriate depends on whether
@@ -1146,14 +1146,14 @@ export default function AdminReservationsPage() {
                   bills that night (see emergencyCheckout on the backend). */}
               {res.actual_check_in && !res.actual_check_out && (
                 hasPassedNoonCutoff(res.check_out) ? (
-                  <WithTip id="reservations.checkOut"><button onClick={handleCheckOut} disabled={actionLoading} className={btn.success}>Check Out</button></WithTip>
+                  <button onClick={handleCheckOut} disabled={actionLoading} className={btn.success}>Check Out</button>
                 ) : (
-                  <WithTip id="reservations.earlyCheckout"><button onClick={() => setShowEarlyCheckoutConfirm(true)} disabled={actionLoading} className={btn.danger}>Early Checkout</button></WithTip>
+                  <button onClick={() => setShowEarlyCheckoutConfirm(true)} disabled={actionLoading} className={btn.danger}>Early Checkout</button>
                 )
               )}
-              <WithTip id="reservations.save"><button onClick={handleSaveEdit} disabled={saving} className={btn.primary}>
+              <button onClick={handleSaveEdit} disabled={saving} className={btn.primary}>
                 {saving ? "Saving..." : "Save Changes"}
-              </button></WithTip>
+              </button>
             </>
           )}
         >
@@ -1192,9 +1192,9 @@ export default function AdminReservationsPage() {
                         stay, held for them, and priced at this booking&apos;s own rate.
                       </p>
                       {stayDates.check_in !== businessToday && (
-                        <WithTip id="reservations.useToday"><button type="button" className={btn.secondary} onClick={() => setStayDates((p) => ({ ...p, check_in: businessToday }))}>
+                        <button type="button" className={btn.secondary} onClick={() => setStayDates((p) => ({ ...p, check_in: businessToday }))}>
                           Use today as check-in
-                        </button></WithTip>
+                        </button>
                       )}
                     </div>
                   )}
@@ -1241,17 +1241,17 @@ export default function AdminReservationsPage() {
                   )}
                   {datesChanged && (
                     <div className="flex gap-3 flex-wrap">
-                      <WithTip id="reservations.updateDates"><button onClick={handleChangeDates} disabled={changingDates || Boolean(datesBlockReason)} className={btn.primary}>
+                      <button onClick={handleChangeDates} disabled={changingDates || Boolean(datesBlockReason)} className={btn.primary}>
                         {changingDates ? "Updating..." : "Update Dates"}
-                      </button></WithTip>
-                      <WithTip id="reservations.undoDates"><button
+                      </button>
+                      <button
                         type="button"
                         onClick={() => { setStayDates(savedDates); setDatesError(""); }}
                         disabled={changingDates}
                         className={btn.secondary}
                       >
                         Undo
-                      </button></WithTip>
+                      </button>
                     </div>
                   )}
                 </section>
@@ -1453,13 +1453,13 @@ export default function AdminReservationsPage() {
                               ))}
                             </select>
                             <div className="flex gap-3 flex-wrap">
-                              <WithTip id="reservations.moveCredit"><button
+                              <button
                                 onClick={() => handleTransferCredit(dep.id)}
                                 disabled={!transferTo || depositActionLoading === dep.id}
                                 className={btn.rowPrimary}
                               >
                                 {depositActionLoading === dep.id ? "Moving..." : "Move the credit"}
-                              </button></WithTip>
+                              </button>
                               <button onClick={closeTransfer} className={btn.rowSecondary}>Cancel</button>
                             </div>
                           </div>
@@ -1483,9 +1483,9 @@ export default function AdminReservationsPage() {
                         <AutoGrowTextarea value={depositForm.notes} onChange={(e) => setDepositForm({ ...depositForm, notes: e.target.value })} className={field.textarea} />
                       </div>
                     </div>
-                    <WithTip id="reservations.recordCredit"><button onClick={handleRecordDeposit} disabled={recordingDeposit || !hasValidDepositSplits} className={`${btn.primary} self-start`}>
+                    <button onClick={handleRecordDeposit} disabled={recordingDeposit || !hasValidDepositSplits} className={`${btn.primary} self-start`}>
                       {recordingDeposit ? "Recording..." : "Record Reservation Credit"}
-                    </button></WithTip>
+                    </button>
                   </div>
                 )}
               </section>
@@ -1568,13 +1568,13 @@ export default function AdminReservationsPage() {
                             );
                           })}
                           {(!res.rooms_booked || newTypeRoomSlots.length < res.rooms_booked) && (
-                            <WithTip id="reservations.addRoom"><button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
+                            <button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
                               + Add Room
-                            </button></WithTip>
+                            </button>
                           )}
                         </div>
                       ) : null}
-                      <WithTip id="reservations.changeRoomTypeButton"><button
+                      <button
                         onClick={handleChangeRoomType}
                         disabled={
                           changingRoomType ||
@@ -1584,7 +1584,7 @@ export default function AdminReservationsPage() {
                         className={`${btn.primary} self-start`}
                       >
                         {changingRoomType ? "Changing..." : "Change Room Type"}
-                      </button></WithTip>
+                      </button>
                     </>
                   )}
                 </section>
@@ -1596,13 +1596,13 @@ export default function AdminReservationsPage() {
                   <h3 className="text-2xl font-bold text-[color:var(--black)]">Extend Stay<Tip id="reservations.extendStay" /></h3>
                   <div className="flex gap-3 flex-nowrap items-center">
                     <DateInput value={newCheckOutDate} min={extendMin} aria-label="New check-out date" onChange={(e) => setNewCheckOutDate(e.target.value)} className={field.input} />
-                    <WithTip id="reservations.extend"><button
+                    <button
                       onClick={handleExtendStay}
                       disabled={extending || !newCheckOutDate || Boolean(extendProblem)}
                       className={`${btn.primary} whitespace-nowrap`}
                     >
                       {extending ? "Extending..." : "Extend"}
-                    </button></WithTip>
+                    </button>
                   </div>
                   {extendProblem && <p className="text-lg text-red-600">{extendProblem}</p>}
                   {hasOutstandingBalance && (
@@ -1628,9 +1628,9 @@ export default function AdminReservationsPage() {
           footer={
             <>
               <button onClick={closeCancelModal} disabled={actionLoading} className={btn.secondary}>Back</button>
-              <WithTip id="reservations.confirmCancel"><button onClick={handleCancel} disabled={actionLoading} className={btn.dangerSolid}>
+              <button onClick={handleCancel} disabled={actionLoading} className={btn.dangerSolid}>
                 {actionLoading ? "Cancelling..." : "Confirm Cancel"}
-              </button></WithTip>
+              </button>
             </>
           }
         >
@@ -1658,9 +1658,9 @@ export default function AdminReservationsPage() {
           footer={
             <>
               <button onClick={closeConfirmModal} disabled={confirmingId === confirmTarget.id} className={btn.secondary}>Back</button>
-              <WithTip id="reservations.yesConfirm"><button onClick={handleQuickConfirm} disabled={confirmingId === confirmTarget.id} className={btn.success}>
+              <button onClick={handleQuickConfirm} disabled={confirmingId === confirmTarget.id} className={btn.success}>
                 {confirmingId === confirmTarget.id ? "Confirming..." : "Yes, Confirm"}
-              </button></WithTip>
+              </button>
             </>
           }
         >
@@ -1684,9 +1684,9 @@ export default function AdminReservationsPage() {
           footer={
             <>
               <button onClick={() => setShowEarlyCheckoutConfirm(false)} disabled={actionLoading} className={btn.secondary}>Back</button>
-              <WithTip id="reservations.confirmEarly"><button onClick={handleEarlyCheckout} disabled={actionLoading} className={btn.dangerSolid}>
+              <button onClick={handleEarlyCheckout} disabled={actionLoading} className={btn.dangerSolid}>
                 {actionLoading ? "Processing..." : "Yes, Check Out Early"}
-              </button></WithTip>
+              </button>
             </>
           }
         >
@@ -1712,7 +1712,7 @@ export default function AdminReservationsPage() {
           footer={
             <>
               <button onClick={() => setIsExportOpen(false)} className={btn.secondary}>Cancel</button>
-              <WithTip id="reservations.exportCsv"><button onClick={handleExport} disabled={exporting} className={btn.primary}>{exporting ? "Exporting..." : "Export CSV"}</button></WithTip>
+              <button onClick={handleExport} disabled={exporting} className={btn.primary}>{exporting ? "Exporting..." : "Export CSV"}</button>
             </>
           }
         >

@@ -33,7 +33,7 @@ import {
 } from "@/lib/pms/api/non-guest-folios-api";
 import Pagination from "@/components/pms/Pagination";
 import { PAGE_SIZE } from "@/components/pms/usePagedRows";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const emptyRow = { reference_id: "", laundry_service_type: "wash_and_iron", quantity: 1 };
 const emptyNewFolio = { guest_name: "", guest_phone: "", bill_no: "", rows: [{ ...emptyRow }] };
@@ -257,17 +257,17 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
               </div>
             </div>
           ))}
-          <WithTip id="laundry.addRow"><button type="button" className={`${btn.secondary} self-start`}
+          <button type="button" className={`${btn.secondary} self-start`}
             onClick={() => setNewFolio((p) => ({ ...p, rows: [...p.rows, { ...emptyRow }] }))}>
             Add another item
-          </button></WithTip>
+          </button>
         </div>
 
         <div className="flex justify-between items-center border-t border-(--accent-2) pt-4">
           <span className="text-2xl font-bold">Total: {money(orderTotal)}<Tip id="laundrySales.total" /></span>
-          <WithTip id="laundrySales.record"><button disabled={!orderValid || submitting} onClick={handleCreate} className={btn.primary}>
+          <button disabled={!orderValid || submitting} onClick={handleCreate} className={btn.primary}>
             {submitting ? "Recording..." : "Record Sale"}
-          </button></WithTip>
+          </button>
         </div>
       </div>
 
@@ -446,7 +446,7 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
                     <input type="number" min={1} value={charge.quantity} className={field.input}
                       onChange={(e) => setCharge({ ...charge, quantity: e.target.value })} />
                   </div>
-                  <WithTip id="laundrySales.addCharge"><button disabled={busy || !chargeValid} className={btn.secondary}
+                  <button disabled={busy || !chargeValid} className={btn.secondary}
                     onClick={() => run(async () => {
                       await addNonGuestFolioItem(folio.id, {
                         item_kind: "laundry",
@@ -457,7 +457,7 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
                       setCharge({ ...emptyRow });
                     })}>
                     Add Charge
-                  </button></WithTip>
+                  </button>
                 </div>
               )}
             </section>
@@ -476,12 +476,12 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
                     selectClassName={field.select} inputClassName={field.input} />
                 </div>
               </div>
-              <WithTip id="laundrySales.customer.save"><button
+              <button
                 disabled={busy || (guestInfo.guest_name === (detail.guest_name || "") && guestInfo.guest_phone === (detail.guest_phone || ""))}
                 className={`${btn.secondary} self-start`}
                 onClick={() => run(() => updateNonGuestFolioGuestInfo(folio.id, guestInfo))}>
                 Save Customer Info
-              </button></WithTip>
+              </button>
             </section>
 
             {detail.status !== "closed" && credits.length > 0 && (
@@ -524,7 +524,7 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
                       onChange={(e) => setPayment({ ...payment, notes: e.target.value })} />
                   </div>
                 </div>
-                <WithTip id="laundrySales.recordPaymentButton"><button disabled={busy || validSplits.length === 0} className={`${btn.primary} self-start`}
+                <button disabled={busy || validSplits.length === 0} className={`${btn.primary} self-start`}
                   onClick={() => run(async () => {
                     const result = await recordNonGuestPayment({
                       non_guest_folio_id: folio.id,
@@ -552,7 +552,7 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
                     });
                   })}>
                   {busy ? "Recording..." : "Record Payment"}
-                </button></WithTip>
+                </button>
               </section>
             )}
           </>

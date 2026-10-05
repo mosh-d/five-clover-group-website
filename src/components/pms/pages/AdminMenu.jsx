@@ -26,7 +26,7 @@ import {
 } from "@/lib/pms/api/menu-api";
 import StatusBadge from "@/components/pms/StatusBadge";
 import { money } from "@/lib/pms/format";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const EMPTY_LAUNDRY_FORM = { name: "", wash_and_iron_price: "", ironing_only_price: "" };
 
@@ -59,11 +59,10 @@ export default function AdminMenu() {
 
       <div className="flex gap-3 text-xl flex-wrap">
         {[
-          { key: "food", label: "Food", tip: "menu.tab.food" },
-          { key: "drinks", label: "Drinks", tip: "menu.tab.drinks" },
-          { key: "laundry", label: "Laundry", tip: "menu.tab.laundry" },
+          { key: "food", label: "Food" },
+          { key: "drinks", label: "Drinks" },
+          { key: "laundry", label: "Laundry" },
         ].map((t) => (
-          <WithTip key={t.key} id={t.tip}>
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
@@ -73,7 +72,6 @@ export default function AdminMenu() {
           >
             {t.label}
           </button>
-          </WithTip>
         ))}
       </div>
 
@@ -408,9 +406,9 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                               <AutoGrowTextarea value={stockForm.notes} onChange={(e) => setStockForm({ ...stockForm, notes: e.target.value })} className={`${field.textarea} text-xl!`} />
                             </div>
                             <div className={table.actions}>
-                              <WithTip id="menu.stock.save"><button onClick={() => handleSaveStockAdjust(item.id)} disabled={savingStockId === item.id || !stockQtyValid} className={btn.rowPrimary}>
+                              <button onClick={() => handleSaveStockAdjust(item.id)} disabled={savingStockId === item.id || !stockQtyValid} className={btn.rowPrimary}>
                                 {savingStockId === item.id ? "Saving..." : "Save"}
-                              </button></WithTip>
+                              </button>
                               <button onClick={() => setStockAdjustId(null)} className={btn.rowSecondary}>Cancel</button>
                             </div>
                           </div>
@@ -441,9 +439,9 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
               <label className={field.label}>Service Charge (₦)<Tip id="menu.add.serviceCharge" /></label>
               <input type="number" value={addForm.service_charge} onChange={(e) => setAddForm({ ...addForm, service_charge: e.target.value })} className={field.input} />
             </div>
-            <WithTip id="menu.add.submit"><button type="submit" disabled={adding || !addForm.name.trim() || !addForm.price} className={btn.primary}>
+            <button type="submit" disabled={adding || !addForm.name.trim() || !addForm.price} className={btn.primary}>
               {adding ? "Adding..." : "Add Item"}
-            </button></WithTip>
+            </button>
           </div>
         </form>
       )}
@@ -620,9 +618,9 @@ function LaundrySection({ canEdit }) {
                 onChange={(e) => setAddForm({ ...addForm, ironing_only_price: e.target.value })} />
             </div>
           </div>
-          <WithTip id="menu.laundry.add.submit"><button disabled={saving || !addValid} onClick={() => submit(() => createLaundryItem(payloadFrom(addForm)))} className={`${btn.primary} self-start`}>
+          <button disabled={saving || !addValid} onClick={() => submit(() => createLaundryItem(payloadFrom(addForm)))} className={`${btn.primary} self-start`}>
             {saving ? "Saving..." : "Add Item"}
-          </button></WithTip>
+          </button>
         </div>
       )}
     </div>

@@ -11,7 +11,7 @@ import { logoForBranch, branchLocationName } from "./theme/brands";
 import { landingPath } from "./pmsNavItems";
 import { SIMULATABLE_ROLES, SIMULATABLE_HQ_ROLES } from "@/lib/pms/session";
 import { HEAD_OFFICE } from "@/lib/pms/client";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const ROLE_LABELS = {
   head_hr: "Head HR",
@@ -88,7 +88,7 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
 
         {isDeveloper && (
           <>
-            <WithTip id="topBar.switch" light><button
+            <button
               type="button"
               onClick={() => setPicking(true)}
               className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-base font-medium border-2 border-white/30 text-white cursor-pointer hover:bg-white/10 transition-colors"
@@ -96,7 +96,7 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
             >
               <IoSwapHorizontalOutline size={16} />
               <span className="max-w-60 truncate">{placeName}</span>
-            </button></WithTip>
+            </button>
             {/* "View as" previews a role of the place the session is in -
                 a branch's roles in a branch, Head Office's at Head Office. */}
             <label className="flex items-center gap-2 text-base text-white/60">
@@ -118,13 +118,13 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
           </>
         )}
 
-        <WithTip id="topBar.signOut" light><button
+        <button
           type="button"
           onClick={signOut}
           className="rounded-lg px-4 py-2 text-lg font-semibold border border-white/30 text-white cursor-pointer hover:bg-white/10 transition-colors"
         >
           Sign out
-        </button></WithTip>
+        </button>
       </div>
 
       <button

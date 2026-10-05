@@ -21,7 +21,7 @@ import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const emptyRow = { reference_id: "", laundry_service_type: "wash_and_iron", quantity: "1" };
 const emptyOrder = { reservation_id: "", bill_no: "", rows: [{ ...emptyRow }] };
@@ -317,13 +317,13 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
               </div>
             </div>
           ))}
-          <WithTip id="laundry.addRow"><button
+          <button
             type="button"
             className={`${btn.secondary} self-start`}
             onClick={() => setOrder((p) => ({ ...p, rows: [...p.rows, { ...emptyRow }] }))}
           >
             Add another item
-          </button></WithTip>
+          </button>
         </div>
 
         <div className="flex justify-between items-center border-t border-(--accent-2) pt-4">
@@ -331,9 +331,9 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
           <span className="text-2xl font-bold">{money(orderTotal)}</span>
         </div>
 
-        <WithTip id="laundryGuest.post"><button onClick={handleSubmit} disabled={submitting || !orderValid} className={`${btn.primary} self-start`}>
+        <button onClick={handleSubmit} disabled={submitting || !orderValid} className={`${btn.primary} self-start`}>
           {submitting ? "Posting..." : "Post to Folio"}
-        </button></WithTip>
+        </button>
         {/* Never leave a disabled button unexplained. */}
         {!orderValid && !submitting && (
           <p className="text-lg text-[color:var(--text-color)]/68">{orderBlockReason}</p>

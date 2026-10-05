@@ -16,7 +16,7 @@ import { canManageRooms } from "@/lib/pms/auth";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import ManagerOnlyTag from "@/components/pms/ManagerOnlyTag";
 import { currentBranchId } from "@/lib/pms/session";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // ─── API Setup ────────────────────────────────────────────────────────────────
 
@@ -115,9 +115,9 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
       footer={
         <>
           <button type="button" onClick={onClose} className={btn.secondary}>Cancel</button>
-          <WithTip id="rooms.add.submit"><button type="button" onClick={handleSubmit} disabled={submitting} className={btn.primary}>
+          <button type="button" onClick={handleSubmit} disabled={submitting} className={btn.primary}>
             {submitting ? "Adding..." : "Add Room"}
-          </button></WithTip>
+          </button>
         </>
       }
     >
@@ -572,7 +572,7 @@ function ViewRoomModal({
       size="lg"
       footer={
         <>
-          <WithTip id="rooms.view.delete"><button
+          <button
             onClick={() => {
               console.log(
                 `AdminRooms: Delete Room clicked for room_type_id=${room.room_type_id} (${room.room_type_name}) — showing confirmation dialog`
@@ -583,7 +583,7 @@ function ViewRoomModal({
             className={btn.danger}
           >
             Delete Room
-          </button></WithTip>
+          </button>
           {!canManage && <ManagerOnlyTag />}
           <span className="mr-auto" />
           <button onClick={onClose} className={btn.secondary}>Close</button>
@@ -605,7 +605,7 @@ function ViewRoomModal({
           {!canManage ? (
             <ManagerOnlyTag />
           ) : !editingDetails && (
-            <WithTip id="rooms.view.edit"><button onClick={() => setEditingDetails(true)} className={btn.secondary}>Edit</button></WithTip>
+            <button onClick={() => setEditingDetails(true)} className={btn.secondary}>Edit</button>
           )}
         </div>
 
@@ -669,9 +669,9 @@ function ViewRoomModal({
               >
                 Cancel
               </button>
-              <WithTip id="rooms.view.save"><button onClick={handleSaveDetails} disabled={savingDetails} className={btn.primary}>
+              <button onClick={handleSaveDetails} disabled={savingDetails} className={btn.primary}>
                 {savingDetails ? "Saving..." : "Save"}
-              </button></WithTip>
+              </button>
             </div>
           </>
         ) : (
@@ -772,13 +772,13 @@ function ViewRoomModal({
                 className={field.input}
                 min="0"
               />
-              <WithTip id="rooms.view.updatePrice"><button
+              <button
                 onClick={handleUpdatePrice}
                 disabled={updatingPrice}
                 className={`${btn.primary} whitespace-nowrap`}
               >
                 {updatingPrice ? "..." : "Update"}
-              </button></WithTip>
+              </button>
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-lg font-semibold text-[color:var(--text-color)]/76">Breakfast Price (₦)<Tip id="rooms.view.breakfast" /></label>
@@ -817,13 +817,13 @@ function ViewRoomModal({
             disabled={refreshing}
             min="1"
           />
-          <WithTip id="rooms.view.updateCapacity"><button
+          <button
             onClick={handleUpdateCapacity}
             disabled={updatingCapacity || refreshing}
             className={`${btn.primary} whitespace-nowrap`}
           >
             {updatingCapacity ? "..." : refreshing ? "Syncing..." : "Update"}
-          </button></WithTip>
+          </button>
         </div>
         )}
       </section>
@@ -848,9 +848,9 @@ function ViewRoomModal({
             </div>
             <div className="flex gap-4 justify-center pt-2">
               <button onClick={() => setConfirmCapacityDecrease(false)} className={btn.secondary}>Cancel</button>
-              <WithTip id="rooms.confirm.reduce"><button onClick={handleUpdateCapacity} disabled={updatingCapacity} className={btn.dangerSolid}>
+              <button onClick={handleUpdateCapacity} disabled={updatingCapacity} className={btn.dangerSolid}>
                 {updatingCapacity ? "Reducing..." : "Yes, Reduce"}
-              </button></WithTip>
+              </button>
             </div>
           </div>
         </div>
@@ -880,7 +880,7 @@ function ViewRoomModal({
             </div>
             <div className="flex gap-4 justify-center pt-2">
               <button onClick={() => setConfirmStatusChange(null)} className={btn.secondary}>Cancel</button>
-              <WithTip id="rooms.confirm.status"><button
+              <button
                 onClick={() =>
                   // confirmStatusChange is already set, so handleSetRoomStatus's
                   // guard is skipped regardless of what's passed here — this call
@@ -896,7 +896,7 @@ function ViewRoomModal({
                 className={btn.dangerSolid}
               >
                 {statusUpdatingId === confirmStatusChange.roomInventoryId ? "Applying..." : "Yes, Continue"}
-              </button></WithTip>
+              </button>
             </div>
           </div>
         </div>
@@ -954,13 +954,13 @@ function ViewRoomModal({
                 Cancel
               </button>
 
-              <WithTip id="rooms.confirm.delete"><button
+              <button
                 onClick={handleDelete}
                 disabled={deleting}
                 className={btn.dangerSolid}
               >
                 {deleting ? "Deleting..." : "Yes, Delete"}
-              </button></WithTip>
+              </button>
             </div>
           </div>
         </div>
@@ -1280,7 +1280,7 @@ export default function AdminRoomsPage() {
           <PageHeading icon={IoBedOutline} tipId="rooms.page">Rooms</PageHeading>
           <div className="flex items-center gap-3">
             {!canManage && <ManagerOnlyTag />}
-            <WithTip id="rooms.add"><button
+            <button
               onClick={() => {
                 console.log("AdminRooms: Opening Add Room modal");
                 setShowAddModal(true);
@@ -1289,7 +1289,7 @@ export default function AdminRoomsPage() {
               className={`${btn.primary} whitespace-nowrap`}
             >
               + Add Room
-            </button></WithTip>
+            </button>
           </div>
         </div>
 

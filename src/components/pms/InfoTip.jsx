@@ -61,9 +61,9 @@ export function FloatingTip({ tip }) {
 
 // A short label with an (i) that says it in full on hover or focus - "OOO"
 // for Out of Order (owner, 2026-10-01). `size` is the (i)'s, for beside a
-// page heading; `light` draws it pale, for on a coloured card. At 30% until
-// pointed at (owner, 2026-10-04: with one on every control, they cluttered
-// the page).
+// page heading; `light` draws it pale, for on a coloured card. At 21% until
+// pointed at (owner: 30% on 2026-10-04, then 30% less again on 2026-10-05 -
+// one on every heading and field cluttered the page).
 export default function InfoTip({ label, text, size = 17, light = false }) {
   const [tip, setTip] = useState(null);
   const show = (e) => setTip(tipFor(e.currentTarget, text));
@@ -87,8 +87,8 @@ export default function InfoTip({ label, text, size = 17, light = false }) {
         }}
         className={`inline-flex cursor-help rounded-full focus-visible:outline-2 ${
           light
-            ? "text-white/30 hover:text-white focus-visible:text-white focus-visible:outline-white"
-            : "text-(--text-color)/30 hover:text-(--emphasis) focus-visible:text-(--emphasis) focus-visible:outline-(--emphasis)"
+            ? "text-white/[0.21] hover:text-white focus-visible:text-white focus-visible:outline-white"
+            : "text-(--text-color)/[0.21] hover:text-(--emphasis) focus-visible:text-(--emphasis) focus-visible:outline-(--emphasis)"
         }`}
       >
         <IoInformationCircleOutline size={size} aria-hidden="true" />

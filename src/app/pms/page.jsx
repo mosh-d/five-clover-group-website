@@ -11,7 +11,7 @@ import { pathAfterSignIn } from "@/components/pms/pmsNavItems";
 import { btn, field } from "@/components/pms/ui";
 import { pmsSignIn, PmsApiError } from "@/lib/pms/client";
 import { readPmsSession, markJustSignedIn, hasBeenIdleTooLong, clearPmsSession } from "@/lib/pms/session";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // fivecloverhotels.com/pms - one sign-in for every branch, and for Head
 // Office (owner, 2026-10-01; it had its own at /hq). The account says where:
@@ -125,9 +125,9 @@ export default function PmsSignInPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <WithTip id="signIn.submit"><button type="submit" disabled={submitting || !username.trim() || !password} className={btn.primary}>
+          <button type="submit" disabled={submitting || !username.trim() || !password} className={btn.primary}>
             {submitting ? "Signing in..." : "Sign in"}
-          </button></WithTip>
+          </button>
         </form>
       </section>
 

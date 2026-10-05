@@ -14,8 +14,8 @@ import AdminLaundrySales from "./AdminLaundrySales";
 // guest half is new - an in-house guest's laundry used to have no home of
 // its own at all and had to be typed into the Folios page by hand.
 const TABS = [
-  { key: "guest", label: "Guest Sales", tip: "laundry.tab.guest" },
-  { key: "non-guest", label: "Non-Guest Sales", tip: "laundry.tab.nonGuest" },
+  { key: "guest", label: "Guest Sales" },
+  { key: "non-guest", label: "Non-Guest Sales" },
 ];
 
 export default function AdminLaundryPage() {

@@ -5,7 +5,7 @@ import Modal from "./Modal";
 import { BRANDS } from "./theme/brands";
 import { btn, field } from "./ui";
 import { HEAD_OFFICE } from "@/lib/pms/client";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // "Which branch?" - after signing in, for a developer (any branch) or
 // someone with accounts at several; and from the top bar, for a developer
@@ -57,9 +57,9 @@ export default function BranchPicker({ branches, headOffice = false, currentId, 
             ))}
           </select>
         </div>
-        <WithTip id="branchPicker.submit"><button type="submit" disabled={!branchId || busy || String(branchId) === String(currentId)} className={btn.primary}>
+        <button type="submit" disabled={!branchId || busy || String(branchId) === String(currentId)} className={btn.primary}>
           {busy ? "Opening..." : confirmLabel}
-        </button></WithTip>
+        </button>
       </form>
     </Modal>
   );

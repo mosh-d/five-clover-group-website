@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { field, btn } from "@/components/pms/ui";
 import { fetchAvailableRoomsForReservation } from "@/lib/pms/api/reservations-pms-api";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { WithTip } from "@/components/pms/Tip";
 
 // Editable set of room-number dropdowns for a reservation, up to `roomsBooked`
 // slots — one dropdown per physical room the reservation needs. Each slot's
@@ -105,17 +104,17 @@ export default function RoomAssignmentPicker({ reservationId, roomTypeId, roomsB
       )}
       <div className="flex gap-3 items-center flex-wrap">
         {canAddMore && (
-          <WithTip id="roomPicker.addRoom"><button type="button" onClick={addSlot} className={btn.rowSecondary}>+ Add Room</button></WithTip>
+          <button type="button" onClick={addSlot} className={btn.rowSecondary}>+ Add Room</button>
         )}
         {!hideSaveButton && (
-          <WithTip id="roomPicker.save"><button
+          <button
             type="button"
             onClick={() => onSave(validSlots)}
             disabled={saving || unchanged}
             className={`${btn.primary} whitespace-nowrap`}
           >
             {saving ? "Saving..." : "Save Room Assignments"}
-          </button></WithTip>
+          </button>
         )}
       </div>
       {roomsBooked > 1 && (

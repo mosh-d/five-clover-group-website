@@ -42,7 +42,7 @@ import { formatDate } from "@/lib/pms/format";
 import GuestName from "@/components/pms/GuestName";
 import { GuestTagPills } from "@/components/pms/GuestName";
 import EmailStatusTag from "@/components/pms/EmailStatusTag";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 const todayISO = () => adminTodayISO();
 // A Walk-In's check-in is always "right now" — but the reservation it
 // creates must be dated by the hotel's business day (6am Lagos cutover, see
@@ -643,14 +643,14 @@ export default function AdminCheckInsPage() {
             one row, their labels broke mid-word on a phone ("Walk- / In"). */}
         <div className="flex flex-wrap gap-3 w-full">
           {[
-            { key: "arrivals", label: "Expected Arrivals", tip: "checkIns.tab.arrivals" },
-            { key: "walkin", label: "Walk-In", tip: "checkIns.tab.walkIn" },
+            { key: "arrivals", label: "Expected Arrivals" },
+            { key: "walkin", label: "Walk-In" },
             // A walk-in who wants a LATER date, not a room tonight — see
             // FutureBookingForm for why this can't reuse the Walk-In form.
-            { key: "future", label: "Future Booking", tip: "checkIns.tab.future" },
-          ].map(({ key, label, tip }) => (
-            <WithTip key={key} id={tip}>
+            { key: "future", label: "Future Booking" },
+          ].map(({ key, label }) => (
             <button
+              key={key}
               onClick={() => setTab(key)}
               className={`px-6 py-3 rounded-lg text-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
                 tab === key
@@ -660,7 +660,6 @@ export default function AdminCheckInsPage() {
             >
               {label}
             </button>
-            </WithTip>
           ))}
         </div>
 
@@ -758,7 +757,7 @@ export default function AdminCheckInsPage() {
                 {walkInPaymentWarning && (
                   <p className="text-orange-700 text-xl bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 max-w-lg">{walkInPaymentWarning}</p>
                 )}
-                <WithTip id="checkIns.walkIn.new"><button onClick={resetWalkIn} className={`${btn.primary} mt-4`}>New Walk-In</button></WithTip>
+                <button onClick={resetWalkIn} className={`${btn.primary} mt-4`}>New Walk-In</button>
               </div>
             ) : (
               <form onSubmit={handleWalkIn} className="w-full flex flex-col gap-8 bg-(--card) rounded-xl border border-(--accent-2) p-8">
@@ -797,14 +796,14 @@ export default function AdminCheckInsPage() {
                       className={`${field.input} w-28`}
                     />
                   </div>
-                  <WithTip id="checkIns.walkIn.checkAvailability"><button
+                  <button
                     type="button"
                     onClick={handleCheckAvailability}
                     disabled={!walkIn.checkOut || availLoading || Boolean(walkInDateProblem || walkInRoomsProblem)}
                     className={btn.primary}
                   >
                     {availLoading ? "Checking..." : "Check Availability"}
-                  </button></WithTip>
+                  </button>
                 </div>
                 {(walkInDateProblem || walkInRoomsProblem) && (
                   <p className="text-lg text-red-600 -mt-4">{walkInDateProblem || walkInRoomsProblem}</p>
@@ -1232,7 +1231,7 @@ export default function AdminCheckInsPage() {
                   </div>
                 </div>
 
-                <WithTip id="checkIns.walkIn.submit"><button
+                <button
                   type="submit"
                   disabled={
                     walkInProcessing ||
@@ -1244,7 +1243,7 @@ export default function AdminCheckInsPage() {
                   className={`${btn.primary} self-start px-12! py-4!`}
                 >
                   {walkInProcessing ? "Processing..." : "Check In Guest"}
-                </button></WithTip>
+                </button>
               </form>
             )}
           </div>
@@ -1272,17 +1271,17 @@ export default function AdminCheckInsPage() {
           footer={
             <>
               <button onClick={() => setSelected(null)} className={btn.secondary}>Cancel</button>
-              <WithTip id="checkIns.checkIn.goToFolio"><button onClick={() => navigate(`/pms/folios?reservation_id=${selected.id}`)} className={btn.secondary}>
+              <button onClick={() => navigate(`/pms/folios?reservation_id=${selected.id}`)} className={btn.secondary}>
                 Go to Folio
-              </button></WithTip>
-              <WithTip id="checkIns.checkIn.confirm"><button
+              </button>
+              <button
                 onClick={handleCheckIn}
                 disabled={processing || roomNumbers.length < (selected.rooms_booked || 1) || Boolean(otaRangeProblem(ota))}
                 className={btn.success}
                 title={roomNumbers.length < (selected.rooms_booked || 1) ? "Assign a room number to every room before checking in" : otaRangeProblem(ota) || undefined}
               >
                 {processing ? "Checking In..." : "Confirm Check In"}
-              </button></WithTip>
+              </button>
             </>
           }
         >
@@ -1831,9 +1830,9 @@ function FutureBookingForm() {
           maxDate={form.checkOut}
         />
 
-        <WithTip id="checkIns.future.create"><button type="submit" disabled={!canSubmit} className={`${btn.primary} self-start px-12! py-4!`}>
+        <button type="submit" disabled={!canSubmit} className={`${btn.primary} self-start px-12! py-4!`}>
           {submitting ? "Creating..." : "Create Reservation"}
-        </button></WithTip>
+        </button>
         {!canSubmit && !submitting && submitBlockReason && (
           <p className="text-lg text-[color:var(--text-color)]/68 -mt-2">{submitBlockReason}</p>
         )}

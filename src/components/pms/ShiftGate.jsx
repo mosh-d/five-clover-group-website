@@ -6,7 +6,7 @@ import { btn, field } from "./ui";
 import { selectCurrentShift } from "@/lib/pms/api/shifts-api";
 import { fetchStaffAccounts } from "@/lib/pms/api/staff-accounts-api";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 // How each rota reads on screen.
 const ROTA = {
@@ -118,7 +118,7 @@ export default function ShiftGate({ role, businessDate, currentName, onSelected,
             </>
           ) : (
             <>
-              <WithTip id="shiftGate.start"><button onClick={() => setConfirming(true)} disabled={!selected} className={btn.primary}>Start the shift</button></WithTip>
+              <button onClick={() => setConfirming(true)} disabled={!selected} className={btn.primary}>Start the shift</button>
               {onCancel && <button onClick={onCancel} className={btn.secondary}>Cancel</button>}
             </>
           )}

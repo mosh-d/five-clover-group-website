@@ -16,7 +16,7 @@ import { markNoShow } from "@/lib/pms/api/reservations-pms-api";
 import { calendarDaysAgo, serverNow } from "@/lib/pms/dates";
 import { formatDate, money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 
 const PAGE_SIZE = 10;
 
@@ -117,7 +117,6 @@ export default function PmsAlertsPage() {
   const TABS = [
     {
       key: "missed",
-      tip: "alerts.tab.missed",
       colTips: { "Guest": "alerts.col.guest", "Room Type": "alerts.col.roomType", "Check-In Was": "alerts.missed.checkInWas", "Status": "alerts.col.status", "Actions": "alerts.missed.actions" },
       label: "Missed Check-Ins",
       rows: data?.missed_check_ins || [],
@@ -152,7 +151,6 @@ export default function PmsAlertsPage() {
     },
     {
       key: "unconfirmed",
-      tip: "alerts.tab.unconfirmed",
       colTips: { "Guest": "alerts.col.guest", "Room Type": "alerts.col.roomType", "Booked": "alerts.unconfirmed.booked", "Hold Expires": "alerts.unconfirmed.expires", "Actions": "alerts.unconfirmed.actions" },
       label: "Unconfirmed",
       rows: data?.unconfirmed || [],
@@ -177,7 +175,6 @@ export default function PmsAlertsPage() {
     },
     {
       key: "overdue",
-      tip: "alerts.tab.overdue",
       colTips: { "Guest": "alerts.col.guest", "Room Type": "alerts.col.roomType", "Was Due Out": "alerts.overdue.wasDueOut", "Actions": "alerts.overdue.actions" },
       label: "Overdue Checkouts",
       rows: data?.overdue_checkouts || [],
@@ -201,7 +198,6 @@ export default function PmsAlertsPage() {
     },
     {
       key: "balances",
-      tip: "alerts.tab.balances",
       colTips: { "Guest": "alerts.col.guest", "Folio #": "alerts.balances.folio", "Checked Out": "alerts.balances.checkedOut", "Balance Due": "alerts.balances.due", "Actions": "alerts.balances.actions" },
       label: "Overdue Balances",
       rows: data?.overdue_balances || [],
@@ -220,7 +216,6 @@ export default function PmsAlertsPage() {
       // no longer settle anything, so it waits here until it is refunded or
       // moved to a booking they have now - both on the folio.
       key: "credits",
-      tip: "alerts.tab.credits",
       colTips: { "Guest": "alerts.col.guest", "Credit": "alerts.credits.credit", "Taken": "alerts.credits.taken", "Checked Out": "alerts.credits.checkedOut", "Actions": "alerts.credits.actions" },
       label: "Credit to Guest",
       rows: data?.guest_credits || [],
@@ -327,10 +322,9 @@ function AlertTabs({ tabs, active, onChange }) {
   return (
     <div className="w-full">
       <div className="sm:hidden relative" ref={menuRef}>
-        <WithTip id={current?.tip} className="w-full">
         <button
           onClick={() => setMenuOpen((open) => !open)}
-          className="flex-1 min-w-0 flex items-center justify-between gap-3 px-6 py-4 border border-(--accent-2) bg-(--card) rounded-xl text-xl font-bold text-(--emphasis) cursor-pointer"
+          className="w-full flex items-center justify-between gap-3 px-6 py-4 border border-(--accent-2) bg-(--card) rounded-xl text-xl font-bold text-(--emphasis) cursor-pointer"
         >
           <span className="flex items-center gap-3">
             <IoMenuOutline size={24} />
@@ -338,7 +332,6 @@ function AlertTabs({ tabs, active, onChange }) {
           </span>
           {countPill(current?.rows.length, false)}
         </button>
-        </WithTip>
         {menuOpen && (
           <div className="absolute z-30 mt-2 w-full bg-(--card) border border-(--accent-2) rounded-xl shadow-lg overflow-hidden">
             {tabs.map(({ key, label, rows }) => (
@@ -361,9 +354,9 @@ function AlertTabs({ tabs, active, onChange }) {
       </div>
 
       <div className="hidden sm:flex flex-wrap gap-3 w-full">
-        {tabs.map(({ key, label, rows, tip }) => (
-          <WithTip key={key} id={tip}>
+        {tabs.map(({ key, label, rows }) => (
           <button
+            key={key}
             onClick={() => onChange(key)}
             className={`px-6 py-3 rounded-lg text-xl font-bold whitespace-nowrap flex items-center gap-2 cursor-pointer transition-all ${
               active === key ? "bg-(--emphasis) text-white" : "bg-black/4 hover:bg-black/8"
@@ -372,7 +365,6 @@ function AlertTabs({ tabs, active, onChange }) {
             {label}
             {countPill(rows.length, active === key)}
           </button>
-          </WithTip>
         ))}
       </div>
     </div>

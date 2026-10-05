@@ -47,7 +47,7 @@ import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBa
 import DateInput from "@/components/pms/DateInput";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
 import GuestName from "@/components/pms/GuestName";
-import { Tip, WithTip } from "@/components/pms/Tip";
+import { Tip } from "@/components/pms/Tip";
 function currentMonthRange() {
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -57,20 +57,20 @@ function currentMonthRange() {
 }
 
 const ALL_TABS = [
-  { key: "dashboard", label: "Dashboard", tip: "reports.tab.dashboard" },
+  { key: "dashboard", label: "Dashboard" },
   // Labels are deliberately crossed against the keys (2026-09-07): the
   // report keyed "manifest" is the arrivals/departures sheet, which the
   // hotel calls the Accommodation report, and the one keyed "accommodation"
   // is the per-room house register, which they call the Manifest. Renaming
   // the keys would mean renaming the API routes and every activeTab branch
   // below for a wording change, so only the display labels moved.
-  { key: "manifest", label: "Accommodation", tip: "reports.tab.manifest" },
-  { key: "analysis", label: "Analysis", tip: "reports.tab.analysis" },
-  { key: "pms", label: "PMS Report", tip: "reports.tab.pms" },
-  { key: "accommodation", label: "Manifest", tip: "reports.tab.accommodation" },
-  { key: "food-sales", label: "Food Sales", tip: "reports.tab.foodSales" },
-  { key: "drink-sales", label: "Drink Sales", tip: "reports.tab.drinkSales" },
-  { key: "bar-stock", label: "Bar Stock", tip: "reports.tab.barStock" },
+  { key: "manifest", label: "Accommodation" },
+  { key: "analysis", label: "Analysis" },
+  { key: "pms", label: "PMS Report" },
+  { key: "accommodation", label: "Manifest" },
+  { key: "food-sales", label: "Food Sales" },
+  { key: "drink-sales", label: "Drink Sales" },
+  { key: "bar-stock", label: "Bar Stock" },
 ];
 
 // Food/Drink Sales and Bar Stock are all F&B-only — a receptionist has no
@@ -138,7 +138,6 @@ export default function AdminReportsPage() {
 
       <div className="flex gap-3 text-xl flex-wrap">
         {visibleTabs().map((t) => (
-          <WithTip key={t.key} id={t.tip}>
           <button
             key={t.key}
             onClick={() => openTab(t.key)}
@@ -148,7 +147,6 @@ export default function AdminReportsPage() {
           >
             {t.label}
           </button>
-          </WithTip>
         ))}
       </div>
 
@@ -305,22 +303,22 @@ function DashboardTab() {
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <WithTip id="reports.generate"><Button
+        <Button
           onClick={loadReport}
           disabled={loading}
           variant="emphasis"
           className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button></WithTip>
-        <WithTip id="reports.export"><Button
+        </Button>
+        <Button
           onClick={handleExport}
           disabled={exporting || !from || !to}
           variant="secondary"
           className={`text-xl! flex items-center gap-2 rounded-xl ${exporting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-        </Button></WithTip>
+        </Button>
         {/* Email Report, parked — see the note by its state above.
         <Button
           onClick={() => setShowEmailForm((v) => !v)}
@@ -637,9 +635,9 @@ function ManifestTab() {
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button></WithTip>
+        </Button>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -653,9 +651,9 @@ function ManifestTab() {
               Accommodation report for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <WithTip id="reports.export"><Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
+              <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button></WithTip>
+              </Button>
             </div>
           </div>
 
@@ -754,9 +752,9 @@ function AnalysisTab() {
       {!loading && data && (
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex justify-end gap-3">
-            <WithTip id="reports.export"><Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex rounded-xl items-center gap-2">
+            <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex rounded-xl items-center gap-2">
               <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-            </Button></WithTip>
+            </Button>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 w-full">
@@ -877,9 +875,9 @@ function PmsReportTab() {
             <option value="morning">Morning (~7am)</option>
           </select>
         </div>
-        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button></WithTip>
+        </Button>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -894,9 +892,9 @@ function PmsReportTab() {
               <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <WithTip id="reports.export"><Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
+              <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button></WithTip>
+              </Button>
             </div>
           </div>
 
@@ -1053,9 +1051,9 @@ function AccommodationReportTab({ shift }) {
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button></WithTip>
+        </Button>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -1069,7 +1067,7 @@ function AccommodationReportTab({ shift }) {
               Manifest for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <WithTip id="reports.export"><Button
+              <Button
                 onClick={handleExport}
                 disabled={exporting || (shiftRequired && !shift)}
                 variant="secondary"
@@ -1077,7 +1075,7 @@ function AccommodationReportTab({ shift }) {
                 title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button></WithTip>
+              </Button>
             </div>
           </div>
 
@@ -1524,9 +1522,9 @@ function FoodSalesReportTab({ shift }) {
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button></WithTip>
+        </Button>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -1540,7 +1538,7 @@ function FoodSalesReportTab({ shift }) {
               Food sales for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <WithTip id="reports.export"><Button
+              <Button
                 onClick={handleExport}
                 disabled={exporting || (shiftRequired && !shift)}
                 variant="secondary"
@@ -1548,7 +1546,7 @@ function FoodSalesReportTab({ shift }) {
                 title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button></WithTip>
+              </Button>
             </div>
           </div>
 
@@ -1642,9 +1640,9 @@ function DrinkSalesReportTab({ shift }) {
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button></WithTip>
+        </Button>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -1658,7 +1656,7 @@ function DrinkSalesReportTab({ shift }) {
               Drink sales for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <WithTip id="reports.export"><Button
+              <Button
                 onClick={handleExport}
                 disabled={exporting || (shiftRequired && !shift)}
                 variant="secondary"
@@ -1666,7 +1664,7 @@ function DrinkSalesReportTab({ shift }) {
                 title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button></WithTip>
+              </Button>
             </div>
           </div>
 
@@ -1763,9 +1761,9 @@ function BarStockReportTab({ shift }) {
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           />
         </div>
-        <WithTip id="reports.generate"><Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
           <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button></WithTip>
+        </Button>
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
@@ -1779,7 +1777,7 @@ function BarStockReportTab({ shift }) {
               Bar stock for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
             <div className="flex items-center gap-3">
-              <WithTip id="reports.export"><Button
+              <Button
                 onClick={handleExport}
                 disabled={exporting || (shiftRequired && !shift)}
                 variant="secondary"
@@ -1787,7 +1785,7 @@ function BarStockReportTab({ shift }) {
                 title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button></WithTip>
+              </Button>
             </div>
           </div>
 
@@ -1889,9 +1887,9 @@ function RangePicker({ from, to, setFrom, setTo, onGenerate, loading }) {
           className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
         />
       </div>
-      <WithTip id="reports.generate"><Button onClick={onGenerate} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+      <Button onClick={onGenerate} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
         <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-      </Button></WithTip>
+      </Button>
     </div>
   );
 }

@@ -6,12 +6,16 @@ import PageHeading from "@/components/pms/PageHeading";
 import PageTabs from "@/components/pms/PageTabs";
 import { page } from "@/components/pms/ui";
 import DayCloseTab from "./DayCloseTab";
+import CashUpTab from "./CashUpTab";
 
 // Accounting - the branch accountant's page (owner, 2026-10-08; the plan is
 // docs/ACCOUNTING-PLAN.md in the backend). One tab per part of the job, each
 // added as it is built. The tab lives in the address, so a refresh or a
 // shared link opens the same one.
-const TABS = [{ key: "day-close", label: "Day Close", Tab: DayCloseTab }];
+const TABS = [
+  { key: "day-close", label: "Day Close", Tab: DayCloseTab },
+  { key: "cash-up", label: "Cash-Up", Tab: CashUpTab },
+];
 
 export default function AccountingPage() {
   const router = useRouter();

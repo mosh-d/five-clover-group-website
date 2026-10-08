@@ -17,6 +17,7 @@ import {
   IoFastFoodOutline,
   IoShirtOutline,
   IoCalculatorOutline,
+  IoWalletOutline,
 } from "react-icons/io5";
 
 // The Help page's guide - one section per sidebar page, in the sidebar's
@@ -46,6 +47,7 @@ export const HELP_SECTIONS = [
       "Day Close lists the business days ten to a page, newest first from yesterday. Open one to see its money in and out by method, the reservation credit taken, its charges by type and the night audit's total.",
       "Sign a day off once you have checked it - a record that it was checked, under your name. A day can only be signed off after it has ended and its night audit has run - until then its room charges are missing.",
       "Money is recorded when it happens, so a past day only changes when something is dated into it later: a night audit run late, a guest's last night charged at check-out, or a reservation's deposit applied when the booking is confirmed (it keeps the day it was taken). A signed-off day that changes shows as \"Changed after sign-off\", with what moved and what was posted since; check it and sign it off again, saying what you checked. The earlier sign-off is kept.",
+      "Cash-Up shows, for a business day, each person who took money or declared: what they are expected to hold per method (money they took and reservation credit, less refunds, credit refunds and their paid-outs) beside what they declared, and the difference in red. Someone who took money and didn't declare shows \"Not declared\". Verify a declared cash-up once you have checked it - after 6am, when its day has ended - and it can't be changed after.",
     ],
   },
   {
@@ -216,6 +218,17 @@ export const HELP_SECTIONS = [
       "Can only be run once per branch per date — running it again for a date already audited is blocked outright.",
       "Automatically skips a reservation with no open folio, or one that already has a room charge posted for that date (safe to re-check without double-charging).",
       "Automatically excludes any of a reservation's rooms currently marked Complementary from the charge — a fully-complementary stay is skipped entirely for that night.",
+    ],
+  },
+  {
+    id: "cash-up",
+    icon: IoWalletOutline,
+    label: "Cash-Up",
+    summary: "Your own count of what you hold, declared for the accountant - and the cash you pay out of your drawer.",
+    workflow: [
+      "Pick today, or yesterday if your shift ran past 6am, count what you hold and enter it by method: cash, card, transfer, POS, online. Declaring is optional.",
+      "You never see what the system expects - the accountant compares your count with it. You can change your declaration until the accountant verifies it.",
+      "Record cash you pay out of your drawer for a small expense (fuel, transport, cleaning supplies...) as a paid-out, with its voucher or receipt number. It comes off the cash you are expected to hold. You can cancel one the same day, until your cash-up is verified.",
     ],
   },
   {

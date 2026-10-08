@@ -22,6 +22,7 @@ import {
   IoBulbOutline,
   IoStatsChartOutline,
   IoCalculatorOutline,
+  IoWalletOutline,
 } from "react-icons/io5";
 import { readPmsSession } from "@/lib/pms/session";
 
@@ -68,6 +69,8 @@ export const PMS_NAV_ITEMS = [
   { slug: "in-house", label: "IN-HOUSE", icon: IoHomeOutline, roles: OVERSIGHT },
   { slug: "reports", label: "REPORTS", icon: IoBarChartOutline, roles: EVERY_ROLE },
   { slug: "night-audit", label: "NIGHT AUDIT", icon: IoMoonOutline, roles: FRONT_DESK },
+  // Whoever holds a drawer counts it (docs/ACCOUNTING-PLAN.md, Step 2).
+  { slug: "cash-up", label: "CASH-UP", icon: IoWalletOutline, roles: ["receptionist", "waitron"] },
   // badge: carries a live count (PmsSidebar) - open alerts; OTA payments
   // still to arrive.
   { slug: "alerts", label: "ALERTS", icon: IoNotificationsOutline, roles: OVERSIGHT, badge: "alerts" },

@@ -906,6 +906,14 @@ export default function AdminFoliosPage() {
                   value={selectedFolio.reservation?.actual_check_out
                     ? formatDate(selectedFolio.reservation.actual_check_out)
                     : `${formatDate(selectedFolio.reservation?.check_out)} (expected)`}
+                  // A stay cut short says so (owner, 2026-10-08): its credit for
+                  // the unused nights otherwise read as unexplained.
+                  note={selectedFolio.reservation?.left_early && selectedFolio.reservation?.actual_check_out
+                    ? `(early checkout on ${formatDate(selectedFolio.reservation.actual_check_out)})`
+                    : null}
+                  noteTitle={selectedFolio.reservation?.booked_check_out
+                    ? `Booked to leave on ${formatDate(selectedFolio.reservation.booked_check_out)}`
+                    : undefined}
                 />
                 <SummaryStat label="Total Charged" tip="folios.sum.charged" value={money(selectedFolio.total_amount)} />
                 <SummaryStat label="Total Paid" tip="folios.sum.paid" value={money(selectedFolio.total_received ?? selectedFolio.amount_paid)} />
@@ -1557,13 +1565,15 @@ export default function AdminFoliosPage() {
   );
 }
 
-function SummaryStat({ label, value, tone, tip }) {
+// `note`: a red line under the value (an early checkout).
+function SummaryStat({ label, value, tone, tip, note, noteTitle }) {
   const valueColor =
     tone === "danger" ? "text-red-600" : tone === "success" ? "text-green-700" : "text-[color:var(--black)]";
   return (
     <div className="bg-[color:var(--text-color)]/5 border-1 border-gray-200 rounded-lg px-5 py-4">
       <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68 mb-1">{label}{tip && <Tip id={tip} />}</p>
       <p className={`text-2xl font-bold ${valueColor} truncate`}>{value}</p>
+      {note && <p className="text-xl font-semibold text-red-600 mt-1" title={noteTitle}>{note}</p>}
     </div>
   );
 }

@@ -218,7 +218,7 @@ export const TIPS = {
   "folios.col.actions": "View: the folio's charges, payments, credit and refunds.",
   "folios.sum.guest": "The guest the folio is for.",
   "folios.sum.checkIn": "When the guest checked in, or the day they are expected.",
-  "folios.sum.checkOut": "When the guest checked out, or the day they are expected to.",
+  "folios.sum.checkOut": "When the guest checked out, or the day they are expected to. In red: they left before their booked date, so any nights they paid for and didn't stay show as credit.",
   "folios.sum.charged": "Everything charged to the folio.",
   "folios.sum.paid": "Everything paid towards it, including reservation credit.",
   "folios.sum.balance": "What the guest still owes. Settled: nothing owed.",

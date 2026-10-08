@@ -16,6 +16,7 @@ import {
   IoRestaurantOutline,
   IoFastFoodOutline,
   IoShirtOutline,
+  IoCalculatorOutline,
 } from "react-icons/io5";
 
 // The Help page's guide - one section per sidebar page, in the sidebar's
@@ -34,6 +35,17 @@ export const HELP_SECTIONS = [
       "Clicking a number (e.g. \"Outstanding\") jumps to the matching page with the right tab pre-selected.",
       "A colored banner appears here whenever any room is flagged Out of Order, Complementary, or Reserved — showing the count, and for Reserved, the room number(s) too. Clicking a banner jumps straight to Rooms with that room type open and the room highlighted.",
       "Room status (Out of Order/Complementary/Reserved, set from the Rooms page) is the only way to pull a room out of availability — there's no separate manual room-count override.",
+    ],
+  },
+  {
+    id: "accounting",
+    icon: IoCalculatorOutline,
+    label: "Accounting",
+    summary: "The accountant's page: checking and signing off the branch's books, one business day (6am to 6am) at a time.",
+    workflow: [
+      "Day Close lists the business days ten to a page, newest first from yesterday. Open one to see its money in and out by method, the reservation credit taken, its charges by type and the night audit's total.",
+      "Sign a day off once you have checked it - a record that it was checked, under your name. A day can only be signed off after it has ended and its night audit has run - until then its room charges are missing.",
+      "Money is recorded when it happens, so a past day only changes when something is dated into it later: a night audit run late, a guest's last night charged at check-out, or a reservation's deposit applied when the booking is confirmed (it keeps the day it was taken). A signed-off day that changes shows as \"Changed after sign-off\", with what moved and what was posted since; check it and sign it off again, saying what you checked. The earlier sign-off is kept.",
     ],
   },
   {

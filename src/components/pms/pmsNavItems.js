@@ -21,6 +21,7 @@ import {
   IoWarningOutline,
   IoBulbOutline,
   IoStatsChartOutline,
+  IoCalculatorOutline,
 } from "react-icons/io5";
 import { readPmsSession } from "@/lib/pms/session";
 
@@ -53,6 +54,8 @@ export const PMS_NAV_ITEMS = [
   { slug: "staff-accounts", label: "STAFF ACCOUNTS", icon: IoPeopleOutline, hq: HEAD_OFFICE },
   // A branch.
   { slug: "overview", label: "OVERVIEW", icon: IoGridOutline, roles: OVERSIGHT },
+  // The accountant's own page, and where an accountant lands (docs/ACCOUNTING-PLAN.md, 2026-10-08).
+  { slug: "accounting", label: "ACCOUNTING", icon: IoCalculatorOutline, roles: ["accountant"] },
   { slug: "rooms", label: "ROOMS", icon: IoBedOutline, roles: OVERSIGHT },
   { slug: "room-chart", label: "ROOM CHART", icon: IoAppsOutline, roles: FRONT_DESK },
   { slug: "reservations", label: "RESERVATIONS", icon: IoCalendarOutline, roles: FRONT_DESK },

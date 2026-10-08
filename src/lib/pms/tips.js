@@ -960,6 +960,28 @@ export const TIPS = {
   "staffAccounts.newRole": "What they will be able to open.",
   "staffAccounts.newPassword": "At least 8 characters. Their old one stops working.",
   "staffAccounts.newBranch": "Where the account moves. Role, username and password stay the same.",
+  // ---- Accounting
+  "accounting.page": "The accountant's page: check and sign off the branch's books.",
+  "accounting.dayClose": "Each business day (6am to 6am), signed off once you have checked it - a record that it was checked. Ten days a page, newest first.",
+  "accounting.days.col.day": "The business day: 6am that day to 6am the next.",
+  "accounting.days.col.audit": "Whether that night's audit has run. A day can only be signed off once it has.",
+  "accounting.days.col.collected": "Money taken that day, less refunds: the Analysis report's Net Total for the day.",
+  "accounting.days.col.charged": "Everything charged that day, to guests and non-guests.",
+  "accounting.days.col.status": "Open: not signed off yet. Signed off: checked, and nothing has changed since. Changed after sign-off: something was posted into it later - check it and sign it off again.",
+  "accounting.days.col.actions": "Open a day to see its figures and sign it off.",
+  "accounting.day.changed": "This day's figures no longer match what was signed off: what moved, and what was posted into it since. Usually a night audit run late, a guest's last night charged at check-out, or a reservation's deposit applied when the booking was confirmed (it keeps the day it was taken).",
+  "accounting.day.diff.figure": "The figure that moved.",
+  "accounting.day.diff.then": "What it was when the day was signed off.",
+  "accounting.day.diff.now": "What it is now.",
+  "accounting.day.diff.difference": "Now minus at sign-off.",
+  "accounting.day.late": "Charges and payments dated into this day but posted after it was signed off: what, on whose folio, by whom and when.",
+  "accounting.day.money": "Payments, non-guest sales, refunds and credit refunds by method, as the Analysis report counts them.",
+  "accounting.day.credit": "Money paid ahead for bookings that day (reservation credit), by method. Not part of Collected until it is used.",
+  "accounting.day.charges": "Everything charged that day, by type: guest folios by the date charged, non-guest sales by when they were rung up.",
+  "accounting.day.audit": "The night audit for this day: the rooms it charged and what it posted.",
+  "accounting.day.signedOff": "Who signed this day off, and when.",
+  "accounting.day.history": "This day's earlier sign-offs, each replaced when the day changed and was signed off again.",
+  "accounting.day.note": "Anything worth recording with the sign-off; kept with it and shown in the Audit Trail. Needed when signing a changed day off again: say what you checked.",
 };
 
 export const tipText = (id) => TIPS[id] || null;

@@ -34,7 +34,9 @@ export default function AccountingPage() {
     <div className={page.wrap}>
       <div>
         <PageHeading icon={IoCalculatorOutline} tipId="accounting.page">Accounting</PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>Check and sign off the branch&apos;s books.</p>
+        <p className={`text-2xl mt-2 ${page.muted}`}>
+          Sign off each day&apos;s books, check the cash-ups, review refunds and discounts, chase what is owed, refund guests&apos; credit and check receipt numbers.
+        </p>
       </div>
       {TABS.length > 1 && (
         <PageTabs tabs={TABS} active={current.key} onChange={(key) => router.replace(`/pms/accounting?tab=${key}`, { scroll: false })} />

@@ -42,7 +42,7 @@ export const HELP_SECTIONS = [
     id: "accounting",
     icon: IoCalculatorOutline,
     label: "Accounting",
-    summary: "The accountant's page: checking and signing off the branch's books, one business day (6am to 6am) at a time.",
+    summary: "The accountant's page: signing off each business day (6am to 6am), checking the cash-ups, reviewing refunds and discounts, chasing what is owed, refunding guests' credit and checking receipt numbers.",
     workflow: [
       "Day Close lists the business days ten to a page, newest first from yesterday. Open one to see its money in and out by method, the reservation credit taken, its charges by type and the night audit's total.",
       "Sign a day off once you have checked it - a record that it was checked, under your name. A day can only be signed off after it has ended and its night audit has run - until then its room charges are missing.",

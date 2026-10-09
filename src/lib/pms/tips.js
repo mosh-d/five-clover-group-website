@@ -966,7 +966,7 @@ export const TIPS = {
   "staffAccounts.newPassword": "At least 8 characters. Their old one stops working.",
   "staffAccounts.newBranch": "Where the account moves. Role, username and password stay the same.",
   // ---- Accounting
-  "accounting.page": "The accountant's page: check and sign off the branch's books.",
+  "accounting.page": "The accountant's page, a tab for each job: Day Close signs off each business day; Cash-Up checks what each person counted against what they took; Exceptions reviews refunds, discounts and free items, flagging any for the manager; Receivables shows who owes what, with follow-up notes and statements; Deposits lists the reservation credit held, to refund or chase; Receipts finds receipt numbers used twice or missing. Guest Folios is read-only for you, but you can refund a guest's credit there.",
   "accounting.dayClose": "Each business day (6am to 6am), signed off once you have checked it - a record that it was checked. Ten days a page, newest first.",
   "accounting.days.col.day": "The business day: 6am that day to 6am the next.",
   "accounting.days.col.audit": "Whether that night's audit has run. A day can only be signed off once it has.",

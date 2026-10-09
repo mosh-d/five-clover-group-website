@@ -24,7 +24,6 @@ import StatementDialog from "./StatementDialog";
 // on each debt, a printable statement for a guest, and the non-guest credits
 // the branch owes back, which the accountant can refund.
 
-const amountText = (v) => (v < 0 ? `-${money(-v)}` : money(v));
 const ago = (days) => (days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`);
 
 function NotesDialog({ debt, onClose, onAdded }) {
@@ -288,7 +287,7 @@ export default function ReceivablesTab() {
           <>
             <div className="flex flex-wrap items-center gap-3">
               <span className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong>Left owing</strong>: {money(view.totals.city_ledger)}</span>
-              <span className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong>In house</strong>: {amountText(view.totals.guest_ledger)}</span>
+              <span className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong>In house</strong>: {money(view.totals.guest_ledger)}</span>
               <span className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong>Non-guest bills</strong>: {money(view.totals.non_guest)}</span>
               <Tip id="accounting.receivables.totals" />
               <button type="button" onClick={() => downloadCsv(view)} className={btn.secondary}>Download CSV</button>
@@ -340,7 +339,7 @@ export default function ReceivablesTab() {
             <section className="w-full flex flex-col gap-4">
               <h3 className="text-2xl font-bold text-(--black)">In House<Tip id="accounting.receivables.house" /></h3>
               {view.guest_ledger.length === 0 ? (
-                <p className={`text-xl ${page.muted}`}>Nobody is in the house.</p>
+                <p className={`text-xl ${page.muted}`}>Nobody in the house owes anything.</p>
               ) : (
                 <div className={table.card}>
                   <div className={table.scroll}>
@@ -361,9 +360,7 @@ export default function ReceivablesTab() {
                             <td className={`${table.td} ${table.stickyTd}`}>{guestCell(g)}</td>
                             <td className={`${table.td} hidden md:table-cell`}>{g.rooms || "-"}</td>
                             <td className={`${table.td} hidden md:table-cell`}>{formatDate(g.check_out)}</td>
-                            <td className={`${table.td} text-right! font-bold ${g.guest_due > 0 ? "text-red-600" : g.guest_due < 0 ? "text-green-700" : ""}`}>
-                              {g.guest_due < 0 ? `${money(-g.guest_due)} credit` : money(g.guest_due)}
-                            </td>
+                            <td className={`${table.td} text-right! font-bold text-red-600`}>{money(g.guest_due)}</td>
                             <td className={`${table.td} hidden lg:table-cell`}><LatestNote note={g.latest_note} /></td>
                             <td className={table.td}>{actions(g)}</td>
                           </tr>
@@ -374,6 +371,11 @@ export default function ReceivablesTab() {
                 </div>
               )}
               <Pagination page={housePage.page} totalPages={housePage.totalPages} onPage={housePage.setPage} className="mt-0" />
+              {view.in_house_settled > 0 && (
+                <p className={`text-xl ${page.muted}`}>
+                  {view.in_house_settled} {view.guest_ledger.length > 0 ? "more " : ""}guest{view.in_house_settled === 1 ? " is" : "s are"} in the house owing nothing.
+                </p>
+              )}
             </section>
 
             {/* ---- Non-guest debts */}

@@ -90,3 +90,21 @@ export const fetchTaxAndService = async (from, to) => {
   const response = await http.get(`/api/accounting/tax-service`, { params: { from, to } });
   return response.data;
 };
+
+// Exports: the branch's account codes, and the journal (a CSV download).
+export const fetchAccounts = async () => {
+  const response = await http.get(`/api/accounting/accounts`);
+  return response.data;
+};
+
+export const saveAccounts = async (accounts) => {
+  const response = await http.put(`/api/accounting/accounts`, { accounts });
+  return response.data;
+};
+
+export const fetchJournal = async (from, to) => {
+  const response = await http.get(`/api/accounting/journal`, { params: { from, to } });
+  return response.data;
+};
+
+export const downloadJournal = (from, to) => pmsDownload("/api/accounting/journal/export", { from, to }, `journal_${from}_to_${to}.csv`);

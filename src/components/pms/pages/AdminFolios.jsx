@@ -18,7 +18,7 @@ import CopyIconButton from "@/components/pms/CopyIconButton";
 import PaymentSplitRows from "@/components/pms/PaymentSplitRows";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
-import { canRefund, getStoredStaffRole } from "@/lib/pms/auth";
+import { canRefund, canTransferCredit, getStoredStaffRole } from "@/lib/pms/auth";
 import { markOtaSettlementPaid, createOtaSettlement, updateOtaSettlement, previewOtaAmount } from "@/lib/pms/api/ota-api";
 import { fetchInHouse } from "@/lib/pms/api/front-office-api";
 import { formatPaymentMethod, money, formatDate, PAYMENT_METHODS } from "@/lib/pms/format";
@@ -92,6 +92,9 @@ export default function AdminFoliosPage() {
   // one (owner, 2026-10-02: the "+ Create Folio" button is gone).
   const staffRole = getStoredStaffRole();
   const isWaitstaffSession = staffRole === "waitron";
+  // The accountant reads every folio but changes nothing here - except paying
+  // a guest's credit back (Accounting, Step 4). The server refuses the rest.
+  const readOnly = staffRole === "accountant";
 
   const [subTab, setSubTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState(isWaitstaffSession ? "open" : "all");
@@ -676,6 +679,11 @@ export default function AdminFoliosPage() {
         <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
           <PageHeading icon={IoReceiptOutline} tipId="folios.page">Guest Folios</PageHeading>
         </div>
+        {readOnly && (
+          <p className="text-xl text-(--text-color)/68 -mt-8">
+            Read-only: the front desk posts charges, takes payments and closes folios. You can refund a guest&apos;s credit.
+          </p>
+        )}
 
         <div className="flex gap-3 text-xl flex-wrap items-center w-full">
           {/* Waitstaff's view is locked to open folios only (they can only
@@ -718,7 +726,7 @@ export default function AdminFoliosPage() {
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by folio #, guest name, or payment reference (e.g. FOL-D7931B, PAY-3F9A2B)"
+              placeholder="Search by folio #, guest name, payment reference or receipt number (e.g. FOL-D7931B, PAY-3F9A2B)"
               className={`${field.input} w-auto text-xl!`}
             />
             <button type="submit" className={btn.secondary}>Search</button>
@@ -855,7 +863,7 @@ export default function AdminFoliosPage() {
           footer={selectedFolio && (
             <>
               <button onClick={closeFolioDetail} className={btn.secondary}>Close</button>
-              {selectedFolio.status !== "closed" && (
+              {selectedFolio.status !== "closed" && !readOnly && (
                 <button
                   onClick={handleCloseFolio}
                   disabled={!canCloseFolio || closing}
@@ -979,9 +987,11 @@ export default function AdminFoliosPage() {
                               Adjust OTA paid nights
                             </button>
                           )}
-                          <button onClick={() => handleMarkOtaPaid(s.id)} disabled={otaPayingId === s.id} className={btn.rowSuccess}>
-                            {otaPayingId === s.id ? "Recording..." : "Mark OTA Paid"}
-                          </button>
+                          {!readOnly && (
+                            <button onClick={() => handleMarkOtaPaid(s.id)} disabled={otaPayingId === s.id} className={btn.rowSuccess}>
+                              {otaPayingId === s.id ? "Recording..." : "Mark OTA Paid"}
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <StatusBadge status="paid" />
@@ -1083,7 +1093,7 @@ export default function AdminFoliosPage() {
               {/* Money this guest left behind on a DIFFERENT stay — the same
                   panel the reservation modal offers, put where a bill is
                   actually settled (owner, 2026-09-16). */}
-              {guestCredit.length > 0 && selectedFolio.status !== "closed" && (
+              {guestCredit.length > 0 && selectedFolio.status !== "closed" && !readOnly && (
                 <div className="border border-(--accent-2) rounded-lg px-5 py-4 flex flex-col gap-3">
                   <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
                     Credit from a previous stay
@@ -1166,14 +1176,16 @@ export default function AdminFoliosPage() {
                             </span>
                             {Number(c.available) > 0 && canRefund() && (
                               <>
-                                <button
-                                  onClick={() => openTransfer(c.id)}
-                                  disabled={transferring || refundingCreditId === c.id}
-                                  className={btn.rowSecondary}
-                                  title="Move this credit to another folio"
-                                >
-                                  Transfer
-                                </button>
+                                {canTransferCredit() && (
+                                  <button
+                                    onClick={() => openTransfer(c.id)}
+                                    disabled={transferring || refundingCreditId === c.id}
+                                    className={btn.rowSecondary}
+                                    title="Move this credit to another folio"
+                                  >
+                                    Transfer
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => setRefundCreditTarget(c)}
                                   disabled={refundingCreditId === c.id}
@@ -1277,7 +1289,7 @@ export default function AdminFoliosPage() {
                   </div>
                 )}
 
-                {selectedFolio.status !== "closed" && (
+                {selectedFolio.status !== "closed" && !readOnly && (
                   <div className="flex flex-col gap-4 mt-2">
                     <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Add a charge<Tip id="folios.addCharge" /></p>
                     <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
@@ -1395,7 +1407,7 @@ export default function AdminFoliosPage() {
                   </div>
                 )}
 
-                {selectedFolio.status !== "closed" && (
+                {selectedFolio.status !== "closed" && !readOnly && (
                   <div className="flex flex-col gap-4 mt-2">
                     {paymentError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{paymentError}</p>}
                     <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">

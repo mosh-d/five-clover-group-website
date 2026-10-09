@@ -8,6 +8,7 @@ import { page } from "@/components/pms/ui";
 import DayCloseTab from "./DayCloseTab";
 import CashUpTab from "./CashUpTab";
 import ExceptionsTab from "./ExceptionsTab";
+import ReceivablesTab from "./ReceivablesTab";
 
 // Accounting - the branch accountant's page (owner, 2026-10-08; the plan is
 // docs/ACCOUNTING-PLAN.md in the backend). One tab per part of the job, each
@@ -17,6 +18,7 @@ const TABS = [
   { key: "day-close", label: "Day Close", Tab: DayCloseTab },
   { key: "cash-up", label: "Cash-Up", Tab: CashUpTab },
   { key: "exceptions", label: "Exceptions", Tab: ExceptionsTab },
+  { key: "receivables", label: "Receivables", Tab: ReceivablesTab },
 ];
 
 export default function AccountingPage() {

@@ -61,7 +61,8 @@ export const PMS_NAV_ITEMS = [
   { slug: "room-chart", label: "ROOM CHART", icon: IoAppsOutline, roles: FRONT_DESK },
   { slug: "reservations", label: "RESERVATIONS", icon: IoCalendarOutline, roles: FRONT_DESK },
   { slug: "guests", label: "GUESTS", icon: IoPeopleOutline, roles: OVERSIGHT },
-  { slug: "folios", label: "GUEST FOLIOS", icon: IoReceiptOutline, roles: OVERSIGHT },
+  // The accountant reads folios and refunds credit (docs/ACCOUNTING-PLAN.md, Step 4).
+  { slug: "folios", label: "GUEST FOLIOS", icon: IoReceiptOutline, roles: [...OVERSIGHT, "accountant"] },
   { slug: "fnb-sales", label: "F&B SALES", icon: IoFastFoodOutline, roles: ["waitron"] },
   { slug: "laundry-sales", label: "LAUNDRY SALES", icon: IoShirtOutline, roles: FRONT_DESK },
   { slug: "check-ins", label: "CHECK-INS", icon: IoLogInOutline, roles: FRONT_DESK },

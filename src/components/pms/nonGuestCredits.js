@@ -40,7 +40,9 @@ export const creditKind = (credit) => (credit?.source_folio?.service_type === "l
 export const creditServiceLabel = (credit) => (creditKind(credit) === "laundry" ? "Laundry" : "F&B");
 
 // Each drawer pays back its own credits (owner, 2026-09-28): the F&B floor
-// collects F&B money and refunds it, the front desk the laundry. The server
-// refuses the rest (NonGuestCreditsController).
+// collects F&B money and refunds it, the front desk the laundry. The
+// accountant may refund any (Accounting, Step 4). The server refuses the rest
+// (NonGuestCreditsController).
 const REFUNDS_BY_ROLE = { waitron: "fnb", receptionist: "laundry" };
-export const canRefundCredit = (credit, role) => role === "developer" || REFUNDS_BY_ROLE[role] === creditKind(credit);
+export const canRefundCredit = (credit, role) =>
+  role === "developer" || role === "accountant" || REFUNDS_BY_ROLE[role] === creditKind(credit);

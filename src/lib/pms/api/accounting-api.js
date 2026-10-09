@@ -34,3 +34,26 @@ export const fetchFlaggedExceptions = async () => {
   const response = await http.get(`/api/exceptions/flagged`);
   return response.data;
 };
+
+// Receivables: what is owed - in house, left owing (by age), non-guest bills.
+export const fetchReceivables = async () => {
+  const response = await http.get(`/api/accounting/receivables`);
+  return response.data;
+};
+
+// The follow-up notes on one debt: { folio_id } or { non_guest_folio_id }.
+export const fetchReceivableNotes = async (debt) => {
+  const response = await http.get(`/api/accounting/receivables/notes`, { params: debt });
+  return response.data;
+};
+
+export const addReceivableNote = async (debt, note) => {
+  const response = await http.post(`/api/accounting/receivables/notes`, { ...debt, note });
+  return response.data;
+};
+
+// A guest's statement of account, to print.
+export const fetchStatement = async (folioId) => {
+  const response = await http.get(`/api/accounting/receivables/statement/${folioId}`);
+  return response.data;
+};

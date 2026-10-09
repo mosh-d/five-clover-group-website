@@ -32,5 +32,8 @@ export const canEditMenu = () => isManager() || isAccountant() || isStorekeeper(
 export const isReceptionist = () => getStoredStaffRole() === "receptionist";
 export const isWaitron = () => getStoredStaffRole() === "waitron";
 // Folio and reservation-credit refunds (non-guest credits go by drawer instead,
-// see nonGuestCredits.js).
-export const canRefund = () => is("receptionist", "manager");
+// see nonGuestCredits.js) - and the accountant's, who has Guest Folios
+// read-only otherwise (Accounting, Step 4).
+export const canRefund = () => is("receptionist", "manager", "accountant");
+// Moving a guest's credit to another folio stays with the front desk.
+export const canTransferCredit = () => is("receptionist", "manager");

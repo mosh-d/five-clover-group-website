@@ -1,5 +1,6 @@
 // The Accounting page (the branch accountant's; backend docs/ACCOUNTING-PLAN.md).
 import { http } from "../http";
+import { pmsDownload } from "../client";
 
 // Day Close: one page of business days (10), newest first, from yesterday.
 export const fetchAccountingDays = async (page = 1) => {
@@ -69,3 +70,11 @@ export const fetchReceiptsAudit = async (from, to) => {
   const response = await http.get(`/api/accounting/receipts`, { params: { from, to } });
   return response.data;
 };
+
+// Flash report: a business day, the month and the year to it, against last year.
+export const fetchFlashReport = async (date) => {
+  const response = await http.get(`/api/accounting/flash`, { params: { date } });
+  return response.data;
+};
+
+export const downloadFlashReport = (date) => pmsDownload("/api/accounting/flash/export", { date }, `flash_report_${date}.xlsx`);

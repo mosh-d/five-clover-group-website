@@ -42,7 +42,7 @@ export const HELP_SECTIONS = [
     id: "accounting",
     icon: IoCalculatorOutline,
     label: "Accounting",
-    summary: "The accountant's page: signing off each business day (6am to 6am), checking the cash-ups, reviewing refunds and discounts, chasing what is owed, refunding guests' credit and checking receipt numbers.",
+    summary: "The accountant's page: signing off each business day (6am to 6am), checking the cash-ups, reviewing refunds and discounts, chasing what is owed, refunding guests' credit, checking receipt numbers and reading the day's flash report.",
     workflow: [
       "Day Close lists the business days ten to a page, newest first from yesterday. Open one to see its money in and out by method, the reservation credit taken, its charges by type and the night audit's total.",
       "Sign a day off once you have checked it - a record that it was checked, under your name. A day can only be signed off after it has ended and its night audit has run - until then its room charges are missing.",
@@ -52,6 +52,7 @@ export const HELP_SECTIONS = [
       "Receivables shows what is owed to the branch: guests who left owing, by how long ago (0-7, 8-30, 31-60, over 60 days), guests in the house who owe something (those who owe nothing are only counted), and open non-guest bills by age - each with its last payment and your latest follow-up note. Add a note on any of them, print a statement of account for a guest, or open their folio. Non-guest credit the branch owes back is listed there too, and you can refund it.",
       "Deposits lists every bit of reservation credit the branch holds and hasn't spent or paid back - paid ahead for a booking, or an overpayment kept on a stay - by where its stay is: bookings still to arrive, guests in the house, and, to chase, guests who left, no-shows and cancelled bookings, each with how long it has waited and its receipt number. Refund it from there, or open the folio.",
       "Receipts checks the paper receipt numbers typed with payments, reservation credit and non-guest payments over a range of days: numbers used on more than one transaction (in red when the amounts differ), numbers missing between the ones used, per receipt book, and money taken with no receipt number, by who took it.",
+      "Flash Report gives one business day, the month to it and the year to it - rooms available and sold, occupancy, ADR and RevPAR, everything charged by what it was for, and money in by method - worked out as Head Office's Metrics work them out, for your branch. Beside each, the same days last year once the books go back that far. Below: what is owed to the branch and the credit it holds, as things stand now. Download it as an Excel file.",
       "You also have Guest Folios, read-only: every folio, its charges, payments, credit and history, and the search (folio number, guest name, payment reference or receipt number). The front desk posts charges, takes payments and closes folios; you can refund a guest's credit - the same refund the front desk uses, recorded under your name.",
     ],
   },

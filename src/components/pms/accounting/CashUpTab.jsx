@@ -16,8 +16,8 @@ import { fetchCashUpDay, verifyCashUp } from "@/lib/pms/api/cash-up-api";
 
 // Cash-Up (Accounting, Step 2): per person, what the system expects them to
 // hold for a business day - money they took and reservation credit, less
-// refunds, credit refunds and their paid-outs - beside what they declared
-// (blind). The accountant verifies a declared cash-up once checked; it can't
+// refunds, credit refunds and their paid-outs - beside what they counted
+// (blind). The accountant verifies a submitted count once checked; it can't
 // change after.
 
 const dayText = (iso) =>
@@ -31,19 +31,19 @@ const diffClass = (v) => (v === null || v === undefined || Math.abs(v) < 0.005 ?
 function StatusPill({ person }) {
   const d = person.declaration;
   const [label, className] = !d
-    ? ["Not declared", "bg-orange-100 text-orange-700"]
+    ? ["No count", "bg-orange-100 text-orange-700"]
     : d.verified_at
       ? ["Verified", "bg-green-100 text-green-800"]
-      : ["Declared", "bg-black/5 text-(--text-color)/76"];
+      : ["Counted", "bg-black/5 text-(--text-color)/76"];
   return <span className={`inline-block px-3 py-1 rounded-full text-lg font-bold whitespace-nowrap ${className}`}>{label}</span>;
 }
 
 // The day as a spreadsheet: one line per person and method.
 function downloadCsv(view) {
   const quote = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const lines = [["Business day", "Person", "Role", "Method", "Expected", "Declared", "Difference", "Status", "Verified by"]];
+  const lines = [["Business day", "Person", "Role", "Method", "Expected", "Counted", "Difference", "Status", "Verified by"]];
   for (const p of view.people) {
-    const status = !p.declaration ? "Not declared" : p.declaration.verified_at ? "Verified" : "Declared";
+    const status = !p.declaration ? "No count" : p.declaration.verified_at ? "Verified" : "Counted";
     const verifiedBy = p.declaration?.verified_by || "";
     const rows = p.lines.length ? p.lines : [{ label: "", expected: 0, declared: p.declaration ? 0 : null, difference: p.declaration ? 0 : null }];
     for (const l of rows) lines.push([view.date, p.name, p.role || "", l.label, l.expected, l.declared ?? "", l.difference ?? "", status, verifiedBy]);
@@ -92,7 +92,7 @@ function VerifyDialog({ person, date, onClose, onDone }) {
     >
       <div className="flex flex-col gap-6">
         <p className="text-xl">
-          Declared {money(person.declared_total)} against {amountText(person.expected_total)} expected:{" "}
+          Counted {money(person.declared_total)} against {amountText(person.expected_total)} expected:{" "}
           <span className={diffClass(person.difference_total)}>{signed(person.difference_total)}</span>.
         </p>
         <div className="flex flex-col gap-2">
@@ -137,13 +137,13 @@ function PersonCard({ person, onVerify }) {
 
       {d && (
         <p className={`text-xl ${page.muted}`}>
-          Declared at {formatDateTime(d.declared_at)}
+          Submitted at {formatDateTime(d.declared_at)}
           {d.note ? <> - &ldquo;{d.note}&rdquo;</> : null}
         </p>
       )}
 
       {person.lines.length === 0 ? (
-        <p className={`text-xl ${page.muted}`}>Nothing taken or declared.</p>
+        <p className={`text-xl ${page.muted}`}>Nothing taken or counted.</p>
       ) : (
         <div className={table.scroll}>
           <table className="w-full text-xl">
@@ -151,7 +151,7 @@ function PersonCard({ person, onVerify }) {
               <tr className="text-left text-(--text-color)/76">
                 <th className="py-2 pr-4 font-semibold">Method<Tip id="accounting.cashUp.col.method" /></th>
                 <th className="py-2 pr-4 font-semibold text-right">Expected<Tip id="accounting.cashUp.col.expected" /></th>
-                <th className="py-2 pr-4 font-semibold text-right">Declared<Tip id="accounting.cashUp.col.declared" /></th>
+                <th className="py-2 pr-4 font-semibold text-right">Counted<Tip id="accounting.cashUp.col.declared" /></th>
                 <th className="py-2 font-semibold text-right">Difference<Tip id="accounting.cashUp.col.difference" /></th>
               </tr>
             </thead>
@@ -167,7 +167,7 @@ function PersonCard({ person, onVerify }) {
               <tr className="border-t-2 border-(--accent-2) font-bold">
                 <td className="py-2 pr-4">Total</td>
                 <td className="py-2 pr-4 text-right whitespace-nowrap">{amountText(person.expected_total)}</td>
-                <td className="py-2 pr-4 text-right whitespace-nowrap">{person.declared_total === null ? "Not declared" : money(person.declared_total)}</td>
+                <td className="py-2 pr-4 text-right whitespace-nowrap">{person.declared_total === null ? "No count" : money(person.declared_total)}</td>
                 <td className={`py-2 text-right whitespace-nowrap ${diffClass(person.difference_total)}`}>{person.difference_total === null ? "-" : signed(person.difference_total)}</td>
               </tr>
             </tbody>
@@ -252,7 +252,7 @@ export default function CashUpTab() {
           <Tip id="accounting.cashUp" />
         </h2>
         <p className={`text-xl ${page.muted}`}>
-          What each person was expected to hold for a business day, beside what they declared. Verify a cash-up once you have checked it; it can&apos;t be changed after.
+          What each person was expected to hold for a business day, beside what they counted. Verify a cash-up once you have checked it; it can&apos;t be changed after.
         </p>
       </div>
 
@@ -274,7 +274,7 @@ export default function CashUpTab() {
         <div className="flex flex-wrap gap-3">
           {shown.not_declared > 0 && (
             <span className="px-4 py-2 rounded-lg text-xl font-semibold bg-orange-100 text-orange-700">
-              {shown.not_declared} {shown.not_declared === 1 ? "person" : "people"} took money and didn&apos;t declare
+              {shown.not_declared} {shown.not_declared === 1 ? "person" : "people"} took money and didn&apos;t submit a count
             </span>
           )}
           {shown.to_verify > 0 && (
@@ -296,7 +296,7 @@ export default function CashUpTab() {
               <p className={field.hint}>This business day hasn&apos;t ended yet: its figures can still grow, and its cash-ups can be verified after 6am.</p>
             )}
             {shown.people.length === 0 ? (
-              <p className={`text-xl ${page.muted}`}>No money was taken or declared on {dayText(shown.date)}.</p>
+              <p className={`text-xl ${page.muted}`}>No money was taken or counted on {dayText(shown.date)}.</p>
             ) : (
               shown.people.map((p) => <PersonCard key={p.staff_id} person={p} onVerify={setVerifying} />)
             )}

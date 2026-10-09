@@ -15,7 +15,7 @@ import { formatDateTime, formatTime, money } from "@/lib/pms/format";
 import { cancelPaidOut, declareCashUp, fetchMyCashUp, recordPaidOut } from "@/lib/pms/api/cash-up-api";
 
 // Cash-Up (Accounting, Step 2; owner, 2026-10-08) - a receptionist's or
-// waitron's own page. They count what they hold and declare it, per method,
+// waitron's own page. They count what they hold and submit it, per method,
 // for today or yesterday (a night shift ends after 6am), without ever seeing
 // what the system expects: a blind count, so the count isn't bent to match.
 // Optional. Theirs to change until the accountant verifies it. Cash paid out
@@ -48,9 +48,9 @@ function DeclarationCard({ data, onDone }) {
       setBusy(true);
       setError(null);
       await declareCashUp(data.date, values, note.trim() || undefined);
-      onDone(declaration ? `Changed your cash-up for ${dayText(data.date)}: ${money(total)}.` : `Declared your cash-up for ${dayText(data.date)}: ${money(total)}.`);
+      onDone(declaration ? `Updated your count for ${dayText(data.date)}: ${money(total)}.` : `Submitted your count for ${dayText(data.date)}: ${money(total)}.`);
     } catch (err) {
-      setError(err.message || "Could not declare the cash-up.");
+      setError(err.message || "Could not submit your count.");
       setBusy(false);
     }
   };
@@ -58,7 +58,7 @@ function DeclarationCard({ data, onDone }) {
   if (declaration?.verified_at) {
     return (
       <div className={`w-full ${card.surface} p-8 flex flex-col gap-5`}>
-        <h2 className={page.sectionTitle}>Your Declaration<Tip id="cashUp.declaration" /></h2>
+        <h2 className={page.sectionTitle}>Your Count<Tip id="cashUp.declaration" /></h2>
         <p className="text-xl">
           Verified by <strong>{declaration.verified_by || "a former account"}</strong> on {formatDateTime(declaration.verified_at)}
           {declaration.review_note ? <> - &ldquo;{declaration.review_note}&rdquo;</> : null}. It can&apos;t be changed now.
@@ -82,10 +82,10 @@ function DeclarationCard({ data, onDone }) {
   return (
     <div className={`w-full ${card.surface} p-8 flex flex-col gap-6`}>
       <div className="flex flex-col gap-2">
-        <h2 className={page.sectionTitle}>Your Declaration<Tip id="cashUp.declaration" /></h2>
+        <h2 className={page.sectionTitle}>Your Count<Tip id="cashUp.declaration" /></h2>
         <p className={`text-xl ${page.muted}`}>
           {declaration
-            ? `Declared at ${formatDateTime(declaration.declared_at)}. You can change it until the accountant verifies it.`
+            ? `Submitted at ${formatDateTime(declaration.declared_at)}. You can change it until the accountant verifies it.`
             : "Count what you hold for this business day and enter it by method. Leave a method empty if you have none."}
         </p>
       </div>
@@ -126,12 +126,12 @@ function DeclarationCard({ data, onDone }) {
 
       {confirming ? (
         <ConfirmPanel
-          question={declaration ? `Change your cash-up for ${dayText(data.date)} to ${money(total)}?` : `Declare ${money(total)} for ${dayText(data.date)}?`}
+          question={declaration ? `Update your count for ${dayText(data.date)} to ${money(total)}?` : `Submit a count of ${money(total)} for ${dayText(data.date)}?`}
           details={[
             ...data.methods.filter((m) => values[m.key] > 0).map((m) => `${m.label}: ${money(values[m.key])}`),
             "You can change it until the accountant verifies it.",
           ]}
-          confirmLabel={declaration ? "Yes, change it" : "Yes, declare it"}
+          confirmLabel={declaration ? "Yes, update it" : "Yes, submit it"}
           busyLabel="Saving..."
           busy={busy}
           error={error}
@@ -144,7 +144,7 @@ function DeclarationCard({ data, onDone }) {
       ) : (
         <div>
           <button type="button" onClick={() => setConfirming(true)} disabled={Boolean(invalid)} className={btn.primary}>
-            {declaration ? "Change my declaration" : "Declare"}
+            {declaration ? "Update my count" : "Submit my count"}
           </button>
         </div>
       )}
@@ -329,7 +329,7 @@ export default function CashUpPage() {
       <div>
         <PageHeading icon={IoWalletOutline} tipId="cashUp.page">Cash-Up</PageHeading>
         <p className={`text-2xl mt-2 ${page.muted}`}>
-          Count what you hold and declare it. You won&apos;t see what the system expects - the accountant compares the two.
+          Count what you hold and submit it. You won&apos;t see what the system expects - the accountant compares the two.
         </p>
       </div>
 

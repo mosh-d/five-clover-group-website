@@ -188,7 +188,11 @@ export default function ReceiptsTab() {
             <section className="w-full flex flex-col gap-4">
               <h3 className="text-2xl font-bold text-(--black)">Missing From a Receipt Book<Tip id="accounting.receipts.gaps" /></h3>
               {view.books.length === 0 ? (
-                <p className={`text-xl ${page.muted}`}>No numbers are missing between the receipts used in these days.</p>
+                <p className={`text-xl ${page.muted}`}>
+                  {c.no_receipt === view.transactions
+                    ? "No receipt numbers were typed in these days, so there are no gaps to look for."
+                    : "No numbers are missing between the receipts used in these days."}
+                </p>
               ) : (
                 view.books.map((b) => (
                   <div key={b.book || "-"} className="w-full rounded-xl border border-(--accent-2) bg-(--card) px-6 py-4 flex flex-col gap-2">

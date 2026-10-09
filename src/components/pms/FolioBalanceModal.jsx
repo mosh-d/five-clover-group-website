@@ -105,7 +105,7 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
                 <label className={field.label}>Receipt Number (optional)<Tip id="folioModal.receipt" /></label>
                 <input
                   type="text"
-                  placeholder="Leave blank to have the system generate one"
+                  placeholder="e.g. from the receipt book"
                   value={paymentForm.receipt_number}
                   onChange={(e) => setPaymentForm({ ...paymentForm, receipt_number: e.target.value })}
                   className={field.input}

@@ -320,7 +320,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
           </div>
         </div>
         <p className="text-lg text-[color:var(--text-color)]/60">
-          One receipt number covers the whole order — leave it blank and the system fills one in.
+          One bill number covers the whole order — leave it blank and the system fills one in.
         </p>
 
         <OrderItemRows

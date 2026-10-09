@@ -274,7 +274,7 @@ export const TIPS = {
   "folioModal.paid": "Everything paid towards it.",
   "folioModal.charges": "Every charge on the guest's folio, with whether each is paid.",
   "folioModal.recordPayment": "Record money the guest has paid towards their folio.",
-  "folioModal.receipt": "The number on the paper receipt. Leave it blank and the system makes one.",
+  "folioModal.receipt": "The number on the paper receipt you gave for this payment. Left blank, the payment is recorded without one - the system doesn't make one up.",
   "folioModal.notes": "Anything worth noting about this payment.",
   // ---- F&B Sales
   "guestSales.newOrder": "Post food and drink to an in-house guest's folio, then print the receipt.",
@@ -358,7 +358,7 @@ export const TIPS = {
   "laundrySales.customer.phone": "The customer's phone number.",
   "laundrySales.creditOnFile": "Money this customer overpaid on an earlier bill. Apply Credit puts it towards this one.",
   "laundrySales.recordPayment": "Record money paid towards the bill. Anything paid over the balance is kept on file as credit.",
-  "laundrySales.receipt": "The number on the paper receipt. Leave it blank and the system makes one.",
+  "laundrySales.receipt": "The number on the paper receipt you gave for this payment. Left blank, the payment is recorded without one - the system doesn't make one up.",
   "laundrySales.notes": "Anything worth noting about this payment.",
   // ---- Reports
   "reports.shift": "Who was on duty. It is written on the Excel export; the Manifest, Food Sales, Drink Sales and Bar Stock need it before they export.",

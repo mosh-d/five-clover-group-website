@@ -108,7 +108,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
   }, [newFolio.guest_name]);
 
   const newFolioTotal = newFolio.rows.reduce((sum, row) => sum + rowAmount(row) + rowServiceCharge(row), 0);
-  // Bill No is optional — the system generates a receipt number if it's
+  // Bill No is optional — the system generates a bill number if it's
   // left blank (see PrintReceiptModal), so it's no longer required here the
   // way a docket/bill book number used to be.
   // Same rule as Guest Sales (see its rowUntouched): a line added and left
@@ -468,7 +468,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
           </div>
         </div>
         <p className="text-lg text-[color:var(--text-color)]/60">
-          One receipt number covers the whole order — leave it blank and the system fills one in.
+          One bill number covers the whole order — leave it blank and the system fills one in.
         </p>
 
         {nameCredits.length > 0 && (

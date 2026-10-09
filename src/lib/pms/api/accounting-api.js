@@ -78,3 +78,9 @@ export const fetchFlashReport = async (date) => {
 };
 
 export const downloadFlashReport = (date) => pmsDownload("/api/accounting/flash/export", { date }, `flash_report_${date}.xlsx`);
+
+// Balance check: what guests owe less the credit they hold, day by day, against the folios' own figures.
+export const fetchBalanceCheck = async (from, to) => {
+  const response = await http.get(`/api/accounting/balance`, { params: { from, to } });
+  return response.data;
+};

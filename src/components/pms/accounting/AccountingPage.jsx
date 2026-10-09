@@ -12,6 +12,7 @@ import ReceivablesTab from "./ReceivablesTab";
 import DepositsTab from "./DepositsTab";
 import ReceiptsTab from "./ReceiptsTab";
 import FlashTab from "./FlashTab";
+import BalanceTab from "./BalanceTab";
 
 // Accounting - the branch accountant's page (owner, 2026-10-08; the plan is
 // docs/ACCOUNTING-PLAN.md in the backend). One tab per part of the job, each
@@ -25,6 +26,7 @@ const TABS = [
   { key: "deposits", label: "Deposits", Tab: DepositsTab },
   { key: "receipts", label: "Receipts", Tab: ReceiptsTab },
   { key: "flash", label: "Flash Report", Tab: FlashTab },
+  { key: "balance", label: "Balance Check", Tab: BalanceTab },
 ];
 
 export default function AccountingPage() {
@@ -37,7 +39,7 @@ export default function AccountingPage() {
       <div>
         <PageHeading icon={IoCalculatorOutline} tipId="accounting.page">Accounting</PageHeading>
         <p className={`text-2xl mt-2 ${page.muted}`}>
-          Sign off each day&apos;s books, check the cash-ups, review refunds and discounts, chase what is owed, refund guests&apos; credit, check receipt numbers and read the day&apos;s flash report.
+          Sign off each day&apos;s books; check the cash-ups, refunds and discounts, receipt numbers and guest balances; chase what is owed; refund guests&apos; credit; and read the day&apos;s flash report.
         </p>
       </div>
       {TABS.length > 1 && (

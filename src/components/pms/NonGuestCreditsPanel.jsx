@@ -12,6 +12,8 @@ import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { refundNonGuestCredit } from "@/lib/pms/api/non-guest-folios-api";
 import { Tip } from "@/components/pms/Tip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { auditFor, businessDayOf } from "@/components/pms/accounting/audit";
 
 // Money the hotel owes back, listed the same way money owed TO the hotel
 // already is. Until now an overpayment on a non-guest bill went into a credit
@@ -24,7 +26,9 @@ import { Tip } from "@/components/pms/Tip";
 // list does offer is paying a credit back out (2026-09-28), each drawer its
 // own: the F&B floor refunds F&B credits, the front desk laundry ones (see
 // canRefundCredit). onRefunded reloads the page's credits afterwards.
-export default function NonGuestCreditsPanel({ credits = [], loading = false, onRefunded }) {
+// auditTo (the Accounting page's today) adds each credit's View log, from the
+// day it was kept to then.
+export default function NonGuestCreditsPanel({ credits = [], loading = false, onRefunded, auditTo = null }) {
   const pending = credits.filter((c) => c.status === "pending");
   const total = pending.reduce((sum, c) => sum + Number(c.amount || 0), 0);
   const role = getStoredStaffRole();
@@ -82,7 +86,7 @@ export default function NonGuestCreditsPanel({ credits = [], loading = false, on
                   <th className={table.th}>Date &amp; Time<Tip id="credits.dateTime" /></th>
                   <th className={table.th}>Amount<Tip id="credits.amount" /></th>
                   <th className={table.th}>Reference<Tip id="credits.reference" /></th>
-                  {refundable && <th className={table.th}>Actions<Tip id="credits.actions" /></th>}
+                  {(refundable || auditTo) && <th className={table.th}>Actions<Tip id={auditTo ? "accounting.receivables.credits.actions" : "credits.actions"} /></th>}
                 </tr>
               </thead>
               <tbody>
@@ -94,13 +98,18 @@ export default function NonGuestCreditsPanel({ credits = [], loading = false, on
                     <td className={`${table.td} whitespace-nowrap`}>{formatDateTime(c.created_at)}</td>
                     <td className={`${table.td} font-bold text-blue-700`}>{money(c.amount)}</td>
                     <td className={`${table.td} font-mono text-base`}>{c.credit_reference}</td>
-                    {refundable && (
+                    {(refundable || auditTo) && (
                       <td className={table.td}>
-                        {canRefundCredit(c, role) && (
-                          <button onClick={() => setRefundTarget(c)} disabled={refunding} className={btn.rowDanger}>
-                            Refund
-                          </button>
-                        )}
+                        <div className={table.actions}>
+                          {canRefundCredit(c, role) && (
+                            <button onClick={() => setRefundTarget(c)} disabled={refunding} className={btn.rowDanger}>
+                              Refund
+                            </button>
+                          )}
+                          {auditTo && (
+                            <AuditLink audit={auditFor({ search: c.source_folio?.folio_number || c.credit_reference, from: businessDayOf(c.created_at), to: auditTo })} />
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>

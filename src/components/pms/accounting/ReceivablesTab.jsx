@@ -11,6 +11,9 @@ import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import NonGuestCreditsPanel from "@/components/pms/NonGuestCreditsPanel";
 import { Tip } from "@/components/pms/Tip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { addDaysISO } from "@/lib/pms/dates";
+import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime, money } from "@/lib/pms/format";
@@ -244,6 +247,12 @@ export default function ReceivablesTab() {
   const nonGuest = (view?.non_guest_debts || []).filter((n) => !ngBucket || n.bucket === ngBucket);
   const ngPage = usePagedRows(nonGuest);
 
+  // A guest's stay from the day before it began (a booked date is a calendar
+  // day), a non-guest bill from when it was opened - both to today.
+  const auditOf = (row) =>
+    row.folio_id
+      ? auditFor({ search: row.guest_name || row.folio_number, from: addDaysISO(String(row.check_in || view.today).slice(0, 10), -1), to: view.today })
+      : auditFor({ search: row.guest_name || row.folio_number, from: row.owed_since, to: view.today });
   const actions = (row, { statement = true } = {}) => (
     <div className={table.actions}>
       <button type="button" onClick={() => setNotesFor(row)} className={btn.rowSecondary}>Notes</button>
@@ -253,6 +262,7 @@ export default function ReceivablesTab() {
           <button type="button" onClick={() => router.push(`/pms/folios?folio_id=${row.folio_id}`)} className={btn.rowPrimary}>Folio</button>
         </>
       )}
+      <AuditLink audit={auditOf(row)} />
     </div>
   );
   const guestCell = (g) => (
@@ -426,7 +436,7 @@ export default function ReceivablesTab() {
             </section>
 
             {/* ---- What the branch owes back to non-guests */}
-            <NonGuestCreditsPanel credits={credits} onRefunded={loadCredits} />
+            <NonGuestCreditsPanel credits={credits} onRefunded={loadCredits} auditTo={view.today} />
           </>
         )
       )}

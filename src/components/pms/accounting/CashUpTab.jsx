@@ -8,6 +8,8 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, card, field, page, table } from "@/components/pms/ui";
 import { formatDateTime, money } from "@/lib/pms/format";
@@ -119,8 +121,10 @@ function VerifyDialog({ person, date, onClose, onDone }) {
   );
 }
 
-function PersonCard({ person, onVerify }) {
+function PersonCard({ person, date, onVerify }) {
   const d = person.declaration;
+  // Everything this person did that day.
+  const audit = auditFor({ staffId: person.staff_id, from: date });
   const activePaidOuts = person.paid_outs.filter((p) => !p.cancelled_at);
   return (
     <section aria-labelledby={`cashup-person-${person.staff_id}`} className={`w-full ${card.surface} p-6 md:p-8 flex flex-col gap-5`}>
@@ -152,7 +156,8 @@ function PersonCard({ person, onVerify }) {
                 <th className="py-2 pr-4 font-semibold">Method<Tip id="accounting.cashUp.col.method" /></th>
                 <th className="py-2 pr-4 font-semibold text-right">Expected<Tip id="accounting.cashUp.col.expected" /></th>
                 <th className="py-2 pr-4 font-semibold text-right">Counted<Tip id="accounting.cashUp.col.declared" /></th>
-                <th className="py-2 font-semibold text-right">Difference<Tip id="accounting.cashUp.col.difference" /></th>
+                <th className="py-2 pr-4 font-semibold text-right">Difference<Tip id="accounting.cashUp.col.difference" /></th>
+                <th className="py-2 font-semibold">Action<Tip id="accounting.col.viewLog" /></th>
               </tr>
             </thead>
             <tbody>
@@ -161,14 +166,16 @@ function PersonCard({ person, onVerify }) {
                   <td className="py-2 pr-4">{l.label}</td>
                   <td className={`py-2 pr-4 text-right whitespace-nowrap ${l.expected < 0 ? "text-red-600" : ""}`}>{amountText(l.expected)}</td>
                   <td className="py-2 pr-4 text-right whitespace-nowrap">{l.declared === null ? "-" : money(l.declared)}</td>
-                  <td className={`py-2 text-right whitespace-nowrap ${diffClass(l.difference)}`}>{l.difference === null ? "-" : signed(l.difference)}</td>
+                  <td className={`py-2 pr-4 text-right whitespace-nowrap ${diffClass(l.difference)}`}>{l.difference === null ? "-" : signed(l.difference)}</td>
+                  <td className="py-2"><AuditLink audit={audit} /></td>
                 </tr>
               ))}
               <tr className="border-t-2 border-(--accent-2) font-bold">
                 <td className="py-2 pr-4">Total</td>
                 <td className="py-2 pr-4 text-right whitespace-nowrap">{amountText(person.expected_total)}</td>
                 <td className="py-2 pr-4 text-right whitespace-nowrap">{person.declared_total === null ? "No count" : money(person.declared_total)}</td>
-                <td className={`py-2 text-right whitespace-nowrap ${diffClass(person.difference_total)}`}>{person.difference_total === null ? "-" : signed(person.difference_total)}</td>
+                <td className={`py-2 pr-4 text-right whitespace-nowrap ${diffClass(person.difference_total)}`}>{person.difference_total === null ? "-" : signed(person.difference_total)}</td>
+                <td className="py-2"><AuditLink audit={audit} /></td>
               </tr>
             </tbody>
           </table>
@@ -298,7 +305,7 @@ export default function CashUpTab() {
             {shown.people.length === 0 ? (
               <p className={`text-xl ${page.muted}`}>No money was taken or counted on {dayText(shown.date)}.</p>
             ) : (
-              shown.people.map((p) => <PersonCard key={p.staff_id} person={p} onVerify={setVerifying} />)
+              shown.people.map((p) => <PersonCard key={p.staff_id} person={p} date={shown.date} onVerify={setVerifying} />)
             )}
           </div>
         )

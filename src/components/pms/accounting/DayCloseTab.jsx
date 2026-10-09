@@ -8,6 +8,9 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import Pagination from "@/components/pms/Pagination";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { Tip } from "@/components/pms/Tip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { businessDateISO } from "@/lib/pms/dates";
+import { auditFor, businessDayOf } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDateTime, money } from "@/lib/pms/format";
@@ -149,7 +152,8 @@ function DayDialog({ date, onClose, onSignedOff }) {
                         <th className="py-2 pr-4 font-semibold">Figure<Tip id="accounting.day.diff.figure" /></th>
                         <th className="py-2 pr-4 font-semibold text-right">At sign-off<Tip id="accounting.day.diff.then" /></th>
                         <th className="py-2 pr-4 font-semibold text-right">Now<Tip id="accounting.day.diff.now" /></th>
-                        <th className="py-2 font-semibold text-right">Difference<Tip id="accounting.day.diff.difference" /></th>
+                        <th className="py-2 pr-4 font-semibold text-right">Difference<Tip id="accounting.day.diff.difference" /></th>
+                        <th className="py-2 font-semibold">Action<Tip id="accounting.day.diff.action" /></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -158,9 +162,12 @@ function DayDialog({ date, onClose, onSignedOff }) {
                           <td className="py-2 pr-4">{d.label}</td>
                           <td className="py-2 pr-4 text-right whitespace-nowrap">{amount({ ...d, amount: d.at_sign_off })}</td>
                           <td className="py-2 pr-4 text-right whitespace-nowrap">{amount({ ...d, amount: d.now })}</td>
-                          <td className="py-2 text-right whitespace-nowrap font-bold text-red-700">
+                          <td className="py-2 pr-4 text-right whitespace-nowrap font-bold text-red-700">
                             {d.difference > 0 ? "+" : ""}
                             {amount({ ...d, amount: d.difference })}
+                          </td>
+                          <td className="py-2">
+                            <AuditLink audit={auditFor({ from: businessDayOf(day.signoff?.signed_off_at) || date, to: businessDateISO() })} />
                           </td>
                         </tr>
                       ))}
@@ -183,6 +190,8 @@ function DayDialog({ date, onClose, onSignedOff }) {
                       <span className="whitespace-nowrap">
                         <strong>{money(e.amount)}</strong> · {formatDateTime(e.posted_at)}
                         {e.posted_by ? ` · ${e.posted_by}` : " · the system"}
+                        {" · "}
+                        <AuditLink audit={auditFor({ staffId: e.posted_by_id, search: e.guest_name || e.folio_number, from: businessDayOf(e.posted_at) })} />
                       </span>
                     </div>
                   ))}
@@ -195,7 +204,8 @@ function DayDialog({ date, onClose, onSignedOff }) {
             <p className="text-xl">
               Signed off by <strong>{day.signoff.signed_off_by || "a former account"}</strong> on {formatDateTime(day.signoff.signed_off_at)}
               {day.signoff.note ? <> - &ldquo;{day.signoff.note}&rdquo;</> : null}
-              <Tip id="accounting.day.signedOff" />
+              <Tip id="accounting.day.signedOff" />{" "}
+              <AuditLink audit={auditFor({ staffId: day.signoff.signed_off_by_id, from: businessDayOf(day.signoff.signed_off_at) })} />
             </p>
           )}
 
@@ -204,6 +214,9 @@ function DayDialog({ date, onClose, onSignedOff }) {
               Night audit {day.night_audit.auto_run ? "ran by itself" : "run by hand"} at {formatDateTime(day.night_audit.audited_at)}.
             </p>
           ) : null}
+          <p className={`text-xl ${page.muted}`}>
+            Everything recorded in this business day: <AuditLink audit={auditFor({ from: date })} />
+          </p>
 
           <Figures lines={day.figures} />
 
@@ -222,7 +235,8 @@ function DayDialog({ date, onClose, onSignedOff }) {
                 .map((h) => (
                   <p key={h.id} className={`text-xl ${page.muted}`}>
                     {h.signed_off_by || "A former account"} on {formatDateTime(h.signed_off_at)}
-                    {h.note ? <> - &ldquo;{h.note}&rdquo;</> : null}
+                    {h.note ? <> - &ldquo;{h.note}&rdquo;</> : null}{" "}
+                    <AuditLink audit={auditFor({ staffId: h.signed_off_by_id, from: businessDayOf(h.signed_off_at) })} />
                   </p>
                 ))}
             </section>
@@ -382,9 +396,12 @@ export default function DayCloseTab() {
                         </div>
                       </td>
                       <td className={table.td}>
-                        <button type="button" onClick={() => setOpen(d.date)} className={d.status === "changed" || d.can_sign_off ? btn.rowPrimary : btn.rowSecondary}>
-                          {d.status === "changed" ? "See what changed" : d.can_sign_off ? "Review and sign off" : "View"}
-                        </button>
+                        <div className={table.actions}>
+                          <button type="button" onClick={() => setOpen(d.date)} className={d.status === "changed" || d.can_sign_off ? btn.rowPrimary : btn.rowSecondary}>
+                            {d.status === "changed" ? "See what changed" : d.can_sign_off ? "Review and sign off" : "View"}
+                          </button>
+                          <AuditLink audit={auditFor({ from: d.date })} />
+                        </div>
                       </td>
                     </tr>
                   ))}

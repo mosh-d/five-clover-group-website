@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { money } from "@/lib/pms/format";
@@ -28,8 +30,8 @@ const dayText = (iso) =>
 const shortDay = (iso) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).replace(",", "");
 const signed = (v) => (v < 0 ? `-${money(-v)}` : money(v));
-// The By Day table's money columns, a little narrower so all seven fit a laptop.
-const num = "text-right! px-6!";
+// The By Day table's money columns, a little narrower so all eight fit a laptop.
+const num = "text-right! px-4!";
 const cell = (v) => (v ? signed(v) : "-");
 
 function downloadCsv(view) {
@@ -153,6 +155,7 @@ export default function TaxTab() {
                         ))}
                         <th className={`${table.th} ${num}`}>Service Charge<Tip id="accounting.tax.col.service" /></th>
                         <th className={`${table.th} ${num}`}>Tax<Tip id="accounting.tax.col.tax" /></th>
+                        <th className={`${table.th} px-4!`}>Action<Tip id="accounting.col.viewLog" /></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -167,6 +170,7 @@ export default function TaxTab() {
                           ))}
                           <td className={`${table.td} ${num} font-bold`}>{cell(d.service.total)}</td>
                           <td className={`${table.td} ${num} ${d.tax ? "font-bold text-orange-700" : ""}`}>{cell(d.tax)}</td>
+                          <td className={`${table.td} px-4!`}><AuditLink audit={auditFor({ from: d.date })} /></td>
                         </tr>
                       ))}
                       <tr className={`${table.row} bg-(--text-color)/3`}>
@@ -176,6 +180,7 @@ export default function TaxTab() {
                         ))}
                         <td className={`${table.td} ${num} font-bold`}>{signed(shown.totals.service.total)}</td>
                         <td className={`${table.td} ${num} font-bold`}>{signed(shown.totals.tax)}</td>
+                        <td className={`${table.td} px-4!`}><AuditLink audit={auditFor({ from: shown.from, to: shown.to })} /></td>
                       </tr>
                     </tbody>
                   </table>
@@ -230,7 +235,10 @@ export default function TaxTab() {
                               <td className={`${table.td} text-right! font-bold text-orange-700`}>{signed(t.tax)}</td>
                               <td className={`${table.td} hidden md:table-cell`}>{t.posted_by || "-"}</td>
                               <td className={table.td}>
-                                <button type="button" onClick={() => router.push(`/pms/folios?folio_id=${t.folio_id}`)} className={btn.rowPrimary}>Folio</button>
+                                <div className={table.actions}>
+                                  <button type="button" onClick={() => router.push(`/pms/folios?folio_id=${t.folio_id}`)} className={btn.rowPrimary}>Folio</button>
+                                  <AuditLink audit={auditFor({ staffId: t.posted_by_id, search: t.guest_name || t.folio_number, from: t.day })} />
+                                </div>
                               </td>
                             </tr>
                           ))}

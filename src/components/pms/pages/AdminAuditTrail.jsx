@@ -303,7 +303,7 @@ export default function AdminAuditTrail() {
         <p className="text-2xl text-[color:var(--text-color)]/76 mt-2">
           {isHeadOffice
             ? "A record of actions taken by staff at any branch - or at Head Office, by Head Office's own accounts."
-            : "A record of actions taken by staff on this branch's account. Manager and developer visibility only."}
+            : "A record of actions taken by staff on this branch's account. Seen by the manager, the accountant and developers."}
         </p>
       </div>
 

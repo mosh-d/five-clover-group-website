@@ -6,6 +6,8 @@ import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDateTime, money } from "@/lib/pms/format";
@@ -33,7 +35,8 @@ function DuplicateCard({ dup }) {
               <th className="py-2 pr-4 font-semibold">When<Tip id="accounting.receipts.col.when" /></th>
               <th className="py-2 pr-4 font-semibold">What<Tip id="accounting.receipts.col.what" /></th>
               <th className="py-2 pr-4 font-semibold hidden md:table-cell">Taken By<Tip id="accounting.receipts.col.by" /></th>
-              <th className="py-2 font-semibold text-right">Amount<Tip id="accounting.receipts.col.amount" /></th>
+              <th className="py-2 pr-4 font-semibold text-right">Amount<Tip id="accounting.receipts.col.amount" /></th>
+              <th className="py-2 font-semibold">Action<Tip id="accounting.col.viewLog" /></th>
             </tr>
           </thead>
           <tbody>
@@ -45,7 +48,10 @@ function DuplicateCard({ dup }) {
                   <div className={`text-lg ${page.muted}`}>{[t.guest, t.reference, t.methods].filter(Boolean).join(" · ")}</div>
                 </td>
                 <td className="py-2 pr-4 hidden md:table-cell">{t.taken_by || "-"}</td>
-                <td className="py-2 text-right whitespace-nowrap font-bold">{money(t.amount)}</td>
+                <td className="py-2 pr-4 text-right whitespace-nowrap font-bold">{money(t.amount)}</td>
+                <td className="py-2">
+                  <AuditLink audit={auditFor({ staffId: t.taken_by_id, search: t.guest || t.reference, from: t.day })} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -227,6 +233,7 @@ export default function ReceiptsTab() {
                             <th className={table.th}>What<Tip id="accounting.receipts.col.what" /></th>
                             <th className={`${table.th} hidden md:table-cell`}>Taken By<Tip id="accounting.receipts.col.by" /></th>
                             <th className={`${table.th} text-right!`}>Amount<Tip id="accounting.receipts.col.amount" /></th>
+                            <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -239,6 +246,9 @@ export default function ReceiptsTab() {
                               </td>
                               <td className={`${table.td} hidden md:table-cell`}>{l.taken_by || "-"}</td>
                               <td className={`${table.td} text-right! font-bold`}>{money(l.amount)}</td>
+                              <td className={table.td}>
+                                <AuditLink audit={auditFor({ staffId: l.taken_by_id, search: l.guest || l.reference, from: l.day })} />
+                              </td>
                             </tr>
                           ))}
                         </tbody>

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDateTime, money } from "@/lib/pms/format";
@@ -163,6 +165,7 @@ export default function BalanceTab() {
                       {shown.credit_given && <th className={`${table.th} text-right!`}>Credit Given<Tip id="accounting.balance.col.creditGiven" /></th>}
                       <th className={`${table.th} text-right!`}>Paid Back<Tip id="accounting.balance.col.paidBack" /></th>
                       <th className={`${table.th} text-right!`}>At the End<Tip id="accounting.balance.col.end" /></th>
+                      <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -179,6 +182,7 @@ export default function BalanceTab() {
                         {shown.credit_given && <td className={`${table.td} text-right!`}>{d.credit_given ? signed(-d.credit_given) : "-"}</td>}
                         <td className={`${table.td} text-right!`}>{d.paid_back ? `+${signed(d.paid_back)}` : "-"}</td>
                         <td className={`${table.td} text-right! font-bold`}>{signed(d.at_end)}</td>
+                        <td className={table.td}><AuditLink audit={auditFor({ from: d.date })} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -217,7 +221,10 @@ export default function BalanceTab() {
                             <td className={`${table.td} text-right!`}>{signed(f.balance)}</td>
                             <td className={`${table.td} text-right! font-bold text-red-600`}>{signed(f.difference)}</td>
                             <td className={table.td}>
-                              <button type="button" onClick={() => openFolio(f.folio_id)} className={btn.rowPrimary}>Folio</button>
+                              <div className={table.actions}>
+                                <button type="button" onClick={() => openFolio(f.folio_id)} className={btn.rowPrimary}>Folio</button>
+                                <AuditLink audit={auditFor({ search: f.guest_name || f.folio_number, from: f.opened, to: shown.today })} />
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -262,7 +269,10 @@ export default function BalanceTab() {
                               {f.paid_difference !== 0 && <div className="text-lg text-red-600">should be {signed(f.total_amount - f.balance)}</div>}
                             </td>
                             <td className={table.td}>
-                              <button type="button" onClick={() => openFolio(f.folio_id)} className={btn.rowPrimary}>Folio</button>
+                              <div className={table.actions}>
+                                <button type="button" onClick={() => openFolio(f.folio_id)} className={btn.rowPrimary}>Folio</button>
+                                <AuditLink audit={auditFor({ search: f.guest_name || f.folio_number, from: f.opened, to: shown.today })} />
+                              </div>
                             </td>
                           </tr>
                         ))}

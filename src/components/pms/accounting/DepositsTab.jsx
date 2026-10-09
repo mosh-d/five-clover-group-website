@@ -8,6 +8,8 @@ import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import RefundCreditModal from "@/components/pms/RefundCreditModal";
 import { Tip } from "@/components/pms/Tip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDate, formatPaymentMethod, money } from "@/lib/pms/format";
@@ -23,7 +25,7 @@ import { refundDeposit } from "@/lib/pms/api/folios-api";
 
 const ago = (days) => (days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`);
 
-function GroupTable({ group, onRefund, onFolio }) {
+function GroupTable({ group, today, onRefund, onFolio }) {
   const paged = usePagedRows(group.credits);
   return (
     <section className="w-full flex flex-col gap-4">
@@ -83,6 +85,7 @@ function GroupTable({ group, onRefund, onFolio }) {
                         <div className={table.actions}>
                           <button type="button" onClick={() => onRefund(c)} className={btn.rowDanger}>Refund</button>
                           {c.folio_id && <button type="button" onClick={() => onFolio(c.folio_id)} className={btn.rowSecondary}>Folio</button>}
+                          <AuditLink audit={auditFor({ search: c.guest_name || c.deposit_reference, from: c.taken, to: today })} />
                         </div>
                       </td>
                     </tr>
@@ -204,7 +207,7 @@ export default function DepositsTab() {
             {[...view.groups.filter((g) => g.chase), ...view.groups.filter((g) => !g.chase)]
               .filter((g) => g.count > 0 || !g.chase)
               .map((g) => (
-                <GroupTable key={g.key} group={g} onRefund={setRefundTarget} onFolio={(id) => router.push(`/pms/folios?folio_id=${id}`)} />
+                <GroupTable key={g.key} group={g} today={view.today} onRefund={setRefundTarget} onFolio={(id) => router.push(`/pms/folios?folio_id=${id}`)} />
               ))}
           </>
         )

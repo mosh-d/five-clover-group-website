@@ -6,6 +6,8 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
 import { AbbrLabel } from "@/components/pms/InfoTip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDateTime, money, pct } from "@/lib/pms/format";
@@ -207,6 +209,11 @@ export default function FlashTab() {
                           </div>
                           {view.has_last_year && <div>{c.year === "this" ? "This Year" : "Last Year"}</div>}
                           <div className="text-lg font-normal normal-case tracking-normal">{span(c)}</div>
+                          {c.from && (
+                            <div className="normal-case tracking-normal">
+                              <AuditLink audit={auditFor({ from: c.from, to: c.to })} />
+                            </div>
+                          )}
                         </th>
                       ))}
                     </tr>

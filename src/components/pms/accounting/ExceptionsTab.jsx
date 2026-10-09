@@ -9,6 +9,8 @@ import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import { Tip } from "@/components/pms/Tip";
+import { AuditLink } from "@/components/pms/reportUi";
+import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDateTime, formatTime, money } from "@/lib/pms/format";
@@ -298,6 +300,7 @@ export default function ExceptionsTab() {
                         <th className={`${table.th} hidden lg:table-cell`}>Guest / Bill<Tip id="accounting.exceptions.col.guest" /></th>
                         <th className={`${table.th} hidden lg:table-cell`}>Reason<Tip id="accounting.exceptions.col.reason" /></th>
                         <th className={table.th}>Review<Tip id="accounting.exceptions.col.review" /></th>
+                        <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -332,6 +335,9 @@ export default function ExceptionsTab() {
                                 {l.review.by || "a former account"}{l.review.note ? `: ${l.review.note}` : ""}
                               </div>
                             )}
+                          </td>
+                          <td className={table.td}>
+                            <AuditLink audit={auditFor({ staffId: l.by_id, search: l.guest || l.reference, from: l.day })} />
                           </td>
                         </tr>
                       ))}

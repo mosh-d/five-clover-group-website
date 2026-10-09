@@ -1041,6 +1041,17 @@ export const TIPS = {
   "accounting.deposits.col.receipt": "The credit's reference and the paper receipt number typed with it.",
   "accounting.deposits.col.credit": "What is left to spend or pay back, how it was paid, and whether it was paid ahead or is an overpayment. Part may already have gone to charges.",
   "accounting.deposits.col.actions": "Refund: pay it back to the guest, recorded under your name. Folio: open the stay's folio.",
+  "accounting.receipts": "The paper receipt numbers typed with guest payments, reservation credit and non-guest payments: numbers used more than once, numbers missing from a receipt book, and money taken without a receipt number.",
+  "accounting.receipts.from": "The first business day to check (6am that day).",
+  "accounting.receipts.to": "The last business day to check (until 6am the next day). Up to 31 days at a time.",
+  "accounting.receipts.totals": "Payments: everything taken in these days. The rest is what needs a look.",
+  "accounting.receipts.duplicates": "Receipt numbers used on more than one transaction, on any day. One payment split over two methods is one transaction. Red: the transactions are for different amounts.",
+  "accounting.receipts.gaps": "Numbers skipped between the receipts used in these days, per receipt book (the letters before the number). A number used on any other day doesn't count as missing. A big jump is shown as one line: usually a new book, or a mistyped number.",
+  "accounting.receipts.blank": "Money taken without a receipt number, by who took it.",
+  "accounting.receipts.col.when": "When the money was taken.",
+  "accounting.receipts.col.what": "A guest payment, reservation credit or a non-guest payment, with the guest or bill and how it was paid.",
+  "accounting.receipts.col.by": "Who took the money.",
+  "accounting.receipts.col.amount": "How much - for a payment split over two methods, both together.",
 
   // ---- Cash-Up
   "cashUp.page": "Count what you hold and submit it. You won't see what the system expects; the accountant compares the two.",

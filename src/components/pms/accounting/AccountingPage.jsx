@@ -10,6 +10,7 @@ import CashUpTab from "./CashUpTab";
 import ExceptionsTab from "./ExceptionsTab";
 import ReceivablesTab from "./ReceivablesTab";
 import DepositsTab from "./DepositsTab";
+import ReceiptsTab from "./ReceiptsTab";
 
 // Accounting - the branch accountant's page (owner, 2026-10-08; the plan is
 // docs/ACCOUNTING-PLAN.md in the backend). One tab per part of the job, each
@@ -21,6 +22,7 @@ const TABS = [
   { key: "exceptions", label: "Exceptions", Tab: ExceptionsTab },
   { key: "receivables", label: "Receivables", Tab: ReceivablesTab },
   { key: "deposits", label: "Deposits", Tab: DepositsTab },
+  { key: "receipts", label: "Receipts", Tab: ReceiptsTab },
 ];
 
 export default function AccountingPage() {

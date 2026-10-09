@@ -63,3 +63,9 @@ export const fetchDepositLedger = async () => {
   const response = await http.get(`/api/accounting/deposits`);
   return response.data;
 };
+
+// Receipts: numbers used twice, numbers missing from a run, money taken without one.
+export const fetchReceiptsAudit = async (from, to) => {
+  const response = await http.get(`/api/accounting/receipts`, { params: { from, to } });
+  return response.data;
+};

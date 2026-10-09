@@ -6,6 +6,7 @@ import Modal from "@/components/pms/Modal";
 import { btn } from "@/components/pms/ui";
 import { getStoredBranch, getStoredStaffUsername } from "@/lib/pms/auth";
 import { money } from "@/lib/pms/format";
+import { printElement } from "@/lib/pms/print";
 
 const formatDateTime = (d) =>
   new Date(d).toLocaleString("en-US", { timeZone: "Africa/Lagos", dateStyle: "medium", timeStyle: "short" });
@@ -17,9 +18,8 @@ const formatDateTime = (d) =>
 // null — non-guest orders don't require a name) for a non-guest one. Branch
 // and staff name are resolved from the logged-in session, not passed in.
 //
-// Print via window.print() with the page's own CSS scoped to #print-receipt
-// (see print.css) — everything else on the page is hidden for the duration
-// of the print, not swapped out into a separate window/tab.
+// Print prints the receipt alone (printElement): it goes into a hidden frame
+// with the page's own styles, so nothing else on the screen is printed.
 export default function PrintReceiptModal({ billNo, who, items, serviceCharge, total, onClose }) {
   const branch = getStoredBranch();
   const staffName = getStoredStaffUsername();
@@ -29,7 +29,7 @@ export default function PrintReceiptModal({ billNo, who, items, serviceCharge, t
     <Modal onClose={onClose} title="Receipt" size="sm" footer={
       <>
         <button onClick={onClose} className={btn.secondary}>Close</button>
-        <button onClick={() => window.print()} className={btn.primary}>Print</button>
+        <button onClick={() => printElement(document.getElementById("print-receipt"), `Receipt ${billNo || ""}`.trim())} className={btn.primary}>Print</button>
       </>
     }>
       <div id="print-receipt" className="flex flex-col gap-4 text-xl">

@@ -9,6 +9,7 @@ import DayCloseTab from "./DayCloseTab";
 import CashUpTab from "./CashUpTab";
 import ExceptionsTab from "./ExceptionsTab";
 import ReceivablesTab from "./ReceivablesTab";
+import DepositsTab from "./DepositsTab";
 
 // Accounting - the branch accountant's page (owner, 2026-10-08; the plan is
 // docs/ACCOUNTING-PLAN.md in the backend). One tab per part of the job, each
@@ -19,6 +20,7 @@ const TABS = [
   { key: "cash-up", label: "Cash-Up", Tab: CashUpTab },
   { key: "exceptions", label: "Exceptions", Tab: ExceptionsTab },
   { key: "receivables", label: "Receivables", Tab: ReceivablesTab },
+  { key: "deposits", label: "Deposits", Tab: DepositsTab },
 ];
 
 export default function AccountingPage() {

@@ -57,3 +57,9 @@ export const fetchStatement = async (folioId) => {
   const response = await http.get(`/api/accounting/receivables/statement/${folioId}`);
   return response.data;
 };
+
+// Deposits: every bit of reservation credit held, by where its stay is.
+export const fetchDepositLedger = async () => {
+  const response = await http.get(`/api/accounting/deposits`);
+  return response.data;
+};

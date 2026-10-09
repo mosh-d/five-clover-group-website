@@ -84,3 +84,9 @@ export const fetchBalanceCheck = async (from, to) => {
   const response = await http.get(`/api/accounting/balance`, { params: { from, to } });
   return response.data;
 };
+
+// Tax & Service: service charge on food and drink, and tax typed on charges, by day and type.
+export const fetchTaxAndService = async (from, to) => {
+  const response = await http.get(`/api/accounting/tax-service`, { params: { from, to } });
+  return response.data;
+};

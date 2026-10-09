@@ -42,7 +42,7 @@ export const HELP_SECTIONS = [
     id: "accounting",
     icon: IoCalculatorOutline,
     label: "Accounting",
-    summary: "The accountant's page: signing off each business day (6am to 6am); checking the cash-ups, refunds and discounts, receipt numbers and guest balances; chasing what is owed; refunding guests' credit; and the day's flash report.",
+    summary: "The accountant's page: signing off each business day (6am to 6am); checking the cash-ups, refunds and discounts, receipt numbers and guest balances; chasing what is owed; refunding guests' credit; the day's flash report; and the tax and service charge to pay over.",
     workflow: [
       "Day Close lists the business days ten to a page, newest first from yesterday. Open one to see its money in and out by method, the reservation credit taken, its charges by type and the night audit's total.",
       "Sign a day off once you have checked it - a record that it was checked, under your name. A day can only be signed off after it has ended and its night audit has run - until then its room charges are missing.",
@@ -54,6 +54,7 @@ export const HELP_SECTIONS = [
       "Receipts checks the paper receipt numbers typed with payments, reservation credit and non-guest payments over a range of days: numbers used on more than one transaction (in red when the amounts differ), numbers missing between the ones used, per receipt book, and money taken with no receipt number, by who took it.",
       "Flash Report gives one business day, the month to it and the year to it - rooms available and sold, occupancy, ADR and RevPAR, everything charged by what it was for, and money in by method - worked out as Head Office's Metrics work them out, for your branch. Beside each, the same days last year once the books go back that far. Below: what is owed to the branch and the credit it holds, as things stand now. Download it as an Excel file.",
       "Balance Check takes what guests owe less the credit they hold and rolls it forward from the records a business day at a time: at the start, plus what was charged, less what was paid and paid ahead, plus what was paid back, gives the end. Credit used on a bill, credit moved to another booking and an overpayment kept as credit only move money between what is owed and what is held, so they leave the total alone. Today's end must match what the folios and credits themselves say now - it says whether it adds up - and any folio whose balance isn't its charges, less what was paid on it, plus anything paid back or kept as credit, less the credit it used, is listed.",
+      "Tax & Service gives, for a range of business days (the month so far at first), the service charge on food and drink - guests' and non-guests', day by day, counted where the Food and Drink Sales reports count it - and any tax typed on a charge, by day and by kind of charge, with every taxed charge listed to check. The PMS adds no tax itself: it is only what staff type on a charge.",
       "You also have Guest Folios, read-only: every folio, its charges, payments, credit and history, and the search (folio number, guest name, payment reference or receipt number). The front desk posts charges, takes payments and closes folios; you can refund a guest's credit - the same refund the front desk uses, recorded under your name.",
     ],
   },

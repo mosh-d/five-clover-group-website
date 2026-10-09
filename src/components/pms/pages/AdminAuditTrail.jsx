@@ -130,7 +130,10 @@ export default function AdminAuditTrail() {
   const [filterFrom, setFilterFrom] = useState(() => searchParams.get("from") || "");
   const [filterTo, setFilterTo] = useState(() => searchParams.get("to") || "");
   const [filterSearch, setFilterSearch] = useState(() => searchParams.get("search") || "");
-  const hasFilters = filterStaffId || filterRole || filterAction || filterFrom || filterTo || filterSearch;
+  // One entry by its id: a folio line opened from Guest Folios (2026-10-09).
+  // Any other filter change lets go of it.
+  const [filterEntry, setFilterEntry] = useState(() => searchParams.get("entry") || "");
+  const hasFilters = filterStaffId || filterRole || filterAction || filterFrom || filterTo || filterSearch || filterEntry;
 
   // Only the newest request may write the list. Several loads can be in
   // flight at once (arrival, a socket reconnect, typing), and without this a
@@ -152,6 +155,7 @@ export default function AdminAuditTrail() {
         from: filters.from || undefined,
         to: filters.to || undefined,
         search: filters.search || undefined,
+        id: filters.entry || undefined,
       };
       const data = isHeadOffice ? await fetchHqAuditLogs(placeRef.current, params) : await fetchAuditLogHistory(params);
       if (requestId !== latestRequest.current) return;
@@ -199,7 +203,9 @@ export default function AdminAuditTrail() {
       from: searchParams.get("from") || "",
       to: searchParams.get("to") || "",
       search: searchParams.get("search") || "",
+      entry: searchParams.get("entry") || "",
     };
+    setFilterEntry(fromUrl.entry);
     setFilterStaffId(fromUrl.staffId);
     setFilterAction(fromUrl.action);
     setFilterFrom(fromUrl.from);
@@ -221,7 +227,7 @@ export default function AdminAuditTrail() {
   const { isConnected } = useWebSocketContext();
   useEffect(() => {
     if (!canView || !isConnected) return;
-    load(1, { staffId: filterStaffId, role: filterRole, action: filterAction, from: filterFrom, to: filterTo, search: filterSearch });
+    load(1, { staffId: filterStaffId, role: filterRole, action: filterAction, from: filterFrom, to: filterTo, search: filterSearch, entry: filterEntry });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, canView]);
 
@@ -238,6 +244,7 @@ export default function AdminAuditTrail() {
       return;
     }
     const timer = setTimeout(() => {
+      setFilterEntry("");
       load(1, { staffId: filterStaffId, role: filterRole, action: filterAction, from: filterFrom, to: filterTo, search: filterSearch });
     }, 400);
     return () => clearTimeout(timer);
@@ -254,6 +261,7 @@ export default function AdminAuditTrail() {
       search: filterSearch,
       ...next,
     };
+    setFilterEntry("");
     setFilterStaffId(merged.staffId);
     setFilterRole(merged.role);
     setFilterAction(merged.action);
@@ -264,6 +272,7 @@ export default function AdminAuditTrail() {
   };
 
   const clearFilters = () => {
+    setFilterEntry("");
     setFilterStaffId("");
     setFilterRole("");
     setFilterAction("");
@@ -401,6 +410,14 @@ export default function AdminAuditTrail() {
       </div>
 
       <div className="w-full flex flex-col gap-4">
+        {filterEntry && (
+          <div className="w-full flex flex-wrap items-center justify-between gap-3 rounded-lg border border-(--accent-2) bg-(--emphasis)/5 px-5 py-3 text-xl">
+            <span>Showing the one entry for the folio line you opened.</span>
+            <button type="button" onClick={() => applyFilters({})} className="font-bold text-(--emphasis) hover:underline cursor-pointer">
+              Show everything that day
+            </button>
+          </div>
+        )}
         {loading ? (
           <div className="flex justify-center py-10"><LoadingSpinner size="lg" /></div>
         ) : error ? (

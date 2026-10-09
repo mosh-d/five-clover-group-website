@@ -3,7 +3,7 @@
 
 // Carried over from the branch PMS's admin_pages/AdminFolios.jsx (2026-09-28).
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useSearchParams } from "@/lib/pms/router";
+import { useNavigate, useSearchParams } from "@/lib/pms/router";
 import { IoClose, IoReceiptOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
 import PageHeading from "@/components/pms/PageHeading";
@@ -20,8 +20,10 @@ import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { canRefund, canTransferCredit, getStoredStaffRole } from "@/lib/pms/auth";
 import { markOtaSettlementPaid, createOtaSettlement, updateOtaSettlement, previewOtaAmount } from "@/lib/pms/api/ota-api";
+import { fetchAuditEntryForLine } from "@/lib/pms/api/audit-log-api";
+import { canOpen } from "@/components/pms/pmsNavItems";
 import { fetchInHouse } from "@/lib/pms/api/front-office-api";
-import { formatPaymentMethod, money, formatDate, PAYMENT_METHODS } from "@/lib/pms/format";
+import { formatPaymentMethod, money, formatDate, formatDateTime, PAYMENT_METHODS } from "@/lib/pms/format";
 import DateInput from "@/components/pms/DateInput";
 import { adjustmentProblem, adjustmentMax } from "@/lib/pms/validation";
 import { AbbrLabel } from "@/components/pms/InfoTip";
@@ -95,6 +97,32 @@ export default function AdminFoliosPage() {
   // The accountant reads every folio but changes nothing here - except paying
   // a guest's credit back (Accounting, Step 4). The server refuses the rest.
   const readOnly = staffRole === "accountant";
+  // A charge or payment line opens its Audit Trail entry (owner, 2026-10-09) -
+  // for whoever may open the Audit Trail (manager, accountant).
+  const navigate = useNavigate();
+  const linesOpenTrail = canOpen(staffRole, "audit-trail");
+  const [trailNote, setTrailNote] = useState(null);
+  const openLineInTrail = async (type, id, e) => {
+    if (!linesOpenTrail || e?.target?.closest?.("button, a, input, select")) return;
+    setTrailNote(null);
+    try {
+      const found = await fetchAuditEntryForLine(type, id);
+      if (found?.id) navigate(`/pms/audit-trail?entry=${found.id}&from=${found.day}&to=${found.day}`);
+      else setTrailNote("No Audit Trail entry was found for that line - it may be older than the trail.");
+    } catch (err) {
+      setTrailNote(err.message || "Could not open the Audit Trail.");
+    }
+  };
+  const lineProps = (type, id) =>
+    linesOpenTrail
+      ? {
+          role: "link",
+          tabIndex: 0,
+          title: "Open this line in the Audit Trail",
+          onClick: (e) => openLineInTrail(type, id, e),
+          onKeyDown: (e) => e.key === "Enter" && openLineInTrail(type, id, e),
+        }
+      : {};
 
   const [subTab, setSubTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState(isWaitstaffSession ? "open" : "all");
@@ -904,15 +932,17 @@ export default function AdminFoliosPage() {
                 <SummaryStat
                   label="Check-In"
                   tip="folios.sum.checkIn"
+                  // With the time (owner, 2026-10-09): a same-day check-in and
+                  // check-out otherwise read as two identical dates.
                   value={selectedFolio.reservation?.actual_check_in
-                    ? formatDate(selectedFolio.reservation.actual_check_in)
+                    ? formatDateTime(selectedFolio.reservation.actual_check_in)
                     : `${formatDate(selectedFolio.reservation?.check_in)} (expected)`}
                 />
                 <SummaryStat
                   label="Check-Out"
                   tip="folios.sum.checkOut"
                   value={selectedFolio.reservation?.actual_check_out
-                    ? formatDate(selectedFolio.reservation.actual_check_out)
+                    ? formatDateTime(selectedFolio.reservation.actual_check_out)
                     : `${formatDate(selectedFolio.reservation?.check_out)} (expected)`}
                   // A stay cut short says so (owner, 2026-10-08): its credit for
                   // the unused nights otherwise read as unexplained.
@@ -1246,6 +1276,7 @@ export default function AdminFoliosPage() {
               {/* Charges */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
                 <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges<Tip id="folios.charges" /></h3>
+                {trailNote && <p className="text-lg text-orange-700">{trailNote}</p>}
                 {/* Surfaced so a missing/short room charge doesn't read as a
                     bug — postStayChargesForDay silently excludes a
                     complementary room's own share when it posts. */}
@@ -1270,7 +1301,11 @@ export default function AdminFoliosPage() {
                 ) : (
                   <div className="flex flex-col gap-2">
                     {selectedFolio.items.map((item) => (
-                      <div key={item.id} className="flex justify-between items-start gap-4 bg-[color:var(--text-color)]/3 rounded-lg px-5 py-3 text-xl">
+                      <div
+                        key={item.id}
+                        {...lineProps("charge", item.id)}
+                        className={`flex justify-between items-start gap-4 bg-[color:var(--text-color)]/3 rounded-lg px-5 py-3 text-xl ${linesOpenTrail ? "cursor-pointer hover:ring-1 hover:ring-(--emphasis)/40" : ""}`}
+                      >
                         <span className="capitalize min-w-0 break-words">
                           {item.description}
                           <span className="text-[color:var(--text-color)]/68 ml-2">({CHARGE_TYPE_LABELS[item.item_type] || item.item_type})</span>
@@ -1383,7 +1418,8 @@ export default function AdminFoliosPage() {
                         <div
                           key={p.id}
                           ref={isHighlighted ? highlightedPaymentRef : null}
-                          className={`flex justify-between items-center gap-4 rounded-lg px-5 py-3 text-xl ${
+                          {...lineProps("payment", p.id)}
+                          className={`flex justify-between items-center gap-4 rounded-lg px-5 py-3 text-xl ${linesOpenTrail ? "cursor-pointer hover:ring-1 hover:ring-(--emphasis)/40 " : ""}${
                             isHighlighted
                               ? "bg-[color:var(--emphasis)]/5 ring-1 ring-[color:var(--emphasis)]/50"
                               : "bg-[color:var(--text-color)]/3"

@@ -16,6 +16,13 @@ export const fetchAuditActionLabels = async () => {
   return response.data;
 };
 
+// The entry behind one folio line - "charge" or "payment" - as { id, day },
+// or { id: null } when the line is older than the trail.
+export const fetchAuditEntryForLine = async (type, id) => {
+  const response = await http.get(`/api/audit-logs/for-line`, { params: { type, id } });
+  return response.data;
+};
+
 // Distinct staff who have at least one logged action for this branch —
 // feeds the Audit Trail page's staff filter dropdown.
 export const fetchAuditStaffOptions = async () => {

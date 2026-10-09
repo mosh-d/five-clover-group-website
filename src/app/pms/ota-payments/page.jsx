@@ -10,6 +10,7 @@ import { btn, field, page, table } from "@/components/pms/ui";
 import { fetchOtaSettlements, markOtaSettlementPaid } from "@/lib/pms/api/ota-api";
 import { money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import Notice from "@/components/pms/Notice";
 import { Tip } from "@/components/pms/Tip";
 
 // OTA Payments - the branch PMS's page (AdminOtaPayments.jsx): money owed by
@@ -29,7 +30,9 @@ export default function PmsOtaPaymentsPage() {
   const [error, setError] = useState(null);
   const [confirming, setConfirming] = useState(null);
   const [reference, setReference] = useState("");
+  const [received, setReceived] = useState("");
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -47,14 +50,28 @@ export default function PmsOtaPaymentsPage() {
     load();
   }, [load]);
 
+  // What the OTA kept: the expected amount less what arrived (never below nothing).
+  const expectedOf = (s) => Number(s?.amount || 0);
+  const receivedNumber = received === "" ? null : Number(received);
+  const commission = confirming && receivedNumber !== null ? Math.max(0, Math.round((expectedOf(confirming) - receivedNumber) * 100) / 100) : 0;
+  const receivedProblem =
+    receivedNumber === null ? "Enter what arrived." : !(receivedNumber > 0) ? "What arrived has to be more than nothing." : null;
+
   const confirmPaid = async () => {
-    if (!confirming) return;
+    if (!confirming || receivedProblem) return;
     try {
       setSaving(true);
       setError(null);
-      await markOtaSettlementPaid(confirming.id, reference.trim() || undefined);
+      const paid = await markOtaSettlementPaid(confirming.id, reference.trim() || undefined, receivedNumber);
+      const s = paid?.settlement || {};
+      const kept = Number(s.commission || 0);
+      setNotice(
+        `Recorded ${money(s.amount_received ?? receivedNumber)} from the OTA for ${confirming.reservation?.guest_name || "the guest"}` +
+          (kept > 0 ? `; ${money(kept)} it kept as commission and fees is taken off the folio, so the guest doesn't owe it.` : "."),
+      );
       setConfirming(null);
       setReference("");
+      setReceived("");
       await load();
     } catch (err) {
       setError(err.message || "Failed to record the OTA payment.");
@@ -71,10 +88,12 @@ export default function PmsOtaPaymentsPage() {
       <PageHeading icon={IoBusinessOutline} tipId="otaPayments.page">OTA Payments</PageHeading>
       <p className={`text-xl ${page.muted}`}>
         Nights an OTA is paying for instead of the guest. The folio keeps showing them as owing until the money arrives, and the
-        guest is never asked for them. Marking one paid records the money against that folio.
+        guest is never asked for them. Marking one paid records the money that arrived against that folio; whatever the OTA kept is
+        recorded as its commission and taken off the folio.
       </p>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
+      <Notice message={notice} onDismiss={() => setNotice(null)} />
 
       <div className="flex gap-3 flex-wrap">
         {TABS.map((tab) => (
@@ -105,8 +124,10 @@ export default function PmsOtaPaymentsPage() {
                   <th className={table.th}>Booking Ref<Tip id="otaPayments.col.bookingRef" /></th>
                   <th className={table.th}>Nights Covered<Tip id="otaPayments.col.nights" /></th>
                   <th className={table.th}>Covers<Tip id="otaPayments.col.covers" /></th>
-                  <th className={table.th}>Amount<Tip id="otaPayments.col.amount" /></th>
-                  <th className={table.th}>Status<Tip id="otaPayments.col.status" /></th>
+                  <th className={table.th}>Expected<Tip id="otaPayments.col.amount" /></th>
+                  {status === "paid" && <th className={table.th}>Received<Tip id="otaPayments.col.received" /></th>}
+                  {status === "paid" && <th className={table.th}>Commission<Tip id="otaPayments.col.commission" /></th>}
+                  {status === "pending" && <th className={table.th}>Status<Tip id="otaPayments.col.status" /></th>}
                   <th className={table.th}>Action<Tip id="otaPayments.col.action" /></th>
                 </tr>
               </thead>
@@ -120,15 +141,25 @@ export default function PmsOtaPaymentsPage() {
                     <td className={table.td}>{s.start_date} to {s.end_date}</td>
                     <td className={table.td}>{s.includes_breakfast ? "Room and breakfast" : "Room only"}</td>
                     <td className={table.td}>{money(s.amount)}</td>
-                    <td className={table.td}>
-                      <StatusBadge status={s.status === "paid" ? "paid" : "owing"} />
-                    </td>
+                    {status === "paid" && <td className={table.td}>{money(s.amount_received ?? s.amount)}</td>}
+                    {status === "paid" && (
+                      <td className={`${table.td} ${Number(s.commission) > 0 ? "font-semibold text-orange-700" : ""}`}>
+                        {Number(s.commission) > 0 ? money(s.commission) : "-"}
+                      </td>
+                    )}
+                    {status === "pending" && (
+                      <td className={table.td}>
+                        <StatusBadge status={s.status === "paid" ? "paid" : "owing"} />
+                      </td>
+                    )}
                     <td className={table.td}>
                       {s.status === "pending" ? (
                         <button
                           onClick={() => {
                             setConfirming(s);
                             setReference(s.reference || "");
+                            setReceived(String(Number(s.amount || 0)));
+                            setNotice(null);
                           }}
                           className={btn.rowSuccess}
                         >
@@ -155,16 +186,36 @@ export default function PmsOtaPaymentsPage() {
           footer={
             <>
               <button onClick={() => setConfirming(null)} className={btn.secondary}>Cancel</button>
-              <button onClick={confirmPaid} disabled={saving} className={btn.success}>
-                {saving ? "Recording..." : `Yes, ${money(confirming.amount)} received`}
+              <button onClick={confirmPaid} disabled={saving || Boolean(receivedProblem)} className={btn.success}>
+                {saving ? "Recording..." : `Yes, ${money(receivedNumber || 0)} received`}
               </button>
             </>
           }
         >
           <p className={`text-xl ${page.muted}`}>
-            This records {money(confirming.amount)} against the guest folio as money from the OTA, settling the nights it covered.
-            Only do it once the money has actually arrived.
+            The OTA was to pay {money(confirming.amount)} for these nights. Enter what actually arrived: it is recorded against the guest folio as
+            money from the OTA. Only do it once the money has arrived.
           </p>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ota-received" className={field.label}>Amount received<Tip id="otaPayments.received" /></label>
+            <input
+              id="ota-received"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={received}
+              onChange={(e) => setReceived(e.target.value)}
+              className={field.input}
+            />
+            {receivedProblem ? (
+              <p className={field.hint}>{receivedProblem}</p>
+            ) : commission > 0 ? (
+              <p className="text-lg text-orange-700">
+                {money(commission)} less than expected: recorded as the OTA&apos;s commission and fees, and taken off the guest&apos;s folio so they don&apos;t owe it.
+              </p>
+            ) : null}
+          </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="ota-reference" className={field.label}>OTA reference (optional)<Tip id="otaPayments.reference" /></label>
             <input

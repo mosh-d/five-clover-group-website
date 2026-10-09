@@ -69,10 +69,12 @@ export const updateOtaSettlement = async (id, { startDate, endDate, includesBrea
   return announced(response.data);
 };
 
-export const markOtaSettlementPaid = async (id, reference) => {
-  const response = await http.post(
-    `/api/ota-settlements/${id}/paid`,
-    reference ? { reference } : {},
-  );
+// amountReceived: what actually arrived, when the OTA kept its commission -
+// left out, the expected amount.
+export const markOtaSettlementPaid = async (id, reference, amountReceived) => {
+  const response = await http.post(`/api/ota-settlements/${id}/paid`, {
+    ...(reference ? { reference } : {}),
+    ...(amountReceived !== undefined && amountReceived !== null && amountReceived !== "" ? { amount_received: Number(amountReceived) } : {}),
+  });
   return announced(response.data);
 };

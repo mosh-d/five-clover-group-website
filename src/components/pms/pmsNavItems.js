@@ -75,7 +75,9 @@ export const PMS_NAV_ITEMS = [
   // badge: carries a live count (PmsSidebar) - open alerts; OTA payments
   // still to arrive.
   { slug: "alerts", label: "ALERTS", icon: IoNotificationsOutline, roles: OVERSIGHT, badge: "alerts" },
-  { slug: "ota-payments", label: "OTA PAYMENTS", icon: IoBusinessOutline, roles: FRONT_DESK, badge: "ota" },
+  // The accountant marks an OTA's money received, with its commission
+  // (Accounting, Step 11; owner, 2026-10-08).
+  { slug: "ota-payments", label: "OTA PAYMENTS", icon: IoBusinessOutline, roles: ["receptionist", "accountant"], badge: "ota" },
   // Both: a branch's own trail, or - at Head Office - any branch's.
   { slug: "audit-trail", label: "AUDIT TRAIL", icon: IoDocumentTextOutline, roles: ["manager", "accountant"], hq: HEAD_OFFICE },
   { slug: "menu", label: "MENU", icon: IoRestaurantOutline, roles: ["storekeeper"] },

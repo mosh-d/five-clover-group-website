@@ -12,9 +12,11 @@ import { MotionDiv, tabEnter } from "@/components/pms/motion";
 import { usePmsLive, useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { fetchAlerts } from "@/lib/pms/api/alerts-api";
+import { fetchFlaggedExceptions } from "@/lib/pms/api/accounting-api";
+import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { markNoShow } from "@/lib/pms/api/reservations-pms-api";
 import { calendarDaysAgo, serverNow } from "@/lib/pms/dates";
-import { formatDate, money } from "@/lib/pms/format";
+import { formatDate, formatDateTime, money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import { Tip } from "@/components/pms/Tip";
 
@@ -49,6 +51,9 @@ const timeUntil = (date, now) => {
 export default function PmsAlertsPage() {
   const router = useRouter();
   const { alertCount, syncAlertCount } = usePmsLive();
+  // What the accountant flagged is the manager's to see (Accounting, Step 3).
+  const role = usePmsSession()?.role;
+  const seesFlags = role === "manager" || role === "developer";
   const [tab, setTab] = useState("missed");
   const [pages, setPages] = useState({});
   const [data, setData] = useState(null);
@@ -68,8 +73,8 @@ export default function PmsAlertsPage() {
   const loadAlerts = useCallback(async () => {
     try {
       setLoading(true);
-      const result = await fetchAlerts();
-      setData(result);
+      const [result, flagged] = await Promise.all([fetchAlerts(), seesFlags ? fetchFlaggedExceptions() : Promise.resolve(null)]);
+      setData(flagged ? { ...result, flagged_exceptions: flagged.map((f) => ({ ...f, id: f.key })) } : result);
       setError(null);
       // This page holds the freshest total; the sidebar badge follows it.
       syncAlertCount(result?.total || 0);
@@ -78,7 +83,7 @@ export default function PmsAlertsPage() {
     } finally {
       setLoading(false);
     }
-  }, [syncAlertCount]);
+  }, [syncAlertCount, seesFlags]);
 
   useEffect(() => {
     loadAlerts();
@@ -230,6 +235,42 @@ export default function PmsAlertsPage() {
       ],
     },
   ];
+  if (seesFlags) {
+    TABS.push({
+      // Lines the accountant flagged on Accounting > Exceptions, with their
+      // note. Not in the badge's count: that is the front desk's too.
+      key: "flagged",
+      colTips: { "When": "alerts.flagged.when", "What": "alerts.flagged.what", "Amount": "alerts.flagged.amount", "By": "alerts.flagged.by", "Accountant's Note": "alerts.flagged.note" },
+      label: "Flagged by Accountant",
+      rows: data?.flagged_exceptions || [],
+      empty: "Nothing flagged by the accountant.",
+      intro: "Refunds, discounts, adjustments and free food or drink the accountant has asked you to look at. They stay here until the accountant marks them OK.",
+      columns: [
+        // The business day it belongs to, as the accountant saw it (a 1am refund is the night before).
+        { head: "When", cell: (f) => formatDate(`${f.day}T12:00:00Z`) },
+        {
+          head: "What",
+          cell: (f) => (
+            <div className="whitespace-normal min-w-[14rem]">
+              <div className="font-semibold">{f.kind_label}</div>
+              <div className={`text-base ${page.muted}`}>{[f.details, f.guest || f.reference].filter(Boolean).join(" · ")}</div>
+            </div>
+          ),
+        },
+        { head: "Amount", cell: (f) => (f.amount === null || f.amount === undefined ? "-" : <span className="font-bold">{f.amount < 0 ? `-${money(-f.amount)}` : money(f.amount)}</span>) },
+        { head: "By", wide: true, cell: (f) => f.by || "-" },
+        {
+          head: "Accountant's Note",
+          cell: (f) => (
+            <div className="whitespace-normal min-w-[12rem]">
+              <div>{f.note || "-"}</div>
+              <div className={`text-base ${page.muted}`}>{f.flagged_by || "The accountant"}, {formatDateTime(f.flagged_at)}</div>
+            </div>
+          ),
+        },
+      ],
+    });
+  }
   const active = TABS.find((t) => t.key === tab);
   const pageNo = pages[tab] || 1;
 

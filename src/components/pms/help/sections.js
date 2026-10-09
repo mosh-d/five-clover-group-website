@@ -48,6 +48,7 @@ export const HELP_SECTIONS = [
       "Sign a day off once you have checked it - a record that it was checked, under your name. A day can only be signed off after it has ended and its night audit has run - until then its room charges are missing.",
       "Money is recorded when it happens, so a past day only changes when something is dated into it later: a night audit run late, a guest's last night charged at check-out, or a reservation's deposit applied when the booking is confirmed (it keeps the day it was taken). A signed-off day that changes shows as \"Changed after sign-off\", with what moved and what was posted since; check it and sign it off again, saying what you checked. The earlier sign-off is kept.",
       "Cash-Up shows, for a business day, each person who took money or declared: what they are expected to hold per method (money they took and reservation credit, less refunds, credit refunds and their paid-outs) beside what they declared, and the difference in red. Someone who took money and didn't declare shows \"Not declared\". Verify a declared cash-up once you have checked it - after 6am, when its day has ended - and it can't be changed after.",
+      "Exceptions lists every way money was given back or taken off over a range of business days (up to 31): refunds, credit refunds, adjustments that took money off a bill, corrections, stays charged below the standard rate, rooms made complementary, and free or manager's food and drink at menu price - each with who did it and the note they typed. Tick lines and mark them OK, or flag them for the manager with a note; the manager sees flagged ones on Alerts until you mark them OK.",
     ],
   },
   {
@@ -240,6 +241,7 @@ export const HELP_SECTIONS = [
       "Missed Check-Ins and Overdue Checkouts only fire from noon on the scheduled date onward — a same-day reservation isn't \"missed\"/\"overdue\" until the hotel's actual noon check-in/checkout time has passed.",
       "Unconfirmed holds show a live countdown to when they'll auto-cancel if nobody confirms payment in time.",
       "The sidebar's alert badge count matches this page's total, and both update live over the websocket connection.",
+      "A manager also sees Flagged by Accountant: the exceptions the accountant has asked them to look at, with the accountant's note. Each stays there until the accountant marks it OK.",
     ],
   },
   {

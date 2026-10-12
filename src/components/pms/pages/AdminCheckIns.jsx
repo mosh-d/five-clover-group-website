@@ -43,7 +43,6 @@ import GuestName from "@/components/pms/GuestName";
 import { GuestTagPills } from "@/components/pms/GuestName";
 import EmailStatusTag from "@/components/pms/EmailStatusTag";
 import { Tip } from "@/components/pms/Tip";
-const todayISO = () => adminTodayISO();
 // A Walk-In's check-in is always "right now" — but the reservation it
 // creates must be dated by the hotel's business day (6am Lagos cutover, see
 // date-utils.js), not the raw calendar date, so an arrival before 6am can
@@ -85,7 +84,9 @@ export default function AdminCheckInsPage() {
   const [tab, setTab] = useState("arrivals");
 
   // --- Arrivals tab ---
-  const [date, setDate] = useState(todayISO());
+  // The business day: before 6am, last night's late arrivals are the ones
+  // that can still check in (today's can't until 6am).
+  const [date, setDate] = useState(currentBusinessDateISO);
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

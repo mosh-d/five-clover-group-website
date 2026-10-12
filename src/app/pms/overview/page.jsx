@@ -29,7 +29,7 @@ import { fetchNightAuditHistory } from "@/lib/pms/api/night-audit-api";
 import { fetchReportsDashboard } from "@/lib/pms/api/reports-api";
 import { fetchHouseStatus, fetchReservations, fetchRoomStatusList } from "@/lib/pms/api/reservations-pms-api";
 import { fetchMaintenanceMode } from "@/lib/pms/api/room-data";
-import { todayISO, yesterdayISO, monthStartISO, formatShortDate } from "@/lib/pms/dates";
+import { todayISO, yesterdayISO, businessDateISO, formatShortDate } from "@/lib/pms/dates";
 import { money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import { Tip } from "@/components/pms/Tip";
@@ -56,13 +56,17 @@ export default function PmsOverviewPage() {
 
   const load = useCallback(async () => {
     const today = todayISO();
+    // Arrivals and the month so far go by the hotel's business day (6am
+    // cutover), like Check-Ins and the reports; departures stay on the
+    // calendar day - after midnight that is this morning's check-outs.
+    const businessDay = businessDateISO();
     const [house, arrivals, departures, inHouse, alertList, report, audits, bookings, status, maintenance] = await Promise.allSettled([
       fetchHouseStatus(),
-      fetchCheckInList(today),
+      fetchCheckInList(businessDay),
       fetchCheckOutList(today),
       fetchInHouse(),
       fetchAlerts(),
-      fetchReportsDashboard(monthStartISO(), today),
+      fetchReportsDashboard(`${businessDay.slice(0, 7)}-01`, businessDay),
       fetchNightAuditHistory({ page: 1, limit: 1 }),
       fetchReservations({ page: 1, limit: 5 }),
       fetchRoomStatusList(),

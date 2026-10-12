@@ -17,6 +17,7 @@ import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import { Tip } from "@/components/pms/Tip";
+import { businessDateISO } from "@/lib/pms/dates";
 
 const DAYS_VISIBLE = 14;
 const DAY_MS = 86400000;
@@ -42,6 +43,9 @@ const isoDate = (d) => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 };
+// The hotel's day (6am Lagos, server clock) as this page's local-midnight
+// Date: before 6am a guest who arrived last night is still on "today".
+const businessToday = () => startOfDay(new Date(`${businessDateISO()}T00:00:00`));
 const dayIndexOf = (date, windowStart) =>
   Math.round((startOfDay(new Date(date)) - windowStart) / DAY_MS);
 
@@ -90,7 +94,7 @@ function packIntoLanes(bars) {
 
 export default function AdminRoomChartPage() {
   const navigate = useNavigate();
-  const [windowStart, setWindowStart] = useState(() => startOfDay(new Date()));
+  const [windowStart, setWindowStart] = useState(businessToday);
   const [chart, setChart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -255,7 +259,7 @@ export default function AdminRoomChartPage() {
               <IoChevronBack size={18} /> Previous
             </button>
             <button
-              onClick={() => setWindowStart(startOfDay(new Date()))}
+              onClick={() => setWindowStart(businessToday())}
               className={btn.secondary}
             >
               Today
@@ -326,7 +330,7 @@ export default function AdminRoomChartPage() {
                 className={`sticky top-0 z-20 text-center text-lg font-semibold border-b px-1 py-2 ${
                   i < DAYS_VISIBLE - 1 ? 'border-r' : ''
                 } border-(--accent-2) ${
-                  isoDate(d) === isoDate(new Date()) ?
+                  isoDate(d) === businessDateISO() ?
                     'bg-[color-mix(in_srgb,var(--emphasis)_12%,white)] text-[color:var(--emphasis)]'
                   : 'bg-(--card) text-[color:var(--text-color)]/76'
                 }`}

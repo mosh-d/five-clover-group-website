@@ -29,7 +29,7 @@ import {
   downloadAccommodationReportExport,
 } from "@/lib/pms/api/reports-api";
 import { fetchStaffAccounts } from "@/lib/pms/api/staff-accounts-api";
-import { adminTodayISO } from "@/lib/pms/dates";
+import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { isAccountant, isReceptionist, isStorekeeper, isWaitron } from "@/lib/pms/auth";
 
 // money/pct/formatDate/formatDateTime plus the shared render bits below
@@ -48,12 +48,15 @@ import DateInput from "@/components/pms/DateInput";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
 import GuestName from "@/components/pms/GuestName";
 import { Tip } from "@/components/pms/Tip";
+// This business month, first to last day. By the hotel's business day (6am
+// Lagos, server clock): before 6am on the 1st it is still last month. It used
+// to read the device's local calendar and then toISOString(), which in Lagos
+// (UTC+1) moved both ends back a day - the 30th of last month to the 30th.
 function currentMonthRange() {
-  const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth(), 1);
-  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const fmt = (d) => d.toISOString().slice(0, 10);
-  return { from: fmt(from), to: fmt(to) };
+  const from = `${businessDateISO().slice(0, 7)}-01`;
+  const [y, m] = from.split("-").map(Number);
+  const to = addDaysISO(`${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01`, -1);
+  return { from, to };
 }
 
 const ALL_TABS = [
@@ -561,7 +564,7 @@ function RoomRevenueTotal({ amount }) {
 
 function ManifestTab() {
   const showAudit = canViewAuditTrail();
-  const [date, setDate] = useState(adminTodayISO());
+  const [date, setDate] = useState(businessDateISO);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -817,7 +820,7 @@ function AnalysisTab() {
 // ─── PMS Report (Evening / Morning) ─────────────────────────────────────────────
 
 function PmsReportTab() {
-  const [date, setDate] = useState(adminTodayISO());
+  const [date, setDate] = useState(businessDateISO);
   const [variant, setVariant] = useState("evening");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -1001,7 +1004,7 @@ function PmsReportTab() {
 
 function AccommodationReportTab({ shift }) {
   const showAudit = canViewAuditTrail();
-  const [date, setDate] = useState(adminTodayISO());
+  const [date, setDate] = useState(businessDateISO);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -1476,7 +1479,7 @@ function SalesNotes({ data }) {
 
 function FoodSalesReportTab({ shift }) {
   const showAudit = canViewAuditTrail();
-  const [date, setDate] = useState(adminTodayISO());
+  const [date, setDate] = useState(businessDateISO);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -1594,7 +1597,7 @@ function FoodSalesReportTab({ shift }) {
 
 function DrinkSalesReportTab({ shift }) {
   const showAudit = canViewAuditTrail();
-  const [date, setDate] = useState(adminTodayISO());
+  const [date, setDate] = useState(businessDateISO);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -1715,7 +1718,7 @@ function BarStockReportTab({ shift }) {
   // What a drink cost the hotel isn't the F&B floor's: a waitron's report
   // comes without it (Accounting, Step 12).
   const showCost = !isWaitron();
-  const [date, setDate] = useState(adminTodayISO());
+  const [date, setDate] = useState(businessDateISO);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

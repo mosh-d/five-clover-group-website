@@ -16,10 +16,12 @@ import { formatDateTime, money } from "@/lib/pms/format";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { fetchCashUpDay, verifyCashUp } from "@/lib/pms/api/cash-up-api";
 
-// Cash-Up (Accounting, Step 2): per person, what the system expects them to
-// hold for a business day - money they took and reservation credit, less
-// refunds, credit refunds and their paid-outs - beside what they counted
-// (blind). The accountant verifies a submitted count once checked; it can't
+// Cash-Up (Accounting, Step 2): per person, the cash the system expects in
+// their drawer for a business day - cash they took and reservation credit,
+// less refunds, credit refunds and their paid-outs - beside the cash they
+// counted (blind). Cash only, and a count is expected of everyone who took
+// cash (owner, 2026-10-12); card, POS, transfer and online money is checked
+// against the bank, not counted. The accountant verifies a submitted count once checked; it can't
 // change after.
 
 const dayText = (iso) =>
@@ -33,7 +35,7 @@ const diffClass = (v) => (v === null || v === undefined || Math.abs(v) < 0.005 ?
 function StatusPill({ person }) {
   const d = person.declaration;
   const [label, className] = !d
-    ? ["No count", "bg-orange-100 text-orange-700"]
+    ? ["No count", "bg-red-100 text-red-700"]
     : d.verified_at
       ? ["Verified", "bg-green-100 text-green-800"]
       : ["Counted", "bg-black/5 text-(--text-color)/76"];
@@ -147,7 +149,7 @@ function PersonCard({ person, date, onVerify }) {
       )}
 
       {person.lines.length === 0 ? (
-        <p className={`text-xl ${page.muted}`}>Nothing taken or counted.</p>
+        <p className={`text-xl ${page.muted}`}>No cash taken or counted.</p>
       ) : (
         <div className={table.scroll}>
           <table className="w-full text-xl">
@@ -259,7 +261,7 @@ export default function CashUpTab() {
           <Tip id="accounting.cashUp" />
         </h2>
         <p className={`text-xl ${page.muted}`}>
-          What each person was expected to hold for a business day, beside what they counted. Verify a cash-up once you have checked it; it can&apos;t be changed after.
+          The cash each person was expected to have in their drawer for a business day, beside the cash they counted. Card, POS, transfer and online money isn&apos;t counted by staff - it is in the bank. Verify a cash-up once you have checked it; it can&apos;t be changed after.
         </p>
       </div>
 
@@ -280,8 +282,8 @@ export default function CashUpTab() {
       {shown && (shown.not_declared > 0 || shown.to_verify > 0) && (
         <div className="flex flex-wrap gap-3">
           {shown.not_declared > 0 && (
-            <span className="px-4 py-2 rounded-lg text-xl font-semibold bg-orange-100 text-orange-700">
-              {shown.not_declared} {shown.not_declared === 1 ? "person" : "people"} took money and didn&apos;t submit a count
+            <span className="px-4 py-2 rounded-lg text-xl font-semibold bg-red-100 text-red-700">
+              {shown.not_declared} {shown.not_declared === 1 ? "person" : "people"} took cash and didn&apos;t count it
             </span>
           )}
           {shown.to_verify > 0 && (

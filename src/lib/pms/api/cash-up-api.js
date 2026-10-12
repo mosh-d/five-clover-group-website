@@ -7,8 +7,19 @@ export const fetchMyCashUp = async (date) => {
   return response.data;
 };
 
+// The cash counts this person still owes (today, or yesterday's until 6am) -
+// the Cash-Up badge. Never an amount.
+export const fetchMyCashUpDue = async () => {
+  const response = await http.get(`/api/cash-up/mine/due`);
+  return response.data?.due || [];
+};
+
+// Fired after a count is submitted, so the badge updates straight away.
+export const CASH_UP_CHANGED_EVENT = "pms:cash-up-changed";
+
 export const declareCashUp = async (date, amounts, note) => {
   const response = await http.put(`/api/cash-up/mine/${date}`, { amounts, ...(note ? { note } : {}) });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(CASH_UP_CHANGED_EVENT));
   return response.data;
 };
 

@@ -15,12 +15,13 @@ import { formatDateTime, formatTime, money } from "@/lib/pms/format";
 import { cancelPaidOut, declareCashUp, fetchMyCashUp, recordPaidOut } from "@/lib/pms/api/cash-up-api";
 
 // Cash-Up (Accounting, Step 2; owner, 2026-10-08) - a receptionist's or
-// waitron's own page. They count what they hold and submit it, per method,
-// for today or yesterday (a night shift ends after 6am), without ever seeing
-// what the system expects: a blind count, so the count isn't bent to match.
-// Optional. Theirs to change until the accountant verifies it. Cash paid out
-// of the drawer for a small expense is recorded here too, on the day it
-// happens.
+// waitron's own page. They count the cash in their drawer and submit it, for
+// today or yesterday (a night shift ends after 6am), without ever seeing what
+// the system expects: a blind count, so the count isn't bent to match. Cash
+// only, and expected of anyone who took cash (owner, 2026-10-12): card, POS,
+// transfer and online money is in the bank, and the accountant checks it
+// there. Theirs to change until the accountant verifies it. Cash paid out of
+// the drawer for a small expense is recorded here too, on the day it happens.
 
 const dayText = (iso) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).replace(",", "");
@@ -64,14 +65,8 @@ function DeclarationCard({ data, onDone }) {
           {declaration.review_note ? <> - &ldquo;{declaration.review_note}&rdquo;</> : null}. It can&apos;t be changed now.
         </p>
         <div className="flex flex-col">
-          {data.methods.map((m) => (
-            <div key={m.key} className="flex justify-between gap-4 py-2 text-xl border-b border-(--accent-2)">
-              <span>{m.label}</span>
-              <span>{money(declaration.amounts?.[m.key] || 0)}</span>
-            </div>
-          ))}
-          <div className="flex justify-between gap-4 py-2 text-xl font-bold">
-            <span>Total</span>
+            <div className="flex justify-between gap-4 py-2 text-xl font-bold">
+            <span>Cash counted</span>
             <span>{money(declaration.total)}</span>
           </div>
         </div>
@@ -86,7 +81,7 @@ function DeclarationCard({ data, onDone }) {
         <p className={`text-xl ${page.muted}`}>
           {declaration
             ? `Submitted at ${formatDateTime(declaration.declared_at)}. You can change it until the accountant verifies it.`
-            : "Count what you hold for this business day and enter it by method. Leave a method empty if you have none."}
+            : "Count the cash in your drawer for this business day - notes and coins - and enter it. Card, POS, transfer and online money isn't counted here: the accountant checks it against the bank."}
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -119,18 +114,15 @@ function DeclarationCard({ data, onDone }) {
         <AutoGrowTextarea id="declare-note" value={note} onChange={(e) => setNote(e.target.value)} className={field.textarea} disabled={busy || confirming} />
       </div>
       <p className="text-2xl font-bold">
-        Total: {money(total)}
+        Cash counted: {money(total)}
         <Tip id="cashUp.total" />
       </p>
       {invalid && <p className={field.error}>The {invalid.label} amount must be a number, 0 or more.</p>}
 
       {confirming ? (
         <ConfirmPanel
-          question={declaration ? `Update your count for ${dayText(data.date)} to ${money(total)}?` : `Submit a count of ${money(total)} for ${dayText(data.date)}?`}
-          details={[
-            ...data.methods.filter((m) => values[m.key] > 0).map((m) => `${m.label}: ${money(values[m.key])}`),
-            "You can change it until the accountant verifies it.",
-          ]}
+          question={declaration ? `Update your cash count for ${dayText(data.date)} to ${money(total)}?` : `Submit a cash count of ${money(total)} for ${dayText(data.date)}?`}
+          details={["You can change it until the accountant verifies it."]}
           confirmLabel={declaration ? "Yes, update it" : "Yes, submit it"}
           busyLabel="Saving..."
           busy={busy}
@@ -329,7 +321,7 @@ export default function CashUpPage() {
       <div>
         <PageHeading icon={IoWalletOutline} tipId="cashUp.page">Cash-Up</PageHeading>
         <p className={`text-2xl mt-2 ${page.muted}`}>
-          Count what you hold and submit it. You won&apos;t see what the system expects - the accountant compares the two.
+          Whenever you took cash, count the cash in your drawer and submit it before you go. You won&apos;t see what the system expects; the accountant compares the two.
         </p>
       </div>
 
@@ -343,6 +335,22 @@ export default function CashUpPage() {
       ) : (
         data && (
           <>
+            {(data.due || []).map((d) => (
+              <p
+                key={d.date}
+                className={`w-full text-xl rounded-lg px-4 py-3 border ${d.overdue ? "bg-red-50 border-red-200 text-red-700" : "bg-orange-50 border-orange-200 text-orange-700"}`}
+              >
+                {d.overdue
+                  ? `You took cash on ${d.date_text} and haven't counted it. Submit that count before 6am today - after that it can't be submitted.`
+                  : "You took cash today. Count your drawer and submit it before you leave."}
+                {d.date !== data.date && (
+                  <button type="button" onClick={() => setDate(d.date)} className={`${btn.rowSecondary} ml-3`}>
+                    Count {d.overdue ? "that day" : "today"}
+                  </button>
+                )}
+              </p>
+            ))}
+
             <div className="flex flex-col gap-2">
               <label htmlFor="cashup-day" className={field.label}>Business Day<Tip id="cashUp.day" /></label>
               <select

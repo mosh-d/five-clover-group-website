@@ -5,6 +5,7 @@ import { io } from "socket.io-client";
 import { API_BASE_URL } from "@/lib/pms/client";
 import { fetchAlerts } from "@/lib/pms/api/alerts-api";
 import { fetchOtaSettlements, OTA_CHANGED_EVENT } from "@/lib/pms/api/ota-api";
+import { fetchMyCashUpDue, CASH_UP_CHANGED_EVENT } from "@/lib/pms/api/cash-up-api";
 
 // The PMS's live connection to the backend (Socket.IO) - the branch PMS's
 // WebSocketContext, for whichever branch is signed in. Pages subscribe to
@@ -32,7 +33,7 @@ const RESERVATION_REFRESH_DEBOUNCE_MS = 250;
 // once a minute for changes made on another PC.
 const OTA_COUNT_REFRESH_MS = 60000;
 
-export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, children }) {
+export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, canCashUp, children }) {
   const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set() });
   const reservationTimerRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -90,6 +91,31 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, chi
       offRooms();
     };
   }, [canSeeOtaPayments, refreshOtaCount, subscribe]);
+
+  // Cash counts this person still owes - the Cash-Up badge (owner,
+  // 2026-10-12: a count is expected of anyone who took cash). Refetched when
+  // money may have moved (bookings change), when they submit one, and once a
+  // minute.
+  const [cashUpDueCount, setCashUpDueCount] = useState(0);
+  const refreshCashUpDue = useCallback(() => {
+    if (!canCashUp) return;
+    fetchMyCashUpDue()
+      .then((due) => setCashUpDueCount(due.length))
+      .catch(() => {});
+  }, [canCashUp]);
+
+  useEffect(() => {
+    if (!canCashUp) return undefined;
+    refreshCashUpDue();
+    const timer = setInterval(refreshCashUpDue, OTA_COUNT_REFRESH_MS);
+    window.addEventListener(CASH_UP_CHANGED_EVENT, refreshCashUpDue);
+    const offReservations = subscribe(refreshCashUpDue, "reservations");
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener(CASH_UP_CHANGED_EVENT, refreshCashUpDue);
+      offReservations();
+    };
+  }, [canCashUp, refreshCashUpDue, subscribe]);
 
   useEffect(() => {
     if (!branchId) return undefined;
@@ -156,7 +182,7 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, chi
 
   return (
     <PmsLiveContext.Provider
-      value={{ isConnected, subscribe, alertCount, refreshAlertCount, syncAlertCount, otaPendingCount, refreshOtaCount, disconnectedRefreshTick }}
+      value={{ isConnected, subscribe, alertCount, refreshAlertCount, syncAlertCount, otaPendingCount, refreshOtaCount, cashUpDueCount, refreshCashUpDue, disconnectedRefreshTick }}
     >
       {children}
     </PmsLiveContext.Provider>
@@ -175,6 +201,8 @@ const HEAD_OFFICE_LIVE = {
   syncAlertCount: () => {},
   otaPendingCount: 0,
   refreshOtaCount: () => {},
+  cashUpDueCount: 0,
+  refreshCashUpDue: () => {},
   disconnectedRefreshTick: 0,
 };
 

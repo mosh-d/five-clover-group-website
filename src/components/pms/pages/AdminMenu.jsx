@@ -30,6 +30,17 @@ import { Tip } from "@/components/pms/Tip";
 
 const EMPTY_LAUNDRY_FORM = { name: "", wash_and_iron_price: "", ironing_only_price: "" };
 
+// A cost price as the form holds it ("" for none), and back. A cost price is
+// what one costs the hotel (Accounting, Step 12) - the store keeper's, never
+// the F&B floor's: the server leaves it out for anyone else.
+const costText = (v) => (v === null || v === undefined ? "" : String(Number(v)));
+const costValue = (text) => (text === "" ? null : Number(text));
+const badCost = (text) => text !== "" && !(Number(text) >= 0);
+
+// The money and stock columns, a little narrower, so a drink's row - its cost
+// price and three actions too - still fits a laptop.
+const narrow = "px-5!";
+
 export default function AdminMenu() {
   // Pricing/add/delete belongs to manager, accountant and storekeeper
   // (2026-09-07); a waitron reaches this page for exactly one thing —
@@ -55,6 +66,7 @@ export default function AdminMenu() {
       <PageHeading icon={IoRestaurantOutline} tipId="menu.page">Menu</PageHeading>
       <p className="text-xl text-[color:var(--text-color)]/76">
         Food and drink items a waitron picks from when posting a charge to a folio, or when recording a non-guest sale. Prices set here are what an order charges.
+        {canEdit && " Cost prices - what an item costs the hotel - are for the accountant's F&B Margin; waitrons don't see them."}
       </p>
 
       <div className="flex gap-3 text-xl flex-wrap">
@@ -109,11 +121,11 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
   const [error, setError] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
 
-  const [addForm, setAddForm] = useState({ name: "", price: "", service_charge: "" });
+  const [addForm, setAddForm] = useState({ name: "", price: "", service_charge: "", cost_price: "" });
   const [adding, setAdding] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ name: "", price: "", service_charge: "" });
+  const [editForm, setEditForm] = useState({ name: "", price: "", service_charge: "", cost_price: "" });
   const [savingId, setSavingId] = useState(null);
 
   // Delete is only allowed for an item with zero order/stock history (the
@@ -126,7 +138,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
   // feeds the Bar Stock report (Reports → Bar Stock), separate from is_active
   // ("In Stock"/"Out of Stock" above, which is really just menu availability).
   const [stockAdjustId, setStockAdjustId] = useState(null);
-  const [stockForm, setStockForm] = useState({ movement_type: "added", quantity: "", notes: "" });
+  const [stockForm, setStockForm] = useState({ movement_type: "added", quantity: "", notes: "", unit_cost: "" });
   const [savingStockId, setSavingStockId] = useState(null);
   const [stockSuccessId, setStockSuccessId] = useState(null);
 
@@ -147,12 +159,17 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!addForm.name.trim() || !addForm.price) return;
+    if (!addForm.name.trim() || !addForm.price || badCost(addForm.cost_price)) return;
     try {
       setAdding(true);
       setError(null);
-      await createItem({ name: addForm.name.trim(), price: Number(addForm.price), service_charge: Number(addForm.service_charge || 0) });
-      setAddForm({ name: "", price: "", service_charge: "" });
+      await createItem({
+        name: addForm.name.trim(),
+        price: Number(addForm.price),
+        service_charge: Number(addForm.service_charge || 0),
+        ...(addForm.cost_price === "" ? {} : { cost_price: Number(addForm.cost_price) }),
+      });
+      setAddForm({ name: "", price: "", service_charge: "", cost_price: "" });
       await load();
     } catch (err) {
       setError(err.response?.data?.message || `Failed to add ${label}.`);
@@ -163,15 +180,27 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
 
   const startEdit = (item) => {
     setEditingId(item.id);
-    setEditForm({ name: item.name, price: String(item.price), service_charge: String(item.service_charge || 0) });
+    setEditForm({ name: item.name, price: String(item.price), service_charge: String(item.service_charge || 0), cost_price: costText(item.cost_price) });
   };
 
   const handleSaveEdit = async (id) => {
     if (!editForm.name.trim() || !editForm.price) return;
+    if (badCost(editForm.cost_price)) {
+      setError("A cost price can't be below 0. Leave it empty for none.");
+      return;
+    }
+    // The cost price goes only when it changed (empty clears it).
+    const cost = costValue(editForm.cost_price);
+    const costChanged = cost !== costValue(costText(items.find((i) => i.id === id)?.cost_price));
     try {
       setSavingId(id);
       setError(null);
-      await updateItem(id, { name: editForm.name.trim(), price: Number(editForm.price), service_charge: Number(editForm.service_charge || 0) });
+      await updateItem(id, {
+        name: editForm.name.trim(),
+        price: Number(editForm.price),
+        service_charge: Number(editForm.service_charge || 0),
+        ...(costChanged ? { cost_price: cost } : {}),
+      });
       setEditingId(null);
       await load();
     } catch (err) {
@@ -231,7 +260,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
 
   const startStockAdjust = (item) => {
     setStockAdjustId(item.id);
-    setStockForm({ movement_type: "added", quantity: "", notes: "" });
+    setStockForm({ movement_type: "added", quantity: "", notes: "", unit_cost: "" });
   };
 
   const handleSaveStockAdjust = async (id) => {
@@ -251,6 +280,8 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
         movement_type: stockForm.movement_type,
         quantity: Number(stockForm.quantity),
         notes: stockForm.notes.trim() || undefined,
+        // A restock's cost each, if given: it becomes the drink's cost price.
+        ...(stockForm.movement_type === "added" && stockForm.unit_cost !== "" ? { unit_cost: Number(stockForm.unit_cost) } : {}),
       });
       setStockAdjustId(null);
       setStockSuccessId(id);
@@ -264,12 +295,13 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
   };
 
   // Stock is a drinks-only column — Name, Price, Service Charge, Status,
-  // Actions is 5 for food; drinks get a 6th for it.
-  const columnCount = recordStock ? 6 : 5;
+  // Actions is 5 for food; drinks get a 6th for it. Cost Price is one more
+  // for whoever edits the menu.
+  const columnCount = (recordStock ? 6 : 5) + (canEdit ? 1 : 0);
 
-  const stockQtyValid = stockForm.movement_type === "correction"
+  const stockQtyValid = (stockForm.movement_type === "correction"
     ? stockForm.quantity !== "" && Number(stockForm.quantity) >= 0
-    : Number(stockForm.quantity) >= 1;
+    : Number(stockForm.quantity) >= 1) && !(stockForm.movement_type === "added" && badCost(stockForm.unit_cost));
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -287,9 +319,10 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
             <thead>
               <tr className={table.headRow}>
                 <th className={`${table.th} ${table.stickyTh}`}>Name<Tip id="menu.col.name" /></th>
-                <th className={table.th}>Price (₦)<Tip id="menu.col.price" /></th>
-                <th className={table.th}>Service Charge (₦)<Tip id="menu.col.serviceCharge" /></th>
-                {recordStock && <th className={table.th}>Stock<Tip id="menu.col.stock" /></th>}
+                <th className={`${table.th} ${narrow}`}>Price (₦)<Tip id="menu.col.price" /></th>
+                {canEdit && <th className={`${table.th} ${narrow}`}>Cost Price (₦)<Tip id="menu.col.costPrice" /></th>}
+                <th className={`${table.th} ${narrow}`}>Service Charge (₦)<Tip id="menu.col.serviceCharge" /></th>
+                {recordStock && <th className={`${table.th} ${narrow}`}>Stock<Tip id="menu.col.stock" /></th>}
                 <th className={table.th}>Status<Tip id="menu.col.status" /></th>
                 <th className={table.th}>Actions<Tip id="menu.col.actions" /></th>
               </tr>
@@ -308,14 +341,19 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                           <td className={table.td}>
                             <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className={`${field.input} text-xl!`} />
                           </td>
-                          <td className={table.td}>
+                          <td className={`${table.td} ${narrow}`}>
                             <input type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className={`${field.input} text-xl! w-32`} />
                           </td>
-                          <td className={table.td}>
+                          {canEdit && (
+                            <td className={`${table.td} ${narrow}`}>
+                              <input type="number" min="0" aria-label="Cost price" placeholder="None" value={editForm.cost_price} onChange={(e) => setEditForm({ ...editForm, cost_price: e.target.value })} className={`${field.input} text-xl! w-32`} />
+                            </td>
+                          )}
+                          <td className={`${table.td} ${narrow}`}>
                             <input type="number" value={editForm.service_charge} onChange={(e) => setEditForm({ ...editForm, service_charge: e.target.value })} className={`${field.input} text-xl! w-32`} />
                           </td>
                           {recordStock && (
-                            <td className={table.td}>{item.current_stock ?? "—"}</td>
+                            <td className={`${table.td} ${narrow}`}>{item.current_stock ?? "—"}</td>
                           )}
                           <td className={table.td}>
                             <span className={`text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${statusBadge(item).className}`}>
@@ -334,10 +372,11 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                       ) : (
                         <>
                           <td className={`${table.td} ${table.stickyTd} font-medium`}>{item.name}</td>
-                          <td className={table.td}>{money(item.price)}</td>
-                          <td className={table.td}>{money(item.service_charge)}</td>
+                          <td className={`${table.td} ${narrow}`}>{money(item.price)}</td>
+                          {canEdit && <td className={`${table.td} ${narrow}`}>{item.cost_price === null || item.cost_price === undefined ? "—" : money(item.cost_price)}</td>}
+                          <td className={`${table.td} ${narrow}`}>{money(item.service_charge)}</td>
                           {recordStock && (
-                            <td className={table.td}>{item.current_stock ?? "—"}</td>
+                            <td className={`${table.td} ${narrow}`}>{item.current_stock ?? "—"}</td>
                           )}
                           <td className={table.td}>
                             <span className={`text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${statusBadge(item).className}`}>
@@ -401,6 +440,20 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                                 <span className="text-base text-[color:var(--text-color)]/60">The real total counted on the shelf right now, not a +/- adjustment</span>
                               )}
                             </div>
+                            {stockForm.movement_type === "added" && canEdit && (
+                              <div className="flex flex-col gap-2">
+                                <label htmlFor={`unit-cost-${item.id}`} className={field.label}>Unit Cost (₦, optional)<Tip id="menu.stock.unitCost" /></label>
+                                <input
+                                  id={`unit-cost-${item.id}`}
+                                  type="number"
+                                  min="0"
+                                  value={stockForm.unit_cost}
+                                  onChange={(e) => setStockForm({ ...stockForm, unit_cost: e.target.value })}
+                                  className={`${field.input} text-xl! w-32`}
+                                />
+                                <span className="text-base text-[color:var(--text-color)]/60">What each one cost. It becomes the drink&apos;s cost price.</span>
+                              </div>
+                            )}
                             <div className="flex flex-col gap-2 flex-1 min-w-48">
                               <label className={field.label}>Notes (optional)<Tip id="menu.stock.notes" /></label>
                               <AutoGrowTextarea value={stockForm.notes} onChange={(e) => setStockForm({ ...stockForm, notes: e.target.value })} className={`${field.textarea} text-xl!`} />
@@ -439,7 +492,11 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
               <label className={field.label}>Service Charge (₦)<Tip id="menu.add.serviceCharge" /></label>
               <input type="number" value={addForm.service_charge} onChange={(e) => setAddForm({ ...addForm, service_charge: e.target.value })} className={field.input} />
             </div>
-            <button type="submit" disabled={adding || !addForm.name.trim() || !addForm.price} className={btn.primary}>
+            <div className="flex flex-col gap-2 w-40">
+              <label htmlFor="menu-add-cost" className={field.label}>Cost Price (₦)<Tip id="menu.add.costPrice" /></label>
+              <input id="menu-add-cost" type="number" min="0" placeholder="Optional" value={addForm.cost_price} onChange={(e) => setAddForm({ ...addForm, cost_price: e.target.value })} className={field.input} />
+            </div>
+            <button type="submit" disabled={adding || !addForm.name.trim() || !addForm.price || badCost(addForm.cost_price)} className={btn.primary}>
               {adding ? "Adding..." : "Add Item"}
             </button>
           </div>

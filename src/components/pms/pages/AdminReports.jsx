@@ -1712,6 +1712,9 @@ function DrinkSalesReportTab({ shift }) {
 
 function BarStockReportTab({ shift }) {
   const showAudit = canViewAuditTrail();
+  // What a drink cost the hotel isn't the F&B floor's: a waitron's report
+  // comes without it (Accounting, Step 12).
+  const showCost = !isWaitron();
   const [date, setDate] = useState(adminTodayISO());
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -1799,7 +1802,7 @@ function BarStockReportTab({ shift }) {
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Stock", "Opening", "Added", "Total (before sales)", "Damaged", "Sold", "Unit Cost Price", "Total Amount", "Closing", "Service Charge", "Remark", ...(showAudit ? ["Action"] : [])]} tips={{ "Stock": "reports.bar.col.stock", "Opening": "reports.bar.col.opening", "Added": "reports.bar.col.added", "Total (before sales)": "reports.bar.col.totalBefore", "Damaged": "reports.bar.col.damaged", "Sold": "reports.bar.col.sold", "Unit Cost Price": "reports.bar.col.unitPrice", "Total Amount": "reports.bar.col.totalAmount", "Closing": "reports.bar.col.closing", "Service Charge": "reports.bar.col.serviceCharge", "Remark": "reports.bar.col.remark" }} />
+                <TableHead cells={["Stock", "Opening", "Added", "Total (before sales)", "Damaged", "Sold", "Unit Price", ...(showCost ? ["Unit Cost"] : []), "Total Amount", "Closing", "Service Charge", "Remark", ...(showAudit ? ["Action"] : [])]} tips={{ "Stock": "reports.bar.col.stock", "Opening": "reports.bar.col.opening", "Added": "reports.bar.col.added", "Total (before sales)": "reports.bar.col.totalBefore", "Damaged": "reports.bar.col.damaged", "Sold": "reports.bar.col.sold", "Unit Price": "reports.bar.col.unitPrice", "Unit Cost": "reports.bar.col.unitCost", "Total Amount": "reports.bar.col.totalAmount", "Closing": "reports.bar.col.closing", "Service Charge": "reports.bar.col.serviceCharge", "Remark": "reports.bar.col.remark" }} />
                 <tbody>
                   {data.rows.map((r) => (
                     <tr key={r.drink_item_id} className={table.row}>
@@ -1809,7 +1812,10 @@ function BarStockReportTab({ shift }) {
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.total_stock}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.damaged_stock}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.sold_stock}</td>
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{money(r.unit_cost_price)}</td>
+                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{money(r.unit_price ?? r.unit_cost_price)}</td>
+                      {showCost && (
+                        <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.unit_cost === null || r.unit_cost === undefined ? "—" : money(r.unit_cost)}</td>
+                      )}
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{money(r.total_amount)}</td>
                       <td className={`px-6 py-4 font-semibold ${r.closing_stock < 0 ? "text-red-600" : "text-[color:var(--black)]"}`}>{r.closing_stock}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{money(r.service_charge)}</td>

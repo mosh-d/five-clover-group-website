@@ -14,6 +14,7 @@ import ReceiptsTab from "./ReceiptsTab";
 import FlashTab from "./FlashTab";
 import BalanceTab from "./BalanceTab";
 import TaxTab from "./TaxTab";
+import MarginTab from "./MarginTab";
 import ExportsTab from "./ExportsTab";
 
 // Accounting - the branch accountant's page (owner, 2026-10-08; the plan is
@@ -30,6 +31,7 @@ const TABS = [
   { key: "flash", label: "Flash Report", Tab: FlashTab },
   { key: "balance", label: "Balance Check", Tab: BalanceTab },
   { key: "tax", label: "Tax & Service", Tab: TaxTab },
+  { key: "margin", label: "F&B Margin", Tab: MarginTab },
   { key: "exports", label: "Exports", Tab: ExportsTab },
 ];
 
@@ -43,7 +45,7 @@ export default function AccountingPage() {
       <div>
         <PageHeading icon={IoCalculatorOutline} tipId="accounting.page">Accounting</PageHeading>
         <p className={`text-2xl mt-2 ${page.muted}`}>
-          Sign off each day&apos;s books; check the cash-ups, refunds and discounts, receipt numbers and guest balances; chase what is owed and refund guests&apos; credit; read the day&apos;s flash report and the tax and service charge to pay over; and download the journal for your books.
+          Sign off each day&apos;s books; check the cash-ups, refunds and discounts, receipt numbers and guest balances; chase what is owed and refund guests&apos; credit; read the day&apos;s flash report and the tax and service charge to pay over; see what food and drink make over what they cost; and download the journal for your books.
         </p>
       </div>
       {TABS.length > 1 && (

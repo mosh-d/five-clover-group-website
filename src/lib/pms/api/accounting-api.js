@@ -108,3 +108,9 @@ export const fetchJournal = async (from, to) => {
 };
 
 export const downloadJournal = (from, to) => pmsDownload("/api/accounting/journal/export", { from, to }, `journal_${from}_to_${to}.csv`);
+
+// F&B Margin: each food and drink item's sales, cost and margin over a range of days.
+export const fetchMargin = async (from, to) => {
+  const response = await http.get(`/api/accounting/margin`, { params: { from, to } });
+  return response.data;
+};

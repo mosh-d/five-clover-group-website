@@ -177,6 +177,7 @@ export const HELP_SECTIONS = [
       "A reservation must already be Confirmed (paid) before it can be checked in — a Hold has to be confirmed first (do that from Reservations).",
       "Confirming check-in and assigning room number(s) happens together in one step — supports multiple rooms for a multi-room booking.",
       "Walk-In creates a brand-new reservation and checks it in immediately, for a guest who shows up without booking ahead.",
+      "Room Rate starts at the room's price. A lower rate - typed in, or made with Discount - is shown against the price, and needs a reason before the guest can be checked in. The reason is kept with the booking, in the Audit Trail and in the accountant's Exceptions; the folio shows it beside the stay's original cost. The same applies to lowering a booking's rate on Reservations.",
       "The hotel day starts at 6am. A walk-in before 6am counts from the night before, so check-out can be that same day — a guest arriving at 1am can be checked out by noon. From 6am, the earliest check-out is tomorrow.",
     ],
   },

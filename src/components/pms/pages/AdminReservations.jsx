@@ -80,7 +80,7 @@ export default function AdminReservationsPage() {
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [reservationFolio, setReservationFolio] = useState(null);
-  const [editFields, setEditFields] = useState({ special_requests: "", total_rate: "", discount_mode: "percentage", discount: "" });
+  const [editFields, setEditFields] = useState({ special_requests: "", total_rate: "", discount_mode: "percentage", discount: "", rate_note: "" });
   // Tracks which reservation the Discount field's value currently applies
   // to, so a not-yet-saved discount survives closing and reopening the SAME
   // reservation (e.g. flicking over to Folios and back) without leaking
@@ -246,6 +246,7 @@ export default function AdminReservationsPage() {
             check_in: full.check_in ? new Date(full.check_in).toISOString().split("T")[0] : "",
             discount_mode: "percentage",
             discount: "",
+            rate_note: full.rate_note || "",
           };
         }
 
@@ -260,6 +261,7 @@ export default function AdminReservationsPage() {
           check_in: full.check_in ? new Date(full.check_in).toISOString().split("T")[0] : "",
           discount_mode: prev.discount_mode,
           discount: prev.discount,
+          rate_note: prev.rate_note || full.rate_note || "",
         };
       });
       lastEditedReservationIdRef.current = full.id;
@@ -345,6 +347,8 @@ export default function AdminReservationsPage() {
     // that's actually still editable from here.
     if (!reservationFolio) {
       updatePayload.total_rate = editFields.total_rate === "" ? null : Number(editFields.total_rate);
+      // Why it is below the price - the server refuses a lower rate without it.
+      if (editBelowPrice) updatePayload.rate_note = editFields.rate_note.trim();
     }
     // No check_in here any more: dates are changed from Stay Dates, which
     // goes through change-dates (availability, rooms, hold and price). The
@@ -356,7 +360,8 @@ export default function AdminReservationsPage() {
   const handleSaveEdit = async () => {
     if (!selectedReservation) return;
     const problem = adjustmentProblem("The total rate", editFields.total_rate)
-      || adjustmentProblem("The discount", editFields.discount, editFields.discount_mode);
+      || adjustmentProblem("The discount", editFields.discount, editFields.discount_mode)
+      || (editRateNoteMissing ? "This rate is below the room's price. Say why in Reason for the Lower Rate." : "");
     if (problem) {
       setModalError(problem);
       return;
@@ -400,6 +405,10 @@ export default function AdminReservationsPage() {
       // may be an unsaved Total Rate / Special Requests edit sitting in
       // editFields — persist it first so it's never silently lost.
       if (selectedReservation?.id === confirmTarget.id) {
+        if (editRateNoteMissing) {
+          setConfirmError("This booking's rate is below the room's price. Say why in Reason for the Lower Rate, then confirm.");
+          return;
+        }
         await updateReservation(confirmTarget.id, buildReservationUpdatePayload());
       }
       await confirmReservationById(confirmTarget.id);
@@ -862,6 +871,17 @@ export default function AdminReservationsPage() {
   const discountBaseTotal = res
     ? (Number(res.room_type?.base_rate || 0) + discountBreakfastRate) * Number(res.rooms_booked || 1) * discountNights
     : 0;
+  // The room's price for this booking - the one it was made against
+  // (standard_rate), else today's - as the server checks it. A rate below it
+  // needs a reason (owner, 2026-10-15); under a naira is rounding.
+  const editPriceTotal = res
+    ? (Number(res.standard_rate) || Number(res.room_type?.base_rate || 0) + discountBreakfastRate)
+      * Number(res.rooms_booked || 1)
+      * Math.max(1, Math.ceil((new Date(res.check_out) - new Date(res.check_in)) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const editBelowPrice = Boolean(res) && !reservationFolio && editFields.total_rate !== "" && editFields.total_rate !== null
+    && editPriceTotal - Number(editFields.total_rate) >= 1;
+  const editRateNoteMissing = editBelowPrice && !String(editFields.rate_note || "").trim();
 
   // Discount is a one-shot calculator, not a persisted field — touching it
   // recomputes Total Rate from the base total every time, so it always
@@ -1298,6 +1318,30 @@ export default function AdminReservationsPage() {
                       {money(depositsTotal)}
                     </div>
                   </div>
+                  {editBelowPrice && (
+                    <div className="col-span-2 max-sm:col-span-1 flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+                      <p className="text-xl text-amber-900">
+                        This rate is below the room&apos;s price of {money(editPriceTotal)} for the stay - {money(editPriceTotal - Number(editFields.total_rate))} less.
+                        Say why before saving or confirming; the reason is kept with the booking and shown to the accountant.
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        <label htmlFor="reservation-rate-note" className={field.label}>Reason for the Lower Rate *<Tip id="reservations.rateNote" /></label>
+                        <AutoGrowTextarea
+                          id="reservation-rate-note"
+                          maxLength={500}
+                          placeholder="e.g. corporate rate agreed by the manager"
+                          value={editFields.rate_note}
+                          onChange={(e) => setEditFields({ ...editFields, rate_note: e.target.value })}
+                          className={field.textarea}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {reservationFolio && res?.rate_note && (
+                    <p className="col-span-2 max-sm:col-span-1 text-lg text-[color:var(--text-color)]/76">
+                      Rate below the room&apos;s price because: &ldquo;{res.rate_note}&rdquo;
+                    </p>
+                  )}
                   {!reservationFolio && (
                     <div className="flex flex-col gap-2">
                       <label className={field.label}>Discount ({editFields.discount_mode === "percentage" ? "%" : "₦"})<Tip id="reservations.discount" /></label>

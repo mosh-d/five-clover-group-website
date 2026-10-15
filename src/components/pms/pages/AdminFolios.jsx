@@ -1294,6 +1294,18 @@ export default function AdminFoliosPage() {
                     <span className="block text-base mt-1">
                       Reference only — not part of the balance below. Room charges are billed night by night; use this if you need to compare against a later discount.
                     </span>
+                    {(() => {
+                      // Below the room's price when booked: by how much, and why (owner, 2026-10-15).
+                      const r = selectedFolio.reservation;
+                      const nights = Math.max(1, Math.ceil((new Date(r.check_out) - new Date(r.check_in)) / (1000 * 60 * 60 * 24)));
+                      const price = Number(r.standard_rate || 0) * Number(r.rooms_booked || 1) * nights;
+                      if (!price || price - Number(r.total_rate) < 1) return null;
+                      return (
+                        <span className="block text-base mt-1 text-amber-800">
+                          Below the room&apos;s price of {money(price)} ({money(r.standard_rate)} a night){r.rate_note ? <> because: &ldquo;{r.rate_note}&rdquo;</> : " - no reason was recorded (booked before reasons were asked for)."}
+                        </span>
+                      );
+                    })()}
                   </div>
                 )}
                 {(!selectedFolio.items || selectedFolio.items.length === 0) ? (

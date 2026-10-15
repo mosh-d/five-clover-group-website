@@ -72,7 +72,7 @@ const otaRangeProblem = (ota) => {
 
 const EMPTY_WALK_IN = {
   checkOut: "", roomsBooked: 1, roomTypeId: "", guestFirstName: "", guestLastName: "", phone: "", email: "",
-  roomNumbers: [], roomRate: "", discountMode: "percentage", discount: "", withoutBreakfast: false, complementary: false,
+  roomNumbers: [], roomRate: "", discountMode: "percentage", discount: "", withoutBreakfast: false, complementary: false, rateNote: "",
   paymentSplits: [{ amount: "", payment_method: "transfer" }], paymentReceiptNumber: "", paymentNotes: "",
   paymentTaxMode: "fixed", paymentTax: "", paymentDiscountMode: "percentage", paymentDiscount: "",
   // Nights an OTA is paying for instead of the guest (see OtaNightsFields).
@@ -395,6 +395,10 @@ export default function AdminCheckInsPage() {
       setWalkInError(formProblem);
       return;
     }
+    if (walkInRateNoteMissing) {
+      setWalkInError("This rate is below the room's price. Say why in Reason for the Lower Rate before checking the guest in.");
+      return;
+    }
     const validRoomNumbers = walkIn.roomNumbers.map((r) => r.trim()).filter(Boolean);
     if (validRoomNumbers.length < Number(walkIn.roomsBooked || 1)) {
       setWalkInError("Assign a room number to every room before checking in.");
@@ -426,6 +430,8 @@ export default function AdminCheckInsPage() {
         // otherwise compute it from the room type's own base_rate.
         total_rate: walkInTotal,
         without_breakfast: walkIn.withoutBreakfast,
+        // Why the rate is below the price - the server refuses one without it.
+        ...(walkInBelowPrice ? { rate_note: walkIn.rateNote.trim() } : {}),
       });
 
       const internalId = hold.internal_id;
@@ -553,6 +559,14 @@ export default function AdminCheckInsPage() {
   const walkInTotal = walkInPerNightRate * Number(walkIn.roomsBooked || 1) * walkInNights;
   const walkInValidRoomNumbers = walkIn.roomNumbers.map((r) => r.trim()).filter(Boolean);
   const walkInBaseRate = Number(selectedWalkInRoomType?.base_rate || 0);
+  // The room's price for this stay, as the server prices it. A rate below it
+  // - typed in Room Rate or made by Discount - is warned about and needs a
+  // reason before the guest can be checked in (owner, 2026-10-15). Under a
+  // naira is rounding, not a lower rate.
+  const walkInPricePerNight = walkInBaseRate + (walkInBreakfastIncluded ? walkInBreakfastRate : 0);
+  const walkInPriceTotal = walkInPricePerNight * Number(walkIn.roomsBooked || 1) * walkInNights;
+  const walkInBelowPrice = Boolean(walkIn.roomTypeId && selectedWalkInRoomType) && walkInPriceTotal - walkInTotal >= 1;
+  const walkInRateNoteMissing = walkInBelowPrice && !walkIn.rateNote.trim();
 
   // What the OTA is expected to cover, so the desk can see what to actually
   // take from the guest rather than working it out in their head. A typed
@@ -939,6 +953,29 @@ export default function AdminCheckInsPage() {
                   </div>
                 )}
 
+                {/* A rate below the room's price: said plainly, with a
+                    reason required before check-in (owner, 2026-10-15). */}
+                {walkInBelowPrice && (
+                  <div className="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+                    <p className="text-xl text-amber-900">
+                      This rate is below the room&apos;s price: {fmtCurrency(walkInPerNightRate)} a night against {fmtCurrency(walkInPricePerNight)}
+                      {" "}- {fmtCurrency(walkInPriceTotal - walkInTotal)} less for the stay. Say why before checking the guest in; the reason is kept
+                      with the booking and shown to the accountant.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor="walkin-rate-note" className={field.label}>Reason for the Lower Rate *<Tip id="checkIns.walkIn.rateNote" /></label>
+                      <AutoGrowTextarea
+                        id="walkin-rate-note"
+                        maxLength={500}
+                        placeholder="e.g. returning guest, rate agreed by the manager"
+                        value={walkIn.rateNote}
+                        onChange={(e) => setWalkIn((p) => ({ ...p, rateNote: e.target.value }))}
+                        className={field.textarea}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Without Breakfast — a manual opt-out from the room type's
                     breakfast_rate, applied to every night of the stay. */}
                 <div className="flex items-center gap-3">
@@ -1239,12 +1276,16 @@ export default function AdminCheckInsPage() {
                     !walkIn.roomTypeId ||
                     !walkIn.guestFirstName.trim() ||
                     !walkIn.phone.trim() ||
-                    walkInValidRoomNumbers.length < Number(walkIn.roomsBooked || 1)
+                    walkInValidRoomNumbers.length < Number(walkIn.roomsBooked || 1) ||
+                    walkInRateNoteMissing
                   }
                   className={`${btn.primary} self-start px-12! py-4!`}
                 >
                   {walkInProcessing ? "Processing..." : "Check In Guest"}
                 </button>
+                {walkInRateNoteMissing && (
+                  <p className={field.hint}>The rate is below the room&apos;s price - say why in Reason for the Lower Rate, above.</p>
+                )}
               </form>
             )}
           </div>

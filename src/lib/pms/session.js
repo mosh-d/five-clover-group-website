@@ -67,15 +67,17 @@ export function clearPmsSession() {
 
 // Whether the person is still here - not merely whether a session exists.
 // The access token lapses every 30 minutes by design; an actively-used
-// session renews through it, and one left untouched for an hour ends (the
+// session renews through it, and one left untouched for six hours ends (the
 // branch PMS's rule, owner 2026-09-27: "I was only logged in for about 30
 // minutes so why did my tokens expire?"; raised from 30 minutes to an hour,
-// owner 2026-09-29). Stamped only from a real pointer or key event (see
+// owner 2026-09-29; to six hours for everyone, owner 2026-10-16, so a
+// housekeeper's phone between rooms stays signed in and keeps getting
+// notified). Stamped only from a real pointer or key event (see
 // PmsShell), never from a network response - the PMS refetches on its own,
 // and that must not keep an abandoned front-desk terminal signed in.
-export const IDLE_LIMIT_MS = 60 * 60 * 1000;
+export const IDLE_LIMIT_MS = 6 * 60 * 60 * 1000;
 
-// A click or a key: the person is still here. Unless the hour has already
+// A click or a key: the person is still here. Unless the six hours have already
 // run out - that session is over, and touching it must not bring it back:
 // the F5 that reloads the page reaches the page first, and stamping it
 // signed a night-old session straight back in (2026-10-02).

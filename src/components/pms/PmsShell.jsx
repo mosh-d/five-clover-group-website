@@ -55,7 +55,7 @@ export default function PmsShell({ children }) {
     if (session || leaving.current) return;
     let cancelled = false;
     const stored = readPmsSession();
-    // Opening the PMS after an hour or more away is the same as being idle
+    // Opening the PMS after six hours or more away is the same as being idle
     // that long mid-work: the session is over (owner, 2026-10-01 - a session
     // from the day before used to open straight in). Checked before anything
     // can renew it, and before any of this page's own activity counts.

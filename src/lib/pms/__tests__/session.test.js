@@ -34,24 +34,24 @@ describe("the PMS idle clock", () => {
     expect(stamp()).toBe(Date.now() - 40 * MINUTE);
   });
 
-  it("is not moved by a renewal, so a tab left open still ends after the hour", async () => {
+  it("is not moved by a renewal, so a tab left open still ends after the idle limit", async () => {
     setStamp(Date.now() - 40 * MINUTE);
     localStorage.setItem("pms_refresh_token", "refresh");
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ ...SESSION, token: "renewed" }) })));
     expect(await renewSession()).toBe(true);
     expect(localStorage.getItem("pms_auth_token")).toBe("renewed");
     expect(stamp()).toBe(Date.now() - 40 * MINUTE);
-    vi.setSystemTime(Date.now() + 21 * MINUTE);
+    vi.setSystemTime(Date.now() + IDLE_LIMIT_MS - 40 * MINUTE + MINUTE);
     expect(hasBeenIdleTooLong()).toBe(true);
   });
 
-  it("is moved by a click or a key within the hour", () => {
+  it("is moved by a click or a key within the idle limit", () => {
     setStamp(Date.now() - 50 * MINUTE);
     markActivity();
     expect(stamp()).toBe(Date.now());
   });
 
-  it("is not moved by a click or a key once the hour has run out - that session stays over", () => {
+  it("is not moved by a click or a key once the idle limit has run out - that session stays over", () => {
     const lastNight = Date.now() - 10 * 60 * MINUTE;
     setStamp(lastNight);
     markActivity();
@@ -59,7 +59,7 @@ describe("the PMS idle clock", () => {
     expect(hasBeenIdleTooLong()).toBe(true);
   });
 
-  it("runs out just past the hour, not before", () => {
+  it("runs out just past the idle limit (six hours), not before", () => {
     setStamp(Date.now() - IDLE_LIMIT_MS);
     expect(hasBeenIdleTooLong()).toBe(false);
     setStamp(Date.now() - IDLE_LIMIT_MS - 1);

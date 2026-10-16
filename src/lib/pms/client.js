@@ -63,7 +63,7 @@ export function renewSession() {
 // Attaches the session's token and throws PmsApiError - with the server's
 // own message - on anything but a 2xx. On a 401 the access token has lapsed
 // (it lasts half an hour): someone still working gets it renewed and the
-// request retried; a session left untouched for an hour ends instead
+// request retried; a session left untouched for six hours ends instead
 // (IDLE_LIMIT_MS).
 export async function pmsRequest(path, { method = "GET", body, query, auth = true, _retried = false } = {}) {
   const headers = { "Content-Type": "application/json" };
@@ -160,7 +160,7 @@ export async function pmsSignOut() {
 }
 
 // Whether the stored session is still good, checked on arrival. A lapsed
-// access token is renewed only for someone who was working in the last hour
+// access token is renewed only for someone who was working in the last six hours
 // (IDLE_LIMIT_MS); a tab reopened after a longer absence is asked to sign in
 // again, not quietly extended for another week - the branch PMS's rule.
 export async function verifyPmsSession() {

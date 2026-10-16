@@ -171,7 +171,18 @@ export default function PmsShell({ children }) {
   }, [router]);
 
   const value = useMemo(
-    () => (session ? { ...session, brand: brandForBranch(session.branch), switchBranch, setRoleOverride, signOut } : null),
+    () =>
+      session
+        ? {
+            ...session,
+            brand: brandForBranch(session.branch),
+            switchBranch,
+            setRoleOverride,
+            signOut,
+            // Re-reads the stored session after a page changed it (patchStoredBranch).
+            reloadSession: () => setSession(readPmsSession()),
+          }
+        : null,
     [session, switchBranch, setRoleOverride, signOut],
   );
 

@@ -17,6 +17,7 @@ import {
   IoRestaurantOutline,
   IoFastFoodOutline,
   IoShirtOutline,
+  IoSparklesOutline,
   IoBusinessOutline,
   IoWarningOutline,
   IoBulbOutline,
@@ -40,8 +41,12 @@ import { readPmsSession } from "@/lib/pms/session";
 // override the server's RolesGuard applies. This governs the sidebar, where
 // a session lands and which pages refuse it; every endpoint keeps its own
 // @Roles guard regardless.
-export const ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper"];
+export const ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper"];
 const EVERY_ROLE = ROLES;
+// Housekeeping's own two (docs/HOUSEKEEPING-PLAN.md in the backend): no money
+// pages, so not Reports.
+const HOUSEKEEPING = ["housekeeping_supervisor", "housekeeper"];
+const REPORT_ROLES = ROLES.filter((role) => !HOUSEKEEPING.includes(role));
 const OVERSIGHT = ["manager", "receptionist"];
 const FRONT_DESK = ["receptionist"];
 const HEAD_OFFICE = ["head_hr", "hr"];
@@ -58,6 +63,9 @@ export const PMS_NAV_ITEMS = [
   // The accountant's own page, and where an accountant lands (docs/ACCOUNTING-PLAN.md, 2026-10-08).
   { slug: "accounting", label: "ACCOUNTING", icon: IoCalculatorOutline, roles: ["accountant"] },
   { slug: "rooms", label: "ROOMS", icon: IoBedOutline, roles: OVERSIGHT },
+  // Housekeeping's own page, where they land; the manager's too once the
+  // developer has switched housekeeping on for the branch (onlyWhenOn).
+  { slug: "housekeeping", label: "HOUSEKEEPING", icon: IoSparklesOutline, roles: [...HOUSEKEEPING, "manager"], onlyWhenOn: ["manager"] },
   { slug: "room-chart", label: "ROOM CHART", icon: IoAppsOutline, roles: FRONT_DESK },
   { slug: "reservations", label: "RESERVATIONS", icon: IoCalendarOutline, roles: FRONT_DESK },
   { slug: "guests", label: "GUESTS", icon: IoPeopleOutline, roles: OVERSIGHT },
@@ -68,7 +76,7 @@ export const PMS_NAV_ITEMS = [
   { slug: "check-ins", label: "CHECK-INS", icon: IoLogInOutline, roles: FRONT_DESK },
   { slug: "check-outs", label: "CHECK-OUTS", icon: IoLogOutOutline, roles: FRONT_DESK },
   { slug: "in-house", label: "IN-HOUSE", icon: IoHomeOutline, roles: OVERSIGHT },
-  { slug: "reports", label: "REPORTS", icon: IoBarChartOutline, roles: EVERY_ROLE },
+  { slug: "reports", label: "REPORTS", icon: IoBarChartOutline, roles: REPORT_ROLES },
   { slug: "night-audit", label: "NIGHT AUDIT", icon: IoMoonOutline, roles: FRONT_DESK },
   // Whoever holds a drawer counts it (docs/ACCOUNTING-PLAN.md, Step 2).
   { slug: "cash-up", label: "CASH-UP", icon: IoWalletOutline, roles: ["receptionist", "waitron"], badge: "cashUp" },
@@ -93,9 +101,12 @@ export const navItemForPath = (pathname) => navItemFor(String(pathname || "").sp
 // Who may open an item in a scope ("branch" or "hq"); none = it doesn't open there.
 const rolesIn = (item, scope) => (scope === "hq" ? item.hq : item.roles);
 
-export const visibleNavItems = (role, scope = "branch") =>
+// `branch`, when given (the sidebar), hides a page offered to some roles only
+// once the branch has switched it on - Housekeeping, for the manager.
+export const visibleNavItems = (role, scope = "branch", branch = null) =>
   PMS_NAV_ITEMS.filter((item) => {
     const roles = rolesIn(item, scope);
+    if (branch && item.onlyWhenOn?.includes(role) && !branch.housekeeping_on) return false;
     return Boolean(roles) && (role === "developer" || roles.includes(role));
   });
 

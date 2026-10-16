@@ -18,6 +18,7 @@ import {
   IoShirtOutline,
   IoCalculatorOutline,
   IoWalletOutline,
+  IoSparklesOutline,
 } from "react-icons/io5";
 
 // The Help page's guide - one section per sidebar page, in the sidebar's
@@ -289,6 +290,16 @@ export const HELP_SECTIONS = [
       "Cost Price is what an item costs the hotel, for the accountant's F&B Margin - optional, and never shown to waitrons. A drink restock given its unit cost makes that the drink's cost price. A new cost price counts from when it is set: what was sold before keeps the cost it had.",
       "Setting an item Out of Stock (instead of deleting it) keeps it out of future pickers while preserving any past folio charge or non-guest sale that already referenced it.",
       "A price change here only affects new charges/sales going forward — a historical charge or sale keeps whatever price was in effect when it was made.",
+    ],
+  },
+  {
+    id: "housekeeping",
+    icon: IoSparklesOutline,
+    label: "Housekeeping",
+    summary: "Cleaning the rooms guests leave: the housekeeping supervisor's and housekeepers' page, and the manager's.",
+    workflow: [
+      "Housekeeping is off at a branch until the developer switches it on. Off, a room is ready for the next guest as soon as the last one checks out, as before.",
+      "Housekeeping Supervisor and Housekeeper accounts are made on Head Office's Staff Accounts, like every branch account. They open Housekeeping, Account and Help - no money pages.",
     ],
   },
   {

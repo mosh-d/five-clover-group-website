@@ -20,6 +20,8 @@ const ROLE_LABELS = {
   accountant: "Accountant",
   waitron: "Waitron",
   storekeeper: "Store Keeper",
+  housekeeping_supervisor: "Housekeeping Supervisor",
+  housekeeper: "Housekeeper",
 };
 
 // Account & Security - the branch PMS's Account page (AdminAccount.jsx), and

@@ -9,7 +9,7 @@ import { visibleNavItems } from "./pmsNavItems";
 import { usePmsLive } from "./live/PmsLive";
 import { AnimatePresence, MotionDiv, EASE_OUT } from "./motion";
 
-function NavItems({ pathname, role, scope, onNavigate }) {
+function NavItems({ pathname, role, scope, branch, onNavigate }) {
   const { alertCount, otaPendingCount, cashUpDueCount } = usePmsLive();
   // Each nav item's `badge` (pmsNavItems): its live count, and what it counts.
   const badges = {
@@ -19,7 +19,7 @@ function NavItems({ pathname, role, scope, onNavigate }) {
   };
   return (
     <ul className="flex flex-col gap-2">
-      {visibleNavItems(role, scope).map(({ href, label, icon: Icon, badge }) => {
+      {visibleNavItems(role, scope, branch).map(({ href, label, icon: Icon, badge }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
         const count = badge ? badges[badge].count : 0;
         return (
@@ -59,7 +59,7 @@ function NavItems({ pathname, role, scope, onNavigate }) {
 // their system for less motion.
 export default function PmsSidebar({ mobileOpen = false, onCloseMobile }) {
   const pathname = usePathname();
-  const { role, scope } = usePmsSession();
+  const { role, scope, branch } = usePmsSession();
 
   // Escape closes the menu, as it closes every dialog.
   useEffect(() => {
@@ -73,7 +73,7 @@ export default function PmsSidebar({ mobileOpen = false, onCloseMobile }) {
     <>
       <nav className="hidden md:flex overflow-y-auto shrink-0 w-sm bg-(--accent-2)">
         <div className="flex flex-col px-4 py-8 gap-2 w-full">
-          <NavItems pathname={pathname} role={role} scope={scope} />
+          <NavItems pathname={pathname} role={role} scope={scope} branch={branch} />
         </div>
       </nav>
 

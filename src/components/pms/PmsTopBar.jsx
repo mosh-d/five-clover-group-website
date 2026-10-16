@@ -22,6 +22,8 @@ const ROLE_LABELS = {
   accountant: "Accountant",
   waitron: "Waitron",
   storekeeper: "Store Keeper",
+  housekeeping_supervisor: "Housekeeping Supervisor",
+  housekeeper: "Housekeeper",
 };
 
 // One rota's readout: who is on it today, and the control to correct a

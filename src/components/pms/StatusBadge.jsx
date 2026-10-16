@@ -20,6 +20,8 @@ const STYLES = {
   accountant: "bg-teal-100 text-teal-700",
   waitron: "bg-amber-100 text-amber-700",
   storekeeper: "bg-orange-100 text-orange-700",
+  housekeeping_supervisor: "bg-cyan-100 text-cyan-700",
+  housekeeper: "bg-sky-100 text-sky-700",
   auto: "bg-slate-100 text-slate-700",
   paid: "bg-green-100 text-green-700",
   owing: "bg-red-100 text-red-700",

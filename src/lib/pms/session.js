@@ -22,7 +22,7 @@ const KEYS = {
 // the developer's real token. A branch's roles in a branch; Head Office's at
 // Head Office (owner, 2026-10-01: Head Office features will be gated per
 // role too).
-export const SIMULATABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper"];
+export const SIMULATABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper"];
 export const SIMULATABLE_HQ_ROLES = ["head_hr", "hr"];
 
 const hasStorage = () => typeof window !== "undefined";
@@ -95,6 +95,14 @@ export function hasBeenIdleTooLong() {
   if (!hasStorage()) return false;
   const stamp = Number(localStorage.getItem(KEYS.lastActivity) || 0);
   return Boolean(stamp) && Date.now() - stamp > IDLE_LIMIT_MS;
+}
+
+// Merges a change to the signed-in branch into the stored session - e.g. the
+// developer switching housekeeping on - so the sidebar follows at once.
+export function patchStoredBranch(patch) {
+  const branch = readJson(KEYS.branch);
+  if (!branch || !hasStorage()) return;
+  localStorage.setItem(KEYS.branch, JSON.stringify({ ...branch, ...patch }));
 }
 
 // The signed-in branch's id - what the branch PMS hard-codes per site as

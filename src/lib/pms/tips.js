@@ -26,6 +26,8 @@ export const TIPS = {
   "otaPayments.page": "Money owed by Online Travel Agencies (OTAs) such as Booking.com for nights they sold, and recording it when it arrives - with whatever the OTA kept as its commission.",
   "auditTrail.page": "Who did what and when, in plain words - every change made in the PMS, newest first.",
   "menu.page": "The food, drink and laundry price lists, and drink stock.",
+  "housekeeping.page": "Cleaning the rooms guests leave: housekeepers clean and submit, the supervisor approves or sends back.",
+  "housekeeping.status": "Whether this branch runs housekeeping. Off, rooms are ready again as soon as a guest checks out, as before. Only the developer switches it.",
   "account.page": "Your own sign-in: change your password.",
   "help.page": "How each page works, and the day's workflow from check-in to night audit.",
   "critical.page": "Every room out of order across all branches, longest out first, live.",

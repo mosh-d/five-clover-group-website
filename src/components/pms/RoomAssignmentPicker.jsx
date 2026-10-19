@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { field, btn } from "@/components/pms/ui";
 import { fetchAvailableRoomsForReservation } from "@/lib/pms/api/reservations-pms-api";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
+import { NotCleanWarning, roomOptionText } from "@/components/pms/CleaningTag";
 
 // Editable set of room-number dropdowns for a reservation, up to `roomsBooked`
 // slots — one dropdown per physical room the reservation needs. Each slot's
@@ -23,7 +24,14 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 //   live as the user edits, so a parent with its OWN single action button
 //   (e.g. Check-In's "Confirm Check In") can assign rooms and check in
 //   together in one click, without a second, redundant save step.
-export default function RoomAssignmentPicker({ reservationId, roomTypeId, roomsBooked, initialRoomNumbers, onSave, saving, hideSaveButton = false, onSlotsChange }) {
+//
+// `cleaningVerb` (Housekeeping, Step 3): for a guest arriving or moving NOW,
+// what the desk is about to do ("check the guest in", "move the guest") -
+// each room then shows whether it is clean, and picking one that isn't
+// warns (never stops). Left out for a booking ahead, where today's cleaning
+// says nothing. `warnOnlyNew`: a move warns only about rooms the guest isn't
+// already in.
+export default function RoomAssignmentPicker({ reservationId, roomTypeId, roomsBooked, initialRoomNumbers, onSave, saving, hideSaveButton = false, onSlotsChange, cleaningVerb = null, warnOnlyNew = false }) {
   const [availableRooms, setAvailableRooms] = useState(null);
   const [loading, setLoading] = useState(true);
   const [slots, setSlots] = useState(initialRoomNumbers.length > 0 ? initialRoomNumbers : [""]);
@@ -82,7 +90,7 @@ export default function RoomAssignmentPicker({ reservationId, roomTypeId, roomsB
                   <option value="">-- Select a room --</option>
                   {options.map((r) => (
                     <option key={r.id} value={r.room_number}>
-                      {r.room_number}{r.status === "complementary" ? " (Complementary)" : ""}
+                      {cleaningVerb ? roomOptionText(r) : `${r.room_number}${r.status === "complementary" ? " (Complementary)" : ""}`}
                     </option>
                   ))}
                 </select>
@@ -119,6 +127,14 @@ export default function RoomAssignmentPicker({ reservationId, roomTypeId, roomsB
       </div>
       {roomsBooked > 1 && (
         <p className="text-lg text-[color:var(--text-color)]/60">{validSlots.length} of {roomsBooked} room(s) assigned</p>
+      )}
+      {cleaningVerb && availableRooms && (
+        <NotCleanWarning
+          verb={cleaningVerb}
+          rooms={validSlots
+            .filter((n) => !warnOnlyNew || !initialRoomNumbers.includes(n))
+            .map((n) => availableRooms.available.find((r) => r.room_number === n))}
+        />
       )}
     </div>
   );

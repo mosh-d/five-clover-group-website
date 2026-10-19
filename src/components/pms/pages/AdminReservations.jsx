@@ -10,6 +10,7 @@ import PageHeading from "@/components/pms/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import RoomAssignmentPicker from "@/components/pms/RoomAssignmentPicker";
+import { NotCleanWarning, roomOptionText } from "@/components/pms/CleaningTag";
 import ContactRow from "@/components/pms/ContactRow";
 import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
 import RefundCreditModal from "@/components/pms/RefundCreditModal";
@@ -808,6 +809,15 @@ export default function AdminReservationsPage() {
 
   const res = selectedReservation;
   const canModify = res && res.status !== "cancelled" && res.status !== "completed";
+  // Whether rooms show if they are clean (Housekeeping, Step 3): only for a
+  // guest in the house (a move) or arriving today - not a booking ahead.
+  const cleaningVerb = !res
+    ? null
+    : res.status === "active"
+      ? "move the guest"
+      : String(res.check_in || "").slice(0, 10) <= currentBusinessDateISO()
+        ? "check the guest in"
+        : null;
 
   // Check In waits for the booked arrival (owner, 2026-09-27) — the server
   // refuses it too. "Today" is the business day, as it is for the server: at
@@ -1546,6 +1556,8 @@ export default function AdminReservationsPage() {
                     onSave={handleAssignRoom}
                     saving={assigningRoom}
                     onSlotsChange={setPendingRoomSlots}
+                    cleaningVerb={cleaningVerb}
+                    warnOnlyNew={res.status === "active"}
                   />
                 </section>
               )}
@@ -1599,7 +1611,7 @@ export default function AdminReservationsPage() {
                                   <option value="">-- Select a room --</option>
                                   {options.map((r) => (
                                     <option key={r.id} value={r.room_number}>
-                                      {r.room_number}{r.status === "complementary" ? " (Complementary)" : ""}
+                                      {cleaningVerb ? roomOptionText(r) : `${r.room_number}${r.status === "complementary" ? " (Complementary)" : ""}`}
                                     </option>
                                   ))}
                                 </select>
@@ -1611,6 +1623,12 @@ export default function AdminReservationsPage() {
                               </div>
                             );
                           })}
+                          {cleaningVerb && (
+                            <NotCleanWarning
+                              verb={cleaningVerb}
+                              rooms={newTypeRoomSlots.map((n) => newTypeRoomOptions.available.find((r) => r.room_number === n.trim()))}
+                            />
+                          )}
                           {(!res.rooms_booked || newTypeRoomSlots.length < res.rooms_booked) && (
                             <button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
                               + Add Room

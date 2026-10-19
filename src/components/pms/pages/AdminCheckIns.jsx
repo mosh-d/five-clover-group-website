@@ -15,6 +15,7 @@ import { checkGuestBlacklist, fetchGuests } from "@/lib/pms/api/guests-api";
 import { addDaysISO, adminTodayISO, currentBusinessDateISO, minWalkInCheckOutISO } from "@/lib/pms/dates";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import RoomAssignmentPicker from "@/components/pms/RoomAssignmentPicker";
+import { NotCleanWarning, roomOptionText } from "@/components/pms/CleaningTag";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
 import PaymentSplitRows from "@/components/pms/PaymentSplitRows";
 import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
@@ -1129,7 +1130,7 @@ export default function AdminCheckInsPage() {
                               <option value="">-- Select a room --</option>
                               {options.map((r) => (
                                 <option key={r.id} value={r.room_number}>
-                                  {r.room_number}{r.status === "complementary" ? " (Complementary)" : ""}
+                                  {roomOptionText(r)}
                                 </option>
                               ))}
                             </select>
@@ -1149,6 +1150,7 @@ export default function AdminCheckInsPage() {
                             {walkInValidRoomNumbers.length} of {walkIn.roomsBooked} room(s) assigned — a room number is required for every room before check-in.
                           </p>
                         )}
+                        <NotCleanWarning rooms={walkInValidRoomNumbers.map((num) => walkInAvailableRooms?.available?.find((r) => r.room_number === num))} />
                       </div>
                     )}
                   </div>
@@ -1346,6 +1348,7 @@ export default function AdminCheckInsPage() {
               initialRoomNumbers={roomNumbers}
               onSlotsChange={setRoomNumbers}
               hideSaveButton
+              cleaningVerb="check the guest in"
             />
             {roomNumbers.length < (selected.rooms_booked || 1) && (
               <p className="text-lg text-orange-600">

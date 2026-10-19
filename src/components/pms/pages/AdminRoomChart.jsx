@@ -15,6 +15,7 @@ import { btn } from "@/components/pms/ui";
 import { fetchRoomChart } from "@/lib/pms/api/reservations-pms-api";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
+import CleaningTag from "@/components/pms/CleaningTag";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import { Tip } from "@/components/pms/Tip";
 import { businessDateISO } from "@/lib/pms/dates";
@@ -140,9 +141,11 @@ export default function AdminRoomChartPage() {
     return () => observer.disconnect();
   }, []);
 
-  const load = useCallback(async () => {
+  // quiet: a refresh in the background (a room's cleaning changed), without
+  // swapping the chart for the spinner.
+  const load = useCallback(async (quiet = false) => {
     try {
-      setLoading(true);
+      if (quiet !== true) setLoading(true);
       const data = await fetchRoomChart(
         isoDate(windowStart),
         isoDate(windowEnd),
@@ -165,12 +168,14 @@ export default function AdminRoomChartPage() {
 
   // Re-fetch whenever the socket (re)connects (e.g. after a backend
   // restart), same pattern as AdminOverview.jsx/AdminRooms.jsx.
-  const { isConnected } = useWebSocketContext();
+  const { isConnected, subscribe } = useWebSocketContext();
   useEffect(() => {
     if (!isConnected) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected]);
+  // Each room shows whether it is clean (Housekeeping, Step 3).
+  useEffect(() => subscribe(() => load(true), "housekeeping"), [subscribe, load]);
 
   // Flatten room types into a single row list: a header row per type, one
   // row per numbered room, and an "Unassigned" row per type if it has any
@@ -192,6 +197,7 @@ export default function AdminRoomChartPage() {
           key: `r-${rt.room_type_id}-${room.room_inventory_id}`,
           label: room.room_number,
           roomStatus: room.room_status,
+          cleaning: room.cleaning,
           lanes: packIntoLanes(room.bars),
         });
       }
@@ -361,6 +367,7 @@ export default function AdminRoomChartPage() {
                   key={row.key}
                   label={row.label}
                   roomStatus={row.roomStatus}
+                  cleaning={row.cleaning}
                   lanes={row.lanes}
                   windowStart={windowStart}
                   isUnassigned={row.kind === 'unassigned'}
@@ -377,6 +384,7 @@ export default function AdminRoomChartPage() {
 function RoomRow({
   label,
   roomStatus,
+  cleaning,
   lanes,
   windowStart,
   isUnassigned,
@@ -419,6 +427,7 @@ function RoomRow({
           <RoomStatusTag
             status={roomStatus === 'available' ? null : roomStatus}
           />
+          <CleaningTag cleaning={cleaning} />
         </span>
       </div>
       {effectiveLanes.map((laneBars, laneIdx) => (

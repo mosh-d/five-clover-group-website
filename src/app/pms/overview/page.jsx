@@ -16,6 +16,7 @@ import {
   IoConstructOutline,
   IoGiftOutline,
   IoBriefcaseOutline,
+  IoSparklesOutline,
 } from "react-icons/io5";
 import PageHeading from "@/components/pms/PageHeading";
 import StatusBadge from "@/components/pms/StatusBadge";
@@ -33,6 +34,7 @@ import { todayISO, yesterdayISO, businessDateISO, formatShortDate } from "@/lib/
 import { money } from "@/lib/pms/format";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import { Tip } from "@/components/pms/Tip";
+import { isNotClean } from "@/components/pms/CleaningTag";
 
 // The branch's day at a glance - the branch PMS's Overview
 // (hotel-frontends admin_pages/AdminOverview.jsx), moved here.
@@ -52,7 +54,7 @@ export default function PmsOverviewPage() {
   const [reportSummary, setReportSummary] = useState(null);
   const [lastAudit, setLastAudit] = useState(undefined); // undefined = loading, null = none yet
   const [recentBookings, setRecentBookings] = useState([]);
-  const [roomFlags, setRoomFlags] = useState({ outOfOrder: [], complementary: [], reserved: [] });
+  const [roomFlags, setRoomFlags] = useState({ outOfOrder: [], complementary: [], reserved: [], notClean: [] });
 
   const load = useCallback(async () => {
     const today = todayISO();
@@ -87,13 +89,15 @@ export default function PmsOverviewPage() {
     // Physical rooms flagged out of order, complementary or reserved - each
     // with where to find it on the Rooms page.
     if (value(status)) {
-      const flags = { outOfOrder: [], complementary: [], reserved: [] };
+      const flags = { outOfOrder: [], complementary: [], reserved: [], notClean: [] };
       for (const rt of value(status).room_types || []) {
         for (const room of rt.rooms || []) {
           const entry = { roomTypeId: rt.room_type_id, roomInventoryId: room.room_inventory_id, number: room.room_number };
           if (room.display_status === "out_of_order") flags.outOfOrder.push(entry);
           else if (room.display_status === "complementary") flags.complementary.push(entry);
           else if (room.display_status === "reserved") flags.reserved.push(entry);
+          // Free rooms housekeeping hasn't finished with (Housekeeping, Step 3).
+          if (room.display_status === "available" && isNotClean(room)) flags.notClean.push(entry);
         }
       }
       setRoomFlags(flags);
@@ -105,7 +109,7 @@ export default function PmsOverviewPage() {
     const timer = setInterval(load, REFRESH_MS);
     return () => clearInterval(timer);
   }, [load]);
-  useLiveRefresh(load, ["rooms", "reservations", "alerts"]);
+  useLiveRefresh(load, ["rooms", "reservations", "alerts", "housekeeping"]);
 
   // Occupied/held counts only real guests - never out-of-order or reserved
   // rooms, which are a maintenance/admin block (RoomsService.getHouseStatusSummary).
@@ -192,7 +196,7 @@ export default function PmsOverviewPage() {
             </div>
           ))}
 
-        {(roomFlags.outOfOrder.length > 0 || roomFlags.complementary.length > 0 || roomFlags.reserved.length > 0) && (
+        {(roomFlags.outOfOrder.length > 0 || roomFlags.complementary.length > 0 || roomFlags.reserved.length > 0 || roomFlags.notClean.length > 0) && (
           <div className="w-full flex flex-col sm:flex-row gap-4">
             {roomFlags.outOfOrder.length > 0 && (
               <StatusBanner
@@ -219,6 +223,15 @@ export default function PmsOverviewPage() {
                 detail="set aside for a branch/zonal manager"
                 color="indigo"
                 onClick={() => go(roomLink(roomFlags.reserved[0]))}
+              />
+            )}
+            {roomFlags.notClean.length > 0 && (
+              <StatusBanner
+                icon={IoSparklesOutline}
+                boldText={`${plural(roomFlags.notClean.length, "free room")} not clean yet (${roomFlags.notClean.map((r) => r.number).join(", ")})`}
+                detail={`housekeeping hasn't finished with ${roomFlags.notClean.length === 1 ? "it" : "them"}`}
+                color="amber"
+                onClick={() => go(roomLink(roomFlags.notClean[0]))}
               />
             )}
           </div>
@@ -398,6 +411,7 @@ const BANNER_THEMES = {
   red: { box: "bg-red-50 border-red-200 text-red-800 hover:bg-red-100", icon: "text-red-600" },
   purple: { box: "bg-purple-50 border-purple-200 text-purple-800 hover:bg-purple-100", icon: "text-purple-600" },
   indigo: { box: "bg-indigo-50 border-indigo-200 text-indigo-800 hover:bg-indigo-100", icon: "text-indigo-600" },
+  amber: { box: "bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100", icon: "text-amber-600" },
 };
 
 function StatusBanner({ icon: Icon, boldText, detail, color, onClick }) {

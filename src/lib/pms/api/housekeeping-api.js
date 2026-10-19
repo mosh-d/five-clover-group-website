@@ -57,3 +57,10 @@ export const markRoomForCleaning = async (roomInventoryId, note) => {
   const response = await http.post(`/api/housekeeping/rooms/${roomInventoryId}/dirty`, { note });
   return response.data;
 };
+
+// The front desk's override (Step 3): a room that isn't clean, ready for a
+// guest now without review, saying why.
+export const makeRoomReady = async (roomInventoryId, note) => {
+  const response = await http.post(`/api/housekeeping/rooms/${roomInventoryId}/ready`, { note });
+  return response.data;
+};

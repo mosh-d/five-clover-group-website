@@ -14,6 +14,9 @@ import { btn, field, table } from "@/components/pms/ui";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import { canManageRooms } from "@/lib/pms/auth";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
+import CleaningTag, { CLEANING_LABELS, isNotClean } from "@/components/pms/CleaningTag";
+import ConfirmPanel from "@/components/pms/ConfirmPanel";
+import { makeRoomReady } from "@/lib/pms/api/housekeeping-api";
 import ManagerOnlyTag from "@/components/pms/ManagerOnlyTag";
 import { currentBranchId } from "@/lib/pms/session";
 import { Tip } from "@/components/pms/Tip";
@@ -329,6 +332,10 @@ function ViewRoomModal({
   // fetching once when the modal happens to open.
   const { subscribe: subscribeRoomStatus } = useWebSocketContext();
   useEffect(() => subscribeRoomStatus(loadRoomStatusList, "rooms"), [subscribeRoomStatus, loadRoomStatusList]);
+  // A room's cleaning changing (Housekeeping) - shown on each room below.
+  useEffect(() => subscribeRoomStatus(loadRoomStatusList, "housekeeping"), [subscribeRoomStatus, loadRoomStatusList]);
+  // The front desk making a room ready without review (Housekeeping, Step 3).
+  const [makingReady, setMakingReady] = useState(null);
 
   // Safety fetches after data update - ensures consistency
   const runSafetyFetches = async () => {
@@ -730,12 +737,19 @@ function ViewRoomModal({
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-xl font-semibold">{r.room_number}</span>
                   <RoomStatusTag status={r.display_status} />
+                  <CleaningTag cleaning={r.cleaning} />
                   {r.status_changed_at && r.manual_status !== "available" && (
                     <span className="text-base text-[color:var(--text-color)]/60">
                       since {formatDateTime(r.status_changed_at)}
                     </span>
                   )}
                 </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                {isNotClean(r) && (
+                  <button type="button" onClick={() => setMakingReady(r)} className={btn.rowSecondary}>
+                    Make ready
+                  </button>
+                )}
                 <select
                   value={r.manual_status}
                   disabled={statusUpdatingId === r.room_inventory_id}
@@ -749,6 +763,7 @@ function ViewRoomModal({
                   <option value="complementary">Complementary</option>
                   <option value="reserved">Reserved</option>
                 </select>
+                </div>
               </div>
             ))}
           </div>
@@ -965,6 +980,69 @@ function ViewRoomModal({
           </div>
         </div>
       )}
+      {makingReady && (
+        <MakeReadyDialog
+          room={makingReady}
+          onClose={() => setMakingReady(null)}
+          onDone={(message) => {
+            setMakingReady(null);
+            onSuccess(message);
+            loadRoomStatusList();
+          }}
+        />
+      )}
+    </Modal>
+  );
+}
+
+// The front desk's override (Housekeeping, Step 3; owner, 2026-10-16: for
+// the edge cases): a room that isn't clean, ready for a guest now without a
+// clean being approved. The reason is required and goes in the Audit Trail;
+// a housekeeper cleaning it loses it from their list.
+function MakeReadyDialog({ room, onClose, onDone }) {
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const state = CLEANING_LABELS[room.cleaning] || room.cleaning;
+  const confirm = async () => {
+    if (!note.trim()) {
+      setError("Say why the room is ready without review.");
+      return;
+    }
+    try {
+      setBusy(true);
+      setError(null);
+      await makeRoomReady(room.room_inventory_id, note.trim());
+      onDone(`Room ${room.room_number} is ready for a guest.`);
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not make the room ready.");
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal onClose={busy ? undefined : onClose} title={`Make Room ${room.room_number} Ready`} subtitle={`Now: ${state}`} size="md" zIndex={1100}>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="make-ready-note" className={field.label}>
+            Why<Tip id="rooms.view.makeReadyNote" />
+          </label>
+          <AutoGrowTextarea id="make-ready-note" value={note} onChange={(e) => setNote(e.target.value)} className={field.textarea} maxLength={500} disabled={busy} />
+        </div>
+        <ConfirmPanel
+          question={`Make Room ${room.room_number} ready for a guest without review?`}
+          details={[
+            `It is ${state} now. It becomes Clean straight away, without the supervisor approving a clean.`,
+            room.cleaning === "cleaning" ? "The housekeeper cleaning it loses it from their list." : "It leaves the housekeepers' list.",
+            "Your reason goes in the Audit Trail.",
+          ]}
+          confirmLabel="Yes, make it ready"
+          busyLabel="Saving..."
+          busy={busy}
+          error={error}
+          onBack={onClose}
+          onConfirm={confirm}
+        />
+      </div>
     </Modal>
   );
 }

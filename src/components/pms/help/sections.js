@@ -307,6 +307,8 @@ export const HELP_SECTIONS = [
       "The supervisor can mark a clean room for cleaning, saying why, and give a room someone started to someone else (a housekeeper who went home mid-room).",
       "The Housekeeping item in the sidebar shows how many rooms are waiting for you. A housekeeper's or supervisor's phone with the PMS open chimes and shows a notification when one arrives - allow notifications when the browser asks.",
       "Every step is in the Audit Trail: who started, submitted, approved or sent back which room, and when.",
+      "The front desk sees whether each room is clean wherever it picks or shows one - the room pickers on Check-Ins, In-House and Reservations, Rooms, the Room Chart, and the Overview. Picking a room that isn't clean warns but doesn't stop: the guest can still be checked in or moved, and the Audit Trail notes it.",
+      "For the edge cases, the receptionist or the manager can make a room ready for a guest without review from Rooms (Make ready), saying why. It becomes Clean at once, leaves the housekeepers' list, and the reason goes in the Audit Trail.",
     ],
   },
   {

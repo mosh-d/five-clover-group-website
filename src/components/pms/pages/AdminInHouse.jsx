@@ -9,6 +9,7 @@ import Modal from "@/components/pms/Modal";
 import PageHeading from "@/components/pms/PageHeading";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import RoomAssignmentPicker from "@/components/pms/RoomAssignmentPicker";
+import { NotCleanWarning, roomOptionText } from "@/components/pms/CleaningTag";
 import ContactRow from "@/components/pms/ContactRow";
 import { btn, field, table } from "@/components/pms/ui";
 import { fetchInHouse, fetchInHouseById } from "@/lib/pms/api/front-office-api";
@@ -586,6 +587,8 @@ export default function AdminInHousePage() {
                   initialRoomNumbers={(selected.room_assignments || []).map((ra) => ra.room_number)}
                   onSave={handleAssignRoom}
                   saving={assigningRoom}
+                  cleaningVerb="move the guest"
+                  warnOnlyNew
                 />
               </section>
 
@@ -636,7 +639,7 @@ export default function AdminInHousePage() {
                                 <option value="">-- Select a room --</option>
                                 {options.map((r) => (
                                   <option key={r.id} value={r.room_number}>
-                                    {r.room_number}{r.status === "complementary" ? " (Complementary)" : ""}
+                                    {roomOptionText(r)}
                                   </option>
                                 ))}
                               </select>
@@ -648,6 +651,10 @@ export default function AdminInHousePage() {
                             </div>
                           );
                         })}
+                        <NotCleanWarning
+                          verb="move the guest"
+                          rooms={newTypeRoomSlots.map((n) => newTypeRoomOptions.available.find((r) => r.room_number === n.trim()))}
+                        />
                         {(!selected.rooms_booked || newTypeRoomSlots.length < selected.rooms_booked) && (
                           <button type="button" onClick={() => setNewTypeRoomSlots((prev) => [...prev, ""])} className={`${btn.rowSecondary} self-start`}>
                             + Add Room

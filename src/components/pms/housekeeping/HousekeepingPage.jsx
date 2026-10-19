@@ -460,9 +460,12 @@ function SupervisorView({ board, onAction }) {
 // ------------------------------------------------------------------- the page
 
 export default function HousekeepingPage() {
-  const { role, realRole, user, branch, reloadSession } = usePmsSession();
+  const { role, user, branch, reloadSession } = usePmsSession();
   const { refreshHousekeepingCount } = usePmsLive();
-  const isDeveloper = realRole === "developer";
+  // The developer's own view only: viewing as a housekeeper or the
+  // supervisor shows the page exactly as they see it, without the toggle
+  // (owner, 2026-10-19).
+  const isDeveloper = role === "developer";
   const isHousekeeper = role === "housekeeper";
   const me = Number(user?.staff_account_id) || null;
   const [board, setBoard] = useState(null);

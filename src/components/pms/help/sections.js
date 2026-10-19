@@ -300,6 +300,13 @@ export const HELP_SECTIONS = [
     workflow: [
       "Housekeeping is off at a branch until the developer switches it on. Off, a room is ready for the next guest as soon as the last one checks out, as before.",
       "Housekeeping Supervisor and Housekeeper accounts are made on Head Office's Staff Accounts, like every branch account. They open Housekeeping, Account and Help - no money pages.",
+      "Once it is on, a room a guest leaves - checking out, early or not, or moving to another room mid-stay - becomes Dirty and goes on the housekeepers' list. Dirty rooms can still be booked; only checking a guest in now is affected.",
+      "How rooms are given out is the supervisor's choice: Open - every housekeeper sees every room waiting and the first to start one takes it - or Assigned - the supervisor gives each room to a housekeeper with Give out.",
+      "A housekeeper taps Start on a room (it shows Cleaning, with their name), cleans it, and taps Submit for review, with a note if there is something to say. One room at a time.",
+      "The supervisor (or the manager) checks the room under For Review: Approve makes it Clean; Send back returns it to the same housekeeper with a note saying what is wrong, and they clean it again. Every round is kept.",
+      "The supervisor can mark a clean room for cleaning, saying why, and give a room someone started to someone else (a housekeeper who went home mid-room).",
+      "The Housekeeping item in the sidebar shows how many rooms are waiting for you. A housekeeper's or supervisor's phone with the PMS open chimes and shows a notification when one arrives - allow notifications when the browser asks.",
+      "Every step is in the Audit Trail: who started, submitted, approved or sent back which room, and when.",
     ],
   },
   {

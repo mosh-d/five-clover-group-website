@@ -65,7 +65,7 @@ export const PMS_NAV_ITEMS = [
   { slug: "rooms", label: "ROOMS", icon: IoBedOutline, roles: OVERSIGHT },
   // Housekeeping's own page, where they land; the manager's too once the
   // developer has switched housekeeping on for the branch (onlyWhenOn).
-  { slug: "housekeeping", label: "HOUSEKEEPING", icon: IoSparklesOutline, roles: [...HOUSEKEEPING, "manager"], onlyWhenOn: ["manager"] },
+  { slug: "housekeeping", label: "HOUSEKEEPING", icon: IoSparklesOutline, roles: [...HOUSEKEEPING, "manager"], onlyWhenOn: ["manager"], badge: "housekeeping" },
   { slug: "room-chart", label: "ROOM CHART", icon: IoAppsOutline, roles: FRONT_DESK },
   { slug: "reservations", label: "RESERVATIONS", icon: IoCalendarOutline, roles: FRONT_DESK },
   { slug: "guests", label: "GUESTS", icon: IoPeopleOutline, roles: OVERSIGHT },

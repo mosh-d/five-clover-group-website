@@ -37,6 +37,8 @@ const ENTITY_LINKS = {
   }),
   // The night audit's own entry for a run (the PMS's, 2026-09-18).
   night_audit: () => ({ path: "/pms/night-audit" }),
+  // A room's cleaning (Housekeeping, Step 2).
+  housekeeping_job: () => ({ path: "/pms/housekeeping" }),
 };
 
 const LINK_LABELS = {
@@ -46,6 +48,7 @@ const LINK_LABELS = {
   room_type: "View room →",
   room_inventory: "View room →",
   night_audit: "View night audit →",
+  housekeeping_job: "View housekeeping →",
 };
 
 // Every role whose actions can appear in a BRANCH audit trail. accountant

@@ -6,12 +6,13 @@ import { API_BASE_URL } from "@/lib/pms/client";
 import { fetchAlerts } from "@/lib/pms/api/alerts-api";
 import { fetchOtaSettlements, OTA_CHANGED_EVENT } from "@/lib/pms/api/ota-api";
 import { fetchMyCashUpDue, CASH_UP_CHANGED_EVENT } from "@/lib/pms/api/cash-up-api";
+import { fetchHousekeepingCounts } from "@/lib/pms/api/housekeeping-api";
 
 // The PMS's live connection to the backend (Socket.IO) - the branch PMS's
 // WebSocketContext, for whichever branch is signed in. Pages subscribe to
 // what they show: 'rooms', 'reservations' (any booking changing state),
 // 'new_reservation' (a booking from the guest-facing site - the front desk
-// popup) and 'alerts'.
+// popup), 'alerts' and 'housekeeping' (a room's cleaning changed).
 //
 // The branch id only picks which room of broadcasts to join (see the
 // backend's RoomsGateway) - it is not an auth boundary; nothing sent over
@@ -33,8 +34,38 @@ const RESERVATION_REFRESH_DEBOUNCE_MS = 250;
 // once a minute for changes made on another PC.
 const OTA_COUNT_REFRESH_MS = 60000;
 
-export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, canCashUp, children }) {
-  const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set() });
+// A short two-note chime for a room to clean or to review - a phone with the
+// PMS open sounds as well as notifying (docs/HOUSEKEEPING-PLAN.md, §4). A
+// browser may refuse sound until the page has been touched; then it stays
+// silent and the badge and notification still show.
+let chimeContext = null;
+function chime() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    chimeContext = chimeContext || new Ctx();
+    const now = chimeContext.currentTime;
+    [880, 1320].forEach((freq, i) => {
+      const osc = chimeContext.createOscillator();
+      const gain = chimeContext.createGain();
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, now + i * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + i * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.18 + 0.3);
+      osc.connect(gain).connect(chimeContext.destination);
+      osc.start(now + i * 0.18);
+      osc.stop(now + i * 0.18 + 0.32);
+    });
+  } catch {
+    // No sound is fine - the badge still shows.
+  }
+}
+
+// canHousekeep: a role with the Housekeeping page at a branch that runs it.
+// chimeOnHousekeeping: the housekeeping supervisor and housekeepers, who are
+// told by sound and notification; the manager has the badge.
+export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, canCashUp, canHousekeep, chimeOnHousekeeping, children }) {
+  const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set(), housekeeping: new Set() });
   const reservationTimerRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
   // Ticks every DISCONNECTED_FALLBACK_MS only while disconnected - pages
@@ -117,6 +148,46 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
     };
   }, [canCashUp, refreshCashUpDue, subscribe]);
 
+  // Rooms waiting on this person - the Housekeeping badge: a housekeeper's
+  // rooms to clean; the supervisor's and manager's rooms to review (and, in
+  // Assigned mode, to give out). Refetched whenever a room's cleaning changes
+  // (a check-out included - the server announces it). A rise sounds and
+  // notifies the housekeeping staff.
+  const [housekeepingCount, setHousekeepingCount] = useState(0);
+  const prevHousekeepingRef = useRef(null);
+  const refreshHousekeepingCount = useCallback(() => {
+    if (!canHousekeep) {
+      prevHousekeepingRef.current = null;
+      return;
+    }
+    fetchHousekeepingCounts()
+      .then((c) => {
+        const count = Number(c?.badge) || 0;
+        const previous = prevHousekeepingRef.current;
+        prevHousekeepingRef.current = count;
+        setHousekeepingCount(count);
+        if (!chimeOnHousekeeping || previous === null || count <= previous) return;
+        chime();
+        if ("Notification" in window && Notification.permission === "granted") {
+          const waiting = c.for_review || c.to_assign ? `${count} room${count !== 1 ? "s" : ""} waiting for you` : `${count} room${count !== 1 ? "s" : ""} to clean`;
+          new Notification("Housekeeping", { body: `${waiting}.`, tag: "housekeeping" });
+        }
+      })
+      .catch(() => {});
+  }, [canHousekeep, chimeOnHousekeeping]);
+
+  useEffect(() => {
+    refreshHousekeepingCount();
+    if (!canHousekeep) return undefined;
+    return subscribe(refreshHousekeepingCount, "housekeeping");
+  }, [canHousekeep, refreshHousekeepingCount, subscribe]);
+
+  // Anything announced while the socket was down is lost: recount on
+  // reconnecting, and every 30s while it stays down.
+  useEffect(() => {
+    if (isConnected || disconnectedRefreshTick > 0) refreshHousekeepingCount();
+  }, [isConnected, disconnectedRefreshTick, refreshHousekeepingCount]);
+
   useEffect(() => {
     if (!branchId) return undefined;
     const listeners = listenersRef.current;
@@ -158,6 +229,8 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
       notify("new_reservation", data);
     });
 
+    socket.on("housekeeping_updated", (data) => forThisBranch(data) && notify("housekeeping", data));
+
     socket.on("alerts_updated", (data) => {
       if (!forThisBranch(data)) return;
       const count = data.alert_count || 0;
@@ -182,7 +255,21 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
 
   return (
     <PmsLiveContext.Provider
-      value={{ isConnected, subscribe, alertCount, refreshAlertCount, syncAlertCount, otaPendingCount, refreshOtaCount, cashUpDueCount, refreshCashUpDue, disconnectedRefreshTick }}
+      value={{
+        isConnected,
+        subscribe,
+        alertCount,
+        refreshAlertCount,
+        syncAlertCount,
+        otaPendingCount,
+        refreshOtaCount,
+        cashUpDueCount,
+        refreshCashUpDue,
+        // A count from before housekeeping was switched off isn't shown.
+        housekeepingCount: canHousekeep ? housekeepingCount : 0,
+        refreshHousekeepingCount,
+        disconnectedRefreshTick,
+      }}
     >
       {children}
     </PmsLiveContext.Provider>
@@ -203,6 +290,8 @@ const HEAD_OFFICE_LIVE = {
   refreshOtaCount: () => {},
   cashUpDueCount: 0,
   refreshCashUpDue: () => {},
+  housekeepingCount: 0,
+  refreshHousekeepingCount: () => {},
   disconnectedRefreshTick: 0,
 };
 

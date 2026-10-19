@@ -288,7 +288,14 @@ function BranchWorkspace({ pathname, children }) {
     ) : null;
 
   return (
-    <PmsLiveProvider branchId={branch?.id} canSeeAlerts={canOpen(role, "alerts")} canSeeOtaPayments={canOpen(role, "ota-payments")} canCashUp={canOpen(role, "cash-up")}>
+    <PmsLiveProvider
+      branchId={branch?.id}
+      canSeeAlerts={canOpen(role, "alerts")}
+      canSeeOtaPayments={canOpen(role, "ota-payments")}
+      canCashUp={canOpen(role, "cash-up")}
+      canHousekeep={canOpen(role, "housekeeping") && Boolean(branch?.housekeeping_on)}
+      chimeOnHousekeeping={role === "housekeeper" || role === "housekeeping_supervisor"}
+    >
       <Frame
         pathname={pathname}
         shifts={readouts}

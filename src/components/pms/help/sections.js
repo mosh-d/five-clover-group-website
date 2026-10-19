@@ -309,6 +309,8 @@ export const HELP_SECTIONS = [
       "Every step is in the Audit Trail: who started, submitted, approved or sent back which room, and when.",
       "The front desk sees whether each room is clean wherever it picks or shows one - the room pickers on Check-Ins, In-House and Reservations, Rooms, the Room Chart, and the Overview. Picking a room that isn't clean warns but doesn't stop: the guest can still be checked in or moved, and the Audit Trail notes it.",
       "For the edge cases, the receptionist or the manager can make a room ready for a guest without review from Rooms (Make ready), saying why. It becomes Clean at once, leaves the housekeepers' list, and the reason goes in the Audit Trail.",
+      "The supervisor (or the manager) can set a room out of order from Housekeeping, saying why; the manager and the front desk still can from Rooms, also saying why. Head Office sees the reason on Critical and Decision Support and decides when the room is attended to. A room out of order is off the housekeepers' lists.",
+      "Back in service - from Housekeeping or Rooms - a room becomes Dirty and goes on the housekeepers' list, so it is cleaned and approved before a guest gets it.",
     ],
   },
   {

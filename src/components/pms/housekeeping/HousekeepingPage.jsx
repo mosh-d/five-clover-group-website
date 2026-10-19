@@ -18,7 +18,9 @@ import {
   fetchHousekeepingBoard,
   giveRoomTo,
   markRoomForCleaning,
+  putRoomBackInService,
   reviewRoom,
+  setRoomOutOfOrder,
   setHousekeepingMode,
   startCleaning,
   submitForReview,
@@ -35,6 +37,8 @@ import {
 // Step 2: a room a guest leaves becomes Dirty; a housekeeper starts it and
 // submits it for review; the supervisor approves it (Clean) or sends it back
 // with a note. Rooms are given out the supervisor's way - Open or Assigned.
+// Step 4: the supervisor sets a room out of order, saying why, and puts it
+// back in service - dirty, so it is cleaned and approved first.
 // Every action is asked twice (owner).
 
 const STATES = {
@@ -207,6 +211,42 @@ function ActionDialog({ action, board, onClose, onDone }) {
         return result.to ? `${name} is now ${result.to}'s.` : `${name} is no longer given to anyone.`;
       },
     },
+    ooo: {
+      title: `Set ${name} Out of Order`,
+      noteLabel: "Why",
+      noteTip: "housekeeping.outOfOrderNote",
+      noteRequired: "Say why the room is out of order - Head Office sees it.",
+      question: `Set ${name} out of order?`,
+      details: [
+        "It can't be sold or given to a guest until it is back in service.",
+        ...(room?.occupied ? ["A guest is in it now: they stay; it is flagged for when they leave."] : []),
+        ...(job?.status === "open" ? ["It leaves the housekeepers' lists until it is back."] : []),
+        "Head Office sees it, with your reason, on Critical and Decision Support.",
+      ],
+      confirmLabel: "Yes, out of order",
+      busyLabel: "Saving...",
+      danger: true,
+      run: async () => {
+        await setRoomOutOfOrder(room.room_inventory_id, note.trim());
+        return `${name} is out of order.`;
+      },
+    },
+    back: {
+      title: `${name} Back in Service`,
+      question: `Put ${name} back in service?`,
+      details: [
+        "It can be sold again.",
+        job
+          ? "It is still on the housekeepers' list, to be cleaned and approved."
+          : "It becomes Dirty and goes on the housekeepers' list, to be cleaned and approved before a guest gets it.",
+      ],
+      confirmLabel: "Yes, back in service",
+      busyLabel: "Saving...",
+      run: async () => {
+        const result = await putRoomBackInService(room.room_inventory_id);
+        return result.needs_cleaning ? `${name} is back in service - it needs cleaning first.` : `${name} is back in service.`;
+      },
+    },
     dirty: {
       title: `Mark ${name} for Cleaning`,
       noteLabel: "Why",
@@ -377,6 +417,7 @@ function SupervisorView({ board, onAction }) {
     .filter((r) => r.job.status === "open")
     .sort((a, b) => Number(Boolean(b.job.sent_back_note)) - Number(Boolean(a.job.sent_back_note)) || new Date(a.job.opened_at) - new Date(b.job.opened_at));
   const cleaning = withJob.filter((r) => r.job.status === "cleaning");
+  const outOfOrder = board.rooms.filter((r) => r.manual_status === "out_of_order");
   const counts = Object.keys(STATES).map((s) => [s, board.rooms.filter((r) => r.state === s).length]);
   const givenTo = (job) =>
     job.assigned_to ? `Given to ${job.assigned_to.name}` : board.mode === "assigned" ? "Not given to anyone yet" : "Any housekeeper can take it";
@@ -415,7 +456,12 @@ function SupervisorView({ board, onAction }) {
           <RoomCard
             key={r.room_inventory_id}
             room={r}
-            lines={[`${why(r.job)}, ${when(r.job.opened_at)}`, r.job.sent_back_note && `Sent back: ${r.job.sent_back_note}`, givenTo(r.job), r.occupied && "A guest is in this room"]}
+            lines={[
+              `${why(r.job)}, ${when(r.job.opened_at)}`,
+              r.job.sent_back_note && `Sent back: ${r.job.sent_back_note}`,
+              r.manual_status === "out_of_order" ? "Out of order - off the housekeepers' lists until it is back in service" : givenTo(r.job),
+              r.occupied && "A guest is in this room",
+            ]}
           >
             <button type="button" onClick={() => onAction({ kind: "assign", room: r })} className={btn.rowSecondary}>
               Give out
@@ -429,6 +475,24 @@ function SupervisorView({ board, onAction }) {
           <RoomCard key={r.room_inventory_id} room={r} lines={[`${r.job.started_by?.name || "A housekeeper"} started at ${when(r.job.started_at)}`]}>
             <button type="button" onClick={() => onAction({ kind: "assign", room: r })} className={btn.rowSecondary}>
               Give to someone else
+            </button>
+          </RoomCard>
+        ))}
+      </Section>
+
+      <Section id="hk-out-of-order" title="Out of Order" tip="housekeeping.outOfOrder" count={outOfOrder.length} empty="No rooms out of order.">
+        {outOfOrder.map((r) => (
+          <RoomCard
+            key={r.room_inventory_id}
+            room={r}
+            lines={[
+              r.out_of_order_reason ? `Why: ${r.out_of_order_reason}` : "No reason recorded",
+              r.out_of_order_since && `Since ${when(r.out_of_order_since)}`,
+              r.occupied && "A guest is in this room",
+            ]}
+          >
+            <button type="button" onClick={() => onAction({ kind: "back", room: r })} className={btn.rowPrimary}>
+              Back in service
             </button>
           </RoomCard>
         ))}
@@ -448,6 +512,11 @@ function SupervisorView({ board, onAction }) {
             {r.state === "clean" && !r.job && (
               <button type="button" onClick={() => onAction({ kind: "dirty", room: r })} className={btn.rowSecondary}>
                 Mark for cleaning
+              </button>
+            )}
+            {r.manual_status !== "out_of_order" && (
+              <button type="button" onClick={() => onAction({ kind: "ooo", room: r })} className={btn.rowDanger}>
+                Set out of order
               </button>
             )}
           </RoomCard>

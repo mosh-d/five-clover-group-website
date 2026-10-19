@@ -242,6 +242,7 @@ export default function DecisionSupportPage() {
                       <th className={table.th}><OooLabel label="OOO For" /></th>
                       <th className={table.th}>Sold-Out Nights<Tip id="decisionSupport.col.roomSoldOut" /></th>
                       <th className={table.th}>Potential Loss<Tip id="decisionSupport.col.roomLoss" /></th>
+                      <th className={table.th}>Why<Tip id="critical.col.why" /></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -258,6 +259,7 @@ export default function DecisionSupportPage() {
                         <td className={table.td}>{r.since ? plural(daysOut(r.since, now), "day") : "Not recorded"}</td>
                         <td className={table.td}>{r.since ? `${r.sold_out_nights} of ${r.nights_out}` : "—"}</td>
                         <td className={`${table.td} font-semibold ${r.lost_up_to > 0 ? "text-red-700" : ""}`}>{naira(r.lost_up_to)}</td>
+                        <td className={`${table.td} whitespace-normal! min-w-[22rem]`}>{r.reason || "Not recorded"}</td>
                       </tr>
                     ))}
                   </tbody>

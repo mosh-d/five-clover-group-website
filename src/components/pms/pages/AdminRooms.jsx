@@ -336,6 +336,8 @@ function ViewRoomModal({
   useEffect(() => subscribeRoomStatus(loadRoomStatusList, "housekeeping"), [subscribeRoomStatus, loadRoomStatusList]);
   // The front desk making a room ready without review (Housekeeping, Step 3).
   const [makingReady, setMakingReady] = useState(null);
+  // Setting a room out of order, saying why (Step 4).
+  const [settingOutOfOrder, setSettingOutOfOrder] = useState(null);
 
   // Safety fetches after data update - ensures consistency
   const runSafetyFetches = async () => {
@@ -515,6 +517,12 @@ function ViewRoomModal({
   };
 
   const handleSetRoomStatus = async (roomInventoryId, roomNumber, newStatus, currentDisplayStatus) => {
+    // Out of order asks why first (Housekeeping, Step 4: Head Office sees
+    // it); its dialog also says when a guest is in the room.
+    if (newStatus === "out_of_order") {
+      setSettingOutOfOrder({ roomInventoryId, roomNumber, occupied: currentDisplayStatus === "occupied" });
+      return;
+    }
     if (currentDisplayStatus === "occupied" && !confirmStatusChange) {
       setConfirmStatusChange({ roomInventoryId, roomNumber, newStatus });
       return;
@@ -522,11 +530,15 @@ function ViewRoomModal({
     setConfirmStatusChange(null);
     setStatusUpdatingId(roomInventoryId);
     try {
-      await http.patch(
+      const res = await http.patch(
         `/api/rooms/inventory/${roomInventoryId}/status`,
         { status: newStatus },
       );
-      onSuccess(`Room ${roomNumber} marked ${newStatus.replace(/_/g, " ")}.`);
+      onSuccess(
+        res.data?.needs_cleaning
+          ? `Room ${roomNumber} is back in service - it needs cleaning first.`
+          : `Room ${roomNumber} marked ${newStatus.replace(/_/g, " ")}.`,
+      );
       await loadRoomStatusList();
     } catch (err) {
       onError(err.response?.data?.message || "Failed to update room status.");
@@ -734,13 +746,20 @@ function ViewRoomModal({
                     : "bg-[color:var(--text-color)]/3"
                 }`}
               >
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-xl font-semibold">{r.room_number}</span>
-                  <RoomStatusTag status={r.display_status} />
-                  <CleaningTag cleaning={r.cleaning} />
-                  {r.status_changed_at && r.manual_status !== "available" && (
-                    <span className="text-base text-[color:var(--text-color)]/60">
-                      since {formatDateTime(r.status_changed_at)}
+                <div className="flex flex-col gap-1 min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-xl font-semibold">{r.room_number}</span>
+                    <RoomStatusTag status={r.display_status} />
+                    <CleaningTag cleaning={r.cleaning} />
+                    {r.status_changed_at && r.manual_status !== "available" && (
+                      <span className="text-base text-[color:var(--text-color)]/60">
+                        since {formatDateTime(r.status_changed_at)}
+                      </span>
+                    )}
+                  </div>
+                  {r.manual_status === "out_of_order" && (
+                    <span className="text-lg text-[color:var(--text-color)]/76 break-words">
+                      {r.out_of_order_reason ? `Why: ${r.out_of_order_reason}` : "No reason recorded"}
                     </span>
                   )}
                 </div>
@@ -980,6 +999,17 @@ function ViewRoomModal({
           </div>
         </div>
       )}
+      {settingOutOfOrder && (
+        <OutOfOrderDialog
+          room={settingOutOfOrder}
+          onClose={() => setSettingOutOfOrder(null)}
+          onDone={(message) => {
+            setSettingOutOfOrder(null);
+            onSuccess(message);
+            loadRoomStatusList();
+          }}
+        />
+      )}
       {makingReady && (
         <MakeReadyDialog
           room={makingReady}
@@ -991,6 +1021,57 @@ function ViewRoomModal({
           }}
         />
       )}
+    </Modal>
+  );
+}
+
+// Setting a room out of order from Rooms (Housekeeping, Step 4; owner,
+// 2026-10-16): why is required - Head Office sees it on Critical and
+// Decision Support, and decides when the room is attended to.
+function OutOfOrderDialog({ room, onClose, onDone }) {
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const confirm = async () => {
+    if (!note.trim()) {
+      setError("Say why the room is out of order - Head Office sees it.");
+      return;
+    }
+    try {
+      setBusy(true);
+      setError(null);
+      await http.patch(`/api/rooms/inventory/${room.roomInventoryId}/status`, { status: "out_of_order", reason: note.trim() });
+      onDone(`Room ${room.roomNumber} is out of order.`);
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not set the room out of order.");
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal onClose={busy ? undefined : onClose} title={`Room ${room.roomNumber} Out of Order`} size="md" zIndex={1100}>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="out-of-order-note" className={field.label}>
+            Why<Tip id="rooms.view.outOfOrderNote" />
+          </label>
+          <AutoGrowTextarea id="out-of-order-note" value={note} onChange={(e) => setNote(e.target.value)} className={field.textarea} maxLength={500} disabled={busy} />
+        </div>
+        <ConfirmPanel
+          question={`Set Room ${room.roomNumber} out of order?`}
+          details={[
+            "It can't be sold or given to a guest until it is back in service.",
+            ...(room.occupied ? ["A guest is in it now: they stay; it is flagged for when they leave."] : []),
+            "Head Office sees it, with your reason, on Critical and Decision Support.",
+          ]}
+          confirmLabel="Yes, out of order"
+          busyLabel="Saving..."
+          danger
+          busy={busy}
+          error={error}
+          onBack={onClose}
+          onConfirm={confirm}
+        />
+      </div>
     </Modal>
   );
 }

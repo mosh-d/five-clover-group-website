@@ -64,3 +64,15 @@ export const makeRoomReady = async (roomInventoryId, note) => {
   const response = await http.post(`/api/housekeeping/rooms/${roomInventoryId}/ready`, { note });
   return response.data;
 };
+
+// Out of order from the Housekeeping page (Step 4), saying why.
+export const setRoomOutOfOrder = async (roomInventoryId, note) => {
+  const response = await http.post(`/api/housekeeping/rooms/${roomInventoryId}/out-of-order`, { note });
+  return response.data;
+};
+
+// Back in service: dirty until cleaned and approved.
+export const putRoomBackInService = async (roomInventoryId) => {
+  const response = await http.post(`/api/housekeeping/rooms/${roomInventoryId}/back-in-service`);
+  return response.data;
+};

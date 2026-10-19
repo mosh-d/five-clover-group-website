@@ -104,6 +104,7 @@ export default function CriticalPage() {
                     <th className={table.th}>Out of Order Since<Tip id="critical.col.since" /></th>
                     <th className={table.th}>For<Tip id="critical.col.for" /></th>
                     <th className={table.th}>Set By<Tip id="critical.col.setBy" /></th>
+                    <th className={table.th}>Why<Tip id="critical.col.why" /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,6 +118,9 @@ export default function CriticalPage() {
                       <td className={table.td}>{r.since ? sinceText(r.since) : "Not recorded"}</td>
                       <td className={`${table.td} font-semibold text-red-700`}>{r.since ? forText(r.since, now) : "—"}</td>
                       <td className={table.td}>{r.set_by || "Not recorded"}</td>
+                      {/* Why (Housekeeping, Step 4): rooms set out of order
+                          before the reason was asked have none. */}
+                      <td className={`${table.td} whitespace-normal! min-w-[22rem]`}>{r.reason || "Not recorded"}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -378,7 +378,7 @@ export default function AdminInHousePage() {
   return (
     <>
       {successMessage && (
-        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl z-50 flex items-center gap-4 shadow-lg">
+        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl z-[2500] flex items-center gap-4 shadow-lg">
           <span className="text-xl font-bold">{successMessage}</span>
           <button onClick={() => setSuccessMessage("")} className="text-green-700 hover:text-green-900 cursor-pointer">
             <IoClose size={24} />

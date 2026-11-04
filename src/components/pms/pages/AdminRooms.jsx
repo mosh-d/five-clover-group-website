@@ -50,6 +50,10 @@ const EMPTY_FORM = {
 function AddRoomModal({ onClose, onSuccess, onError }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  // One number per room, in order (owner, 2026-11-04); any left blank can be
+  // set later from the room type's Physical Rooms.
+  const [roomNumbers, setRoomNumbers] = useState([]);
+  const roomCount = Math.min(Math.max(Number(form.max_capacity) || 0, 0), 100);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -84,6 +88,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
       base_rate: Number(form.base_rate),
       breakfast_rate: Number(form.breakfast_rate || 0),
       max_capacity: Number(form.max_capacity),
+      room_numbers: roomNumbers.slice(0, roomCount).map((n) => (n || "").trim()).filter(Boolean),
     };
 
     console.log("AdminRooms: Submitting new room type:", payload);
@@ -240,6 +245,31 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
           />
         </div>
 
+        {roomCount > 0 && (
+          <div className="flex flex-col gap-2">
+            <label className={field.label}>Room Numbers<Tip id="rooms.add.roomNumbers" /></label>
+            <div className="grid grid-cols-4 max-sm:grid-cols-2 gap-3">
+              {Array.from({ length: roomCount }).map((_, i) => (
+                <input
+                  key={i}
+                  type="text"
+                  aria-label={`Room ${i + 1} number`}
+                  value={roomNumbers[i] || ""}
+                  onChange={(e) => setRoomNumbers((prev) => {
+                    const next = [...prev];
+                    next[i] = e.target.value;
+                    return next;
+                  })}
+                  maxLength={50}
+                  placeholder={`Room ${i + 1}`}
+                  className={field.input}
+                />
+              ))}
+            </div>
+            <p className={field.hint}>Optional - any left blank can be numbered later from the room type&apos;s Physical Rooms.</p>
+          </div>
+        )}
+
         {/* Allow Enter key to submit */}
         <button type="submit" className="hidden" aria-hidden="true" />
       </form>
@@ -285,6 +315,9 @@ function ViewRoomModal({
   const [savingDetails, setSavingDetails] = useState(false);
 
   const [physicalRooms, setPhysicalRooms] = useState(null);
+  // Rooms of this type with no number yet, and the one being (re)numbered.
+  const [unnumberedRooms, setUnnumberedRooms] = useState([]);
+  const [numbering, setNumbering] = useState(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
   const [confirmStatusChange, setConfirmStatusChange] = useState(null); // { roomInventoryId, roomNumber, newStatus }
@@ -312,6 +345,7 @@ function ViewRoomModal({
       const res = await http.get(`/api/rooms/status`);
       const match = (res.data?.room_types || []).find((rt) => rt.room_type_id === room.room_type_id);
       setPhysicalRooms(match?.rooms || []);
+      setUnnumberedRooms(match?.unnumbered || []);
       hasLoadedRoomStatusRef.current = true;
     } catch (err) {
       console.error("AdminRooms: Failed to load room status list:", err);
@@ -723,7 +757,7 @@ function ViewRoomModal({
           className="flex items-center justify-between flex-1 cursor-pointer"
         >
           <h3 className="text-2xl font-bold text-[color:var(--black)]">
-            Physical Rooms {physicalRooms && <span className="text-lg font-normal text-[color:var(--text-color)]/60">({physicalRooms.length})</span>}
+            Physical Rooms {physicalRooms && <span className="text-lg font-normal text-[color:var(--text-color)]/60">({physicalRooms.length + unnumberedRooms.length})</span>}
           </h3>
           <span className="text-lg text-[color:var(--text-color)]/60">{physicalRoomsExpanded ? "Hide ▲" : "Show ▼"}</span>
         </button>
@@ -732,10 +766,23 @@ function ViewRoomModal({
         {physicalRoomsExpanded && (
         loadingStatus ? (
           <LoadingSpinner />
-        ) : !physicalRooms || physicalRooms.length === 0 ? (
-          <p className="text-xl text-[color:var(--text-color)]/76">No numbered rooms yet.</p>
+        ) : !physicalRooms || physicalRooms.length + unnumberedRooms.length === 0 ? (
+          <p className="text-xl text-[color:var(--text-color)]/76">No rooms yet.</p>
         ) : (
           <div className="flex flex-col gap-2">
+            {/* Rooms with no number yet can't be picked for a guest - number them here. */}
+            {unnumberedRooms.map((r, i) => (
+              <div key={r.room_inventory_id} className="flex items-center justify-between gap-4 flex-wrap rounded-lg px-5 py-3 bg-amber-50 border border-amber-200">
+                <span className="text-xl text-amber-800">Room {physicalRooms.length + i + 1}: no number yet</span>
+                {canManage ? (
+                  <button type="button" onClick={() => setNumbering({ room_inventory_id: r.room_inventory_id, room_number: null })} className={btn.rowPrimary}>
+                    Set number
+                  </button>
+                ) : (
+                  <ManagerOnlyTag />
+                )}
+              </div>
+            ))}
             {physicalRooms.map((r) => (
               <div
                 key={r.room_inventory_id}
@@ -764,6 +811,11 @@ function ViewRoomModal({
                   )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                {canManage && (
+                  <button type="button" onClick={() => setNumbering(r)} className={btn.rowSecondary}>
+                    Change number
+                  </button>
+                )}
                 {isNotClean(r) && (
                   <button type="button" onClick={() => setMakingReady(r)} className={btn.rowSecondary}>
                     Make ready
@@ -999,6 +1051,18 @@ function ViewRoomModal({
           </div>
         </div>
       )}
+      {numbering && (
+        <RoomNumberDialog
+          room={numbering}
+          typeName={room.room_type_name}
+          onClose={() => setNumbering(null)}
+          onDone={(message) => {
+            setNumbering(null);
+            onSuccess(message);
+            loadRoomStatusList();
+          }}
+        />
+      )}
       {settingOutOfOrder && (
         <OutOfOrderDialog
           room={settingOutOfOrder}
@@ -1021,6 +1085,57 @@ function ViewRoomModal({
           }}
         />
       )}
+    </Modal>
+  );
+}
+
+// A room's number, set or changed (owner, 2026-11-04) - the manager's. The
+// server refuses a number the branch already has, and a change while a
+// booking or a guest holds the room by its old number.
+function RoomNumberDialog({ room, typeName, onClose, onDone }) {
+  const [number, setNumber] = useState(room.room_number || "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const next = number.trim();
+  const confirm = async () => {
+    if (!next) {
+      setError("Give the room a number.");
+      return;
+    }
+    try {
+      setBusy(true);
+      setError(null);
+      const res = await http.patch(`/api/rooms/inventory/${room.room_inventory_id}/number`, { room_number: next });
+      onDone(res.data?.changed === false ? `Room ${next} kept its number.` : room.room_number ? `Room ${room.room_number} is now Room ${next}.` : `The room is now Room ${next}.`);
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not set the room number.");
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal onClose={busy ? undefined : onClose} title={room.room_number ? `Change Room ${room.room_number}'s Number` : "Number a Room"} subtitle={typeName} size="md" zIndex={1100}>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="room-number-input" className={field.label}>
+            Room Number<Tip id="rooms.view.roomNumber" />
+          </label>
+          <input id="room-number-input" type="text" value={number} onChange={(e) => setNumber(e.target.value)} maxLength={50} disabled={busy} className={field.input} />
+        </div>
+        <ConfirmPanel
+          question={room.room_number ? `Change Room ${room.room_number} to ${next || "..."}?` : `Number this room ${next || "..."}?`}
+          details={[
+            "Each room number can be used once at this branch.",
+            ...(room.room_number ? ["Past stays keep the number they had; a room with a booking or a guest on it can't be renumbered."] : ["It can then be picked for a guest."]),
+            "The change is recorded in the Audit Trail.",
+          ]}
+          confirmLabel="Yes, save the number"
+          busyLabel="Saving..."
+          busy={busy}
+          error={error}
+          onBack={onClose}
+          onConfirm={confirm}
+        />
+      </div>
     </Modal>
   );
 }
@@ -1407,7 +1522,7 @@ export default function AdminRoomsPage() {
     <>
       {/* ── Notifications ── */}
       {successMessage && (
-        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl z-50 flex items-center gap-4 max-w-sm shadow-lg">
+        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl z-[2500] flex items-center gap-4 max-w-sm shadow-lg">
           <span className="text-xl">{successMessage}</span>
           <button
             onClick={() => setSuccessMessage("")}
@@ -1419,7 +1534,7 @@ export default function AdminRoomsPage() {
       )}
 
       {error && (
-        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl z-50 flex items-center gap-4 max-w-sm shadow-lg">
+        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl z-[2500] flex items-center gap-4 max-w-sm shadow-lg">
           <span className="text-xl">{error}</span>
           <button
             onClick={() => setError(null)}

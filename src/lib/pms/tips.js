@@ -152,6 +152,8 @@ export const TIPS = {
   "rooms.view.adultsField": "How many adults one room sleeps.",
   "rooms.view.childrenField": "How many children one room sleeps.",
   "rooms.view.physical": "Every room of this type and its status: Available, Out of Order (needs fixing, not sold), Complementary (free to its guest) or Reserved (set aside for a manager). Occupied shows by itself while a guest is in. Where housekeeping runs, a room that isn't clean says so: Dirty, Cleaning or For review.",
+  "rooms.add.roomNumbers": "The number on each room's door, as guests and staff know it. Each number can be used once at this branch.",
+  "rooms.view.roomNumber": "The number on the room's door. Each number can be used once at this branch; a room with a booking or a guest on it keeps its number.",
   "rooms.view.outOfOrderNote": "What is wrong with the room - Head Office sees this on Critical and Decision Support and decides when it is attended to.",
   "rooms.view.makeReadyNote": "Why this room is ready for a guest without the supervisor approving a clean - for example, a guest waiting and the room never used. It goes in the Audit Trail.",
   "rooms.view.basePrice": "The price per room per night, without breakfast. New bookings use it; existing ones keep their price.",

@@ -38,7 +38,7 @@ export default function NewBookingPopup({ enabled }) {
       {bookingId !== null && (
         <motion.div
           // Just below the top bar.
-          className="fixed top-[15rem] right-6 z-[200]"
+          className="fixed top-[15rem] right-6 z-[2600]"
           initial={{ opacity: 0, x: 80, scale: 0.96 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 80, transition: { duration: 0.2 } }}

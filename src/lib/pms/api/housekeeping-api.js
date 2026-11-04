@@ -76,3 +76,15 @@ export const putRoomBackInService = async (roomInventoryId) => {
   const response = await http.post(`/api/housekeeping/rooms/${roomInventoryId}/back-in-service`);
   return response.data;
 };
+
+// The housekeeping hours (Step 7), minutes after midnight Lagos time.
+export const setHousekeepingHours = async (start, end) => {
+  const response = await http.patch(`/api/housekeeping/hours`, { start, end });
+  return response.data;
+};
+
+// The reports and time tracking (Step 7), over business days.
+export const fetchHousekeepingReport = async (from, to) => {
+  const response = await http.get(`/api/housekeeping/reports`, { params: { from, to } });
+  return response.data;
+};

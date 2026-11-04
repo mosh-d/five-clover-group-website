@@ -256,7 +256,7 @@ function HeadOfficeWorkspace({ pathname, children }) {
 
 // One branch's PMS, for one role.
 function BranchWorkspace({ pathname, children }) {
-  const { branch, role } = usePmsSession();
+  const { branch, role, roleOverride, setRoleOverride, signOut } = usePmsSession();
   const { readouts, gate } = useShifts(role);
   const [clockDriftMinutes, setClockDriftMinutes] = useState(0);
 
@@ -303,7 +303,13 @@ function BranchWorkspace({ pathname, children }) {
         extras={
           <>
             <NewBookingPopup enabled={canOpen(role, "reservations")} />
-            {gate && <ShiftGate {...gate} />}
+            {gate && (
+              <ShiftGate
+                {...gate}
+                onSignOut={signOut}
+                onStopViewingAs={roleOverride ? () => setRoleOverride(null) : undefined}
+              />
+            )}
           </>
         }
       >

@@ -311,6 +311,8 @@ export const HELP_SECTIONS = [
       "For the edge cases, the receptionist or the manager can make a room ready for a guest without review from Rooms (Make ready), saying why. It becomes Clean at once, leaves the housekeepers' list, and the reason goes in the Audit Trail.",
       "The supervisor (or the manager) can set a room out of order from Housekeeping, saying why; the manager and the front desk still can from Rooms, also saying why. Head Office sees the reason on Critical and Decision Support and decides when the room is attended to. A room out of order is off the housekeepers' lists.",
       "Back in service - from Housekeeping or Rooms - a room becomes Dirty and goes on the housekeepers' list, so it is cleaned and approved before a guest gets it.",
+      "Reports (the supervisor's and the manager's tab on Housekeeping): over any business days, rooms cleaned, passed first time, sent back and made ready without review; average response, cleaning, review and turnaround times; each housekeeper's and each reviewer's figures; every room finished; and a CSV download.",
+      "The times are when Start and Submit were tapped. Response and review times count only the housekeeping hours the supervisor sets (07:00 to 19:00 to begin with). A clean under five minutes or over three hours is listed under Unlikely Times to look at, and left out of the averages.",
     ],
   },
   {

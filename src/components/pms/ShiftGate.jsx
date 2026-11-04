@@ -24,7 +24,11 @@ const ROTA = {
 //
 // A pick is read back before it is recorded - the whole day is attributed to
 // whoever is named here.
-export default function ShiftGate({ role, businessDate, currentName, onSelected, onCancel }) {
+//
+// Always a way out (owner, 2026-11-04: locked out viewing as a receptionist
+// at a branch with none): Sign out, and for the developer viewing as another
+// role, back to their own view - which has no shift to record.
+export default function ShiftGate({ role, businessDate, currentName, onSelected, onCancel, onSignOut, onStopViewingAs }) {
   const rota = ROTA[role] || ROTA.receptionist;
   const [staff, setStaff] = useState(null);
   const [selected, setSelected] = useState("");
@@ -120,6 +124,12 @@ export default function ShiftGate({ role, businessDate, currentName, onSelected,
             <>
               <button onClick={() => setConfirming(true)} disabled={!selected} className={btn.primary}>Start the shift</button>
               {onCancel && <button onClick={onCancel} className={btn.secondary}>Cancel</button>}
+              {!onCancel && onStopViewingAs && (
+                <button onClick={onStopViewingAs} className={btn.secondary}>Back to developer view</button>
+              )}
+              {!onCancel && onSignOut && (
+                <button onClick={onSignOut} className={btn.secondary}>Sign out</button>
+              )}
             </>
           )}
         </div>

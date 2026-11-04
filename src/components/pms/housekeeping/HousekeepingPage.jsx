@@ -9,6 +9,8 @@ import Modal from "@/components/pms/Modal";
 import Notice from "@/components/pms/Notice";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { Tip } from "@/components/pms/Tip";
+import PageTabs from "@/components/pms/PageTabs";
+import HousekeepingReports, { timeOfDay } from "@/components/pms/housekeeping/HousekeepingReports";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { useLiveRefresh, usePmsLive } from "@/components/pms/live/PmsLive";
 import { btn, card, field, page } from "@/components/pms/ui";
@@ -20,6 +22,7 @@ import {
   markRoomForCleaning,
   putRoomBackInService,
   reviewRoom,
+  setHousekeepingHours,
   setRoomOutOfOrder,
   setHousekeepingMode,
   startCleaning,
@@ -84,6 +87,12 @@ function ActionDialog({ action, board, onClose, onDone }) {
   const job = room?.job;
   const [note, setNote] = useState("");
   const [staffId, setStaffId] = useState(job?.assigned_to?.id ? String(job.assigned_to.id) : "");
+  const [hoursFrom, setHoursFrom] = useState(timeOfDay(board.hours?.start ?? 420));
+  const [hoursTo, setHoursTo] = useState(timeOfDay(board.hours?.end ?? 1140));
+  const minutesOf = (hhmm) => {
+    const [h, m] = String(hhmm || "").split(":").map(Number);
+    return Number.isInteger(h) && Number.isInteger(m) ? h * 60 + m : null;
+  };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const name = room ? roomName(room) : "";
@@ -115,6 +124,26 @@ function ActionDialog({ action, board, onClose, onDone }) {
         const result = await switchHousekeeping(!board.on);
         patchStoredBranch({ housekeeping_on: result.on });
         return { message: `Housekeeping is now ${result.on ? "on" : "off"} at ${result.branch_name}.`, patch: { on: result.on }, sessionChanged: true };
+      },
+    },
+    hours: {
+      title: "Housekeeping Hours",
+      hoursPicker: true,
+      question: `Set the housekeeping hours to ${hoursFrom} - ${hoursTo}?`,
+      details: [
+        "The reports' response and review times count only these hours, so a room left overnight doesn't count against the morning shift.",
+        hoursTo < hoursFrom ? "The hours run past midnight." : "Times already recorded are worked out again with the new hours.",
+      ],
+      confirmLabel: "Yes, set the hours",
+      busyLabel: "Saving...",
+      check: () => {
+        const start = minutesOf(hoursFrom);
+        const end = minutesOf(hoursTo);
+        return start === null || end === null ? "Pick a start and an end time." : start === end ? "The start and the end can't be the same." : null;
+      },
+      run: async () => {
+        const result = await setHousekeepingHours(minutesOf(hoursFrom), minutesOf(hoursTo));
+        return { message: `Housekeeping hours are ${hoursFrom} - ${hoursTo}.`, patch: { hours: result.hours } };
       },
     },
     mode: {
@@ -268,6 +297,11 @@ function ActionDialog({ action, board, onClose, onDone }) {
       setError(spec.noteRequired);
       return;
     }
+    const problem = spec.check?.();
+    if (problem) {
+      setError(problem);
+      return;
+    }
     try {
       setBusy(true);
       setError(null);
@@ -282,6 +316,22 @@ function ActionDialog({ action, board, onClose, onDone }) {
   return (
     <Modal onClose={busy ? undefined : onClose} title={spec.title} subtitle={room ? `${room.room_type_name}` : board.branch_name} size="md">
       <div className="flex flex-col gap-6">
+        {spec.hoursPicker && (
+          <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="hk-hours-from" className={field.label}>
+                From<Tip id="housekeeping.hours" />
+              </label>
+              <input id="hk-hours-from" type="time" value={hoursFrom} onChange={(e) => setHoursFrom(e.target.value)} className={field.input} disabled={busy} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="hk-hours-to" className={field.label}>
+                To
+              </label>
+              <input id="hk-hours-to" type="time" value={hoursTo} onChange={(e) => setHoursTo(e.target.value)} className={field.input} disabled={busy} />
+            </div>
+          </div>
+        )}
         {spec.picker &&
           (board.housekeepers.length === 0 ? (
             <p className={`text-xl ${page.muted}`}>This branch has no housekeeper accounts yet - Head Office adds them on Staff Accounts.</p>
@@ -541,6 +591,8 @@ export default function HousekeepingPage() {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [action, setAction] = useState(null);
+  // The supervisor's and manager's two views: the rooms, and the reports (Step 7).
+  const [tab, setTab] = useState("rooms");
 
   const load = useCallback(() => {
     fetchHousekeepingBoard().then(
@@ -652,9 +704,42 @@ export default function HousekeepingPage() {
                   </div>
                 </div>
               )}
+              {board.on && !isHousekeeper && board.hours && (
+                <div className="flex flex-col gap-2">
+                  <span className={field.label}>
+                    Housekeeping Hours
+                    <Tip id="housekeeping.hours" />
+                  </span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xl font-semibold">
+                      {timeOfDay(board.hours.start)} - {timeOfDay(board.hours.end)}
+                    </span>
+                    <button type="button" onClick={() => setAction({ kind: "hours" })} className={btn.rowSecondary}>
+                      Change
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
 
-            {board.on && (isHousekeeper ? <HousekeeperView board={board} me={me} onAction={setAction} /> : <SupervisorView board={board} onAction={setAction} />)}
+            {board.on && !isHousekeeper && (
+              <PageTabs
+                tabs={[
+                  { key: "rooms", label: "Rooms" },
+                  { key: "reports", label: "Reports" },
+                ]}
+                active={tab}
+                onChange={setTab}
+              />
+            )}
+            {board.on &&
+              (isHousekeeper ? (
+                <HousekeeperView board={board} me={me} onAction={setAction} />
+              ) : tab === "reports" ? (
+                <HousekeepingReports />
+              ) : (
+                <SupervisorView board={board} onAction={setAction} />
+              ))}
           </>
         )
       )}

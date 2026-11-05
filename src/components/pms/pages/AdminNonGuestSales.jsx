@@ -2,6 +2,7 @@
 "use no memo";
 
 // Carried over from the branch PMS's admin_pages/AdminNonGuestSales.jsx (2026-09-28).
+import { menuServiceCharge } from "@/lib/pms/serviceCharge";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { IoCartOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
@@ -77,7 +78,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
   const rowServiceCharge = (row) => {
     const item = itemFor(row);
     if (!item || isCompOrManager(row)) return 0;
-    return Number(item.service_charge || 0) * (Number(row.quantity) || 0);
+    return menuServiceCharge(item, Number(row.quantity) || 0);
   };
 
   const [successMessage, setSuccessMessage] = useState("");

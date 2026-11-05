@@ -26,6 +26,7 @@ import {
 } from "@/lib/pms/api/menu-api";
 import StatusBadge from "@/components/pms/StatusBadge";
 import { money } from "@/lib/pms/format";
+import { serviceChargeText } from "@/lib/pms/serviceCharge";
 import { Tip } from "@/components/pms/Tip";
 import Modal from "@/components/pms/Modal";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
@@ -39,6 +40,15 @@ const EMPTY_LAUNDRY_FORM = { name: "", wash_and_iron_price: "", ironing_only_pri
 const costText = (v) => (v === null || v === undefined ? "" : String(Number(v)));
 const costValue = (text) => (text === "" ? null : Number(text));
 const badCost = (text) => text !== "" && !(Number(text) >= 0);
+
+// A service charge is a fixed amount per one sold, or a percentage of the
+// price (owner, 2026-11-05).
+const CHARGE_TYPES = [
+  { value: "fixed", label: "Fixed (₦)" },
+  { value: "percent", label: "Percentage (%)" },
+];
+const badCharge = (text, type) => text !== "" && !(Number(text) >= 0 && (type !== "percent" || Number(text) <= 100));
+const EMPTY_MENU_FORM = { name: "", price: "", service_charge: "", service_charge_type: "fixed", cost_price: "" };
 
 // The money and stock columns, a little narrower, so a drink's row - its cost
 // price and three actions too - still fits a laptop.
@@ -124,7 +134,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
   const [error, setError] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
 
-  const [addForm, setAddForm] = useState({ name: "", price: "", service_charge: "", cost_price: "" });
+  const [addForm, setAddForm] = useState(EMPTY_MENU_FORM);
   const [adding, setAdding] = useState(false);
 
   // Editing opens a dialog, like Inventory's items (owner, 2026-11-05).
@@ -163,7 +173,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!addForm.name.trim() || !addForm.price || badCost(addForm.cost_price)) return;
+    if (!addForm.name.trim() || !addForm.price || badCost(addForm.cost_price) || badCharge(addForm.service_charge, addForm.service_charge_type)) return;
     try {
       setAdding(true);
       setError(null);
@@ -171,9 +181,10 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
         name: addForm.name.trim(),
         price: Number(addForm.price),
         service_charge: Number(addForm.service_charge || 0),
+        service_charge_type: addForm.service_charge_type,
         ...(addForm.cost_price === "" ? {} : { cost_price: Number(addForm.cost_price) }),
       });
-      setAddForm({ name: "", price: "", service_charge: "", cost_price: "" });
+      setAddForm(EMPTY_MENU_FORM);
       await load();
     } catch (err) {
       setError(err.response?.data?.message || `Failed to add ${label}.`);
@@ -296,7 +307,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                 <th className={`${table.th} ${table.stickyTh}`}>Name<Tip id="menu.col.name" /></th>
                 <th className={`${table.th} ${narrow}`}>Price (₦)<Tip id="menu.col.price" /></th>
                 {canEdit && <th className={`${table.th} ${narrow}`}>Cost Price (₦)<Tip id="menu.col.costPrice" /></th>}
-                <th className={`${table.th} ${narrow}`}>Service Charge (₦)<Tip id="menu.col.serviceCharge" /></th>
+                <th className={`${table.th} ${narrow}`}>Service Charge<Tip id="menu.col.serviceCharge" /></th>
                 {recordStock && <th className={`${table.th} ${narrow}`}>Stock<Tip id="menu.col.stock" /></th>}
                 <th className={table.th}>Status<Tip id="menu.col.status" /></th>
                 <th className={table.th}>Actions<Tip id="menu.col.actions" /></th>
@@ -315,7 +326,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                           <td className={`${table.td} ${table.stickyTd} font-medium`}>{item.name}</td>
                           <td className={`${table.td} ${narrow}`}>{money(item.price)}</td>
                           {canEdit && <td className={`${table.td} ${narrow}`}>{item.cost_price === null || item.cost_price === undefined ? "—" : money(item.cost_price)}</td>}
-                          <td className={`${table.td} ${narrow}`}>{money(item.service_charge)}</td>
+                          <td className={`${table.td} ${narrow}`}>{serviceChargeText(item)}</td>
                           {recordStock && (
                             <td className={`${table.td} ${narrow}`}>{item.current_stock ?? "—"}</td>
                           )}
@@ -434,14 +445,20 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
               <input type="number" value={addForm.price} onChange={(e) => setAddForm({ ...addForm, price: e.target.value })} className={field.input} />
             </div>
             <div className="flex flex-col gap-2 w-40">
-              <label className={field.label}>Service Charge (₦)<Tip id="menu.add.serviceCharge" /></label>
-              <input type="number" value={addForm.service_charge} onChange={(e) => setAddForm({ ...addForm, service_charge: e.target.value })} className={field.input} />
+              <label htmlFor="menu-add-charge-type" className={field.label}>Service Charge Is<Tip id="menu.add.serviceChargeType" /></label>
+              <select id="menu-add-charge-type" value={addForm.service_charge_type} onChange={(e) => setAddForm({ ...addForm, service_charge_type: e.target.value })} className={field.select}>
+                {CHARGE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-2 w-40">
+              <label htmlFor="menu-add-charge" className={field.label}>Service Charge ({addForm.service_charge_type === "percent" ? "%" : "₦"})<Tip id="menu.add.serviceCharge" /></label>
+              <input id="menu-add-charge" type="number" min="0" max={addForm.service_charge_type === "percent" ? 100 : undefined} value={addForm.service_charge} onChange={(e) => setAddForm({ ...addForm, service_charge: e.target.value })} className={field.input} />
             </div>
             <div className="flex flex-col gap-2 w-40">
               <label htmlFor="menu-add-cost" className={field.label}>Cost Price (₦)<Tip id="menu.add.costPrice" /></label>
               <input id="menu-add-cost" type="number" min="0" placeholder="Optional" value={addForm.cost_price} onChange={(e) => setAddForm({ ...addForm, cost_price: e.target.value })} className={field.input} />
             </div>
-            <button type="submit" disabled={adding || !addForm.name.trim() || !addForm.price || badCost(addForm.cost_price)} className={btn.primary}>
+            <button type="submit" disabled={adding || !addForm.name.trim() || !addForm.price || badCost(addForm.cost_price) || badCharge(addForm.service_charge, addForm.service_charge_type)} className={btn.primary}>
               {adding ? "Adding..." : "Add Item"}
             </button>
           </div>
@@ -483,7 +500,8 @@ function MenuItemDialog({ item, label, updateItem, onClose, onDone }) {
   const [form, setForm] = useState({
     name: item.name,
     price: String(item.price),
-    service_charge: String(item.service_charge || 0),
+    service_charge: String(Number(item.service_charge || 0)),
+    service_charge_type: item.service_charge_type || "fixed",
     cost_price: costText(item.cost_price),
   });
   const [busy, setBusy] = useState(false);
@@ -497,6 +515,8 @@ function MenuItemDialog({ item, label, updateItem, onClose, onDone }) {
         ? "Give a price of 0 or more."
         : form.service_charge !== "" && !(Number(form.service_charge) >= 0)
           ? "A service charge can't be below 0."
+          : form.service_charge_type === "percent" && Number(form.service_charge) > 100
+            ? "A service charge can't be more than 100% of the price."
           : badCost(form.cost_price)
             ? "A cost price can't be below 0. Leave it empty for none."
             : null;
@@ -514,6 +534,7 @@ function MenuItemDialog({ item, label, updateItem, onClose, onDone }) {
         name: form.name.trim(),
         price: Number(form.price),
         service_charge: Number(form.service_charge || 0),
+        service_charge_type: form.service_charge_type,
         ...(costChanged ? { cost_price: cost } : {}),
       });
       onDone(`${form.name.trim()} saved.`);
@@ -533,16 +554,27 @@ function MenuItemDialog({ item, label, updateItem, onClose, onDone }) {
           <DialogField id="menu-edit-price" label="Price (₦)" tip="menu.add.price">
             <input id="menu-edit-price" type="number" min="0" value={form.price} onChange={set("price")} className={field.input} disabled={busy} />
           </DialogField>
-          <DialogField id="menu-edit-service" label="Service Charge (₦)" tip="menu.add.serviceCharge">
-            <input id="menu-edit-service" type="number" min="0" value={form.service_charge} onChange={set("service_charge")} className={field.input} disabled={busy} />
+          <DialogField id="menu-edit-cost" label="Cost Price (₦, optional)" tip="menu.col.costPrice">
+            <input id="menu-edit-cost" type="number" min="0" placeholder="None" value={form.cost_price} onChange={set("cost_price")} className={field.input} disabled={busy} />
           </DialogField>
         </div>
-        <DialogField id="menu-edit-cost" label="Cost Price (₦, optional)" tip="menu.col.costPrice">
-          <input id="menu-edit-cost" type="number" min="0" placeholder="None" value={form.cost_price} onChange={set("cost_price")} className={field.input} disabled={busy} />
-        </DialogField>
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+          <DialogField id="menu-edit-charge-type" label="Service Charge Is" tip="menu.add.serviceChargeType">
+            <select id="menu-edit-charge-type" value={form.service_charge_type} onChange={set("service_charge_type")} className={`${field.select} w-full`} disabled={busy}>
+              {CHARGE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </DialogField>
+          <DialogField id="menu-edit-service" label={`Service Charge (${form.service_charge_type === "percent" ? "%" : "₦"})`} tip="menu.add.serviceCharge">
+            <input id="menu-edit-service" type="number" min="0" max={form.service_charge_type === "percent" ? 100 : undefined} value={form.service_charge} onChange={set("service_charge")} className={field.input} disabled={busy} />
+          </DialogField>
+        </div>
         <ConfirmPanel
           question={`Save ${form.name.trim() || "the item"}?`}
-          details={["Orders from now on charge the new price. What was sold before keeps its price.", "The change is recorded in the Audit Trail."]}
+          details={[
+            `Service charge: ${Number(form.service_charge || 0) ? `${serviceChargeText(form)}${form.service_charge_type === "percent" ? " of the price" : " for each one sold"}` : "none"}.`,
+            "Orders from now on charge the new price and service charge. What was sold before keeps what it was charged.",
+            "The change is recorded in the Audit Trail.",
+          ]}
           confirmLabel="Yes, save it"
           busyLabel="Saving..."
           busy={busy}

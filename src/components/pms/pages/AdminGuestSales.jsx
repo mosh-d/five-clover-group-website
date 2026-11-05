@@ -2,6 +2,7 @@
 "use no memo";
 
 // Carried over from the branch PMS's admin_pages/AdminGuestSales.jsx (2026-09-28).
+import { menuServiceCharge } from "@/lib/pms/serviceCharge";
 import { useState, useEffect } from "react";
 import { IoFastFoodOutline } from "react-icons/io5";
 import PageOrSection from "@/components/pms/PageOrSection";
@@ -118,7 +119,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
   const rowServiceCharge = (row) => {
     const item = itemFor(row);
     if (!item || isComp(row)) return 0;
-    return Number(item.service_charge || 0) * (Number(row.quantity) || 0);
+    return menuServiceCharge(item, Number(row.quantity) || 0);
   };
 
   const [order, setOrder] = useState(emptyOrder);

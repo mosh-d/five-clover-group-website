@@ -1,5 +1,6 @@
 "use client";
 
+import CountBadge from "@/components/pms/CountBadge";
 import { useCallback, useEffect, useState } from "react";
 import { IoSparklesOutline } from "react-icons/io5";
 import PageHeading from "@/components/pms/PageHeading";
@@ -400,10 +401,12 @@ function RoomCard({ room, children, lines = [] }) {
 function Section({ id, title, tip, empty, children, count }) {
   return (
     <section aria-labelledby={id} className="w-full flex flex-col gap-4">
-      <h2 id={id} className={page.sectionTitle}>
-        {title}
-        {count > 0 ? ` (${count})` : ""}
-        <Tip id={tip} />
+      <h2 id={id} className={`${page.sectionTitle} flex items-center gap-2 flex-wrap`}>
+        <span>
+          {title}
+          <Tip id={tip} />
+        </span>
+        <CountBadge count={count} label="rooms" />
       </h2>
       {count > 0 ? <ul className="flex flex-col gap-3">{children}</ul> : <p className={`text-xl ${page.muted}`}>{empty}</p>}
     </section>

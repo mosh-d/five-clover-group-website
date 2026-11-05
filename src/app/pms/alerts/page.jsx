@@ -1,5 +1,7 @@
 "use client";
 
+import PageTabs from "@/components/pms/PageTabs";
+import CountBadge from "@/components/pms/CountBadge";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IoNotificationsOutline, IoMenuOutline } from "react-icons/io5";
@@ -282,7 +284,7 @@ export default function PmsAlertsPage() {
         <PageHeading
           icon={IoNotificationsOutline}
           tipId="alerts.page"
-          badge={alertCount > 0 && <span className="bg-red-600 text-white text-2xl font-bold rounded-full px-3 py-1 min-w-[2.5rem] text-center">{alertCount}</span>}
+          badge={<CountBadge count={alertCount} label="open alerts" size="lg" />}
         >
           Alerts
         </PageHeading>
@@ -353,12 +355,7 @@ function AlertTabs({ tabs, active, onChange }) {
     return () => document.removeEventListener("mousedown", outside);
   }, [menuOpen]);
   const current = tabs.find((t) => t.key === active);
-  const countPill = (count, onEmphasis) =>
-    count > 0 && (
-      <span className={`text-xl font-bold rounded-full px-3 py-1 min-w-[1.4rem] text-center leading-tight ${onEmphasis ? "bg-white text-(--emphasis)" : "bg-red-600 text-white"}`}>
-        {count}
-      </span>
-    );
+  const countPill = (count, onEmphasis) => <CountBadge count={count} label="to look at" active={onEmphasis} />;
 
   return (
     <div className="w-full">
@@ -394,20 +391,12 @@ function AlertTabs({ tabs, active, onChange }) {
         )}
       </div>
 
-      <div className="hidden sm:flex flex-wrap gap-3 w-full">
-        {tabs.map(({ key, label, rows }) => (
-          <button
-            key={key}
-            onClick={() => onChange(key)}
-            className={`px-6 py-3 rounded-lg text-xl font-bold whitespace-nowrap flex items-center gap-2 cursor-pointer transition-all ${
-              active === key ? "bg-(--emphasis) text-white" : "bg-black/4 hover:bg-black/8"
-            }`}
-          >
-            {label}
-            {countPill(rows.length, active === key)}
-          </button>
-        ))}
-      </div>
+      <PageTabs
+        className="max-sm:hidden"
+        tabs={tabs.map(({ key, label, rows }) => ({ key, label, badge: rows.length, badgeLabel: "to look at" }))}
+        active={active}
+        onChange={onChange}
+      />
     </div>
   );
 }

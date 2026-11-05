@@ -538,9 +538,10 @@ export default function InventoryPage() {
   // Kept current when stock moves on another device (a request issued, say).
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
   useLiveRefresh(reload, ["inventory"]);
-  const { inventoryCount } = usePmsLive();
-  const lowCount = data?.totals?.low || 0;
-  const waiting = role === "storekeeper" ? Math.max(inventoryCount - lowCount, 0) : 0;
+  // The sidebar's Inventory badge, split across the tabs it comes from, so
+  // the numbers always add up: items low on stock on Stock, requests waiting
+  // on Requests (those count for whoever answers them - the store keeper).
+  const { inventoryPending: waiting, inventoryLow: low } = usePmsLive();
 
   const items = useMemo(() => {
     if (!data) return [];
@@ -566,8 +567,8 @@ export default function InventoryPage() {
 
       <PageTabs
         tabs={[
-          { key: "stock", label: "Stock" },
-          { key: "requests", label: waiting ? `Requests (${waiting})` : "Requests" },
+          { key: "stock", label: "Stock", badge: low, badgeLabel: "items low on stock" },
+          { key: "requests", label: "Requests", badge: waiting, badgeLabel: "requests waiting" },
           { key: "reports", label: "Reports" },
           { key: "suppliers", label: "Suppliers" },
         ]}

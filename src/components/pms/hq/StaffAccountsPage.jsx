@@ -1,5 +1,6 @@
 "use client";
 
+import CountBadge from "@/components/pms/CountBadge";
 import { useState, useEffect, useCallback } from "react";
 import { IoPeopleOutline } from "react-icons/io5";
 import PageHeading from "@/components/pms/PageHeading";
@@ -333,8 +334,9 @@ export default function StaffAccountsPage() {
         {selectedBranchId && !loadingStaff && staff.length > 0 && (
           <label className={`text-xl flex items-center gap-2 cursor-pointer w-fit ${page.muted}`}>
             <input type="checkbox" checked={showDeactivated} onChange={(e) => setShowDeactivated(e.target.checked)} className="cursor-pointer" />
-            View deactivated accounts{deactivatedCount > 0 ? ` (${deactivatedCount})` : ""}
+            View deactivated accounts
             <Tip id="staffAccounts.showDeactivated" />
+            <CountBadge count={deactivatedCount} label="deactivated" tone="neutral" />
           </label>
         )}
 

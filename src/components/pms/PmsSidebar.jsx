@@ -8,6 +8,7 @@ import { usePmsSession } from "./PmsSessionContext";
 import { visibleNavItems } from "./pmsNavItems";
 import { usePmsLive } from "./live/PmsLive";
 import { AnimatePresence, MotionDiv, EASE_OUT } from "./motion";
+import CountBadge from "./CountBadge";
 
 function NavItems({ pathname, role, scope, branch, onNavigate }) {
   const { alertCount, otaPendingCount, cashUpDueCount, housekeepingCount, inventoryCount } = usePmsLive();
@@ -17,7 +18,7 @@ function NavItems({ pathname, role, scope, branch, onNavigate }) {
     ota: { count: otaPendingCount, label: "OTA payments still to arrive" },
     cashUp: { count: cashUpDueCount, label: "cash counts still to submit" },
     housekeeping: { count: housekeepingCount, label: role === "housekeeper" ? "rooms to clean" : "rooms waiting for you" },
-    inventory: { count: inventoryCount, label: role === "storekeeper" ? "items low on stock or requests waiting" : "items low on stock" },
+    inventory: { count: inventoryCount, label: role === "storekeeper" || role === "developer" ? "items low on stock or requests waiting" : "items low on stock" },
   };
   return (
     <ul className="flex flex-col gap-2">
@@ -35,16 +36,7 @@ function NavItems({ pathname, role, scope, branch, onNavigate }) {
             >
               <Icon size={20} className="shrink-0" />
               <span>{label}</span>
-              {count > 0 && (
-                <span
-                  className={`ml-auto min-w-[2.4rem] h-[2.4rem] px-2 rounded-full text-base font-bold flex items-center justify-center ${
-                    isActive ? "bg-white text-(--emphasis)" : "bg-red-600 text-white"
-                  }`}
-                  aria-label={`${count} ${badges[badge].label}`}
-                >
-                  {count > 99 ? "99+" : count}
-                </span>
-              )}
+              <CountBadge count={count} label={badge ? badges[badge].label : ""} active={isActive} className="ml-auto" />
             </Link>
           </li>
         );

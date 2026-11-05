@@ -9,10 +9,15 @@
 //
 // They wrap rather than sit in one scrolling row: underlined in a single
 // row, a label broke mid-word on a phone ("Walk- / In").
+//
+// A tab may carry a count badge ({ badge: 3, badgeLabel: "requests waiting" }),
+// the same CountBadge the sidebar uses.
+import CountBadge from "./CountBadge";
+
 export default function PageTabs({ tabs, active, onChange, className = "" }) {
   return (
     <div className={`flex flex-wrap gap-3 w-full ${className}`} role="tablist">
-      {tabs.map(({ key, label }) => {
+      {tabs.map(({ key, label, badge, badgeLabel }) => {
         const isActive = key === active;
         return (
           <button
@@ -21,13 +26,14 @@ export default function PageTabs({ tabs, active, onChange, className = "" }) {
             role="tab"
             aria-selected={isActive}
             onClick={() => onChange(key)}
-            className={`px-6 py-3 rounded-lg text-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
+            className={`px-6 py-3 rounded-lg text-xl font-bold whitespace-nowrap cursor-pointer transition-all inline-flex items-center gap-2 ${
               isActive
                 ? "bg-[color:var(--emphasis)] text-white"
                 : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"
             }`}
           >
             {label}
+            <CountBadge count={badge} label={badgeLabel || "waiting"} active={isActive} />
           </button>
         );
       })}

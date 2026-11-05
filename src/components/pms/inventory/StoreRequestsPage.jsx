@@ -17,8 +17,8 @@ import { num, RequestsTable } from "./storeRequestUi";
 
 // Store Requests (Inventory, Step 4): a department asks the store for stock -
 // the waitron for the Bar and the Kitchen, the front desk for Front office and
-// Laundry, the housekeeping supervisor for Housekeeping and Laundry, the
-// manager for any. The store keeper issues it or declines it from Inventory.
+// Laundry, the housekeeping supervisor and housekeepers for Housekeeping
+// and Laundry, the manager for any. The store keeper issues it or declines it from Inventory.
 
 function AskDialog({ data, onClose, onDone }) {
   const departments = Object.entries(data.departments);

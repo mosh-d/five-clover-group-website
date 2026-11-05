@@ -305,7 +305,7 @@ function BranchWorkspace({ pathname, children }) {
       canHousekeep={canOpen(role, "housekeeping") && Boolean(branch?.housekeeping_on)}
       chimeOnHousekeeping={role === "housekeeper" || role === "housekeeping_supervisor"}
       canSeeInventory={canOpen(role, "inventory")}
-      storeKeeper={role === "storekeeper"}
+      storeKeeper={role === "storekeeper" || role === "developer"}
     >
       <Frame
         pathname={pathname}

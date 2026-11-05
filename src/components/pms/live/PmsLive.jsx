@@ -171,6 +171,8 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
   // store keeper the requests waiting as well (Step 4). Refetched whenever the
   // store changes.
   const [inventoryCount, setInventoryCount] = useState(0);
+  const [inventoryPending, setInventoryPending] = useState(0);
+  const [inventoryLow, setInventoryLow] = useState(0);
   const prevPendingRef = useRef(null);
   const refreshInventoryCount = useCallback(() => {
     if (!canSeeInventory) {
@@ -182,6 +184,8 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
         const pending = Number(c?.pending) || 0;
         const low = Number(c?.low) || 0;
         setInventoryCount(storeKeeper ? low + pending : low);
+        setInventoryPending(pending);
+        setInventoryLow(low);
         const previous = prevPendingRef.current;
         prevPendingRef.current = pending;
         if (!storeKeeper || previous === null || pending <= previous) return;
@@ -291,6 +295,11 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
         housekeepingCount: canHousekeep ? housekeepingCount : 0,
         refreshHousekeepingCount,
         inventoryCount: canSeeInventory ? inventoryCount : 0,
+        // The sidebar's Inventory badge is the sum of these two, as its tabs
+        // show them: Stock carries the low items, Requests the waiting ones
+        // (for whoever the requests count for - storeKeeper).
+        inventoryPending: canSeeInventory && storeKeeper ? inventoryPending : 0,
+        inventoryLow: canSeeInventory ? inventoryLow : 0,
         refreshInventoryCount,
         disconnectedRefreshTick,
       }}
@@ -317,6 +326,8 @@ const HEAD_OFFICE_LIVE = {
   housekeepingCount: 0,
   refreshHousekeepingCount: () => {},
   inventoryCount: 0,
+  inventoryPending: 0,
+  inventoryLow: 0,
   refreshInventoryCount: () => {},
   disconnectedRefreshTick: 0,
 };

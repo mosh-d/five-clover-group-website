@@ -27,6 +27,9 @@ import {
 import StatusBadge from "@/components/pms/StatusBadge";
 import { money } from "@/lib/pms/format";
 import { Tip } from "@/components/pms/Tip";
+import Modal from "@/components/pms/Modal";
+import ConfirmPanel from "@/components/pms/ConfirmPanel";
+import Notice from "@/components/pms/Notice";
 
 const EMPTY_LAUNDRY_FORM = { name: "", wash_and_iron_price: "", ironing_only_price: "" };
 
@@ -124,8 +127,9 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
   const [addForm, setAddForm] = useState({ name: "", price: "", service_charge: "", cost_price: "" });
   const [adding, setAdding] = useState(false);
 
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ name: "", price: "", service_charge: "", cost_price: "" });
+  // Editing opens a dialog, like Inventory's items (owner, 2026-11-05).
+  const [editItem, setEditItem] = useState(null);
+  const [notice, setNotice] = useState(null);
   const [savingId, setSavingId] = useState(null);
 
   // Delete is only allowed for an item with zero order/stock history (the
@@ -175,38 +179,6 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
       setError(err.response?.data?.message || `Failed to add ${label}.`);
     } finally {
       setAdding(false);
-    }
-  };
-
-  const startEdit = (item) => {
-    setEditingId(item.id);
-    setEditForm({ name: item.name, price: String(item.price), service_charge: String(item.service_charge || 0), cost_price: costText(item.cost_price) });
-  };
-
-  const handleSaveEdit = async (id) => {
-    if (!editForm.name.trim() || !editForm.price) return;
-    if (badCost(editForm.cost_price)) {
-      setError("A cost price can't be below 0. Leave it empty for none.");
-      return;
-    }
-    // The cost price goes only when it changed (empty clears it).
-    const cost = costValue(editForm.cost_price);
-    const costChanged = cost !== costValue(costText(items.find((i) => i.id === id)?.cost_price));
-    try {
-      setSavingId(id);
-      setError(null);
-      await updateItem(id, {
-        name: editForm.name.trim(),
-        price: Number(editForm.price),
-        service_charge: Number(editForm.service_charge || 0),
-        ...(costChanged ? { cost_price: cost } : {}),
-      });
-      setEditingId(null);
-      await load();
-    } catch (err) {
-      setError(err.response?.data?.message || `Failed to update ${label}.`);
-    } finally {
-      setSavingId(null);
     }
   };
 
@@ -307,6 +279,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
 
   return (
     <div className="w-full flex flex-col gap-6">
+      <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>}
 
       <label className="flex items-center gap-3 text-xl cursor-pointer">
@@ -338,41 +311,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                 items.map((item) => (
                   <Fragment key={item.id}>
                     <tr className={table.row}>
-                      {editingId === item.id ? (
-                        <>
-                          <td className={table.td}>
-                            <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className={`${field.input} text-xl!`} />
-                          </td>
-                          <td className={`${table.td} ${narrow}`}>
-                            <input type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} className={`${field.input} text-xl! w-32`} />
-                          </td>
-                          {canEdit && (
-                            <td className={`${table.td} ${narrow}`}>
-                              <input type="number" min="0" aria-label="Cost price" placeholder="None" value={editForm.cost_price} onChange={(e) => setEditForm({ ...editForm, cost_price: e.target.value })} className={`${field.input} text-xl! w-32`} />
-                            </td>
-                          )}
-                          <td className={`${table.td} ${narrow}`}>
-                            <input type="number" value={editForm.service_charge} onChange={(e) => setEditForm({ ...editForm, service_charge: e.target.value })} className={`${field.input} text-xl! w-32`} />
-                          </td>
-                          {recordStock && (
-                            <td className={`${table.td} ${narrow}`}>{item.current_stock ?? "—"}</td>
-                          )}
-                          <td className={table.td}>
-                            <span className={`text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${statusBadge(item).className}`}>
-                              {statusBadge(item).label}
-                            </span>
-                          </td>
-                          <td className={table.td}>
-                            <div className={table.actions}>
-                              <button onClick={() => handleSaveEdit(item.id)} disabled={savingId === item.id} className={btn.rowPrimary}>
-                                {savingId === item.id ? "Saving..." : "Save"}
-                              </button>
-                              <button onClick={() => setEditingId(null)} className={btn.rowSecondary}>Cancel</button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
+                      <>
                           <td className={`${table.td} ${table.stickyTd} font-medium`}>{item.name}</td>
                           <td className={`${table.td} ${narrow}`}>{money(item.price)}</td>
                           {canEdit && <td className={`${table.td} ${narrow}`}>{item.cost_price === null || item.cost_price === undefined ? "—" : money(item.cost_price)}</td>}
@@ -387,7 +326,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                           </td>
                           <td className={table.td}>
                             <div className={table.actions}>
-                              {canEdit && <button onClick={() => startEdit(item)} className={btn.rowSecondary}>Edit</button>}
+                              {canEdit && <button onClick={() => setEditItem(item)} className={btn.rowSecondary}>Edit</button>}
                               {/* For drinks, going out of stock is now automatic (computed from the ledger) — this manual toggle only stays available to reactivate an item deactivated before that existed. */}
                               {canEdit && (!recordStock || !item.is_active) && (
                                 <button onClick={() => handleToggleActive(item)} disabled={savingId === item.id} className={item.is_active ? btn.rowDanger : btn.rowSuccess}>
@@ -413,8 +352,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                               )}
                             </div>
                           </td>
-                        </>
-                      )}
+                      </>
                     </tr>
                     {recordStock && stockAdjustId === item.id && (
                       <tr className={table.row}>
@@ -509,7 +447,176 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
           </div>
         </form>
       )}
+
+      {editItem && (
+        <MenuItemDialog
+          item={editItem}
+          label={label}
+          updateItem={updateItem}
+          onClose={() => setEditItem(null)}
+          onDone={async (message) => {
+            setEditItem(null);
+            setError(null);
+            setNotice(message);
+            await load();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function DialogField({ id, label, tip, children }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className={field.label}>
+        {label}
+        <Tip id={tip} />
+      </label>
+      {children}
+    </div>
+  );
+}
+
+// Edit a food or drink item: its name, price, service charge and cost price.
+function MenuItemDialog({ item, label, updateItem, onClose, onDone }) {
+  const [form, setForm] = useState({
+    name: item.name,
+    price: String(item.price),
+    service_charge: String(item.service_charge || 0),
+    cost_price: costText(item.cost_price),
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const confirm = async () => {
+    const problem = !form.name.trim()
+      ? "Give the item a name."
+      : form.price === "" || !(Number(form.price) >= 0)
+        ? "Give a price of 0 or more."
+        : form.service_charge !== "" && !(Number(form.service_charge) >= 0)
+          ? "A service charge can't be below 0."
+          : badCost(form.cost_price)
+            ? "A cost price can't be below 0. Leave it empty for none."
+            : null;
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    // The cost price goes only when it changed (empty clears it).
+    const cost = costValue(form.cost_price);
+    const costChanged = cost !== costValue(costText(item.cost_price));
+    try {
+      setBusy(true);
+      setError(null);
+      await updateItem(item.id, {
+        name: form.name.trim(),
+        price: Number(form.price),
+        service_charge: Number(form.service_charge || 0),
+        ...(costChanged ? { cost_price: cost } : {}),
+      });
+      onDone(`${form.name.trim()} saved.`);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || `Failed to update the ${label}.`);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal onClose={busy ? undefined : onClose} title={`Edit ${item.name}`} size="md">
+      <div className="flex flex-col gap-5">
+        <DialogField id="menu-edit-name" label="Name" tip="menu.add.name">
+          <input id="menu-edit-name" type="text" value={form.name} onChange={set("name")} className={field.input} disabled={busy} />
+        </DialogField>
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+          <DialogField id="menu-edit-price" label="Price (₦)" tip="menu.add.price">
+            <input id="menu-edit-price" type="number" min="0" value={form.price} onChange={set("price")} className={field.input} disabled={busy} />
+          </DialogField>
+          <DialogField id="menu-edit-service" label="Service Charge (₦)" tip="menu.add.serviceCharge">
+            <input id="menu-edit-service" type="number" min="0" value={form.service_charge} onChange={set("service_charge")} className={field.input} disabled={busy} />
+          </DialogField>
+        </div>
+        <DialogField id="menu-edit-cost" label="Cost Price (₦, optional)" tip="menu.col.costPrice">
+          <input id="menu-edit-cost" type="number" min="0" placeholder="None" value={form.cost_price} onChange={set("cost_price")} className={field.input} disabled={busy} />
+        </DialogField>
+        <ConfirmPanel
+          question={`Save ${form.name.trim() || "the item"}?`}
+          details={["Orders from now on charge the new price. What was sold before keeps its price.", "The change is recorded in the Audit Trail."]}
+          confirmLabel="Yes, save it"
+          busyLabel="Saving..."
+          busy={busy}
+          error={error}
+          onBack={onClose}
+          onConfirm={confirm}
+        />
+      </div>
+    </Modal>
+  );
+}
+
+// Edit a clothing item: its name and its two prices.
+function LaundryItemDialog({ item, onClose, onDone }) {
+  const [form, setForm] = useState({
+    name: item.name,
+    wash_and_iron_price: String(item.wash_and_iron_price ?? ""),
+    ironing_only_price: String(item.ironing_only_price ?? ""),
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const confirm = async () => {
+    const wash = Number(form.wash_and_iron_price || 0);
+    const iron = Number(form.ironing_only_price || 0);
+    const problem = !form.name.trim()
+      ? "Give the clothing item a name."
+      : !(wash >= 0) || !(iron >= 0)
+        ? "A price can't be below 0."
+        : !(wash > 0 || iron > 0)
+          ? "Give at least one price."
+          : null;
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    try {
+      setBusy(true);
+      setError(null);
+      await updateLaundryItem(item.id, { name: form.name.trim(), wash_and_iron_price: wash, ironing_only_price: iron });
+      onDone(`${form.name.trim()} saved.`);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed to save.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal onClose={busy ? undefined : onClose} title={`Edit ${item.name}`} size="md">
+      <div className="flex flex-col gap-5">
+        <DialogField id="laundry-edit-name" label="Clothes" tip="menu.laundry.add.clothes">
+          <input id="laundry-edit-name" type="text" value={form.name} onChange={set("name")} className={field.input} disabled={busy} />
+        </DialogField>
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+          <DialogField id="laundry-edit-wash" label="Wash and Iron (₦)" tip="menu.laundry.add.washIron">
+            <input id="laundry-edit-wash" type="number" min="0" value={form.wash_and_iron_price} onChange={set("wash_and_iron_price")} className={field.input} disabled={busy} />
+          </DialogField>
+          <DialogField id="laundry-edit-iron" label="Ironing Only (₦)" tip="menu.laundry.add.ironOnly">
+            <input id="laundry-edit-iron" type="number" min="0" value={form.ironing_only_price} onChange={set("ironing_only_price")} className={field.input} disabled={busy} />
+          </DialogField>
+        </div>
+        <ConfirmPanel
+          question={`Save ${form.name.trim() || "the item"}?`}
+          details={["Laundry posted from now on charges the new prices. What was charged before keeps its price.", "The change is recorded in the Audit Trail."]}
+          confirmLabel="Yes, save it"
+          busyLabel="Saving..."
+          busy={busy}
+          error={error}
+          onBack={onClose}
+          onConfirm={confirm}
+        />
+      </div>
+    </Modal>
   );
 }
 
@@ -527,8 +634,8 @@ function LaundrySection({ canEdit }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState(EMPTY_LAUNDRY_FORM);
+  const [editItem, setEditItem] = useState(null);
+  const [notice, setNotice] = useState(null);
   const [addForm, setAddForm] = useState(EMPTY_LAUNDRY_FORM);
   const [saving, setSaving] = useState(false);
 
@@ -546,21 +653,11 @@ function LaundrySection({ canEdit }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const startEdit = (item) => {
-    setEditingId(item.id);
-    setEditForm({
-      name: item.name,
-      wash_and_iron_price: String(item.wash_and_iron_price ?? ""),
-      ironing_only_price: String(item.ironing_only_price ?? ""),
-    });
-  };
-
   const submit = async (action) => {
     setSaving(true);
     setError(null);
     try {
       await action();
-      setEditingId(null);
       setAddForm(EMPTY_LAUNDRY_FORM);
       await load();
     } catch (err) {
@@ -580,6 +677,7 @@ function LaundrySection({ canEdit }) {
 
   return (
     <div className="w-full flex flex-col gap-6">
+      <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3 w-full">{error}</p>}
 
       <label className="flex items-center gap-2 text-xl cursor-pointer">
@@ -608,29 +706,6 @@ function LaundrySection({ canEdit }) {
                   <tr><td colSpan={canEdit ? 5 : 4} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No laundry items yet.</td></tr>
                 ) : (
                   items.map((item) => (
-                    editingId === item.id ? (
-                      <tr key={item.id} className={table.row}>
-                        <td className={table.td}>
-                          <input type="text" value={editForm.name} className={field.input}
-                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
-                        </td>
-                        <td className={table.td}>
-                          <input type="number" min={0} value={editForm.wash_and_iron_price} className={field.input}
-                            onChange={(e) => setEditForm({ ...editForm, wash_and_iron_price: e.target.value })} />
-                        </td>
-                        <td className={table.td}>
-                          <input type="number" min={0} value={editForm.ironing_only_price} className={field.input}
-                            onChange={(e) => setEditForm({ ...editForm, ironing_only_price: e.target.value })} />
-                        </td>
-                        <td className={table.td}><StatusBadge status={item.is_active ? "active" : "inactive"} /></td>
-                        <td className={table.td}>
-                          <div className={table.actions}>
-                            <button disabled={saving} onClick={() => submit(() => updateLaundryItem(item.id, payloadFrom(editForm)))} className={btn.rowSuccess}>Save</button>
-                            <button disabled={saving} onClick={() => setEditingId(null)} className={btn.rowSecondary}>Cancel</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
                       <tr key={item.id} className={table.row}>
                         <td className={`${table.td} ${table.stickyTd} font-medium`}>{item.name}</td>
                         <td className={table.td}>{money(item.wash_and_iron_price)}</td>
@@ -639,7 +714,7 @@ function LaundrySection({ canEdit }) {
                         {canEdit && (
                           <td className={table.td}>
                             <div className={table.actions}>
-                              <button onClick={() => startEdit(item)} className={btn.rowSecondary}>Edit</button>
+                              <button onClick={() => setEditItem(item)} className={btn.rowSecondary}>Edit</button>
                               <button disabled={saving}
                                 onClick={() => submit(() => updateLaundryItem(item.id, { is_active: !item.is_active }))}
                                 className={btn.rowSecondary}>
@@ -653,7 +728,6 @@ function LaundrySection({ canEdit }) {
                           </td>
                         )}
                       </tr>
-                    )
                   ))
                 )}
               </tbody>
@@ -686,6 +760,19 @@ function LaundrySection({ canEdit }) {
             {saving ? "Saving..." : "Add Item"}
           </button>
         </div>
+      )}
+
+      {editItem && (
+        <LaundryItemDialog
+          item={editItem}
+          onClose={() => setEditItem(null)}
+          onDone={async (message) => {
+            setEditItem(null);
+            setError(null);
+            setNotice(message);
+            await load();
+          }}
+        />
       )}
     </div>
   );

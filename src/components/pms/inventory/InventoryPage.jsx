@@ -666,10 +666,8 @@ export default function InventoryPage() {
                                   </button>
                                 </>
                               )}
-                              <button type="button" onClick={() => open("history", i)} className={btn.rowSecondary}>
-                                History
-                              </button>
-                              {canEdit && (
+                              {/* History sits in More... so a row is one line shorter on a phone (owner, 2026-11-05). */}
+                              {canEdit ? (
                                 <select
                                   aria-label={`More for ${i.name}`}
                                   value=""
@@ -677,12 +675,17 @@ export default function InventoryPage() {
                                   className={`${field.select} text-lg! py-2!`}
                                 >
                                   <option value="">More...</option>
+                                  <option value="history">History</option>
                                   {i.is_active && <option value="returned">Take back from a department</option>}
                                   {i.is_active && <option value="written_off">Write off</option>}
                                   {i.is_active && <option value="counted">Count</option>}
                                   <option value="item">Edit</option>
                                   <option value="retire">{i.is_active ? "Retire" : "Bring back"}</option>
                                 </select>
+                              ) : (
+                                <button type="button" onClick={() => open("history", i)} className={btn.rowSecondary}>
+                                  History
+                                </button>
                               )}
                             </div>
                           </td>

@@ -339,6 +339,7 @@ export const HELP_SECTIONS = [
       "You sign in at fivecloverhotels.com/pms with your own username and password, and your account opens your own branch. Someone with accounts at more than one branch is asked which one.",
       "Capitals don't matter when you type your username - Amaka, amaka and AMAKA all sign in to the same account. Your username keeps the capitals HR gave it. The password must match exactly.",
       "A new password needs at least 8 characters and must differ from the current one.",
+      "This Device: turn this phone's or computer's sounds on or off, turn on notifications (pop-ups when something needs you, even with the PMS closed), and how to install the PMS as an app. Each device keeps its own settings.",
     ],
   },
 ];

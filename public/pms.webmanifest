@@ -1,0 +1,17 @@
+{
+  "name": "Five Clover Hotels PMS",
+  "short_name": "Five Clover PMS",
+  "description": "The Five Clover Hotels property management system.",
+  "id": "/pms",
+  "start_url": "/pms",
+  "scope": "/pms",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f1ea",
+  "theme_color": "#2b2622",
+  "icons": [
+    { "src": "/pms-icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/pms-icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/pms-icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

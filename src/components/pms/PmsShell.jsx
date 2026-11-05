@@ -20,6 +20,7 @@ import { readPmsSession, clearPmsSession, consumeJustSignedIn, setDevRoleOverrid
 import { verifyPmsSession, pmsSignOut, pmsSwitchBranch, SESSION_ENDED_EVENT } from "@/lib/pms/client";
 import { fetchBusinessDate } from "@/lib/pms/api/front-office-api";
 import { applyServerClock, deviceClockDriftMinutes } from "@/lib/pms/dates";
+import { registerServiceWorker, turnOffPush } from "@/lib/pms/pwa";
 
 // Everything around a PMS page: the session, the brand's colours, the top
 // bar and sidebar, and the live layer. /pms itself is the sign-in page - no
@@ -46,6 +47,12 @@ export default function PmsShell({ children }) {
   // this page - the next person to sign in on this computer would be taken
   // to where the last one was (2026-10-01).
   const leaving = useRef(false);
+
+  // The PMS as an app: its service worker, registered quietly on every PMS
+  // page (the sign-in page included, so a fresh device can be installed).
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   useEffect(() => {
     if (isSignInPage) {
@@ -153,6 +160,8 @@ export default function PmsShell({ children }) {
   const signOut = useCallback(async () => {
     leaving.current = true;
     try {
+      // This device stops getting their notifications (OWNER-SETUP.md part 2).
+      await turnOffPush().catch(() => {});
       await pmsSignOut();
     } catch {
       // Nothing to show: the session is gone from this computer regardless.

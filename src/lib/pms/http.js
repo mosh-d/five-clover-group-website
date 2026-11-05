@@ -1,4 +1,5 @@
 import { pmsRequest } from "./client";
+import { playSound } from "./sounds";
 
 // The PMS's calls to the backend, in the shape the branch PMS writes them
 // (axios): get(url, { params }), post(url, body), ... each resolving to
@@ -8,7 +9,27 @@ import { pmsRequest } from "./client";
 // "session has ended" prompt, and errors carrying err.response.data.
 //
 // URLs are paths ("/api/folios"); the server address is pmsRequest's.
-const call = (method, url, body, config = {}) => pmsRequest(url, { method, body, query: config.params }).then((data) => ({ data }));
+//
+// Sounds (lib/pms/sounds.js): a request that changes something is a change
+// someone made, so its outcome is heard - success when it goes through,
+// failure when it doesn't. Reading is silent, and so are the few reads the
+// server takes as a POST (READS below).
+const READS = ["/api/rooms/details", "/api/branches/contact", "/api/branches/maintenance-mode", "/api/reservations/availability"];
+const isChange = (method, url) => method !== "GET" && !READS.includes(url);
+
+const call = (method, url, body, config = {}) => {
+  const heard = isChange(method, url) && !config.silent;
+  return pmsRequest(url, { method, body, query: config.params }).then(
+    (data) => {
+      if (heard) playSound("success");
+      return { data };
+    },
+    (err) => {
+      if (heard) playSound("failure");
+      throw err;
+    },
+  );
+};
 
 export const http = {
   get: (url, config) => call("GET", url, undefined, config),

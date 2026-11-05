@@ -9,6 +9,7 @@ import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { btn, card, field, page } from "@/components/pms/ui";
 import { changePassword } from "@/lib/pms/api/auth-api";
 import { Tip } from "@/components/pms/Tip";
+import ThisDevice from "@/components/pms/ThisDevice";
 
 const EMPTY = { current_password: "", new_password: "", confirm_password: "" };
 const ROLE_LABELS = {
@@ -152,6 +153,8 @@ export default function PmsAccountPage() {
           )}
         </form>
       </section>
+
+      <ThisDevice />
     </div>
   );
 }

@@ -41,6 +41,15 @@ const nextConfig = {
   // first, then everything else by its own name (critical, decision-support,
   // metrics, account). Not permanent, so /admin and /hq stay free to mean
   // something else later without browsers holding on to this.
+  // The PMS app's service worker (public/pms-sw.js) and manifest: always
+  // fetched fresh, so an update reaches every device on its next visit.
+  async headers() {
+    return [
+      { source: '/pms-sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }] },
+      { source: '/pms.webmanifest', headers: [{ key: 'Cache-Control', value: 'no-cache' }] },
+    ];
+  },
+
   async redirects() {
     const moved = (from) => [
       { source: from, destination: '/pms', permanent: false },

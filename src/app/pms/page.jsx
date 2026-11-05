@@ -1,5 +1,6 @@
 "use client";
 
+import { playSound } from "@/lib/pms/sounds";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -55,6 +56,7 @@ export default function PmsSignInPage() {
       if (data.choose_branch) setChoices({ branches: data.branches, headOffice: Boolean(data.head_office) });
       else enter(data);
     } catch (err) {
+      playSound("failure");
       setError(
         err instanceof PmsApiError
           ? err.status === 401

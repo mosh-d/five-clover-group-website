@@ -1,5 +1,6 @@
 "use client";
 
+import { playSound } from "@/lib/pms/sounds";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
@@ -20,7 +21,11 @@ export default function NewBookingPopup({ enabled }) {
   // The booking it is about, so clicking opens that one, not just the list.
   const [bookingId, setBookingId] = useState(null);
 
-  const onNewBooking = useCallback((data) => setBookingId(data?.reservation_id || ""), []);
+  // A booking from the website is an alert (lib/pms/sounds.js).
+  const onNewBooking = useCallback((data) => {
+    setBookingId(data?.reservation_id || "");
+    playSound("alert");
+  }, []);
 
   useEffect(() => {
     if (!enabled) return undefined;

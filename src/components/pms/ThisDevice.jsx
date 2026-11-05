@@ -24,6 +24,8 @@ export default function ThisDevice() {
   const [push, setPush] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  // The browser is asking "Allow notifications?" and hasn't been answered.
+  const [asking, setAsking] = useState(false);
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
@@ -50,12 +52,20 @@ export default function ThisDevice() {
     try {
       setBusy(true);
       setError(null);
-      setPush(push === "on" ? await turnOffPush() : await turnOnPush());
+      setPush(push === "on" ? await turnOffPush() : await turnOnPush({ onAsking: () => setAsking(true) }));
     } catch (err) {
       setError(err.message || "That didn't go through.");
     } finally {
       setBusy(false);
+      setAsking(false);
     }
+  };
+
+  // Stops waiting on the browser's question (it can be answered later from
+  // the address bar; then turning them on here works straight away).
+  const stopWaiting = () => {
+    setBusy(false);
+    setAsking(false);
   };
 
   return (
@@ -86,12 +96,23 @@ export default function ThisDevice() {
             </span>
             <span className="text-xl">{push === null ? "Checking..." : PUSH_TEXT[push]}</span>
           </div>
-          {(push === "on" || push === "off") && (
-            <button type="button" onClick={togglePush} className={push === "on" ? btn.secondary : btn.primary} disabled={busy}>
-              {busy ? "Saving..." : push === "on" ? "Turn Off Notifications" : "Turn On Notifications"}
-            </button>
-          )}
+          {(push === "on" || push === "off") &&
+            (asking ? (
+              <button type="button" onClick={stopWaiting} className={btn.secondary}>
+                Cancel
+              </button>
+            ) : (
+              <button type="button" onClick={togglePush} className={push === "on" ? btn.secondary : btn.primary} disabled={busy}>
+                {busy ? "Saving..." : push === "on" ? "Turn Off Notifications" : "Turn On Notifications"}
+              </button>
+            ))}
         </div>
+        {asking && (
+          <p className={`${field.hint} text-xl!`} role="status">
+            Your browser is asking whether to allow notifications. If no box opened, look at the right end of the address bar for a small bell or
+            notification icon, click it and choose Allow.
+          </p>
+        )}
         {error && <p className={field.error}>{error}</p>}
 
         <div className="flex flex-col gap-1">

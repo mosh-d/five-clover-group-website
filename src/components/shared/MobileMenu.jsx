@@ -31,7 +31,8 @@ export default function MobileMenu({ isOpen, onClose }) {
     { href: "/", label: "HOME" },
     { href: "/about", label: "ABOUT" },
     { href: "/contact", label: "CONTACT" },
-    { href: "/blog", label: "BLOG" },
+    // Blog paused (owner, 2026-11-05) - see docs/BLOG-PAUSED.md.
+    // { href: "/blog", label: "BLOG" },
   ];
 
   return (

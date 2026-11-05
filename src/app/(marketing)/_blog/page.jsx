@@ -1,3 +1,5 @@
+// PAUSED (owner, 2026-11-05): the leading _ in this folder keeps it from being a route.
+// To bring it back, build it at build time - see docs/BLOG-PAUSED.md.
 import BlogSection from "@/components/blog/BlogSection";
 import { fetchHashnodeBlogs } from "@/lib/hashnode";
 import { generatePageMetadata } from "@/lib/seo/metadata";

@@ -161,9 +161,11 @@ export default function Footer() {
               <li data-component="NavigationItem" className="text-xl">
                 <Link href="/contact">CONTACT</Link>
               </li>
+              {/* Blog paused (owner, 2026-11-05) - see docs/BLOG-PAUSED.md.
               <li data-component="NavigationItem" className="text-xl">
                 <Link href="/blog">BLOG</Link>
               </li>
+              */}
             </ul>
           </nav>
         </div>

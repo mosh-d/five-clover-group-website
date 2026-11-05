@@ -66,6 +66,7 @@ export default function TopBar() {
                   CONTACT
                 </NavLink>
               </li>
+              {/* Blog paused for the move to Cloudflare's free plan (owner, 2026-11-05) - see docs/BLOG-PAUSED.md.
               <li>
                 <NavLink
                   href="/blog"
@@ -74,6 +75,7 @@ export default function TopBar() {
                   BLOG
                 </NavLink>
               </li>
+              */}
             </ul>
           </nav>
 

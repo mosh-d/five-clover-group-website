@@ -7,6 +7,9 @@ vi.mock('@/lib/hashnode', () => ({
   fetchHashnodeBlogs: vi.fn(),
 }));
 
+// The blog is paused (owner, 2026-11-05; docs/BLOG-PAUSED.md): the sitemap
+// lists the five static pages and asks Hashnode for nothing. The blog tests
+// are skipped, not deleted - unskip them when the blog is back.
 describe('Sitemap Generation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -18,8 +21,8 @@ describe('Sitemap Generation', () => {
 
     const result = await sitemap();
 
-    // Should have 6 static pages
-    expect(result).toHaveLength(6);
+    // The 5 static pages (no /blog while the blog is paused)
+    expect(result).toHaveLength(5);
 
     // Check homepage
     const homepage = result.find(entry => entry.url === 'https://fivecloverhotels.com');
@@ -42,12 +45,8 @@ describe('Sitemap Generation', () => {
     expect(contactPage.priority).toBe(0.7);
     expect(contactPage.lastModified).toBeInstanceOf(Date);
 
-    // Check blog listing page
-    const blogPage = result.find(entry => entry.url === 'https://fivecloverhotels.com/blog');
-    expect(blogPage).toBeDefined();
-    expect(blogPage.changeFrequency).toBe('daily');
-    expect(blogPage.priority).toBe(0.8);
-    expect(blogPage.lastModified).toBeInstanceOf(Date);
+    // No blog listing while the blog is paused
+    expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/blog')).toBeUndefined();
 
     // Check privacy policy page
     const privacyPage = result.find(entry => entry.url === 'https://fivecloverhotels.com/privacy-policy');
@@ -64,7 +63,7 @@ describe('Sitemap Generation', () => {
     expect(termsPage.lastModified).toBeInstanceOf(Date);
   });
 
-  it('should include blog posts from Hashnode', async () => {
+  it.skip('should include blog posts from Hashnode (blog paused)', async () => {
     const mockBlogs = [
       {
         slug: 'test-blog-1',
@@ -98,23 +97,21 @@ describe('Sitemap Generation', () => {
     expect(blog2.lastModified).toEqual(new Date('2024-01-20T10:00:00Z'));
   });
 
-  it('should handle API errors gracefully and return static pages', async () => {
-    // Mock API error
+  it('asks Hashnode for nothing while the blog is paused', async () => {
     vi.mocked(hashnodeModule.fetchHashnodeBlogs).mockRejectedValue(new Error('API Error'));
 
     const result = await sitemap();
 
-    // Should still return static pages
-    expect(result).toHaveLength(6);
+    expect(hashnodeModule.fetchHashnodeBlogs).not.toHaveBeenCalled();
+    expect(result).toHaveLength(5);
     expect(result.find(entry => entry.url === 'https://fivecloverhotels.com')).toBeDefined();
     expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/about')).toBeDefined();
     expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/contact')).toBeDefined();
-    expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/blog')).toBeDefined();
     expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/privacy-policy')).toBeDefined();
     expect(result.find(entry => entry.url === 'https://fivecloverhotels.com/terms-of-service')).toBeDefined();
   });
 
-  it('should have correct URL structure for all entries', async () => {
+  it.skip('should have correct URL structure for all entries (blog paused)', async () => {
     const mockBlogs = [
       {
         slug: 'sample-blog',
@@ -164,7 +161,7 @@ describe('Sitemap Generation', () => {
     });
   });
 
-  it('should fetch up to 100 blog posts', async () => {
+  it.skip('should fetch up to 100 blog posts (blog paused)', async () => {
     vi.mocked(hashnodeModule.fetchHashnodeBlogs).mockResolvedValue([]);
 
     await sitemap();

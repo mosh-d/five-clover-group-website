@@ -15,6 +15,7 @@ import {
   IoKeyOutline,
   IoHelpCircleOutline,
   IoRestaurantOutline,
+  IoCubeOutline,
   IoFastFoodOutline,
   IoShirtOutline,
   IoSparklesOutline,
@@ -89,6 +90,9 @@ export const PMS_NAV_ITEMS = [
   // Both: a branch's own trail, or - at Head Office - any branch's.
   { slug: "audit-trail", label: "AUDIT TRAIL", icon: IoDocumentTextOutline, roles: ["manager", "accountant"], hq: HEAD_OFFICE },
   { slug: "menu", label: "MENU", icon: IoRestaurantOutline, roles: ["storekeeper"] },
+  // The store's stock (docs/INVENTORY-PLAN.md): the store keeper's; the
+  // manager and the accountant read it (owner, 2026-11-05).
+  { slug: "inventory", label: "INVENTORY", icon: IoCubeOutline, roles: ["storekeeper", "manager", "accountant"] },
   { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE, hq: HEAD_OFFICE },
   { slug: "help", label: "HELP", icon: IoHelpCircleOutline, roles: EVERY_ROLE },
 ].map((item) => ({ ...item, href: `/pms/${item.slug}` }));

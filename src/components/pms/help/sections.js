@@ -1,4 +1,5 @@
 import {
+  IoCubeOutline,
   IoGridOutline,
   IoBedOutline,
   IoAppsOutline,
@@ -290,6 +291,18 @@ export const HELP_SECTIONS = [
       "Cost Price is what an item costs the hotel, for the accountant's F&B Margin - optional, and never shown to waitrons. A drink restock given its unit cost makes that the drink's cost price. A new cost price counts from when it is set: what was sold before keeps the cost it had.",
       "Setting an item Out of Stock (instead of deleting it) keeps it out of future pickers while preserving any past folio charge or non-guest sale that already referenced it.",
       "A price change here only affects new charges/sales going forward — a historical charge or sale keeps whatever price was in effect when it was made.",
+    ],
+  },
+  {
+    id: "inventory",
+    icon: IoCubeOutline,
+    label: "Inventory",
+    summary: "The store's stock: what came in, what went out to each department, and what is left.",
+    workflow: [
+      "The store keeper adds each item the store keeps - its name, category, what it is counted in, and the level to reorder at. An item at or below that level shows as Low and goes to the top.",
+      "Receive: goods arriving, how many, from which supplier on the list, what one cost and the invoice number. Issue: goods going to a department - Bar / F&B, Kitchen, Housekeeping, Laundry, Maintenance or Front office. Take back: goods a department returns. Write off: damaged, expired or lost. Count: the number on the shelf; the difference is recorded.",
+      "A store item can be a bar drink. Issued to the Bar, it goes onto that drink's bar stock (and a return from the Bar takes it off), so sales and the Bar Stock report carry on as before. Such a drink gets its stock only from the store - Menu no longer offers Added for it.",
+      "History shows every movement of an item, with who recorded it and what the store held after. Suppliers keeps the supplier list. The manager and the accountant can read Inventory; only the store keeper changes it. Every change is asked twice and goes in the Audit Trail.",
     ],
   },
   {

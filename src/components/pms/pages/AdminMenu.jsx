@@ -258,9 +258,11 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
     return { label: "In Stock", className: "bg-green-100 text-green-700" };
   };
 
+  // A drink the store supplies gets its bar stock only from Inventory (owner,
+  // 2026-11-05), so its adjust starts on Damaged and offers no Added.
   const startStockAdjust = (item) => {
     setStockAdjustId(item.id);
-    setStockForm({ movement_type: "added", quantity: "", notes: "", unit_cost: "" });
+    setStockForm({ movement_type: item.store_item_name ? "damaged" : "added", quantity: "", notes: "", unit_cost: "" });
   };
 
   const handleSaveStockAdjust = async (id) => {
@@ -419,10 +421,15 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                         <td colSpan={columnCount} className={`${table.td} bg-[color:var(--text-color)]/3`}>
                           <div className="flex flex-wrap gap-4 items-end">
                             <span className="text-xl font-semibold whitespace-nowrap">Adjust stock — {item.name}</span>
+                            {item.store_item_name && (
+                              <span className={`w-full text-lg ${"text-(--text-color)/68"}`}>
+                                Restocked from the store (&quot;{item.store_item_name}&quot;) - issue it to the Bar on Inventory.
+                              </span>
+                            )}
                             <div className="flex flex-col gap-2">
                               <label className={field.label}>Type<Tip id="menu.stock.type" /></label>
                               <select value={stockForm.movement_type} onChange={(e) => setStockForm({ ...stockForm, movement_type: e.target.value })} className={`${field.select} text-xl!`}>
-                                <option value="added">Added (restock)</option>
+                                {!item.store_item_name && <option value="added">Added (restock)</option>}
                                 <option value="damaged">Damaged (breakage/spillage/expiry)</option>
                                 <option value="correction">Correction (set the real, counted total)</option>
                               </select>

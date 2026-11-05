@@ -3,6 +3,9 @@
 // fetch the posts at BUILD time (no revalidate), as below.
 // import { fetchHashnodeBlogs } from '@/lib/hashnode';
 
+// Built once, at build time - the site is exported as plain files (next.config.mjs).
+export const dynamic = 'force-static';
+
 /**
  * Generates sitemap for the Five Clover Hotels website: the static pages.
  * @returns {Promise<Array>} Sitemap entries

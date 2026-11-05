@@ -1,0 +1,8 @@
+# Cloudflare's headers for the exported site (wrangler.jsonc).
+# The PMS app's service worker and manifest are always fetched fresh, so an
+# update reaches every device on its next visit.
+/pms-sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pms.webmanifest
+  Cache-Control: no-cache

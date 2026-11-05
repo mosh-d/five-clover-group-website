@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/hq", "destination": "/pms", "permanent": false },
+    { "source": "/hq/staff", "destination": "/pms/staff-accounts", "permanent": false },
+    { "source": "/hq/audit-logs", "destination": "/pms/audit-trail", "permanent": false },
+    { "source": "/hq/:path*", "destination": "/pms/:path*", "permanent": false },
+    { "source": "/admin", "destination": "/pms", "permanent": false },
+    { "source": "/admin/staff", "destination": "/pms/staff-accounts", "permanent": false },
+    { "source": "/admin/audit-logs", "destination": "/pms/audit-trail", "permanent": false },
+    { "source": "/admin/:path*", "destination": "/pms/:path*", "permanent": false }
+  ],
+  "headers": [
+    { "source": "/pms-sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }] },
+    { "source": "/pms.webmanifest", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+  ]
+}

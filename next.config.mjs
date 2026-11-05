@@ -10,55 +10,21 @@ const nextConfig = {
   // JavaScript - whose rewrite of `??` crashed PMS pages ("_room_0_base_rate
   // is not defined", 2026-09-28).
 
-  // Image optimization for SEO
+  // The whole site is exported as plain files (owner, 2026-11-05: Cloudflare's
+  // FREE plan, 10 ms of CPU a request - plain files use none). Every page is
+  // built here, at build time; nothing is rendered per visit. So:
+  // - no per-request pages: the blog is paused for this (docs/BLOG-PAUSED.md);
+  // - no server-side redirects or headers: on Cloudflare they are the owner's
+  //   Redirect Rules (backend docs/OWNER-SETUP.md part 1, step 4) and
+  //   public/_headers; while Vercel still serves the site, vercel.json;
+  // - no per-visitor picture resizing: pictures are served as built.
+  output: 'export',
   images: {
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 2592000, // 30 days
-    dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    unoptimized: true,
   },
-  
-  // Enable static page generation (default behavior, explicitly configured)
-  // Homepage and blog listing will be statically generated at build time
-  // Blog posts will use ISR (Incremental Static Regeneration)
-  output: 'standalone',
-  
-  // Optimize for production
-  compress: true,
-  
-  // Generate ETags for better caching
-  generateEtags: true,
-  
+
   // Power by header removal for security
   poweredByHeader: false,
-
-  // Head Office's pages live in the PMS now (owner, 2026-10-01): one PMS at
-  // /pms, one sign-in. They were at /hq, and at /admin before that, so old
-  // bookmarks and links land on the same page there - the two renamed ones
-  // first, then everything else by its own name (critical, decision-support,
-  // metrics, account). Not permanent, so /admin and /hq stay free to mean
-  // something else later without browsers holding on to this.
-  // The PMS app's service worker (public/pms-sw.js) and manifest: always
-  // fetched fresh, so an update reaches every device on its next visit.
-  async headers() {
-    return [
-      { source: '/pms-sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }] },
-      { source: '/pms.webmanifest', headers: [{ key: 'Cache-Control', value: 'no-cache' }] },
-    ];
-  },
-
-  async redirects() {
-    const moved = (from) => [
-      { source: from, destination: '/pms', permanent: false },
-      { source: `${from}/staff`, destination: '/pms/staff-accounts', permanent: false },
-      { source: `${from}/audit-logs`, destination: '/pms/audit-trail', permanent: false },
-      { source: `${from}/:path*`, destination: '/pms/:path*', permanent: false },
-    ];
-    return [...moved('/hq'), ...moved('/admin')];
-  },
 };
 
 export default nextConfig;

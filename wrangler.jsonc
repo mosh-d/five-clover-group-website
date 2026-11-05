@@ -1,0 +1,21 @@
+// The site on Cloudflare (owner, 2026-11-05; backend docs/OWNER-SETUP.md
+// part 1): a files-only Worker. `npm run build` exports every page to out/,
+// and Cloudflare serves those files as they are - there is no server code
+// ("main"), so nothing runs per request and the free plan's 10 ms CPU limit
+// never applies.
+//
+// The redirects (/hq, /admin -> /pms, www -> root) are Cloudflare Redirect
+// Rules in the dashboard, and the service worker's no-cache header is
+// public/_headers.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "five-clover-site",
+  "compatibility_date": "2026-10-30",
+  "assets": {
+    "directory": "./out",
+    // /pms/inventory is served from out/pms/inventory.html.
+    "html_handling": "auto-trailing-slash",
+    // An unknown address gets the site's own 404 page.
+    "not_found_handling": "404-page"
+  }
+}

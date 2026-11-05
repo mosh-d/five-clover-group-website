@@ -10,13 +10,14 @@ import { usePmsLive } from "./live/PmsLive";
 import { AnimatePresence, MotionDiv, EASE_OUT } from "./motion";
 
 function NavItems({ pathname, role, scope, branch, onNavigate }) {
-  const { alertCount, otaPendingCount, cashUpDueCount, housekeepingCount } = usePmsLive();
+  const { alertCount, otaPendingCount, cashUpDueCount, housekeepingCount, inventoryCount } = usePmsLive();
   // Each nav item's `badge` (pmsNavItems): its live count, and what it counts.
   const badges = {
     alerts: { count: alertCount, label: "open alerts" },
     ota: { count: otaPendingCount, label: "OTA payments still to arrive" },
     cashUp: { count: cashUpDueCount, label: "cash counts still to submit" },
     housekeeping: { count: housekeepingCount, label: role === "housekeeper" ? "rooms to clean" : "rooms waiting for you" },
+    inventory: { count: inventoryCount, label: role === "storekeeper" ? "items low on stock or requests waiting" : "items low on stock" },
   };
   return (
     <ul className="flex flex-col gap-2">

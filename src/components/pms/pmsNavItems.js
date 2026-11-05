@@ -16,6 +16,7 @@ import {
   IoHelpCircleOutline,
   IoRestaurantOutline,
   IoCubeOutline,
+  IoBasketOutline,
   IoFastFoodOutline,
   IoShirtOutline,
   IoSparklesOutline,
@@ -92,7 +93,11 @@ export const PMS_NAV_ITEMS = [
   { slug: "menu", label: "MENU", icon: IoRestaurantOutline, roles: ["storekeeper"] },
   // The store's stock (docs/INVENTORY-PLAN.md): the store keeper's; the
   // manager and the accountant read it (owner, 2026-11-05).
-  { slug: "inventory", label: "INVENTORY", icon: IoCubeOutline, roles: ["storekeeper", "manager", "accountant"] },
+  { slug: "inventory", label: "INVENTORY", icon: IoCubeOutline, roles: ["storekeeper", "manager", "accountant"], badge: "inventory" },
+  // Asking the store for stock (Inventory, Step 4): the waitron (Bar,
+  // Kitchen), the front desk (Front office, Laundry), the housekeeping
+  // supervisor (Housekeeping, Laundry) and the manager (any department).
+  { slug: "store-requests", label: "STORE REQUESTS", icon: IoBasketOutline, roles: ["waitron", "receptionist", "housekeeping_supervisor", "manager"] },
   { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE, hq: HEAD_OFFICE },
   { slug: "help", label: "HELP", icon: IoHelpCircleOutline, roles: EVERY_ROLE },
 ].map((item) => ({ ...item, href: `/pms/${item.slug}` }));

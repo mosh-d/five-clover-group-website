@@ -303,6 +303,8 @@ export const HELP_SECTIONS = [
       "Receive: goods arriving, how many, from which supplier on the list, what one cost and the invoice number. Issue: goods going to a department - Bar / F&B, Kitchen, Housekeeping, Laundry, Maintenance or Front office. Take back: goods a department returns. Write off: damaged, expired or lost. Count: the number on the shelf; the difference is recorded.",
       "A store item can be a bar drink. Issued to the Bar, it goes onto that drink's bar stock (and a return from the Bar takes it off), so sales and the Bar Stock report carry on as before. Such a drink gets its stock only from the store - Menu no longer offers Added for it.",
       "History shows every movement of an item, with who recorded it and what the store held after. Suppliers keeps the supplier list. The manager and the accountant can read Inventory; only the store keeper changes it. Every change is asked twice and goes in the Audit Trail.",
+      "Requests: departments ask the store for stock from their Store Requests page - the waitron for the Bar and the Kitchen, the front desk for Front office and Laundry, the housekeeping supervisor for Housekeeping and Laundry, the manager for any. The store keeper issues it (all, or less when short) or declines it saying why; whoever asked sees the answer. The Inventory badge counts the items low on stock, and for the store keeper the requests waiting too.",
+      "Reports: for any range of business days, each item's opening stock, what was received, issued, returned, written off and counted, and its closing stock; deliveries by supplier, issues by department and write-offs by reason, valued at the cost of the time. Download CSV saves it all.",
     ],
   },
   {
@@ -335,6 +337,7 @@ export const HELP_SECTIONS = [
     summary: "Change your own login password.",
     workflow: [
       "You sign in at fivecloverhotels.com/pms with your own username and password, and your account opens your own branch. Someone with accounts at more than one branch is asked which one.",
+      "Capitals don't matter when you type your username - Amaka, amaka and AMAKA all sign in to the same account. Your username keeps the capitals HR gave it. The password must match exactly.",
       "A new password needs at least 8 characters and must differ from the current one.",
     ],
   },

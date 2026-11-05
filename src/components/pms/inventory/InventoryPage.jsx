@@ -11,6 +11,9 @@ import Notice from "@/components/pms/Notice";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { Tip } from "@/components/pms/Tip";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
+import { useLiveRefresh, usePmsLive } from "@/components/pms/live/PmsLive";
+import RequestsTab from "./RequestsTab";
+import InventoryReports from "./InventoryReports";
 import { btn, card, field, page, table } from "@/components/pms/ui";
 import { formatDateTime, money } from "@/lib/pms/format";
 import {
@@ -532,6 +535,12 @@ export default function InventoryPage() {
     setNotice(message);
     setReloadKey((k) => k + 1);
   }, []);
+  // Kept current when stock moves on another device (a request issued, say).
+  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
+  useLiveRefresh(reload, ["inventory"]);
+  const { inventoryCount } = usePmsLive();
+  const lowCount = data?.totals?.low || 0;
+  const waiting = role === "storekeeper" ? Math.max(inventoryCount - lowCount, 0) : 0;
 
   const items = useMemo(() => {
     if (!data) return [];
@@ -558,13 +567,19 @@ export default function InventoryPage() {
       <PageTabs
         tabs={[
           { key: "stock", label: "Stock" },
+          { key: "requests", label: waiting ? `Requests (${waiting})` : "Requests" },
+          { key: "reports", label: "Reports" },
           { key: "suppliers", label: "Suppliers" },
         ]}
         active={tab}
         onChange={setTab}
       />
 
-      {!data && !error ? (
+      {tab === "requests" ? (
+        <RequestsTab canEdit={canEdit} onDone={setNotice} />
+      ) : tab === "reports" ? (
+        <InventoryReports />
+      ) : !data && !error ? (
         <div className="flex justify-center py-10 w-full">
           <LoadingSpinner size="lg" />
         </div>

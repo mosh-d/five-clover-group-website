@@ -110,6 +110,9 @@ export default function PmsSignInPage() {
               id="username"
               type="text"
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className={field.input}

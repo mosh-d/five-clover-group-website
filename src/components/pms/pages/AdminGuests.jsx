@@ -7,13 +7,13 @@ import { useNavigate } from "@/lib/pms/router";
 import { IoClose, IoFilter, IoPeopleOutline } from 'react-icons/io5';
 import ManagerOnlyTag from "@/components/pms/ManagerOnlyTag";
 import Modal from "@/components/pms/Modal";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import StatusBadge from "@/components/pms/StatusBadge";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import PhoneInput from "@/components/pms/PhoneInput";
 import { formatPhone } from "@/lib/pms/phone-format";
-import { btn, field, table } from "@/components/pms/ui";
+import { btn, field, page as pageUi, table } from "@/components/pms/ui";
 import {
   fetchGuests,
   fetchGuestReservations,
@@ -301,21 +301,12 @@ export default function AdminGuestsPage() {
         data-component='AdminGuests'
         className='flex flex-col items-start gap-[3rem]'
       >
-        <div className='w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4'>
-          <PageHeading icon={IoPeopleOutline} tipId="guests.page">Guests</PageHeading>
-
-          <div className='relative flex flex-col items-start gap-3'>
-            <div className='flex items-center max-sm:w-full'>
-              <input
-                type='text'
-                placeholder='Search by name (partial), or full email/phone...'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`${field.input} text-xl! w-72 max-sm:w-full`}
-              />
-              <Tip id="guests.search" />
-            </div>
-            <div className='flex gap-3'>
+        <PageHeader
+          icon={IoPeopleOutline}
+          tipId="guests.page"
+          title="Guests"
+          actions={
+            <>
               <div
                 className='relative'
                 ref={filterDropdownRef}
@@ -361,9 +352,22 @@ export default function AdminGuestsPage() {
               >
                 + Add Guest
               </button>
+            </>
+          }
+        >
+          <div className={pageUi.toolbar}>
+            <div className='flex items-center max-sm:w-full'>
+              <input
+                type='text'
+                placeholder='Search by name (partial), or full email/phone...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`${field.input} text-xl! w-72 max-sm:w-full`}
+              />
+              <Tip id="guests.search" />
             </div>
           </div>
-        </div>
+        </PageHeader>
 
         <div className={table.card}>
           <div className={table.scroll}>

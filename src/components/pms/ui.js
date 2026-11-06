@@ -12,6 +12,17 @@ export const page = {
   wrap: "w-full flex flex-col items-start gap-[4.5rem]",
   sectionTitle: "text-3xl font-bold text-(--black)",
   muted: "text-(--text-color)/68",
+  // The top of every page (PageHeader, owner 2026-11-06): title, what the
+  // page is for, its section switches and filters - grouped together, and
+  // set apart from the content by a divider and the page's own gap.
+  header: "w-full flex flex-col gap-5 pb-8 border-b border-(--accent-2)",
+  // Descriptions - under a page's title (intro) and under a section's
+  // (sectionIntro): supporting text, a step below body text so it takes less
+  // room. Never a field, so it can't make a phone zoom.
+  intro: "text-lg leading-relaxed text-(--text-color)/68 max-w-[80ch]",
+  sectionIntro: "text-lg leading-relaxed text-(--text-color)/68 max-w-[80ch]",
+  // A row of filters and searches under the section switches.
+  toolbar: "w-full flex flex-wrap items-end gap-3",
 };
 
 export const btn = {
@@ -65,14 +76,16 @@ export const table = {
   // <div className={table.card}><div className={table.scroll}><table className={table.el}>...
   card: "w-full rounded-xl border border-(--accent-2) bg-(--card) overflow-hidden",
   scroll: "overflow-x-auto",
-  el: "min-w-full border-collapse text-2xl",
+  // Compact (owner, 2026-11-06: more data on the screen): 14px on a phone,
+  // 15px from md, with tighter cells on a phone.
+  el: "min-w-full border-collapse text-lg md:text-xl",
   headRow: "border-b border-(--accent-2) bg-(--text-color)/3",
-  th: "px-8 py-4 text-left whitespace-nowrap text-xl font-semibold uppercase tracking-wide text-(--text-color)/76",
+  th: "px-4 py-3 md:px-6 md:py-4 text-left whitespace-nowrap text-base font-semibold uppercase tracking-wide text-(--text-color)/76",
   // `group` lets the pinned column follow the row's hover tint.
   row: "group border-b border-(--accent-2) last:border-b-0 transition-colors hover:bg-black/6",
-  td: "px-8 py-4 text-left whitespace-nowrap text-(--text-color)",
+  td: "px-4 py-3 md:px-6 md:py-4 text-left whitespace-nowrap text-(--text-color)",
   actions: "flex items-center gap-2 flex-nowrap",
-  empty: "px-8 py-10 text-center text-xl text-(--text-color)/68",
+  empty: "px-4 md:px-6 py-10 text-center text-lg text-(--text-color)/68",
   // The pinned name/ID column - whatever identifies a row (a guest, a room
   // type, a booking) stays in view while a wide table scrolls sideways.
   // Compose with th/td: `${table.th} ${table.stickyTh}`. Position-based, so

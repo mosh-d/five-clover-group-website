@@ -7,7 +7,7 @@ import { useSearchParams } from "@/lib/pms/router";
 import { http } from "@/lib/pms/http";
 import { IoClose, IoBedOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { btn, field, table } from "@/components/pms/ui";
@@ -1550,22 +1550,26 @@ export default function AdminRoomsPage() {
         data-component="AdminRooms"
         className="flex flex-col items-start gap-[3rem]"
       >
-        <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
-          <PageHeading icon={IoBedOutline} tipId="rooms.page">Rooms</PageHeading>
-          <div className="flex items-center gap-3">
-            {!canManage && <ManagerOnlyTag />}
-            <button
-              onClick={() => {
-                console.log("AdminRooms: Opening Add Room modal");
-                setShowAddModal(true);
-              }}
-              disabled={!canManage}
-              className={`${btn.primary} whitespace-nowrap`}
-            >
-              + Add Room
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          icon={IoBedOutline}
+          tipId="rooms.page"
+          title="Rooms"
+          actions={
+            <>
+              {!canManage && <ManagerOnlyTag />}
+              <button
+                onClick={() => {
+                  console.log("AdminRooms: Opening Add Room modal");
+                  setShowAddModal(true);
+                }}
+                disabled={!canManage}
+                className={`${btn.primary} whitespace-nowrap`}
+              >
+                + Add Room
+              </button>
+            </>
+          }
+        />
 
         {/* ── Table ── */}
         <div className={table.card}>

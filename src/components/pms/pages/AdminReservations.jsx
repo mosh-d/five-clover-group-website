@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "@/lib/pms/router";
 import { IoClose, IoFilter, IoCalendarOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import StatusBadge from "@/components/pms/StatusBadge";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import RoomAssignmentPicker from "@/components/pms/RoomAssignmentPicker";
@@ -946,82 +946,85 @@ export default function AdminReservationsPage() {
       )}
 
       <div data-component="AdminReservations" className="flex flex-col items-start gap-[3rem]">
-        <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
-          <PageHeading icon={IoCalendarOutline} tipId="reservations.page">Reservations</PageHeading>
-
-          <div className="flex items-center gap-3">
-            <div className="relative" ref={filterDropdownRef}>
-              <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`bg-(--card) border-1 border-gray-300 rounded-3xl py-2.5 px-6 flex items-center gap-2`}
-                title="Filter"
-              >
-                <IoFilter size={22} /> Filters
-              </button>
-              {isFilterOpen && (
-                // Opens from the button's left edge on a phone, where the
-                // button sits at the left of the screen: from its right edge
-                // it started off the screen and the filters were cut off
-                // (2026-10-02).
-                <div className="absolute right-0 max-sm:right-auto max-sm:left-0 mt-2 w-[28rem] max-w-[calc(100vw-2rem)] bg-(--card) border border-(--accent-2) rounded-xl shadow-xl z-20 text-xl overflow-hidden font-primary p-6 flex flex-col gap-5">
-                  <div>
-                    <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Status<Tip id="reservations.filter.status" /></p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {["all", ...STATUSES].map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => setStatusFilter(s)}
-                          className={`py-2 rounded-lg text-lg capitalize cursor-pointer transition-all ${statusFilter === s ? "bg-[color:var(--emphasis)] text-white font-bold" : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"}`}
-                        >
-                          {s}
-                        </button>
-                      ))}
+        <PageHeader
+          icon={IoCalendarOutline}
+          tipId="reservations.page"
+          title="Reservations"
+          actions={
+            <>
+              <div className="relative" ref={filterDropdownRef}>
+                <button
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className={`bg-(--card) border-1 border-gray-300 rounded-3xl py-2.5 px-6 flex items-center gap-2`}
+                  title="Filter"
+                >
+                  <IoFilter size={22} /> Filters
+                </button>
+                {isFilterOpen && (
+                  // Opens from the button's left edge on a phone, where the
+                  // button sits at the left of the screen: from its right edge
+                  // it started off the screen and the filters were cut off
+                  // (2026-10-02).
+                  <div className="absolute right-0 max-sm:right-auto max-sm:left-0 mt-2 w-[28rem] max-w-[calc(100vw-2rem)] bg-(--card) border border-(--accent-2) rounded-xl shadow-xl z-20 text-xl overflow-hidden font-primary p-6 flex flex-col gap-5">
+                    <div>
+                      <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Status<Tip id="reservations.filter.status" /></p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {["all", ...STATUSES].map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setStatusFilter(s)}
+                            className={`py-2 rounded-lg text-lg capitalize cursor-pointer transition-all ${statusFilter === s ? "bg-[color:var(--emphasis)] text-white font-bold" : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"}`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center min-w-0">
+                        <input type="text" placeholder="Source" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className={`${field.input} min-w-0`} />
+                        <Tip id="reservations.filter.source" />
+                      </div>
+                      <div className="flex items-center min-w-0">
+                        <input type="text" placeholder="Booking Channel" value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)} className={`${field.input} min-w-0`} />
+                        <Tip id="reservations.filter.channel" />
+                      </div>
+                    </div>
+                    {/* One under the other, each named: side by side in this
+                        narrow panel, neither date had room to show itself. */}
+                    <div>
+                      <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Dates<Tip id="reservations.filter.dates" /></p>
+                      <div className="flex flex-col gap-3">
+                        <label className="grid grid-cols-[4rem_1fr] items-center gap-3 text-lg">
+                          <span className="text-[color:var(--text-color)]/68">From</span>
+                          <DateInput
+                            value={startDate}
+                            onChange={(e) => {
+                              const from = e.target.value;
+                              setStartDate(from);
+                              if (from && endDate && from > endDate) setEndDate(from);
+                            }}
+                            className={field.input}
+                          />
+                        </label>
+                        <label className="grid grid-cols-[4rem_1fr] items-center gap-3 text-lg">
+                          <span className="text-[color:var(--text-color)]/68">To</span>
+                          <DateInput value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} className={field.input} />
+                        </label>
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-3 cursor-pointer text-lg">
+                      <input type="checkbox" checked={noShowOnly} onChange={(e) => setNoShowOnly(e.target.checked)} className="w-5 h-5 accent-[var(--emphasis)] cursor-pointer" />
+                      No-shows only
+                      <Tip id="reservations.filter.noShows" />
+                    </label>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center min-w-0">
-                      <input type="text" placeholder="Source" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className={`${field.input} min-w-0`} />
-                      <Tip id="reservations.filter.source" />
-                    </div>
-                    <div className="flex items-center min-w-0">
-                      <input type="text" placeholder="Booking Channel" value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)} className={`${field.input} min-w-0`} />
-                      <Tip id="reservations.filter.channel" />
-                    </div>
-                  </div>
-                  {/* One under the other, each named: side by side in this
-                      narrow panel, neither date had room to show itself. */}
-                  <div>
-                    <p className="text-lg font-bold text-[color:var(--text-color)]/84 uppercase tracking-widest mb-3">Dates<Tip id="reservations.filter.dates" /></p>
-                    <div className="flex flex-col gap-3">
-                      <label className="grid grid-cols-[4rem_1fr] items-center gap-3 text-lg">
-                        <span className="text-[color:var(--text-color)]/68">From</span>
-                        <DateInput
-                          value={startDate}
-                          onChange={(e) => {
-                            const from = e.target.value;
-                            setStartDate(from);
-                            if (from && endDate && from > endDate) setEndDate(from);
-                          }}
-                          className={field.input}
-                        />
-                      </label>
-                      <label className="grid grid-cols-[4rem_1fr] items-center gap-3 text-lg">
-                        <span className="text-[color:var(--text-color)]/68">To</span>
-                        <DateInput value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} className={field.input} />
-                      </label>
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-3 cursor-pointer text-lg">
-                    <input type="checkbox" checked={noShowOnly} onChange={(e) => setNoShowOnly(e.target.checked)} className="w-5 h-5 accent-[var(--emphasis)] cursor-pointer" />
-                    No-shows only
-                    <Tip id="reservations.filter.noShows" />
-                  </label>
-                </div>
-              )}
-            </div>
-            <button onClick={() => setIsExportOpen(true)} className={btn.primary}>Export</button>
-          </div>
-        </div>
+                )}
+              </div>
+              <button onClick={() => setIsExportOpen(true)} className={btn.primary}>Export</button>
+            </>
+          }
+        />
 
         <div className={table.card}>
           <div className={table.scroll}>

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IoStatsChartOutline, IoRefreshOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
+import PageTabs from "@/components/pms/PageTabs";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { page, field } from "@/components/pms/ui";
@@ -90,32 +91,20 @@ export default function MetricsPage() {
 
   return (
     <div className={page.wrap}>
-      <div>
-        <PageHeading icon={IoStatsChartOutline} tipId="metrics.page">Metrics</PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>
-          Every branch side by side, one metric at a time, worked out the same way as the branches&apos; own reports.
-        </p>
-      </div>
+      <PageHeader
+        icon={IoStatsChartOutline}
+        tipId="metrics.page"
+        title="Metrics"
+        description={<>Every branch side by side, one metric at a time, worked out the same way as the branches&apos; own reports.</>}
+      >
+        {/* One row of section switches (PageTabs) - owner, 2026-11-06. */}
+        <PageTabs
+          tabs={METRIC_TABS.map(({ key, label }) => ({ key, label }))}
+          active={tab.key}
+          onChange={(key) => go({ tab: key, metric: findTab(key).metrics[0].key, branch: "" })}
+        />
 
-      <div className="w-full flex flex-col gap-6">
-        <div className="flex gap-3 text-xl flex-wrap" role="tablist" aria-label="Metric groups">
-          {METRIC_TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              role="tab"
-              aria-selected={t.key === tab.key}
-              onClick={() => go({ tab: t.key, metric: t.metrics[0].key, branch: "" })}
-              className={`px-6 py-3 rounded-lg font-bold cursor-pointer transition-all ${
-                t.key === tab.key ? "bg-(--emphasis) text-white" : "bg-black/4 text-(--text-color) hover:bg-black/8"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <p className={`text-xl ${page.muted}`}>{tab.blurb}</p>
+        <p className={page.sectionIntro}>{tab.blurb}</p>
         <nav aria-label={`${tab.label} metrics`} className="hidden lg:flex flex-wrap gap-2">
           {tab.metrics.map((m) => {
             const active = m.key === metric.key;
@@ -147,84 +136,84 @@ export default function MetricsPage() {
             ))}
           </select>
         </div>
-      </div>
 
-      <div className="w-full flex flex-wrap items-end gap-4">
-        {metric.snapshot ? (
-          <p className={`text-xl self-center ${page.muted}`}>
-            {metric.key === "top-guests" ? "All time" : "As things stand right now"} - the dates don&apos;t apply to this one.
-          </p>
-        ) : (
-          <>
-            <div role="group" aria-label="Quick dates" className="flex flex-wrap gap-2">
-              {RANGE_PRESETS.map((p) => {
-                const r = presetRange(p.key);
-                const active = r.from === from && r.to === to;
-                return (
-                  <button
-                    key={p.key}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => go({ from: r.from, to: r.to })}
-                    className={`rounded-lg border px-4 py-3 text-xl font-semibold cursor-pointer transition-colors text-(--text-color) ${
-                      active ? "border-(--emphasis) bg-[color-mix(in_srgb,var(--emphasis)_14%,var(--card))]" : "border-(--accent-2) bg-(--card) hover:bg-black/5"
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
-              <span className="self-center"><Tip id="metrics.presets" /></span>
-            </div>
-            {/* From and To in boxes of their own width - two equal halves
-                of the row on a phone - never sized by the date fields
-                themselves, which iPhone Safari draws wider than they say
-                (they overlapped each other and Refresh, 2026-10-02). */}
-            <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
-              <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                <label htmlFor="metric-from" className={field.label}>From<Tip id="metrics.from" /></label>
-                <DateInput
-                  id="metric-from"
-                  value={from}
-                  onChange={(e) => {
-                    // "To" moves along rather than sitting before "from".
-                    const next = e.target.value;
-                    if (ISO_DATE.test(next)) go(next > to ? { from: next, to: next } : { from: next });
-                  }}
-                  className={field.input}
-                />
+        <div className={page.toolbar}>
+          {metric.snapshot ? (
+            <p className={`text-xl self-center ${page.muted}`}>
+              {metric.key === "top-guests" ? "All time" : "As things stand right now"} - the dates don&apos;t apply to this one.
+            </p>
+          ) : (
+            <>
+              <div role="group" aria-label="Quick dates" className="flex flex-wrap gap-2">
+                {RANGE_PRESETS.map((p) => {
+                  const r = presetRange(p.key);
+                  const active = r.from === from && r.to === to;
+                  return (
+                    <button
+                      key={p.key}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => go({ from: r.from, to: r.to })}
+                      className={`rounded-lg border px-4 py-3 text-xl font-semibold cursor-pointer transition-colors text-(--text-color) ${
+                        active ? "border-(--emphasis) bg-[color-mix(in_srgb,var(--emphasis)_14%,var(--card))]" : "border-(--accent-2) bg-(--card) hover:bg-black/5"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+                <span className="self-center"><Tip id="metrics.presets" /></span>
               </div>
-              <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                <label htmlFor="metric-to" className={field.label}>To<Tip id="metrics.to" /></label>
-                <DateInput
-                  id="metric-to"
-                  value={to}
-                  min={from}
-                  onChange={(e) => ISO_DATE.test(e.target.value) && go({ to: e.target.value })}
-                  className={field.input}
-                />
+              {/* From and To in boxes of their own width - two equal halves
+                  of the row on a phone - never sized by the date fields
+                  themselves, which iPhone Safari draws wider than they say
+                  (they overlapped each other and Refresh, 2026-10-02). */}
+              <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
+                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
+                  <label htmlFor="metric-from" className={field.label}>From<Tip id="metrics.from" /></label>
+                  <DateInput
+                    id="metric-from"
+                    value={from}
+                    onChange={(e) => {
+                      // "To" moves along rather than sitting before "from".
+                      const next = e.target.value;
+                      if (ISO_DATE.test(next)) go(next > to ? { from: next, to: next } : { from: next });
+                    }}
+                    className={field.input}
+                  />
+                </div>
+                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
+                  <label htmlFor="metric-to" className={field.label}>To<Tip id="metrics.to" /></label>
+                  <DateInput
+                    id="metric-to"
+                    value={to}
+                    min={from}
+                    onChange={(e) => ISO_DATE.test(e.target.value) && go({ to: e.target.value })}
+                    className={field.input}
+                  />
+                </div>
               </div>
-            </div>
-          </>
-        )}
-        {metric.branchFilter && (
-          <Choice id="metric-branch" tip="metrics.branchChoice" label="Branch" value={branch} onChange={(v) => go({ branch: v })} options={[{ value: "", label: "All branches" }, ...branches]} />
-        )}
-        <button
-          type="button"
-          onClick={() => setRefresh((n) => n + 1)}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg border border-(--accent-2) bg-(--card) px-4 py-3 text-xl font-semibold cursor-pointer text-(--text-color) hover:bg-black/5 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading && shown ? <LoadingSpinner size="sm" /> : <IoRefreshOutline aria-hidden="true" />}
-          Refresh
-        </button>
-      </div>
+            </>
+          )}
+          {metric.branchFilter && (
+            <Choice id="metric-branch" tip="metrics.branchChoice" label="Branch" value={branch} onChange={(v) => go({ branch: v })} options={[{ value: "", label: "All branches" }, ...branches]} />
+          )}
+          <button
+            type="button"
+            onClick={() => setRefresh((n) => n + 1)}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-(--accent-2) bg-(--card) px-4 py-3 text-xl font-semibold cursor-pointer text-(--text-color) hover:bg-black/5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading && shown ? <LoadingSpinner size="sm" /> : <IoRefreshOutline aria-hidden="true" />}
+            Refresh
+          </button>
+        </div>
+      </PageHeader>
 
       <section aria-labelledby="metric-title" className="w-full flex flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h2 id="metric-title" className={page.sectionTitle}>{metric.label}</h2>
-          <p className={`text-xl ${page.muted}`}>
+          <p className={page.sectionIntro}>
             {metric.about}
             {shown?.data?.period && !metric.snapshot ? ` ${periodText(shown.data.period)}.` : ""}
           </p>

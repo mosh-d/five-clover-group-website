@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { IoWalletOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import Modal from "@/components/pms/Modal";
 import Notice from "@/components/pms/Notice";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
@@ -78,7 +78,7 @@ function DeclarationCard({ data, onDone }) {
     <div className={`w-full ${card.surface} p-8 flex flex-col gap-6`}>
       <div className="flex flex-col gap-2">
         <h2 className={page.sectionTitle}>Your Count<Tip id="cashUp.declaration" /></h2>
-        <p className={`text-xl ${page.muted}`}>
+        <p className={page.sectionIntro}>
           {declaration
             ? `Submitted at ${formatDateTime(declaration.declared_at)}. You can change it until the accountant verifies it.`
             : "Count the cash in your drawer for this business day - notes and coins - and enter it. Card, POS, transfer and online money isn't counted here: the accountant checks it against the bank."}
@@ -318,12 +318,16 @@ export default function CashUpPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <div>
-        <PageHeading icon={IoWalletOutline} tipId="cashUp.page">Cash-Up</PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>
-          Whenever you took cash, count the cash in your drawer and submit it before you go. You won&apos;t see what the system expects; the accountant compares the two.
-        </p>
-      </div>
+      <PageHeader
+        icon={IoWalletOutline}
+        tipId="cashUp.page"
+        title="Cash-Up"
+        description={
+          <>
+            Whenever you took cash, count the cash in your drawer and submit it before you go. You won&apos;t see what the system expects; the accountant compares the two.
+          </>
+        }
+      />
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -374,7 +378,7 @@ export default function CashUpPage() {
               <div className="flex flex-wrap items-end justify-between gap-4 w-full">
                 <div className="flex flex-col gap-1">
                   <h2 className={page.sectionTitle}>Paid-Outs<Tip id="cashUp.paidOuts" /></h2>
-                  <p className={`text-xl ${page.muted}`}>
+                  <p className={page.sectionIntro}>
                     {data.can_record_paid_out
                       ? "Cash paid out of your drawer today for a small expense. It comes off the cash you are expected to hold."
                       : data.date !== data.today

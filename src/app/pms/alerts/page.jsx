@@ -5,7 +5,7 @@ import CountBadge from "@/components/pms/CountBadge";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IoNotificationsOutline, IoMenuOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
 import Pagination from "@/components/pms/Pagination";
@@ -281,15 +281,14 @@ export default function PmsAlertsPage() {
       <Toast message={toast} onClose={clearToast} />
 
       <div className={`${page.wrap} gap-[3rem]!`}>
-        <PageHeading
+        <PageHeader
           icon={IoNotificationsOutline}
           tipId="alerts.page"
+          title="Alerts"
           badge={<CountBadge count={alertCount} label="open alerts" size="lg" />}
         >
-          Alerts
-        </PageHeading>
-
-        <AlertTabs tabs={TABS} active={tab} onChange={setTab} />
+          <AlertTabs tabs={TABS} active={tab} onChange={setTab} />
+        </PageHeader>
 
         {loading && !data ? (
           <div className="flex justify-center py-10"><LoadingSpinner size="lg" /></div>

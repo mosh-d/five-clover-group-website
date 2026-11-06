@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { IoCalculatorOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import { page } from "@/components/pms/ui";
 import DayCloseTab from "./DayCloseTab";
@@ -42,15 +42,20 @@ export default function AccountingPage() {
 
   return (
     <div className={page.wrap}>
-      <div>
-        <PageHeading icon={IoCalculatorOutline} tipId="accounting.page">Accounting</PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>
-          Sign off each day&apos;s books; check the cash-ups, refunds and discounts, receipt numbers and guest balances; chase what is owed and refund guests&apos; credit; read the day&apos;s flash report and the tax and service charge to pay over; see what food and drink make over what they cost; and download the journal for your books.
-        </p>
-      </div>
-      {TABS.length > 1 && (
-        <PageTabs tabs={TABS} active={current.key} onChange={(key) => router.replace(`/pms/accounting?tab=${key}`, { scroll: false })} />
-      )}
+      <PageHeader
+        icon={IoCalculatorOutline}
+        tipId="accounting.page"
+        title="Accounting"
+        description={
+          <>
+            Sign off each day&apos;s books; check the cash-ups, refunds and discounts, receipt numbers and guest balances; chase what is owed and refund guests&apos; credit; read the day&apos;s flash report and the tax and service charge to pay over; see what food and drink make over what they cost; and download the journal for your books.
+          </>
+        }
+      >
+        {TABS.length > 1 && (
+          <PageTabs tabs={TABS} active={current.key} onChange={(key) => router.replace(`/pms/accounting?tab=${key}`, { scroll: false })} />
+        )}
+      </PageHeader>
       <current.Tab />
     </div>
   );

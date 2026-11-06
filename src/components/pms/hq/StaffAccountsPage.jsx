@@ -3,7 +3,7 @@
 import CountBadge from "@/components/pms/CountBadge";
 import { useState, useEffect, useCallback } from "react";
 import { IoPeopleOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import StatusBadge from "@/components/pms/StatusBadge";
 import Modal from "@/components/pms/Modal";
 import PasswordField from "@/components/pms/PasswordField";
@@ -297,35 +297,39 @@ export default function StaffAccountsPage() {
 
   return (
     <div className={page.wrap}>
-      <div>
-        <PageHeading icon={IoPeopleOutline} tipId="staffAccounts.page">Staff Accounts</PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>Manage staff across every branch, and Head Office&apos;s own accounts.</p>
-      </div>
-
-      <div className="w-full flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-2 min-w-[24rem]">
-          <label htmlFor="staff-branch" className={field.label}>Branch<Tip id="staffAccounts.branch" /></label>
-          {loadingBranches ? (
-            <LoadingSpinner />
-          ) : (
-            <select id="staff-branch" value={selectedBranchId} onChange={(e) => setSelectedBranchId(e.target.value)} className={field.select}>
-              <option value="">-- Select a branch --</option>
-              <option value={HEAD_OFFICE}>Head Office</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
-          )}
+      <PageHeader
+        icon={IoPeopleOutline}
+        tipId="staffAccounts.page"
+        title="Staff Accounts"
+        description={<>Manage staff across every branch, and Head Office&apos;s own accounts.</>}
+        actions={
+          <button
+            type="button"
+            onClick={() => open("create", null, { username: "", role: assignableRoles[0], password: "", confirm: "" })}
+            disabled={!selectedBranchId}
+            className={btn.primary}
+          >
+            + Add Staff
+          </button>
+        }
+      >
+        <div className={page.toolbar}>
+          <div className="flex flex-col gap-2 min-w-[24rem]">
+            <label htmlFor="staff-branch" className={field.label}>Branch<Tip id="staffAccounts.branch" /></label>
+            {loadingBranches ? (
+              <LoadingSpinner />
+            ) : (
+              <select id="staff-branch" value={selectedBranchId} onChange={(e) => setSelectedBranchId(e.target.value)} className={field.select}>
+                <option value="">-- Select a branch --</option>
+                <option value={HEAD_OFFICE}>Head Office</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => open("create", null, { username: "", role: assignableRoles[0], password: "", confirm: "" })}
-          disabled={!selectedBranchId}
-          className={btn.primary}
-        >
-          + Add Staff
-        </button>
-      </div>
+      </PageHeader>
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className={`${field.error} w-full`} role="alert">{error}</p>}

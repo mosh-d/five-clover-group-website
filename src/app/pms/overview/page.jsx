@@ -18,7 +18,7 @@ import {
   IoBriefcaseOutline,
   IoSparklesOutline,
 } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
 import { MotionDiv, MotionButton, staggerParent, staggerChild } from "@/components/pms/motion";
@@ -148,25 +148,29 @@ export default function PmsOverviewPage() {
   return (
     <>
       <div className={page.wrap}>
-        <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
-          <PageHeading icon={IoGridOutline} tipId="overview.page">Overview</PageHeading>
-          {lastAudit !== undefined && (
-            <button
-              onClick={() => go("/pms/night-audit")}
-              className={`flex items-center gap-3 px-5 py-2.5 rounded-full text-xl font-semibold cursor-pointer transition-colors ${
-                auditCurrent ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-red-100 text-red-700 hover:bg-red-200"
-              }`}
-              title="Go to Night Audit"
-            >
-              <IoMoonOutline size={18} />
-              {lastAudit === null
-                ? "No night audit run yet"
-                : auditCurrent
-                  ? `Night audit up to date (${formatShortDate(lastAudit.audit_date)})`
-                  : `Night audit overdue — last run ${formatShortDate(lastAudit.audit_date)}`}
-            </button>
-          )}
-        </div>
+        <PageHeader
+          icon={IoGridOutline}
+          tipId="overview.page"
+          title="Overview"
+          actions={
+            lastAudit !== undefined && (
+              <button
+                onClick={() => go("/pms/night-audit")}
+                className={`flex items-center gap-3 px-5 py-2.5 rounded-full text-xl font-semibold cursor-pointer transition-colors ${
+                  auditCurrent ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-red-100 text-red-700 hover:bg-red-200"
+                }`}
+                title="Go to Night Audit"
+              >
+                <IoMoonOutline size={18} />
+                {lastAudit === null
+                  ? "No night audit run yet"
+                  : auditCurrent
+                    ? `Night audit up to date (${formatShortDate(lastAudit.audit_date)})`
+                    : `Night audit overdue — last run ${formatShortDate(lastAudit.audit_date)}`}
+              </button>
+            )
+          }
+        />
 
         {alertsSummary &&
           (alertTotal > 0 ? (

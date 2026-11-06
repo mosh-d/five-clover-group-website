@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IoLogOutOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import Modal from "@/components/pms/Modal";
 import DateInput from "@/components/pms/DateInput";
 import GuestName from "@/components/pms/GuestName";
@@ -137,13 +137,14 @@ export default function PmsCheckOutsPage() {
       <Toast message={toast} onClose={clearToast} />
 
       <div className={`${page.wrap} gap-[3rem]!`}>
-        <div className="flex flex-col items-start gap-4">
-          <PageHeading icon={IoLogOutOutline} tipId="checkOuts.page">Check-Out List</PageHeading>
-          <div className="flex items-center">
-            <DateInput value={date} onChange={(e) => setDate(e.target.value)} className={`${field.input} w-auto! text-xl!`} aria-label="Departure date" />
-            <Tip id="checkOuts.date" />
+        <PageHeader icon={IoLogOutOutline} tipId="checkOuts.page" title="Check-Out List">
+          <div className={page.toolbar}>
+            <div className="flex items-center">
+              <DateInput value={date} onChange={(e) => setDate(e.target.value)} className={`${field.input} w-auto! text-xl!`} aria-label="Departure date" />
+              <Tip id="checkOuts.date" />
+            </div>
           </div>
-        </div>
+        </PageHeader>
 
         <div className={table.card}>
           <div className={table.scroll}>

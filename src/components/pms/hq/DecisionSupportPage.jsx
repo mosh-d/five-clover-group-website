@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { IoBulbOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import { OooLabel } from "@/components/pms/InfoTip";
 import useHqLive from "@/components/pms/live/useHqLive";
@@ -171,10 +171,12 @@ export default function DecisionSupportPage() {
 
   return (
     <div className={page.wrap}>
-      <div>
-        <PageHeading icon={IoBulbOutline} tipId="decisionSupport.page">Decision Support</PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>Key insights from across the branches, with what to do about them.</p>
-      </div>
+      <PageHeader
+        icon={IoBulbOutline}
+        tipId="decisionSupport.page"
+        title="Decision Support"
+        description="Key insights from across the branches, with what to do about them."
+      />
 
       {error && <p className={`${field.error} w-full`} role="alert">{error}</p>}
       {!live && (
@@ -187,7 +189,7 @@ export default function DecisionSupportPage() {
         <div>
           <h2 className={page.sectionTitle}>Out of Order Rooms: What to Fix First<Tip id="decisionSupport.ooo" /></h2>
           {data && (
-            <p className={`text-xl mt-1 ${page.muted}`}>
+            <p className={`${page.sectionIntro} mt-1`}>
               {rooms.length === 0
                 ? "No rooms are out of order at any branch."
                 : `Ranked by the bookings each room may have cost: its price, times the nights its room type sold every room it had for sale while it was out - nights a guest may have been turned away. Counted up to the night of ${dateText(data.last_night)}.`}

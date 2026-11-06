@@ -7,7 +7,8 @@ import { IoBarChartOutline, IoDownloadOutline } from "react-icons/io5";
 // IoMailOutline comes back with the Email Report button below, if it does.
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import Button from "@/components/pms/Button";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
+import PageTabs from "@/components/pms/PageTabs";
 import StatusBadge from "@/components/pms/StatusBadge";
 import {
   fetchReportsDashboard,
@@ -41,7 +42,7 @@ import { isAccountant, isReceptionist, isStorekeeper, isWaitron } from "@/lib/pm
 // live here.
 import { money, pct, formatDate, formatDateTime, formatPaymentMethod } from "@/lib/pms/format";
 import { canViewAuditTrail } from "@/components/pms/pmsNavItems";
-import { table } from "@/components/pms/ui";
+import { page, table } from "@/components/pms/ui";
 import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBadge, StaffActivitySection, MoneyKindTag } from "@/components/pms/reportUi";
 
 import DateInput from "@/components/pms/DateInput";
@@ -137,58 +138,52 @@ export default function AdminReportsPage() {
 
   return (
     <div data-component="AdminReports" className="flex flex-col items-start gap-[3rem]">
-      <PageHeading icon={IoBarChartOutline} tipId="reports.page">Reports</PageHeading>
+      <PageHeader
+        icon={IoBarChartOutline}
+        tipId="reports.page"
+        title="Reports"
+        description={
+          activeTab === "dashboard"
+            ? "Revenue, occupancy, and stay totals for a custom date range."
+            : activeTab === "manifest"
+            ? "Arrivals and departures for a date range, with room price, receipt numbers, and deposits — the daily front-desk arrivals and departures sheet, digitized."
+            : activeTab === "analysis"
+            ? "Every naira taken and paid back in a date range — guest payments, non-guest sales, refunds and credit refunds — by room, receipt number, and method. Net Total matches the Overview's Collected for the same dates."
+            : activeTab === "pms"
+            ? "A shift-handoff snapshot: room status (vacant/occupied/out-of-order/reserved/complementary) plus arrivals and departures — pick Evening for end-of-day or Morning to see the previous night's audit."
+            : activeTab === "accommodation"
+            ? "The day's room sales: one row per room occupied that night — guest, room, tariff, payment, and whether they checked in today or stayed over from yesterday. Guests who checked out during the day are left off, and complementary and manager's rooms are listed separately under Non-Revenue Rooms."
+            : activeTab === "food-sales"
+            ? "Every food order for a given date — charged to a room's folio or a non-guest folio — with quantity, amount, payment status, and payment method."
+            : activeTab === "drink-sales"
+            ? "Every drink order for a given date — charged to a room's folio or a non-guest folio — with quantity, amount, payment status, and payment method."
+            : "Every active drink item for a given date — opening, added, damaged, sold, and closing stock, plus what sold for. Digitizes the paper Bar Analysis sheet."
+        }
+      >
+        {/* One row of section switches (PageTabs) - owner, 2026-11-06. */}
+        <PageTabs tabs={visibleTabs()} active={activeTab} onChange={openTab} />
 
-      <div className="flex gap-3 text-xl flex-wrap">
-        {visibleTabs().map((t) => (
-          <button
-            key={t.key}
-            onClick={() => openTab(t.key)}
-            className={`px-6 py-3 rounded-lg font-bold cursor-pointer transition-all ${
-              activeTab === t.key ? "bg-[color:var(--emphasis)] text-white" : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <p className="text-xl text-[color:var(--text-color)]/76">
-        {activeTab === "dashboard"
-          ? "Revenue, occupancy, and stay totals for a custom date range."
-          : activeTab === "manifest"
-          ? "Arrivals and departures for a date range, with room price, receipt numbers, and deposits — the daily front-desk arrivals and departures sheet, digitized."
-          : activeTab === "analysis"
-          ? "Every naira taken and paid back in a date range — guest payments, non-guest sales, refunds and credit refunds — by room, receipt number, and method. Net Total matches the Overview's Collected for the same dates."
-          : activeTab === "pms"
-          ? "A shift-handoff snapshot: room status (vacant/occupied/out-of-order/reserved/complementary) plus arrivals and departures — pick Evening for end-of-day or Morning to see the previous night's audit."
-          : activeTab === "accommodation"
-          ? "The day's room sales: one row per room occupied that night — guest, room, tariff, payment, and whether they checked in today or stayed over from yesterday. Guests who checked out during the day are left off, and complementary and manager's rooms are listed separately under Non-Revenue Rooms."
-          : activeTab === "food-sales"
-          ? "Every food order for a given date — charged to a room's folio or a non-guest folio — with quantity, amount, payment status, and payment method."
-          : activeTab === "drink-sales"
-          ? "Every drink order for a given date — charged to a room's folio or a non-guest folio — with quantity, amount, payment status, and payment method."
-          : "Every active drink item for a given date — opening, added, damaged, sold, and closing stock, plus what sold for. Digitizes the paper Bar Analysis sheet."}
-      </p>
-
-      {/* Shift attributes a report to whichever front-desk shift sends it to
-          the accountant — meaningless for an accountant's own session,
-          since they're not sending anything to themselves. */}
-      {!isAccountant() && (
-        <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-col gap-2 w-full max-w-sm">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">{shiftLabel}<Tip id="reports.shift" /></label>
-          <select
-            value={shift}
-            onChange={(e) => setShift(e.target.value)}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          >
-            <option value="">-- Select --</option>
-            {shiftRoster.map((s) => (
-              <option key={s.id} value={s.username}>{s.username} ({s.role})</option>
-            ))}
-          </select>
-        </div>
-      )}
+        {/* Shift attributes a report to whichever front-desk shift sends it to
+            the accountant — meaningless for an accountant's own session,
+            since they're not sending anything to themselves. */}
+        {!isAccountant() && (
+          <div className={page.toolbar}>
+            <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-col gap-2 w-full max-w-sm">
+              <label className="text-xl font-semibold text-[color:var(--text-color)]/76">{shiftLabel}<Tip id="reports.shift" /></label>
+              <select
+                value={shift}
+                onChange={(e) => setShift(e.target.value)}
+                className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
+              >
+                <option value="">-- Select --</option>
+                {shiftRoster.map((s) => (
+                  <option key={s.id} value={s.username}>{s.username} ({s.role})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+      </PageHeader>
 
       <MotionDiv key={activeTab} className="w-full flex flex-col items-start gap-[3rem]" {...tabEnter}>
       {activeTab === "dashboard" && <DashboardTab />}
@@ -407,7 +402,7 @@ function DashboardTab() {
             <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
               <div className="px-6 py-5 border-b border-(--accent-2)">
                 <h2 className="text-3xl font-bold text-[color:var(--black)]">Revenue by Room Type<Tip id="reports.dash.revenueByType" /></h2>
-                <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Room and breakfast charged for the nights in this period</p>
+                <p className={`${page.sectionIntro} mt-1`}>Room and breakfast charged for the nights in this period</p>
               </div>
               {revenueByRoomType.length === 0 ? (
                 <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No data for this period.</p>
@@ -441,7 +436,7 @@ function DashboardTab() {
             <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
               <div className="px-6 py-5 border-b border-(--accent-2)">
                 <h2 className="text-3xl font-bold text-[color:var(--black)]">Payments by Method<Tip id="reports.dash.paymentsByMethod" /></h2>
-                <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Payments and non-guest sales, less payment and credit refunds — the same total as Analysis</p>
+                <p className={`${page.sectionIntro} mt-1`}>Payments and non-guest sales, less payment and credit refunds — the same total as Analysis</p>
               </div>
               {paymentMethods.length === 0 ? (
                 <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No payments recorded in this period.</p>
@@ -488,7 +483,7 @@ function DashboardTab() {
           <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
             <div className="px-6 py-5 border-b border-(--accent-2)">
               <h2 className="text-3xl font-bold text-[color:var(--black)]">Occupancy by Room Type<Tip id="reports.dash.occupancy" /></h2>
-              <p className="text-xl text-[color:var(--text-color)]/68 mt-1">Room nights booked (no-shows left out) vs available across the selected period</p>
+              <p className={`${page.sectionIntro} mt-1`}>Room nights booked (no-shows left out) vs available across the selected period</p>
             </div>
             {occupancy.length === 0 ? (
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No data for this period.</p>

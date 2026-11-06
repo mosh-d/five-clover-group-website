@@ -6,10 +6,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "@/lib/pms/router";
 import { IoClose, IoLogInOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
+import PageTabs from "@/components/pms/PageTabs";
 import StatusBadge from "@/components/pms/StatusBadge";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { btn, field, table } from "@/components/pms/ui";
+import { btn, field, page, table } from "@/components/pms/ui";
 import { fetchCheckInList } from "@/lib/pms/api/front-office-api";
 import { checkGuestBlacklist, fetchGuests } from "@/lib/pms/api/guests-api";
 import { addDaysISO, adminTodayISO, currentBusinessDateISO, minWalkInCheckOutISO } from "@/lib/pms/dates";
@@ -653,50 +654,46 @@ export default function AdminCheckInsPage() {
       )}
 
       <div data-component="AdminCheckIns" className="flex flex-col items-start gap-[3rem]">
-        <PageHeading icon={IoLogInOutline} tipId="checkIns.page">Check-Ins</PageHeading>
-
-        {/* Tabs - the same wrapping pills as Reports' tabs. Underlined in
-            one row, their labels broke mid-word on a phone ("Walk- / In"). */}
-        <div className="flex flex-wrap gap-3 w-full">
-          {[
-            { key: "arrivals", label: "Expected Arrivals" },
-            { key: "walkin", label: "Walk-In" },
-            // A walk-in who wants a LATER date, not a room tonight — see
-            // FutureBookingForm for why this can't reuse the Walk-In form.
-            { key: "future", label: "Future Booking" },
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`px-6 py-3 rounded-lg text-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
-                tab === key
-                  ? "bg-[color:var(--emphasis)] text-white"
-                  : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <p className="text-xl text-[color:var(--text-color)]/76">
-          {tab === "arrivals"
-            ? "Confirmed (paid) reservations expected to check in on the selected date. Check-in opens on each guest's arrival day — to let someone in early, change their check-in date to today in Reservations first."
-            : "Register a guest who arrives without an existing reservation."}
-        </p>
+        <PageHeader
+          icon={IoLogInOutline}
+          tipId="checkIns.page"
+          title="Check-Ins"
+          description={
+            tab === "arrivals"
+              ? "Confirmed (paid) reservations expected to check in on the selected date. Check-in opens on each guest's arrival day — to let someone in early, change their check-in date to today in Reservations first."
+              : "Register a guest who arrives without an existing reservation."
+          }
+        >
+          {/* One row of section switches (PageTabs) - owner, 2026-11-06. */}
+          <PageTabs
+            tabs={[
+              { key: "arrivals", label: "Expected Arrivals" },
+              { key: "walkin", label: "Walk-In" },
+              // A walk-in who wants a LATER date, not a room tonight — see
+              // FutureBookingForm for why this can't reuse the Walk-In form.
+              { key: "future", label: "Future Booking" },
+            ]}
+            active={tab}
+            onChange={setTab}
+          />
+          {tab === "arrivals" && (
+            <div className={page.toolbar}>
+              <div className="w-auto flex items-center justify-end">
+                <DateInput
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className={`${field.input} w-auto text-xl!`}
+                />
+                <Tip id="checkIns.arrivals.date" />
+              </div>
+            </div>
+          )}
+        </PageHeader>
 
         <MotionDiv key={tab} className="w-full flex flex-col items-start gap-[3rem]" {...tabEnter}>
         {/* EXPECTED ARRIVALS */}
         {tab === "arrivals" && (
           <>
-            <div className="w-auto flex items-center justify-end">
-              <DateInput
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className={`${field.input} w-auto text-xl!`}
-              />
-              <Tip id="checkIns.arrivals.date" />
-            </div>
             <div className={table.card}>
               <div className={table.scroll}>
                 <table className={table.el}>
@@ -1702,7 +1699,7 @@ function FutureBookingForm() {
     <div className="w-full bg-(--card) rounded-xl border border-(--accent-2) p-8 flex flex-col gap-6">
       <div>
         <h2 className="text-3xl font-bold text-[color:var(--black)]">Future Booking<Tip id="checkIns.future.heading" /></h2>
-        <p className="text-xl text-[color:var(--text-color)]/76 mt-1">
+        <p className={`${page.sectionIntro} mt-1`}>
           For a guest booking a later date in person. A room number is required — it holds a real room for those
           dates, and can be reassigned any time before the guest arrives.
         </p>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { IoWarningOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import useHqLive from "@/components/pms/live/useHqLive";
 import { page, field, table } from "@/components/pms/ui";
@@ -62,10 +62,12 @@ export default function CriticalPage() {
 
   return (
     <div className={page.wrap}>
-      <div>
-        <PageHeading icon={IoWarningOutline} tipId="critical.page">Critical</PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>What needs Head Office&apos;s attention across every branch.</p>
-      </div>
+      <PageHeader
+        icon={IoWarningOutline}
+        tipId="critical.page"
+        title="Critical"
+        description={<>What needs Head Office&apos;s attention across every branch.</>}
+      />
 
       {error && <p className={`${field.error} w-full`} role="alert">{error}</p>}
       {!live && (
@@ -78,7 +80,7 @@ export default function CriticalPage() {
         <div>
           <h2 className={page.sectionTitle}>Out of Order Rooms<Tip id="critical.ooo" /></h2>
           {rooms !== null && (
-            <p className={`text-xl mt-1 ${page.muted}`}>
+            <p className={`${page.sectionIntro} mt-1`}>
               {rooms.length === 0
                 ? "No rooms are out of order at any branch."
                 : `${rooms.length} room${rooms.length === 1 ? "" : "s"} out of order across ${branchCount} branch${branchCount === 1 ? "" : "es"}, the longest first.`}

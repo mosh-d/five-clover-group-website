@@ -9,9 +9,9 @@ import {
   IoChevronBack,
   IoChevronForward,
 } from 'react-icons/io5';
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { btn } from "@/components/pms/ui";
+import { btn, page } from "@/components/pms/ui";
 import { fetchRoomChart } from "@/lib/pms/api/reservations-pms-api";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
@@ -240,22 +240,33 @@ export default function AdminRoomChartPage() {
       data-component='AdminRoomChart'
       className='flex flex-col items-start gap-[3rem]'
     >
-      <div className='w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4'>
-        <PageHeading icon={IoAppsOutline} tipId="roomChart.page">Room Chart</PageHeading>
-
-        <div className='flex flex-col items-start gap-3 flex-wrap'>
+      <PageHeader
+        icon={IoAppsOutline}
+        tipId="roomChart.page"
+        title="Room Chart"
+        description={
+          <>
+            Showing {isoDate(windowStart)} to{' '}
+            {isoDate(addDays(windowStart, DAYS_VISIBLE - 1))}. Previous/Next jump a
+            full {DAYS_VISIBLE}-day window back or forward; Today snaps back to the
+            window starting today; the date picker jumps straight to any date, which
+            becomes the leftmost column.
+          </>
+        }
+      >
+        <div className={page.toolbar}>
           <div className='flex items-center'>
-          <input
-            type='date'
-            value={isoDate(windowStart)}
-            onChange={(e) =>
-              e.target.value &&
-              setWindowStart(startOfDay(new Date(`${e.target.value}T00:00:00`)))
-            }
-            className='border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]'
-            title='Jump to a date — it becomes the leftmost column'
-          />
-          <Tip id="roomChart.date" />
+            <input
+              type='date'
+              value={isoDate(windowStart)}
+              onChange={(e) =>
+                e.target.value &&
+                setWindowStart(startOfDay(new Date(`${e.target.value}T00:00:00`)))
+              }
+              className='border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]'
+              title='Jump to a date — it becomes the leftmost column'
+            />
+            <Tip id="roomChart.date" />
           </div>
           <div className='flex items-center gap-3'>
             <button
@@ -278,15 +289,7 @@ export default function AdminRoomChartPage() {
             </button>
           </div>
         </div>
-      </div>
-
-      <p className='text-lg text-[color:var(--text-color)]/68 -mt-6'>
-        Showing {isoDate(windowStart)} to{' '}
-        {isoDate(addDays(windowStart, DAYS_VISIBLE - 1))}. Previous/Next jump a
-        full {DAYS_VISIBLE}-day window back or forward; Today snaps back to the
-        window starting today; the date picker jumps straight to any date, which
-        becomes the leftmost column.
-      </p>
+      </PageHeader>
 
       <div className='flex items-center gap-6 text-xl'>
         <span className='flex items-center gap-2'>

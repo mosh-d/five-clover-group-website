@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { IoCubeOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
@@ -553,28 +553,26 @@ export default function InventoryPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <div>
-        <PageHeading icon={IoCubeOutline} tipId="inventory.page">
-          Inventory
-        </PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>
-          What the store holds: received from suppliers, issued to the departments, returned, written off and counted.
-        </p>
-      </div>
+      <PageHeader
+        icon={IoCubeOutline}
+        tipId="inventory.page"
+        title="Inventory"
+        description="What the store holds: received from suppliers, issued to the departments, returned, written off and counted."
+      >
+        <PageTabs
+          tabs={[
+            { key: "stock", label: "Stock", badge: low, badgeLabel: "items low on stock" },
+            { key: "requests", label: "Requests", badge: waiting, badgeLabel: "requests waiting" },
+            { key: "reports", label: "Reports" },
+            { key: "suppliers", label: "Suppliers" },
+          ]}
+          active={tab}
+          onChange={setTab}
+        />
+      </PageHeader>
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className={`${field.error} w-full`}>{error}</p>}
-
-      <PageTabs
-        tabs={[
-          { key: "stock", label: "Stock", badge: low, badgeLabel: "items low on stock" },
-          { key: "requests", label: "Requests", badge: waiting, badgeLabel: "requests waiting" },
-          { key: "reports", label: "Reports" },
-          { key: "suppliers", label: "Suppliers" },
-        ]}
-        active={tab}
-        onChange={setTab}
-      />
 
       {tab === "requests" ? (
         <RequestsTab canEdit={canEdit} onDone={setNotice} />

@@ -4,7 +4,7 @@
 // Carried over from the branch PMS's admin_pages/AdminLaundry.jsx (2026-09-28).
 import { useState } from "react";
 import { IoShirtOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import AdminLaundryGuestSales from "./AdminLaundryGuestSales";
 import AdminLaundrySales from "./AdminLaundrySales";
@@ -26,8 +26,9 @@ export default function AdminLaundryPage() {
       data-component="AdminLaundry"
       className="flex flex-col items-start gap-[3rem]"
     >
-      <PageHeading icon={IoShirtOutline} tipId="laundry.page">Laundry Sales</PageHeading>
-      <PageTabs tabs={TABS} active={tab} onChange={setTab} />
+      <PageHeader icon={IoShirtOutline} tipId="laundry.page" title="Laundry Sales">
+        <PageTabs tabs={TABS} active={tab} onChange={setTab} />
+      </PageHeader>
       {tab === "guest"
         ? <AdminLaundryGuestSales asSection hideTitle />
         : <AdminLaundrySales asSection hideTitle title="Non-Guest Sales" />}

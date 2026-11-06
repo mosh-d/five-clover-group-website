@@ -4,7 +4,7 @@
 // Carried over from the branch PMS's admin_pages/AdminFnbSales.jsx (2026-09-28).
 import { useState } from "react";
 import { IoFastFoodOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import AdminGuestSales from "./AdminGuestSales";
 import AdminNonGuestSales from "./AdminNonGuestSales";
@@ -31,8 +31,9 @@ export default function AdminFnbSalesPage() {
       data-component="AdminFnbSales"
       className="flex flex-col items-start gap-[3rem]"
     >
-      <PageHeading icon={IoFastFoodOutline} tipId="fnbSales.page">F&amp;B Sales</PageHeading>
-      <PageTabs tabs={TABS} active={tab} onChange={setTab} />
+      <PageHeader icon={IoFastFoodOutline} tipId="fnbSales.page" title="F&B Sales">
+        <PageTabs tabs={TABS} active={tab} onChange={setTab} />
+      </PageHeader>
       {/* Mounted only while selected: each half fetches its own menus, folios
           and credits, and the hidden one has no reason to be holding stale
           copies of all of it. */}

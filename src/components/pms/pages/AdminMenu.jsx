@@ -4,7 +4,8 @@
 // Carried over from the branch PMS's admin_pages/AdminMenu.jsx (2026-09-28).
 import { useState, useEffect, useCallback, Fragment } from "react";
 import { IoRestaurantOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
+import PageTabs from "@/components/pms/PageTabs";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { btn, field, table } from "@/components/pms/ui";
@@ -76,29 +77,28 @@ export default function AdminMenu() {
 
   return (
     <div data-component="AdminMenu" className="flex flex-col items-start gap-[3rem]">
-      <PageHeading icon={IoRestaurantOutline} tipId="menu.page">Menu</PageHeading>
-      <p className="text-xl text-[color:var(--text-color)]/76">
-        Food and drink items a waitron picks from when posting a charge to a folio, or when recording a non-guest sale. Prices set here are what an order charges.
-        {canEdit && " Cost prices - what an item costs the hotel - are for the accountant's F&B Margin; waitrons don't see them."}
-      </p>
-
-      <div className="flex gap-3 text-xl flex-wrap">
-        {[
-          { key: "food", label: "Food" },
-          { key: "drinks", label: "Drinks" },
-          { key: "laundry", label: "Laundry" },
-        ].map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-6 py-3 rounded-lg font-bold cursor-pointer transition-all ${
-              tab === t.key ? "bg-[color:var(--emphasis)] text-white" : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <PageHeader
+        icon={IoRestaurantOutline}
+        tipId="menu.page"
+        title="Menu"
+        description={
+          <>
+            Food and drink items a waitron picks from when posting a charge to a folio, or when recording a non-guest sale. Prices set here are what an order charges.
+            {canEdit && " Cost prices - what an item costs the hotel - are for the accountant's F&B Margin; waitrons don't see them."}
+          </>
+        }
+      >
+        {/* One row of section switches (PageTabs) - owner, 2026-11-06. */}
+        <PageTabs
+          tabs={[
+            { key: "food", label: "Food" },
+            { key: "drinks", label: "Drinks" },
+            { key: "laundry", label: "Laundry" },
+          ]}
+          active={tab}
+          onChange={setTab}
+        />
+      </PageHeader>
 
       {tab === "laundry" ? (
         <LaundrySection canEdit={canEdit} />

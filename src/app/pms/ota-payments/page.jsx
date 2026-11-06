@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { IoBusinessOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
+import PageTabs from "@/components/pms/PageTabs";
 import Modal from "@/components/pms/Modal";
 import StatusBadge from "@/components/pms/StatusBadge";
 import GuestName from "@/components/pms/GuestName";
@@ -85,23 +86,24 @@ export default function PmsOtaPaymentsPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <PageHeading icon={IoBusinessOutline} tipId="otaPayments.page">OTA Payments</PageHeading>
-      <p className={`text-xl ${page.muted}`}>
-        Nights an OTA is paying for instead of the guest. The folio keeps showing them as owing until the money arrives, and the
-        guest is never asked for them. Marking one paid records the money that arrived against that folio; whatever the OTA kept is
-        recorded as its commission and taken off the folio.
-      </p>
+      <PageHeader
+        icon={IoBusinessOutline}
+        tipId="otaPayments.page"
+        title="OTA Payments"
+        description={
+          <>
+            Nights an OTA is paying for instead of the guest. The folio keeps showing them as owing until the money arrives, and the
+            guest is never asked for them. Marking one paid records the money that arrived against that folio; whatever the OTA kept is
+            recorded as its commission and taken off the folio.
+          </>
+        }
+      >
+        {/* One row of section switches (PageTabs) - owner, 2026-11-06. */}
+        <PageTabs tabs={TABS} active={status} onChange={setStatus} />
+      </PageHeader>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
       <Notice message={notice} onDismiss={() => setNotice(null)} />
-
-      <div className="flex gap-3 flex-wrap">
-        {TABS.map((tab) => (
-            <button key={tab.key} onClick={() => setStatus(tab.key)} className={status === tab.key ? btn.rowPrimary : btn.rowSecondary}>
-              {tab.label}
-            </button>
-        ))}
-      </div>
 
       {status === "pending" && !loading && settlements.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg px-5 py-4 flex items-center justify-between gap-4 flex-wrap w-full">

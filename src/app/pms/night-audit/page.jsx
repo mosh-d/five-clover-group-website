@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { IoMoonOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import GuestName from "@/components/pms/GuestName";
@@ -71,10 +71,12 @@ export default function PmsNightAuditPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <div>
-        <PageHeading icon={IoMoonOutline} tipId="nightAudit.page">Night Audit</PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>Posts nightly room charges to all in-house guest folios. Runs automatically at 6am if not triggered manually.</p>
-      </div>
+      <PageHeader
+        icon={IoMoonOutline}
+        tipId="nightAudit.page"
+        title="Night Audit"
+        description="Posts nightly room charges to all in-house guest folios. Runs automatically at 6am if not triggered manually."
+      />
 
       <div className={`w-full ${card.surface} p-8 flex flex-col gap-6`}>
         <h2 className={page.sectionTitle}>Run Audit<Tip id="nightAudit.run" /></h2>

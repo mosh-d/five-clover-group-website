@@ -6,11 +6,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "@/lib/pms/router";
 import { IoClose, IoReceiptOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
+import PageTabs from "@/components/pms/PageTabs";
 import StatusBadge from "@/components/pms/StatusBadge";
 import { CHARGE_TYPE_LABELS, settlementByCharge } from "@/components/pms/folioCharges";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { btn, field, table } from "@/components/pms/ui";
+import { btn, field, page as pageUi, table } from "@/components/pms/ui";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
 import RefundCreditModal from "@/components/pms/RefundCreditModal";
@@ -704,83 +705,87 @@ export default function AdminFoliosPage() {
       )}
 
       <div data-component="AdminFolios" className="flex flex-col items-start gap-[3rem]">
-        <div className="w-full flex justify-between items-center max-sm:flex-col max-sm:items-start max-sm:gap-4">
-          <PageHeading icon={IoReceiptOutline} tipId="folios.page">Guest Folios</PageHeading>
-        </div>
+        <PageHeader
+          icon={IoReceiptOutline}
+          tipId="folios.page"
+          title="Guest Folios"
+          description={
+            searchTerm
+              ? `Folios matching folio #, guest name, or payment/refund reference "${searchTerm}".`
+              : isWaitstaffSession
+              ? "Open folios only. Food and drink orders are posted from Guest Sales — this page is for payments, corrections, and other charges."
+              : subTab === "all"
+              ? "Every folio across all guests, open and closed."
+              : subTab === "pending"
+              ? "Open folios with a balance still owed — both in-house guests (Guest Ledger) and guests who've already departed still owing (City Ledger)."
+              : "Guests who are supposed to have checked out but still have a balance owed — only counted from noon on their checkout date onward. A guest who has genuinely left is a City Ledger receivable; one still in-house past their scheduled date is still a Guest Ledger matter — see the Guest Status column."
+          }
+        >
+          {/* Waitstaff's view is locked to open folios only (they can only
+              ever post to one that's still open — see FoliosService.addFolioItem),
+              so there's nothing for these tab/status controls to switch between.
+              One row of section switches (PageTabs) - owner, 2026-11-06; none is
+              selected while a search is showing. */}
+          {!isWaitstaffSession && (
+            <PageTabs
+              tabs={[
+                { key: "all", label: "All" },
+                { key: "pending", label: "Outstanding Balance" },
+                { key: "overdue", label: "Overdue" },
+              ]}
+              active={searchTerm ? null : subTab}
+              onChange={(key) => { setSubTab(key); setSearchInput(""); setSearchTerm(""); }}
+            />
+          )}
+
+          <div className={`${pageUi.toolbar} text-xl items-center!`}>
+            {!isWaitstaffSession && subTab === "all" && !searchTerm && (
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={`${field.select} w-auto text-xl!`}
+              >
+                <option value="all">All Statuses</option>
+                <option value="open">Open</option>
+                <option value="pending">Pending</option>
+                <option value="closed">Closed</option>
+              </select>
+            )}
+            {!isWaitstaffSession && subTab === "all" && !searchTerm && (
+              <Tip id="folios.statusFilter" />
+            )}
+
+            <form
+              onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); }}
+              // Starts at the left with the other filters, and takes the rest of
+              // the row (all of it on a phone) - owner, 2026-11-06.
+              className="flex gap-2 items-center flex-1 min-w-[min(100%,32rem)]"
+            >
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search by folio #, guest name, payment reference or receipt number (e.g. FOL-D7931B, PAY-3F9A2B)"
+                className={`${field.input} flex-1 min-w-0 text-xl!`}
+              />
+              <button type="submit" className={btn.secondary}>Search</button>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchInput(""); setSearchTerm(""); }}
+                  className={btn.rowSecondary}
+                >
+                  Clear
+                </button>
+              )}
+            </form>
+          </div>
+        </PageHeader>
         {readOnly && (
-          <p className="text-xl text-(--text-color)/68 -mt-8">
+          <p className="text-xl text-(--text-color)/68">
             Read-only: the front desk posts charges, takes payments and closes folios. You can refund a guest&apos;s credit.
           </p>
         )}
-
-        <div className="flex gap-3 text-xl flex-wrap items-center w-full">
-          {/* Waitstaff's view is locked to open folios only (they can only
-              ever post to one that's still open — see FoliosService.addFolioItem),
-              so there's nothing for these tab/status controls to switch between. */}
-          {!isWaitstaffSession && [
-            { key: "all", label: "All" },
-            { key: "pending", label: "Outstanding Balance" },
-            { key: "overdue", label: "Overdue" },
-          ].map((t) => (
-            <button
-              key={t.key}
-              onClick={() => { setSubTab(t.key); setSearchInput(""); setSearchTerm(""); }}
-              className={`px-6 py-3 rounded-lg font-bold cursor-pointer transition-all ${!searchTerm && subTab === t.key ? "bg-[color:var(--emphasis)] text-white" : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"}`}
-            >
-              {t.label}
-            </button>
-          ))}
-          {!isWaitstaffSession && subTab === "all" && !searchTerm && (
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className={`${field.select} w-auto text-xl!`}
-            >
-              <option value="all">All Statuses</option>
-              <option value="open">Open</option>
-              <option value="pending">Pending</option>
-              <option value="closed">Closed</option>
-            </select>
-          )}
-          {!isWaitstaffSession && subTab === "all" && !searchTerm && (
-            <Tip id="folios.statusFilter" />
-          )}
-
-          <form
-            onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); }}
-            className="flex gap-2 items-center ml-auto"
-          >
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by folio #, guest name, payment reference or receipt number (e.g. FOL-D7931B, PAY-3F9A2B)"
-              className={`${field.input} w-auto text-xl!`}
-            />
-            <button type="submit" className={btn.secondary}>Search</button>
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => { setSearchInput(""); setSearchTerm(""); }}
-                className={btn.rowSecondary}
-              >
-                Clear
-              </button>
-            )}
-          </form>
-        </div>
-
-        <p className="text-xl text-[color:var(--text-color)]/76">
-          {searchTerm
-            ? `Folios matching folio #, guest name, or payment/refund reference "${searchTerm}".`
-            : isWaitstaffSession
-            ? "Open folios only. Food and drink orders are posted from Guest Sales — this page is for payments, corrections, and other charges."
-            : subTab === "all"
-            ? "Every folio across all guests, open and closed."
-            : subTab === "pending"
-            ? "Open folios with a balance still owed — both in-house guests (Guest Ledger) and guests who've already departed still owing (City Ledger)."
-            : "Guests who are supposed to have checked out but still have a balance owed — only counted from noon on their checkout date onward. A guest who has genuinely left is a City Ledger receivable; one still in-house past their scheduled date is still a Guest Ledger matter — see the Guest Status column."}
-        </p>
 
         <div className={table.card}>
           <div className={table.scroll}>

@@ -7,9 +7,9 @@ import { useNavigate, useSearchParams } from "@/lib/pms/router";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import Button from "@/components/pms/Button";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import StatusBadge from "@/components/pms/StatusBadge";
-import { table, field } from "@/components/pms/ui";
+import { table, field, page as pageUi } from "@/components/pms/ui";
 import { accessDenial } from "@/components/pms/pmsNavItems";
 import { fetchAuditActionLabels, fetchAuditLogHistory, fetchAuditStaffOptions } from "@/lib/pms/api/audit-log-api";
 import { fetchBranches, fetchHqAuditLogs, fetchHqAuditStaffOptions, fetchHqAuditActionLabels } from "@/lib/pms/api/hq-api";
@@ -303,116 +303,122 @@ export default function AdminAuditTrail() {
 
   return (
     <div data-component="AdminAuditTrail" className="flex flex-col items-start gap-[3rem]">
-      <div>
-        <PageHeading icon={IoDocumentTextOutline} tipId="auditTrail.page">Audit Trail</PageHeading>
-        <p className="text-2xl text-[color:var(--text-color)]/76 mt-2">
-          {isHeadOffice
+      <PageHeader
+        icon={IoDocumentTextOutline}
+        tipId="auditTrail.page"
+        title="Audit Trail"
+        description={
+          isHeadOffice
             ? "A record of actions taken by staff at any branch - or at Head Office, by Head Office's own accounts."
-            : "A record of actions taken by staff on this branch's account. Seen by the manager, the accountant and developers."}
-        </p>
-      </div>
+            : "A record of actions taken by staff on this branch's account. Seen by the manager, the accountant and developers."
+        }
+      >
+        {isHeadOffice && (
+          <div className={pageUi.toolbar}>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="audit-place" className={field.label}>Branch<Tip id="auditTrail.branch" /></label>
+              <select id="audit-place" value={place} onChange={(e) => choosePlace(e.target.value)} className={field.select}>
+                <option value="">-- Select a branch --</option>
+                <option value={HEAD_OFFICE}>Head Office</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
 
-      {isHeadOffice && (
-        <div className="flex flex-col gap-2">
-          <label htmlFor="audit-place" className={field.label}>Branch<Tip id="auditTrail.branch" /></label>
-          <select id="audit-place" value={place} onChange={(e) => choosePlace(e.target.value)} className={field.select}>
-            <option value="">-- Select a branch --</option>
-            <option value={HEAD_OFFICE}>Head Office</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
+        {!waitingForPlace && (
+          <div className={pageUi.toolbar}>
+            <div className="flex flex-col gap-2 flex-1 min-w-64">
+              <label className={field.label}>Search<Tip id="auditTrail.search" /></label>
+              <input
+                type="text"
+                placeholder="Guest name, staff, action…"
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                className={field.input}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className={field.label}>Staff<Tip id="auditTrail.staff" /></label>
+              <select
+                value={filterStaffId}
+                onChange={(e) => applyFilters({ staffId: e.target.value })}
+                className={field.select}
+              >
+                <option value="">All staff</option>
+                {/* The PMS has no staff account; its empty value would read as
+                    "All staff". The Role filter's "Auto (PMS)" singles it out. */}
+                {staffOptions.filter((s) => s.staff_account_id).map((s) => (
+                  <option key={s.staff_account_id} value={s.staff_account_id}>{s.username}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className={field.label}>Role<Tip id="auditTrail.role" /></label>
+              <select
+                value={filterRole}
+                onChange={(e) => applyFilters({ role: e.target.value })}
+                className={field.select}
+              >
+                <option value="">All roles</option>
+                {Object.entries(roleLabels).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className={field.label}>Action<Tip id="auditTrail.action" /></label>
+              <select
+                value={filterAction}
+                onChange={(e) => applyFilters({ action: e.target.value })}
+                className={field.select}
+              >
+                <option value="">All actions</option>
+                {Object.entries(actionLabels).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className={field.label}>From<Tip id="auditTrail.from" /></label>
+              <DateInput
+                value={filterFrom}
+                onChange={(e) => {
+                  // "To" never sits before "from": it moves along instead.
+                  const from = e.target.value;
+                  applyFilters(from && filterTo && from > filterTo ? { from, to: from } : { from });
+                }}
+                className={field.input}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className={field.label}>To<Tip id="auditTrail.to" /></label>
+              <DateInput
+                value={filterTo}
+                min={filterFrom || undefined}
+                onChange={(e) => applyFilters({ to: e.target.value })}
+                className={field.input}
+              />
+            </div>
+
+            {hasFilters && (
+              <Button variant="light-gray" onClick={clearFilters}>Clear filters</Button>
+            )}
+          </div>
+        )}
+      </PageHeader>
 
       {waitingForPlace ? (
         <p className="text-2xl text-[color:var(--text-color)]/68">Select a branch, or Head Office, to see its audit trail.</p>
       ) : (
       <>
-
-      <div className="w-full flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-2 flex-1 min-w-64">
-          <label className={field.label}>Search<Tip id="auditTrail.search" /></label>
-          <input
-            type="text"
-            placeholder="Guest name, staff, action…"
-            value={filterSearch}
-            onChange={(e) => setFilterSearch(e.target.value)}
-            className={field.input}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className={field.label}>Staff<Tip id="auditTrail.staff" /></label>
-          <select
-            value={filterStaffId}
-            onChange={(e) => applyFilters({ staffId: e.target.value })}
-            className={field.select}
-          >
-            <option value="">All staff</option>
-            {/* The PMS has no staff account; its empty value would read as
-                "All staff". The Role filter's "Auto (PMS)" singles it out. */}
-            {staffOptions.filter((s) => s.staff_account_id).map((s) => (
-              <option key={s.staff_account_id} value={s.staff_account_id}>{s.username}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className={field.label}>Role<Tip id="auditTrail.role" /></label>
-          <select
-            value={filterRole}
-            onChange={(e) => applyFilters({ role: e.target.value })}
-            className={field.select}
-          >
-            <option value="">All roles</option>
-            {Object.entries(roleLabels).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className={field.label}>Action<Tip id="auditTrail.action" /></label>
-          <select
-            value={filterAction}
-            onChange={(e) => applyFilters({ action: e.target.value })}
-            className={field.select}
-          >
-            <option value="">All actions</option>
-            {Object.entries(actionLabels).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className={field.label}>From<Tip id="auditTrail.from" /></label>
-          <DateInput
-            value={filterFrom}
-            onChange={(e) => {
-              // "To" never sits before "from": it moves along instead.
-              const from = e.target.value;
-              applyFilters(from && filterTo && from > filterTo ? { from, to: from } : { from });
-            }}
-            className={field.input}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className={field.label}>To<Tip id="auditTrail.to" /></label>
-          <DateInput
-            value={filterTo}
-            min={filterFrom || undefined}
-            onChange={(e) => applyFilters({ to: e.target.value })}
-            className={field.input}
-          />
-        </div>
-
-        {hasFilters && (
-          <Button variant="light-gray" onClick={clearFilters}>Clear filters</Button>
-        )}
-      </div>
 
       <div className="w-full flex flex-col gap-4">
         {filterEntry && (

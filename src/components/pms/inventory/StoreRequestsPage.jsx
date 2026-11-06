@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { IoBasketOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Modal from "@/components/pms/Modal";
@@ -167,12 +167,12 @@ export default function StoreRequestsPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <div>
-        <PageHeading icon={IoBasketOutline} tipId="storeRequests.page">
-          Store Requests
-        </PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>Ask the store for stock. The store keeper issues it or declines it, and the answer shows here.</p>
-      </div>
+      <PageHeader
+        icon={IoBasketOutline}
+        tipId="storeRequests.page"
+        title="Store Requests"
+        description="Ask the store for stock. The store keeper issues it or declines it, and the answer shows here."
+      />
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className={`${field.error} w-full`}>{error}</p>}

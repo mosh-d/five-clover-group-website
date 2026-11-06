@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { IoKeyOutline, IoCheckmarkCircle, IoAlertCircleOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import PasswordField from "@/components/pms/PasswordField";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
@@ -78,12 +78,12 @@ export default function PmsAccountPage() {
 
   return (
     <div className={page.wrap}>
-      <PageHeading icon={IoKeyOutline} tipId="account.page">Account &amp; Security</PageHeading>
+      <PageHeader icon={IoKeyOutline} tipId="account.page" title="Account & Security" />
 
       <section className="w-full max-w-5xl flex flex-col gap-4">
         <div>
           <h2 className={page.sectionTitle}>Change My Password<Tip id="account.changePassword" /></h2>
-          <p className={`text-xl mt-1 ${page.muted}`}>
+          <p className={`${page.sectionIntro} mt-1`}>
             Update the password for your {ROLE_LABELS[realRole] || "PMS"} login. You&apos;ll need your current password to confirm.
           </p>
         </div>

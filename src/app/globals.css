@@ -327,6 +327,21 @@ select:focus {
   --pms-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* PageTabs' row: scrolls sideways on a narrow screen with no scrollbar in
+   the way, and fades out at the right edge while there is more to see. */
+.pms-tab-row {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  mask-image: linear-gradient(to right, black calc(100% - 2.4rem), transparent);
+}
+.pms-tab-row::-webkit-scrollbar {
+  display: none;
+}
+.pms-tab-row > * {
+  scroll-snap-align: start;
+}
+
 /* Every PMS overlay (dialogs, the shift gate, "session ended"): its panel
    sits clear of the status bar's blur and the home indicator in the
    installed app (owner, 2026-11-06). Unlayered, so it outranks the overlay's

@@ -1,7 +1,7 @@
 "use client";
 
 import { IoHelpCircleOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { canOpen } from "@/components/pms/pmsNavItems";
 import { HELP_SECTIONS } from "@/components/pms/help/sections";
@@ -19,21 +19,26 @@ export default function PmsHelpPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <PageHeading icon={IoHelpCircleOutline} tipId="help.page">Help &amp; Workflow Guide</PageHeading>
-      <p className={`text-xl -mt-4 ${page.muted}`}>What each page does and how it fits into the daily workflow. Jump to a section:<Tip id="help.jump" /></p>
-
-      <div className="flex gap-3 text-xl flex-wrap">
-        {sections.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => scrollTo(s.id)}
-            className="flex items-center gap-2 px-5 py-3 rounded-lg font-bold cursor-pointer transition-all bg-black/4 hover:bg-black/8"
-          >
-            <s.icon size={18} className="shrink-0" />
-            {s.label}
-          </button>
-        ))}
-      </div>
+      <PageHeader
+        icon={IoHelpCircleOutline}
+        tipId="help.page"
+        title="Help & Workflow Guide"
+        description={<>What each page does and how it fits into the daily workflow. Jump to a section:<Tip id="help.jump" /></>}
+      >
+        {/* Jump links that scroll to a section, not switches - they stay a wrapped row. */}
+        <div className="flex gap-3 text-xl flex-wrap">
+          {sections.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => scrollTo(s.id)}
+              className="flex items-center gap-2 px-5 py-3 rounded-lg font-bold cursor-pointer transition-all bg-black/4 hover:bg-black/8"
+            >
+              <s.icon size={18} className="shrink-0" />
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </PageHeader>
 
       <div className="w-full flex flex-col gap-8">
         {sections.map((s) => (

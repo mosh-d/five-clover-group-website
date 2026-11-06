@@ -3,7 +3,7 @@
 import CountBadge from "@/components/pms/CountBadge";
 import { useCallback, useEffect, useState } from "react";
 import { IoSparklesOutline } from "react-icons/io5";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Modal from "@/components/pms/Modal";
@@ -633,14 +633,23 @@ export default function HousekeepingPage() {
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
-      <div>
-        <PageHeading icon={IoSparklesOutline} tipId="housekeeping.page">
-          Housekeeping
-        </PageHeading>
-        <p className={`text-2xl mt-2 ${page.muted}`}>
-          The rooms guests leave: housekeepers clean them and submit them for review, and the supervisor approves them or sends them back.
-        </p>
-      </div>
+      <PageHeader
+        icon={IoSparklesOutline}
+        tipId="housekeeping.page"
+        title="Housekeeping"
+        description="The rooms guests leave: housekeepers clean them and submit them for review, and the supervisor approves them or sends them back."
+      >
+        {board?.on && !isHousekeeper && (
+          <PageTabs
+            tabs={[
+              { key: "rooms", label: "Rooms" },
+              { key: "reports", label: "Reports" },
+            ]}
+            active={tab}
+            onChange={setTab}
+          />
+        )}
+      </PageHeader>
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -676,7 +685,7 @@ export default function HousekeepingPage() {
                   </button>
                 )}
               </div>
-              <p className={`text-xl ${page.muted}`}>
+              <p className={page.sectionIntro}>
                 {!board.on
                   ? "Rooms are ready again as soon as a guest checks out, as before. The developer switches housekeeping on when the branch is ready for it."
                   : board.mode === "assigned"
@@ -725,16 +734,6 @@ export default function HousekeepingPage() {
               )}
             </section>
 
-            {board.on && !isHousekeeper && (
-              <PageTabs
-                tabs={[
-                  { key: "rooms", label: "Rooms" },
-                  { key: "reports", label: "Reports" },
-                ]}
-                active={tab}
-                onChange={setTab}
-              />
-            )}
             {board.on &&
               (isHousekeeper ? (
                 <HousekeeperView board={board} me={me} onAction={setAction} />

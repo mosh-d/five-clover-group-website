@@ -6,12 +6,12 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "@/lib/pms/router";
 import { IoClose, IoHomeOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
-import PageHeading from "@/components/pms/PageHeading";
+import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import RoomAssignmentPicker from "@/components/pms/RoomAssignmentPicker";
 import { NotCleanWarning, roomOptionText } from "@/components/pms/CleaningTag";
 import ContactRow from "@/components/pms/ContactRow";
-import { btn, field, table } from "@/components/pms/ui";
+import { btn, field, page, table } from "@/components/pms/ui";
 import { fetchInHouse, fetchInHouseById } from "@/lib/pms/api/front-office-api";
 import {
   checkOutReservation,
@@ -387,19 +387,20 @@ export default function AdminInHousePage() {
       )}
 
       <div data-component="AdminInHouse" className="flex flex-col items-start gap-[3rem]">
-        <div className="w-full flex flex-wrap items-center justify-between gap-4">
-          <PageHeading icon={IoHomeOutline} tipId="inHouse.page">In-House Guests</PageHeading>
-          <select
-            value={roomTypeFilter}
-            onChange={(e) => setRoomTypeFilter(e.target.value)}
-            className={`${field.select} w-auto text-xl!`}
-          >
-            <option value="all">All Room Categories</option>
-            {roomTypeOptions.map((rt) => (
-              <option key={rt.id} value={rt.id}>{rt.name}</option>
-            ))}
-          </select>
-        </div>
+        <PageHeader icon={IoHomeOutline} tipId="inHouse.page" title="In-House Guests">
+          <div className={page.toolbar}>
+            <select
+              value={roomTypeFilter}
+              onChange={(e) => setRoomTypeFilter(e.target.value)}
+              className={`${field.select} w-auto text-xl!`}
+            >
+              <option value="all">All Room Categories</option>
+              {roomTypeOptions.map((rt) => (
+                <option key={rt.id} value={rt.id}>{rt.name}</option>
+              ))}
+            </select>
+          </div>
+        </PageHeader>
 
         <div className={table.card}>
           <div className={table.scroll}>

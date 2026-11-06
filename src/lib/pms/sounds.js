@@ -53,6 +53,32 @@ const SOUNDS = {
 };
 
 let audio = null;
+
+// iPhones play sound only from an audio channel opened or woken DURING a
+// tap - not later, when the server's answer arrives. So every tap opens or
+// wakes the channel (a silent blip the first time), and the success, failure
+// and alert sounds that follow can play (owner, 2026-11-06: no sound after
+// recording a payment). The phone's silent switch still mutes them.
+function wakeAudio() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!audio) {
+      audio = new Ctx();
+      const blip = audio.createBuffer(1, 1, 22050);
+      const src = audio.createBufferSource();
+      src.buffer = blip;
+      src.connect(audio.destination);
+      src.start(0);
+    }
+    if (audio.state !== "running") audio.resume().catch(() => {});
+  } catch {
+    // No sound is fine.
+  }
+}
+if (typeof window !== "undefined") {
+  for (const e of ["pointerdown", "touchend", "keydown"]) window.addEventListener(e, wakeAudio, { passive: true, capture: true });
+}
 let lastAt = 0;
 let lastAlertAt = 0;
 

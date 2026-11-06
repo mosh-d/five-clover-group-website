@@ -355,12 +355,17 @@ export default function AdminRoomChartPage() {
                 // MEASURED height (see dateRowHeight above), not a guess.
                 <div
                   key={row.key}
-                  className='col-span-full sticky z-20 bg-[color-mix(in_srgb,var(--text-color)_5%,white)] px-3 py-3 text-2xl font-bold text-[color:var(--black)] border-b border-(--accent-2)'
+                  className='col-span-full sticky z-20 bg-[color-mix(in_srgb,var(--text-color)_5%,white)] py-3 text-2xl font-bold text-[color:var(--black)] border-b border-(--accent-2)'
                   style={{ top: dateRowHeight }}
                 >
-                  {row.label}{' '}
-                  <span className='text-lg font-normal text-[color:var(--text-color)]/68'>
-                    ({row.count} room{row.count === 1 ? '' : 's'})
+                  {/* Pinned to the left edge too (owner, 2026-11-06): the row
+                      spans every date, so scrolled sideways its name slid off
+                      the screen ("ard" for Standard). */}
+                  <span className='sticky left-0 inline-block px-3 whitespace-nowrap'>
+                    {row.label}{' '}
+                    <span className='text-lg font-normal text-[color:var(--text-color)]/68'>
+                      ({row.count} room{row.count === 1 ? '' : 's'})
+                    </span>
                   </span>
                 </div>
               : <RoomRow

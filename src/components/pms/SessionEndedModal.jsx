@@ -30,8 +30,8 @@ export default function SessionEndedModal({ onSignIn }) {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[4000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="alertdialog" aria-modal="true" aria-labelledby="session-ended-title">
-      <div className="bg-(--card) rounded-2xl shadow-xl max-w-xl w-full p-8 flex flex-col items-center gap-5 text-center">
+    <div className="pms-overlay fixed inset-0 z-[4000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="alertdialog" aria-modal="true" aria-labelledby="session-ended-title">
+      <div className="bg-(--card) rounded-2xl shadow-xl max-w-xl w-full max-h-full overflow-y-auto p-8 flex flex-col items-center gap-5 text-center">
         <span className="w-16 h-16 rounded-full bg-(--emphasis)/10 flex items-center justify-center">
           <IoLockClosedOutline className="text-4xl text-(--emphasis)" />
         </span>

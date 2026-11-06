@@ -31,14 +31,17 @@ export default function Modal({ onClose, title, subtitle, badge, children, foote
   return (
     <MotionDiv
       {...backdropEnter}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+      // pms-overlay: clear of the iPhone status bar's blur and the home
+      // indicator in the installed app (globals.css); the panel fills at most
+      // what is left, and its body scrolls.
+      className="pms-overlay fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
       style={{ zIndex }}
       onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}
       role="dialog"
       aria-modal="true"
       aria-label={typeof title === "string" ? title : "Dialog"}
     >
-      <MotionDiv {...panelEnter} className={`bg-(--card) rounded-2xl w-full ${WIDTHS[size] || WIDTHS.lg} max-h-[90vh] flex flex-col shadow-2xl overflow-hidden`}>
+      <MotionDiv {...panelEnter} className={`bg-(--card) rounded-2xl w-full ${WIDTHS[size] || WIDTHS.lg} max-h-full flex flex-col shadow-2xl overflow-hidden`}>
         {loading ? (
           <div className="p-20 flex justify-center">{children}</div>
         ) : (

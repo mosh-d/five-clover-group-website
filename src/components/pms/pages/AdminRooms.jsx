@@ -916,7 +916,7 @@ function ViewRoomModal({
 
       {/* ── Capacity Decrease Confirmation ── */}
       {confirmCapacityDecrease && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="pms-overlay fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setConfirmCapacityDecrease(false)} />
           <div className="relative z-10 bg-(--card) rounded-2xl shadow-2xl max-w-md w-full p-10 flex flex-col gap-6 text-center font-primary">
             <div className="text-orange-500 flex justify-center">
@@ -944,7 +944,7 @@ function ViewRoomModal({
 
       {/* ── Occupied-Room Status-Change Confirmation ── */}
       {confirmStatusChange && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="pms-overlay fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setConfirmStatusChange(null)} />
           <div className="relative z-10 bg-(--card) rounded-2xl shadow-2xl max-w-md w-full p-10 flex flex-col gap-6 text-center font-primary">
             <div className="text-orange-500 flex justify-center">
@@ -990,7 +990,7 @@ function ViewRoomModal({
 
       {/* ── Delete Confirmation Dialog ── */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="pms-overlay fixed inset-0 z-[110] flex items-center justify-center p-4">
           {/* Backdrop (darker layer on top of the already-dimmed modal) */}
           <div
             className="absolute inset-0 bg-black/50"

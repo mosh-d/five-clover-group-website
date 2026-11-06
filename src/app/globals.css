@@ -326,6 +326,16 @@ select:focus {
   --pms-safe-top: calc(env(safe-area-inset-top, 0px) + min(20px, env(safe-area-inset-top, 0px) * 100));
   --pms-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Every PMS overlay (dialogs, the shift gate, "session ended"): its panel
+   sits clear of the status bar's blur and the home indicator in the
+   installed app (owner, 2026-11-06). Unlayered, so it outranks the overlay's
+   own p-4. Pair the panel with max-h-full so it never grows past the space
+   left, and let its body scroll. */
+.pms-overlay {
+  padding-top: max(1rem, var(--pms-safe-top));
+  padding-bottom: max(1rem, calc(var(--pms-safe-bottom) + 1rem));
+}
 html:has(.pms-frame),
 html:has(.pms-frame) body {
   height: 100%;

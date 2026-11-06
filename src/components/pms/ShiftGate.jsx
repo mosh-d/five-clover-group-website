@@ -66,8 +66,8 @@ export default function ShiftGate({ role, businessDate, currentName, onSelected,
   };
 
   return (
-    <div className="fixed inset-0 z-[3000] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Record the shift">
-      <MotionDiv {...panelEnter} className="bg-(--card) rounded-2xl w-full max-w-2xl shadow-2xl p-8 flex flex-col gap-6">
+    <div className="pms-overlay fixed inset-0 z-[3000] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Record the shift">
+      <MotionDiv {...panelEnter} className="bg-(--card) rounded-2xl w-full max-w-2xl max-h-full overflow-y-auto shadow-2xl p-8 flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h2 className="text-3xl font-bold text-(--black)">Whose shift is this?</h2>
           <p className="text-xl text-(--text-color)/76">

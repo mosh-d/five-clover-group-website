@@ -9,6 +9,7 @@ import { PmsSessionContext, usePmsSession } from "./PmsSessionContext";
 import PmsTopBar from "./PmsTopBar";
 import PmsSidebar from "./PmsSidebar";
 import ShiftGate from "./ShiftGate";
+import PullToRefresh from "./PullToRefresh";
 import NewBookingPopup from "./NewBookingPopup";
 import SessionEndedModal from "./SessionEndedModal";
 import useShifts from "./useShifts";
@@ -247,6 +248,7 @@ function Frame({ pathname, shifts, banner, extras, children }) {
   const { role, scope, brand } = usePmsSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const mainRef = useRef(null);
   const item = navItemForPath(pathname);
   const refused = item && !canOpen(role, item.slug, scope);
 
@@ -255,19 +257,36 @@ function Frame({ pathname, shifts, banner, extras, children }) {
   // strip above the dark top bar (owner, 2026-11-06). The page behind the
   // frame - and the browser's colour - wear the top bar's colour instead,
   // per brand; the frame itself stays cream. Put back on leaving the PMS.
+  //
+  // Split in two (owner, 2026-11-06): the top half wears the top bar's colour
+  // (behind the status bar), the bottom half the page's cream (behind the
+  // iPhone's home indicator), so each edge blends into what it touches. The
+  // cream is the base colour, so anything past the bottom stays cream too.
   useEffect(() => {
-    const header = document.querySelector(".pms-frame > header");
+    const frame = document.querySelector(".pms-frame");
+    const header = frame?.querySelector(":scope > header");
     if (!header) return undefined;
     const colour = getComputedStyle(header).backgroundColor;
+    const cream = getComputedStyle(frame).backgroundColor;
     const html = document.documentElement;
-    const before = { html: html.style.backgroundColor, body: document.body.style.backgroundColor };
-    html.style.backgroundColor = colour;
-    document.body.style.backgroundColor = colour;
+    const props = ["backgroundColor", "backgroundImage", "backgroundSize", "backgroundRepeat", "backgroundPosition"];
+    const before = {
+      html: Object.fromEntries(props.map((p) => [p, html.style[p]])),
+      body: document.body.style.backgroundColor,
+    };
+    Object.assign(html.style, {
+      backgroundColor: cream,
+      backgroundImage: `linear-gradient(${colour}, ${colour})`,
+      backgroundSize: "100% 50%",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "top",
+    });
+    document.body.style.backgroundColor = "transparent";
     const meta = document.querySelector('meta[name="theme-color"]');
     const metaBefore = meta?.getAttribute("content");
     meta?.setAttribute("content", colour);
     return () => {
-      html.style.backgroundColor = before.html;
+      Object.assign(html.style, before.html);
       document.body.style.backgroundColor = before.body;
       if (meta && metaBefore) meta.setAttribute("content", metaBefore);
     };
@@ -277,9 +296,10 @@ function Frame({ pathname, shifts, banner, extras, children }) {
     <div className="admin-root pms-frame flex flex-col overflow-hidden text-(--text-color)" style={{ ...themeStyle(brand), background: "var(--background-color)" }}>
       <PmsTopBar shifts={shifts} onOpenMenu={() => setMenuOpen(true)} />
       {banner}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
         <PmsSidebar mobileOpen={menuOpen} onCloseMobile={closeMenu} />
-        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-16 max-sm:px-4 py-16" style={{ paddingBottom: "max(4rem, calc(var(--pms-safe-bottom) + 2rem))" }}>{refused ? <Refused item={item} /> : children}</main>
+        <PullToRefresh scrollerRef={mainRef} />
+        <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-16 max-sm:px-4 py-16" style={{ paddingBottom: "max(4rem, calc(var(--pms-safe-bottom) + 2rem))" }}>{refused ? <Refused item={item} /> : children}</main>
       </div>
       {extras}
     </div>

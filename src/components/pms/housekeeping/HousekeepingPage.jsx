@@ -245,20 +245,21 @@ function ActionDialog({ action, board, onClose, onDone }) {
       title: `Set ${name} Out of Order`,
       noteLabel: "Why",
       noteTip: "housekeeping.outOfOrderNote",
-      noteRequired: "Say why the room is out of order - Head Office sees it.",
+      noteRequired: "Say why the room is out of order - maintenance and Head Office see it.",
       question: `Set ${name} out of order?`,
       details: [
         "It can't be sold or given to a guest until it is back in service.",
         ...(room?.occupied ? ["A guest is in it now: they stay; it is flagged for when they leave."] : []),
         ...(job?.status === "open" ? ["It leaves the housekeepers' lists until it is back."] : []),
-        "Head Office sees it, with your reason, on Critical and Decision Support.",
+        "Maintenance gets it to fix, with your reason, and is notified.",
+        "Head Office sees it on Critical and Decision Support.",
       ],
       confirmLabel: "Yes, out of order",
       busyLabel: "Saving...",
       danger: true,
       run: async () => {
         await setRoomOutOfOrder(room.room_inventory_id, note.trim());
-        return `${name} is out of order.`;
+        return `${name} is out of order. Maintenance has been told.`;
       },
     },
     back: {

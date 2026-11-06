@@ -64,6 +64,7 @@ const ROLE_LABELS = {
   storekeeper: "Store Keeper",
   housekeeping_supervisor: "Housekeeping Supervisor",
   housekeeper: "Housekeeper",
+  maintenance: "Maintenance",
   developer: "Developer",
   // The PMS itself - the night audit's charges and the credit it settles
   // (owner, 2026-09-18). Shown as staff "PMS".

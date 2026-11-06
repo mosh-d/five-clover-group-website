@@ -20,6 +20,7 @@ import {
   IoCalculatorOutline,
   IoWalletOutline,
   IoSparklesOutline,
+  IoConstructOutline,
 } from "react-icons/io5";
 
 // The Help page's guide - one section per sidebar page, in the sidebar's
@@ -303,7 +304,7 @@ export const HELP_SECTIONS = [
       "Receive: goods arriving, how many, from which supplier on the list, what one cost and the invoice number. Issue: goods going to a department - Bar / F&B, Kitchen, Housekeeping, Laundry, Maintenance or Front office. Take back: goods a department returns. Write off: damaged, expired or lost. Count: the number on the shelf; the difference is recorded.",
       "A store item can be a bar drink. Issued to the Bar, it goes onto that drink's bar stock (and a return from the Bar takes it off), so sales and the Bar Stock report carry on as before. Such a drink gets its stock only from the store - Menu no longer offers Added for it.",
       "History shows every movement of an item, with who recorded it and what the store held after. Suppliers keeps the supplier list. The manager and the accountant can read Inventory; only the store keeper changes it. Every change is asked twice and goes in the Audit Trail.",
-      "Requests: departments ask the store for stock from their Store Requests page - the waitron for the Bar and the Kitchen, the front desk for Front office and Laundry, the housekeeping supervisor and housekeepers for Housekeeping and Laundry, the manager for any. The store keeper issues it (all, or less when short) or declines it saying why; whoever asked sees the answer. The Inventory badge counts the items low on stock, and for the store keeper the requests waiting too.",
+      "Requests: departments ask the store for stock from their Store Requests page - the waitron for the Bar and the Kitchen, the front desk for Front office and Laundry, the housekeeping supervisor and housekeepers for Housekeeping and Laundry, maintenance for Maintenance, the manager for any. The store keeper issues it (all, or less when short) or declines it saying why; whoever asked sees the answer. The Inventory badge counts the items low on stock, and for the store keeper the requests waiting too.",
       "Reports: for any range of business days, each item's opening stock, what was received, issued, returned, written off and counted, and its closing stock; deliveries by supplier, issues by department and write-offs by reason, valued at the cost of the time. Download CSV saves it all.",
     ],
   },
@@ -324,10 +325,24 @@ export const HELP_SECTIONS = [
       "Every step is in the Audit Trail: who started, submitted, approved or sent back which room, and when.",
       "The front desk sees whether each room is clean wherever it picks or shows one - the room pickers on Check-Ins, In-House and Reservations, Rooms, the Room Chart, and the Overview. Picking a room that isn't clean warns but doesn't stop: the guest can still be checked in or moved, and the Audit Trail notes it.",
       "For the edge cases, the receptionist or the manager can make a room ready for a guest without review from Rooms (Make ready), saying why. It becomes Clean at once, leaves the housekeepers' list, and the reason goes in the Audit Trail.",
-      "The supervisor (or the manager) can set a room out of order from Housekeeping, saying why; the manager and the front desk still can from Rooms, also saying why. Head Office sees the reason on Critical and Decision Support and decides when the room is attended to. A room out of order is off the housekeepers' lists.",
+      "The supervisor (or the manager) can set a room out of order from Housekeeping, saying why; the manager and the front desk still can from Rooms, also saying why. Maintenance gets the room to fix (see Maintenance), and Head Office sees the reason on Critical and Decision Support. A room out of order is off the housekeepers' lists.",
       "Back in service - from Housekeeping or Rooms - a room becomes Dirty and goes on the housekeepers' list, so it is cleaned and approved before a guest gets it.",
       "Reports (the supervisor's and the manager's tab on Housekeeping): over any business days, rooms cleaned, passed first time, sent back and made ready without review; average response, cleaning, review and turnaround times; each housekeeper's and each reviewer's figures; every room finished; and a CSV download.",
       "The times are when Start and Submit were tapped. Response and review times count only the housekeeping hours the supervisor sets (07:00 to 19:00 to begin with). A clean under five minutes or over three hours is listed under Unlikely Times to look at, and left out of the averages.",
+    ],
+  },
+  {
+    id: "maintenance",
+    icon: IoConstructOutline,
+    label: "Maintenance",
+    summary: "Rooms set out of order, for the maintenance staff to fix: their page, and the manager's.",
+    workflow: [
+      "Maintenance accounts are made on Head Office's Staff Accounts, like every branch account. They open Maintenance, Store Requests, Account and Help - no money pages.",
+      "Setting a room out of order always takes a reason - from Rooms (the manager and the front desk) or from Housekeeping (the supervisor and the manager). The room then goes on Maintenance's To Fix list, with that reason, who set it and when.",
+      "The maintenance staff's phones with the PMS open chime and show a notification when a room arrives, and the Maintenance item in the sidebar counts the rooms still to fix. Allow notifications when the browser asks.",
+      "Mark Fixed, with what was done if there is something to say, puts the room back in service. At a branch that runs housekeeping it becomes Dirty, so it is cleaned and approved before a guest gets it. Whoever set it out of order is told it is fixed.",
+      "A room put back in service from Rooms or Housekeeping leaves the list on its own. Done shows the last 30 days: when each room came back, by whom, and how.",
+      "Maintenance asks the store for parts and supplies from Store Requests, for the Maintenance department. Marking a room fixed goes in the Audit Trail.",
     ],
   },
   {

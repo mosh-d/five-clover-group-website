@@ -23,6 +23,7 @@ const ROLE_LABELS = {
   storekeeper: "Store Keeper",
   housekeeping_supervisor: "Housekeeping Supervisor",
   housekeeper: "Housekeeper",
+  maintenance: "Maintenance",
 };
 
 // Account & Security - the branch PMS's Account page (AdminAccount.jsx), and

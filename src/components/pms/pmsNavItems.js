@@ -26,6 +26,7 @@ import {
   IoStatsChartOutline,
   IoCalculatorOutline,
   IoWalletOutline,
+  IoConstructOutline,
 } from "react-icons/io5";
 import { readPmsSession } from "@/lib/pms/session";
 
@@ -43,12 +44,13 @@ import { readPmsSession } from "@/lib/pms/session";
 // override the server's RolesGuard applies. This governs the sidebar, where
 // a session lands and which pages refuse it; every endpoint keeps its own
 // @Roles guard regardless.
-export const ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper"];
+export const ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper", "maintenance"];
 const EVERY_ROLE = ROLES;
 // Housekeeping's own two (docs/HOUSEKEEPING-PLAN.md in the backend): no money
 // pages, so not Reports.
 const HOUSEKEEPING = ["housekeeping_supervisor", "housekeeper"];
-const REPORT_ROLES = ROLES.filter((role) => !HOUSEKEEPING.includes(role));
+// Maintenance's own (backend phase-94): no money pages either.
+const REPORT_ROLES = ROLES.filter((role) => !HOUSEKEEPING.includes(role) && role !== "maintenance");
 const OVERSIGHT = ["manager", "receptionist"];
 const FRONT_DESK = ["receptionist"];
 const HEAD_OFFICE = ["head_hr", "hr"];
@@ -68,6 +70,9 @@ export const PMS_NAV_ITEMS = [
   // Housekeeping's own page, where they land; the manager's too once the
   // developer has switched housekeeping on for the branch (onlyWhenOn).
   { slug: "housekeeping", label: "HOUSEKEEPING", icon: IoSparklesOutline, roles: [...HOUSEKEEPING, "manager"], onlyWhenOn: ["manager"], badge: "housekeeping" },
+  // Rooms set out of order, with the reason, are maintenance's work: their
+  // own page, where they land, and the manager's (owner, 2026-11-06).
+  { slug: "maintenance", label: "MAINTENANCE", icon: IoConstructOutline, roles: ["maintenance", "manager"], badge: "maintenance" },
   { slug: "room-chart", label: "ROOM CHART", icon: IoAppsOutline, roles: FRONT_DESK },
   { slug: "reservations", label: "RESERVATIONS", icon: IoCalendarOutline, roles: FRONT_DESK },
   { slug: "guests", label: "GUESTS", icon: IoPeopleOutline, roles: OVERSIGHT },
@@ -96,9 +101,9 @@ export const PMS_NAV_ITEMS = [
   { slug: "inventory", label: "INVENTORY", icon: IoCubeOutline, roles: ["storekeeper", "manager", "accountant"], badge: "inventory" },
   // Asking the store for stock (Inventory, Step 4): the waitron (Bar,
   // Kitchen), the front desk (Front office, Laundry), the housekeeping
-  // supervisor and housekeepers (Housekeeping, Laundry) and the manager
-  // (any department).
-  { slug: "store-requests", label: "STORE REQUESTS", icon: IoBasketOutline, roles: ["waitron", "receptionist", "housekeeping_supervisor", "housekeeper", "manager"] },
+  // supervisor and housekeepers (Housekeeping, Laundry), maintenance
+  // (Maintenance) and the manager (any department).
+  { slug: "store-requests", label: "STORE REQUESTS", icon: IoBasketOutline, roles: ["waitron", "receptionist", "housekeeping_supervisor", "housekeeper", "maintenance", "manager"] },
   { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE, hq: HEAD_OFFICE },
   { slug: "help", label: "HELP", icon: IoHelpCircleOutline, roles: EVERY_ROLE },
 ].map((item) => ({ ...item, href: `/pms/${item.slug}` }));

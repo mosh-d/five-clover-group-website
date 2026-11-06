@@ -22,7 +22,7 @@ const KEYS = {
 // the developer's real token. A branch's roles in a branch; Head Office's at
 // Head Office (owner, 2026-10-01: Head Office features will be gated per
 // role too).
-export const SIMULATABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper"];
+export const SIMULATABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper", "maintenance"];
 export const SIMULATABLE_HQ_ROLES = ["head_hr", "hr"];
 
 const hasStorage = () => typeof window !== "undefined";

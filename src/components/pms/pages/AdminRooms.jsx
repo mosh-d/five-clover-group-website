@@ -1141,22 +1141,22 @@ function RoomNumberDialog({ room, typeName, onClose, onDone }) {
 }
 
 // Setting a room out of order from Rooms (Housekeeping, Step 4; owner,
-// 2026-10-16): why is required - Head Office sees it on Critical and
-// Decision Support, and decides when the room is attended to.
+// 2026-10-16): why is required - maintenance gets it to fix (phase-94), and
+// Head Office sees it on Critical and Decision Support.
 function OutOfOrderDialog({ room, onClose, onDone }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const confirm = async () => {
     if (!note.trim()) {
-      setError("Say why the room is out of order - Head Office sees it.");
+      setError("Say why the room is out of order - maintenance and Head Office see it.");
       return;
     }
     try {
       setBusy(true);
       setError(null);
       await http.patch(`/api/rooms/inventory/${room.roomInventoryId}/status`, { status: "out_of_order", reason: note.trim() });
-      onDone(`Room ${room.roomNumber} is out of order.`);
+      onDone(`Room ${room.roomNumber} is out of order. Maintenance has been told.`);
     } catch (err) {
       setError(err.response?.data?.message || "Could not set the room out of order.");
       setBusy(false);
@@ -1176,7 +1176,8 @@ function OutOfOrderDialog({ room, onClose, onDone }) {
           details={[
             "It can't be sold or given to a guest until it is back in service.",
             ...(room.occupied ? ["A guest is in it now: they stay; it is flagged for when they leave."] : []),
-            "Head Office sees it, with your reason, on Critical and Decision Support.",
+            "Maintenance gets it to fix, with your reason, and is notified.",
+            "Head Office sees it on Critical and Decision Support.",
           ]}
           confirmLabel="Yes, out of order"
           busyLabel="Saving..."

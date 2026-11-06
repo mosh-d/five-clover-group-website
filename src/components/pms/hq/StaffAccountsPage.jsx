@@ -30,7 +30,7 @@ import { Tip } from "@/components/pms/Tip";
 // words, confirm - then a message at the top of the page says what was done,
 // or the dialog says why it wasn't.
 
-const BRANCH_ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper"];
+const BRANCH_ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper", "maintenance"];
 // Only role creatable/assignable at Head Office - developer/head_hr stay
 // CLI-only (see manage-staff-account.ts), never offered here.
 const HEAD_OFFICE_ASSIGNABLE_ROLES = ["hr"];
@@ -48,6 +48,7 @@ const ROLE_LABELS = {
   storekeeper: "Store Keeper",
   housekeeping_supervisor: "Housekeeping Supervisor",
   housekeeper: "Housekeeper",
+  maintenance: "Maintenance",
   hr: "HR",
   head_hr: "Head HR",
   developer: "Developer",

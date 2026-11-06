@@ -8,14 +8,16 @@ import { fetchOtaSettlements, OTA_CHANGED_EVENT } from "@/lib/pms/api/ota-api";
 import { fetchMyCashUpDue, CASH_UP_CHANGED_EVENT } from "@/lib/pms/api/cash-up-api";
 import { fetchHousekeepingCounts } from "@/lib/pms/api/housekeeping-api";
 import { fetchInventoryCounts } from "@/lib/pms/api/inventory-api";
+import { fetchMaintenanceCounts } from "@/lib/pms/api/maintenance-api";
 import { playSound } from "@/lib/pms/sounds";
 
 // The PMS's live connection to the backend (Socket.IO) - the branch PMS's
 // WebSocketContext, for whichever branch is signed in. Pages subscribe to
 // what they show: 'rooms', 'reservations' (any booking changing state),
 // 'new_reservation' (a booking from the guest-facing site - the front desk
-// popup), 'alerts', 'housekeeping' (a room's cleaning changed) and
-// 'inventory' (the store's stock or its requests changed).
+// popup), 'alerts', 'housekeeping' (a room's cleaning changed),
+// 'inventory' (the store's stock or its requests changed) and 'maintenance'
+// (a room went out of order or came back).
 //
 // The branch id only picks which room of broadcasts to join (see the
 // backend's RoomsGateway) - it is not an auth boundary; nothing sent over
@@ -49,8 +51,10 @@ const chime = () => playSound("alert");
 // canSeeInventory: a role with the Inventory page. storeKeeper: the one who
 // answers requests - their badge counts the requests waiting too, and a new
 // one sounds and notifies.
-export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, canCashUp, canHousekeep, chimeOnHousekeeping, canSeeInventory, storeKeeper, children }) {
-  const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set(), housekeeping: new Set(), inventory: new Set() });
+// canSeeMaintenance: a role with the Maintenance page. chimeOnMaintenance:
+// the maintenance staff, told by sound and notification of a new job.
+export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, canCashUp, canHousekeep, chimeOnHousekeeping, canSeeInventory, storeKeeper, canSeeMaintenance, chimeOnMaintenance, children }) {
+  const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set(), housekeeping: new Set(), inventory: new Set(), maintenance: new Set() });
   const reservationTimerRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
   // Ticks every DISCONNECTED_FALLBACK_MS only while disconnected - pages
@@ -203,14 +207,45 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
     return subscribe(refreshInventoryCount, "inventory");
   }, [canSeeInventory, refreshInventoryCount, subscribe]);
 
+  // The Maintenance badge (phase-94): rooms out of order still to fix. A
+  // rise sounds and notifies the maintenance staff.
+  const [maintenanceCount, setMaintenanceCount] = useState(0);
+  const prevMaintenanceRef = useRef(null);
+  const refreshMaintenanceCount = useCallback(() => {
+    if (!canSeeMaintenance) {
+      prevMaintenanceRef.current = null;
+      return;
+    }
+    fetchMaintenanceCounts()
+      .then((c) => {
+        const count = Number(c?.open) || 0;
+        const previous = prevMaintenanceRef.current;
+        prevMaintenanceRef.current = count;
+        setMaintenanceCount(count);
+        if (!chimeOnMaintenance || previous === null || count <= previous) return;
+        chime();
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Maintenance", { body: `${count} room${count !== 1 ? "s" : ""} out of order to fix.`, tag: "maintenance" });
+        }
+      })
+      .catch(() => {});
+  }, [canSeeMaintenance, chimeOnMaintenance]);
+
+  useEffect(() => {
+    refreshMaintenanceCount();
+    if (!canSeeMaintenance) return undefined;
+    return subscribe(refreshMaintenanceCount, "maintenance");
+  }, [canSeeMaintenance, refreshMaintenanceCount, subscribe]);
+
   // Anything announced while the socket was down is lost: recount on
   // reconnecting, and every 30s while it stays down.
   useEffect(() => {
     if (isConnected || disconnectedRefreshTick > 0) {
       refreshHousekeepingCount();
       refreshInventoryCount();
+      refreshMaintenanceCount();
     }
-  }, [isConnected, disconnectedRefreshTick, refreshHousekeepingCount, refreshInventoryCount]);
+  }, [isConnected, disconnectedRefreshTick, refreshHousekeepingCount, refreshInventoryCount, refreshMaintenanceCount]);
 
   useEffect(() => {
     if (!branchId) return undefined;
@@ -255,6 +290,7 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
 
     socket.on("housekeeping_updated", (data) => forThisBranch(data) && notify("housekeeping", data));
     socket.on("inventory_updated", (data) => forThisBranch(data) && notify("inventory", data));
+    socket.on("maintenance_updated", (data) => forThisBranch(data) && notify("maintenance", data));
 
     socket.on("alerts_updated", (data) => {
       if (!forThisBranch(data)) return;
@@ -301,6 +337,8 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
         inventoryPending: canSeeInventory && storeKeeper ? inventoryPending : 0,
         inventoryLow: canSeeInventory ? inventoryLow : 0,
         refreshInventoryCount,
+        maintenanceCount: canSeeMaintenance ? maintenanceCount : 0,
+        refreshMaintenanceCount,
         disconnectedRefreshTick,
       }}
     >
@@ -329,6 +367,8 @@ const HEAD_OFFICE_LIVE = {
   inventoryPending: 0,
   inventoryLow: 0,
   refreshInventoryCount: () => {},
+  maintenanceCount: 0,
+  refreshMaintenanceCount: () => {},
   disconnectedRefreshTick: 0,
 };
 

@@ -20,6 +20,9 @@ export const metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
+  // The page runs edge to edge, so the top bar can sit behind the status bar
+  // (PmsTopBar pads itself by the safe area).
+  viewportFit: "cover",
   themeColor: "#2b2622",
 };
 

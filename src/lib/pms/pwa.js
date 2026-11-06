@@ -8,6 +8,47 @@ import { http } from "./http";
 const SW_URL = "/pms-sw.js";
 const SW_SCOPE = "/pms";
 
+// The version on screen (next.config.mjs), and the one live on the site.
+export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "";
+
+/** Whether a newer version than this one has been shipped. */
+export async function newerVersionOut() {
+  if (!APP_VERSION) return false;
+  const res = await fetch(`/pms-version.json?t=${Date.now()}`, { cache: "no-store" });
+  if (!res.ok) return false;
+  const { version } = await res.json();
+  return Boolean(version) && version !== APP_VERSION;
+}
+
+/** Loads the newest version: a fresh service worker, then the page again. */
+export async function updateApp() {
+  try {
+    const reg = pwaSupported() ? await navigator.serviceWorker.getRegistration(SW_SCOPE) : null;
+    await reg?.update();
+  } catch {
+    // The page reload below still brings the new version.
+  }
+  window.location.reload();
+}
+
+// Whether this person turned notifications off on this device on purpose -
+// then the PMS doesn't turn them back on by itself (syncPush).
+const PUSH_PREF = "pms.push";
+const pushPref = () => {
+  try {
+    return window.localStorage.getItem(PUSH_PREF);
+  } catch {
+    return null;
+  }
+};
+const setPushPref = (value) => {
+  try {
+    window.localStorage.setItem(PUSH_PREF, value);
+  } catch {
+    // Private windows may refuse storage.
+  }
+};
+
 export const pwaSupported = () => typeof window !== "undefined" && "serviceWorker" in navigator;
 export const pushSupported = () => pwaSupported() && "PushManager" in window && "Notification" in window;
 
@@ -87,11 +128,36 @@ export async function turnOnPush({ onAsking } = {}) {
     });
   }
   await http.post("/api/push/subscribe", sub.toJSON());
+  setPushPref("on");
   return "on";
 }
 
-/** Off for this device: the backend forgets it, and the browser drops it. */
-export async function turnOffPush() {
+/**
+ * When the PMS opens (owner, 2026-11-06): a browser that already allows
+ * notifications gets them, without anyone having to press Turn On - and the
+ * device is told which branch it is in (a developer's follow the branch).
+ * Quiet: no question, no sound, nothing on screen. Skipped where someone
+ * turned them off on purpose, or where the browser hasn't been asked yet.
+ */
+export async function syncPush() {
+  if (!pushSupported() || Notification.permission !== "granted" || pushPref() === "off") return;
+  const { data: key } = await http.get("/api/push/key");
+  if (!key?.configured) return;
+  const reg = await within(registration(), 15000, "service worker");
+  if (!reg) return;
+  await within(navigator.serviceWorker.ready, 15000, "service worker");
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) sub = await within(reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key.public_key) }), 20000, "push service");
+  await http.post("/api/push/subscribe", sub.toJSON(), { silent: true });
+}
+
+/**
+ * Off for this device: the backend forgets it, and the browser drops it.
+ * `remember`: turned off on purpose (Account > This Device), so it stays off;
+ * signing out doesn't remember - the next person to sign in gets theirs.
+ */
+export async function turnOffPush({ remember = false } = {}) {
+  if (remember) setPushPref("off");
   const reg = await registration();
   const sub = await reg?.pushManager.getSubscription();
   if (!sub) return "off";

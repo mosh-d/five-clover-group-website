@@ -12,6 +12,7 @@
   ],
   "headers": [
     { "source": "/pms-sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }] },
-    { "source": "/pms.webmanifest", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    { "source": "/pms.webmanifest", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/pms-version.json", "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }] }
   ]
 }

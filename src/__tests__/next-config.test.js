@@ -1,61 +1,63 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+import path from 'path';
 import nextConfig from '../../next.config.mjs';
 
-describe('Next.js Configuration for SEO', () => {
-  it('should have image optimization configured', () => {
-    expect(nextConfig.images).toBeDefined();
-    expect(nextConfig.images.formats).toContain('image/avif');
-    expect(nextConfig.images.formats).toContain('image/webp');
+// The site is exported as plain files for Cloudflare's free plan (owner,
+// 2026-11-05): nothing runs per request, so picture resizing, compression and
+// redirects are no longer Next.js's job - Cloudflare (and, while it still
+// serves the site, Vercel via vercel.json) does them.
+describe('Next.js configuration', () => {
+  it('exports every page as a plain file', () => {
+    expect(nextConfig.output).toBe('export');
   });
 
-  it('should have proper device sizes for responsive images', () => {
-    expect(nextConfig.images.deviceSizes).toBeDefined();
-    expect(nextConfig.images.deviceSizes.length).toBeGreaterThan(0);
+  it('serves pictures as built, with no per-visitor resizing', () => {
+    expect(nextConfig.images?.unoptimized).toBe(true);
   });
 
-  it('should have compression enabled', () => {
-    expect(nextConfig.compress).toBe(true);
-  });
-
-  it('should have ETags generation enabled', () => {
-    expect(nextConfig.generateEtags).toBe(true);
-  });
-
-  it('should have powered by header disabled for security', () => {
+  it('has the powered-by header disabled for security', () => {
     expect(nextConfig.poweredByHeader).toBe(false);
   });
 
-  it('should have minimum cache TTL configured', () => {
-    expect(nextConfig.images.minimumCacheTTL).toBeDefined();
-    expect(nextConfig.images.minimumCacheTTL).toBeGreaterThan(0);
+  it('has no server-side redirects or headers (they would be ignored by an export)', () => {
+    expect(nextConfig.redirects).toBeUndefined();
+    expect(nextConfig.headers).toBeUndefined();
+  });
+
+  it('bakes in a version for the PMS Update button', () => {
+    expect(nextConfig.env?.NEXT_PUBLIC_APP_VERSION).toBeTruthy();
   });
 });
 
 // Head Office moved into the PMS (2026-10-01): /hq and, before it, /admin.
-describe('Old Head Office addresses', () => {
-  // The first rule that matches, as Next.js applies them (in order).
-  const destinationOf = async (path) => {
-    for (const rule of await nextConfig.redirects()) {
+// Those redirects now live in vercel.json (and as Cloudflare Redirect Rules,
+// backend docs/OWNER-SETUP.md part 1 step 4).
+describe('Old Head Office addresses (vercel.json)', () => {
+  const vercel = JSON.parse(fs.readFileSync(path.join(__dirname, '../../vercel.json'), 'utf8'));
+  // The first rule that matches, as Vercel applies them (in order).
+  const destinationOf = (p) => {
+    for (const rule of vercel.redirects) {
       const pattern = new RegExp(`^${rule.source.replace(':path*', '(.*)')}$`);
-      const match = path.match(pattern);
+      const match = p.match(pattern);
       if (match) return rule.destination.replace(':path*', match[1] ?? '');
     }
     return null;
   };
 
-  it('land on the same page in the PMS, renamed pages included', async () => {
+  it('land on the same page in the PMS, renamed pages included', () => {
     for (const from of ['/hq', '/admin']) {
-      expect(await destinationOf(from)).toBe('/pms');
-      expect(await destinationOf(`${from}/critical`)).toBe('/pms/critical');
-      expect(await destinationOf(`${from}/decision-support`)).toBe('/pms/decision-support');
-      expect(await destinationOf(`${from}/metrics`)).toBe('/pms/metrics');
-      expect(await destinationOf(`${from}/staff`)).toBe('/pms/staff-accounts');
-      expect(await destinationOf(`${from}/audit-logs`)).toBe('/pms/audit-trail');
-      expect(await destinationOf(`${from}/account`)).toBe('/pms/account');
+      expect(destinationOf(from)).toBe('/pms');
+      expect(destinationOf(`${from}/critical`)).toBe('/pms/critical');
+      expect(destinationOf(`${from}/decision-support`)).toBe('/pms/decision-support');
+      expect(destinationOf(`${from}/metrics`)).toBe('/pms/metrics');
+      expect(destinationOf(`${from}/staff`)).toBe('/pms/staff-accounts');
+      expect(destinationOf(`${from}/audit-logs`)).toBe('/pms/audit-trail');
+      expect(destinationOf(`${from}/account`)).toBe('/pms/account');
     }
   });
 
-  it('are never permanent, so the old paths stay free for later', async () => {
-    expect((await nextConfig.redirects()).every((rule) => rule.permanent === false)).toBe(true);
+  it('are never permanent, so the old paths stay free for later', () => {
+    expect(vercel.redirects.every((rule) => rule.permanent === false)).toBe(true);
   });
 });

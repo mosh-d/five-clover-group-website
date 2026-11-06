@@ -52,7 +52,7 @@ export default function ThisDevice() {
     try {
       setBusy(true);
       setError(null);
-      setPush(push === "on" ? await turnOffPush() : await turnOnPush({ onAsking: () => setAsking(true) }));
+      setPush(push === "on" ? await turnOffPush({ remember: true }) : await turnOnPush({ onAsking: () => setAsking(true) }));
     } catch (err) {
       setError(err.message || "That didn't go through.");
     } finally {

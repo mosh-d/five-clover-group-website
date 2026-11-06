@@ -6,3 +6,6 @@
 
 /pms.webmanifest
   Cache-Control: no-cache
+
+/pms-version.json
+  Cache-Control: no-cache, no-store, must-revalidate

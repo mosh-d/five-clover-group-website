@@ -1,5 +1,12 @@
+// This build's version, for the PMS's Update button (/pms-version.json and
+// components/pms/UpdateButton.jsx): the commit Cloudflare (or Vercel) is
+// building, else the moment of the build - different for every build.
+const APP_VERSION = process.env.WORKERS_CI_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || String(Date.now());
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: { NEXT_PUBLIC_APP_VERSION: APP_VERSION },
+
   /* config options here */
   reactCompiler: true,
 

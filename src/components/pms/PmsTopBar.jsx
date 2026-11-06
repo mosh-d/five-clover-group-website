@@ -1,5 +1,6 @@
 "use client";
 
+import UpdateButton from "./UpdateButton";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -58,7 +59,12 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
   const viewAsRoles = scope === "hq" ? SIMULATABLE_HQ_ROLES : SIMULATABLE_ROLES;
 
   return (
-    <header className="w-full flex items-center justify-between gap-6 px-6 py-4 shadow-sm shrink-0 bg-(--text-color)">
+    <header
+      className="w-full flex items-center justify-between gap-6 px-6 py-4 shadow-sm shrink-0 bg-(--text-color)"
+      // Installed on an iPhone, the app runs under the status bar: the bar's
+      // own colour reaches up behind the time and battery.
+      style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+    >
       <Link href={landingPath(role, scope)} className="flex flex-col items-center gap-3 shrink-0">
         <div className="relative size-36">
           <Image src={logoForBranch(branch)} alt={branch?.name || "Five Clover Hotels"} fill sizes="9rem" className="object-contain" priority />
@@ -67,7 +73,7 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
         <span className="block max-w-[14rem] text-center text-lg sm:text-xl font-bold leading-tight text-white">{branch ? branchLocationName(branch.name) : "Head Office"}</span>
       </Link>
 
-      <div className="flex items-center gap-5 flex-wrap justify-end">
+      <div className="flex items-center gap-5 flex-wrap justify-end min-w-0 flex-1">
         {/* Whose shift the business day is (the 6am prompt, ShiftGate) - only
             for the rotas themselves, a manager and a developer. Both rotas at
             once sit behind a "Shifts" toggle; your own is one line. */}
@@ -93,7 +99,7 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
             <button
               type="button"
               onClick={() => setPicking(true)}
-              className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-base font-medium border-2 border-white/30 text-white cursor-pointer hover:bg-white/10 transition-colors"
+              className="flex items-center gap-2 min-w-0 max-w-full rounded-lg px-3 py-1.5 text-base font-medium border-2 border-white/30 text-white cursor-pointer hover:bg-white/10 transition-colors"
               title="Open Head Office or another branch"
             >
               <IoSwapHorizontalOutline size={16} />
@@ -101,12 +107,12 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
             </button>
             {/* "View as" previews a role of the place the session is in -
                 a branch's roles in a branch, Head Office's at Head Office. */}
-            <label className="flex items-center gap-2 text-base text-white/60">
+            <label className="flex items-center gap-2 text-base text-white/60 min-w-0 max-w-full">
               <span className="hidden lg:block">Viewing as</span>
               <select
                 value={roleOverride || ""}
                 onChange={(e) => setRoleOverride(e.target.value || null)}
-                className={`rounded-lg px-3 py-1.5 text-base font-medium border-2 cursor-pointer focus:outline-none bg-(--text-color) text-white ${
+                className={`min-w-0 max-w-full rounded-lg px-3 py-1.5 text-base font-medium border-2 cursor-pointer focus:outline-none bg-(--text-color) text-white ${
                   roleOverride ? "border-amber-400" : "border-white/30"
                 }`}
               >
@@ -119,6 +125,8 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
             </label>
           </>
         )}
+
+        <UpdateButton />
 
         <button
           type="button"

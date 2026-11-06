@@ -20,7 +20,7 @@ import { readPmsSession, clearPmsSession, consumeJustSignedIn, setDevRoleOverrid
 import { verifyPmsSession, pmsSignOut, pmsSwitchBranch, SESSION_ENDED_EVENT } from "@/lib/pms/client";
 import { fetchBusinessDate } from "@/lib/pms/api/front-office-api";
 import { applyServerClock, deviceClockDriftMinutes } from "@/lib/pms/dates";
-import { registerServiceWorker, turnOffPush } from "@/lib/pms/pwa";
+import { registerServiceWorker, syncPush, turnOffPush } from "@/lib/pms/pwa";
 
 // Everything around a PMS page: the session, the brand's colours, the top
 // bar and sidebar, and the live layer. /pms itself is the sign-in page - no
@@ -53,6 +53,14 @@ export default function PmsShell({ children }) {
   useEffect(() => {
     registerServiceWorker();
   }, []);
+
+  // Notifications follow whoever is signed in, wherever: a browser that
+  // already allows them is signed up for this person and this branch.
+  const pushKey = session ? `${session.user?.staff_account_id}-${session.branch?.id ?? "hq"}` : "";
+  useEffect(() => {
+    if (!pushKey) return;
+    syncPush().catch(() => {});
+  }, [pushKey]);
 
   useEffect(() => {
     if (isSignInPage) {
@@ -241,6 +249,30 @@ function Frame({ pathname, shifts, banner, extras, children }) {
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const item = navItemForPath(pathname);
   const refused = item && !canOpen(role, item.slug, scope);
+
+  // The phone's status bar (time, battery) takes its colour from the page
+  // behind the PMS, which was the cream page background - a light, blurred
+  // strip above the dark top bar (owner, 2026-11-06). The page behind the
+  // frame - and the browser's colour - wear the top bar's colour instead,
+  // per brand; the frame itself stays cream. Put back on leaving the PMS.
+  useEffect(() => {
+    const header = document.querySelector(".pms-frame > header");
+    if (!header) return undefined;
+    const colour = getComputedStyle(header).backgroundColor;
+    const html = document.documentElement;
+    const before = { html: html.style.backgroundColor, body: document.body.style.backgroundColor };
+    html.style.backgroundColor = colour;
+    document.body.style.backgroundColor = colour;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const metaBefore = meta?.getAttribute("content");
+    meta?.setAttribute("content", colour);
+    return () => {
+      html.style.backgroundColor = before.html;
+      document.body.style.backgroundColor = before.body;
+      if (meta && metaBefore) meta.setAttribute("content", metaBefore);
+    };
+  }, [brand]);
+
   return (
     <div className="admin-root pms-frame flex flex-col overflow-hidden text-(--text-color)" style={{ ...themeStyle(brand), background: "var(--background-color)" }}>
       <PmsTopBar shifts={shifts} onOpenMenu={() => setMenuOpen(true)} />

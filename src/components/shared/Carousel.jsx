@@ -252,13 +252,13 @@ export default function Carousel({ brand, className }) {
           >
             <CgArrowLongLeft size="3rem" />
           </motion.div>
-          <p className="text-[1.4rem] mt-[.4rem]">Prev</p>
+          <p className="text-xl mt-[.4rem]">Prev</p>
         </button>
         <button
           onClick={handleNext}
           className="flex items-center gap-[1rem] cursor-pointer px-[2rem] py-[.5rem] border-[1px] border-transparent  hover:border-[var(--text-color)] active:border-[var(--text-color)]/30 transition-all duration-300 ease-in-out"
         >
-          <p className="text-[1.4rem] mt-[.4rem]">Next</p>
+          <p className="text-xl mt-[.4rem]">Next</p>
           <motion.div
             animate={{ x: clickAnimation === "next" ? "1rem" : 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}

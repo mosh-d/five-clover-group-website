@@ -39,7 +39,7 @@ export default function MiniBlogPost({
           </h2>
         </div>
         <div className="line-clamp-2">
-          <p className="font-secondary text-[1.8rem] max-sm:text-[1.4rem] tracking-[.01em] text-[var(--text-color)] group-hover:text-[var(--white)] group-active:text-[var(--white)]">
+          <p className="font-secondary text-3xl max-sm:text-xl tracking-[.01em] text-[var(--text-color)] group-hover:text-[var(--white)] group-active:text-[var(--white)]">
             {caption}
           </p>
         </div>

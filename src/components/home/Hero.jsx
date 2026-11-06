@@ -47,7 +47,7 @@ export default function Hero() {
           <h1 className="text-[var(--white)] font-accent text-[3.4rem] text-center">
             Experience The Art of Hospitality—Multiplied
           </h1>
-          <p className="font-secondary text-[var(--white)] text-[1.8rem] text-center">
+          <p className="font-secondary text-[var(--white)] text-3xl text-center">
             Welcome to Five Clover Hotels, the premier hotel management company
             behind four distinct brands: Five Clover Hotel, Caritas Inn,
             RingRuby Hotel, and The Cordis Hotel. Together, our 3 Five Clover

@@ -100,11 +100,11 @@ export default function TopBar() {
                   ?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              <p className="text-[1.8rem]">RESERVE</p>
+              <p className="text-3xl">RESERVE</p>
             </a>
           ) : (
             <Button href="/#reservation" className="max-md:hidden">
-              <p className="text-[1.8rem]">RESERVE</p>
+              <p className="text-3xl">RESERVE</p>
             </Button>
           )}
         </div>

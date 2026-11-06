@@ -92,7 +92,7 @@ export default async function FullBlogPage({ params }) {
             />
           )}
           <div
-            className="mt-[2rem] font-secondary text-[1.8rem] font-bold leading-relaxed"
+            className="mt-[2rem] font-secondary text-3xl font-bold leading-relaxed"
             dangerouslySetInnerHTML={{ __html: blog.content.html }}
           />
         </article>

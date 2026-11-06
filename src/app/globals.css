@@ -314,6 +314,11 @@ select:focus {
   position: fixed;
   inset: 0;
   height: auto;
+  /* Installed on an iPhone (status bar see-through), the screen iOS reports
+     is short by exactly the status bar's height, so even pinned to the
+     bottom the frame stopped that far above it - the dark band (owner,
+     2026-11-06). It reaches that much further down; 0 in a browser. */
+  bottom: calc(0px - env(safe-area-inset-top, 0px));
 }
 
 /* The space iOS keeps for itself at the top of the installed app: the status

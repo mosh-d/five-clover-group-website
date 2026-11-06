@@ -258,35 +258,24 @@ function Frame({ pathname, shifts, banner, extras, children }) {
   // frame - and the browser's colour - wear the top bar's colour instead,
   // per brand; the frame itself stays cream. Put back on leaving the PMS.
   //
-  // Split in two (owner, 2026-11-06): the top half wears the top bar's colour
-  // (behind the status bar), the bottom half the page's cream (behind the
-  // iPhone's home indicator), so each edge blends into what it touches. The
-  // cream is the base colour, so anything past the bottom stays cream too.
+  // A solid colour on purpose: iOS tints the status-bar strip from the
+  // page's base colour, not from any picture on it - a "top half dark,
+  // bottom half cream" split left the base cream and the strip went light
+  // and blurry again (owner, 2026-11-06). The bottom is handled by the
+  // frame reaching the screen's bottom edge instead (.pms-frame, globals.css).
   useEffect(() => {
-    const frame = document.querySelector(".pms-frame");
-    const header = frame?.querySelector(":scope > header");
+    const header = document.querySelector(".pms-frame > header");
     if (!header) return undefined;
     const colour = getComputedStyle(header).backgroundColor;
-    const cream = getComputedStyle(frame).backgroundColor;
     const html = document.documentElement;
-    const props = ["backgroundColor", "backgroundImage", "backgroundSize", "backgroundRepeat", "backgroundPosition"];
-    const before = {
-      html: Object.fromEntries(props.map((p) => [p, html.style[p]])),
-      body: document.body.style.backgroundColor,
-    };
-    Object.assign(html.style, {
-      backgroundColor: cream,
-      backgroundImage: `linear-gradient(${colour}, ${colour})`,
-      backgroundSize: "100% 50%",
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "top",
-    });
-    document.body.style.backgroundColor = "transparent";
+    const before = { html: html.style.backgroundColor, body: document.body.style.backgroundColor };
+    html.style.backgroundColor = colour;
+    document.body.style.backgroundColor = colour;
     const meta = document.querySelector('meta[name="theme-color"]');
     const metaBefore = meta?.getAttribute("content");
     meta?.setAttribute("content", colour);
     return () => {
-      Object.assign(html.style, before.html);
+      html.style.backgroundColor = before.html;
       document.body.style.backgroundColor = before.body;
       if (meta && metaBefore) meta.setAttribute("content", metaBefore);
     };

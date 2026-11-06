@@ -76,16 +76,17 @@ export const table = {
   // <div className={table.card}><div className={table.scroll}><table className={table.el}>...
   card: "w-full rounded-xl border border-(--accent-2) bg-(--card) overflow-hidden",
   scroll: "overflow-x-auto",
-  // Compact (owner, 2026-11-06: more data on the screen): 14px on a phone,
-  // 15px from md, with tighter cells on a phone.
-  el: "min-w-full border-collapse text-lg md:text-xl",
+  // Compact (owner, 2026-11-06: more data on the screen), and a step up on
+  // phones and tablets once the PMS dropped the public site's minimum sizes
+  // (owner, same day: "a bit" bigger): 12px on a phone, 12.5px on a laptop.
+  el: "min-w-full border-collapse text-2xl lg:text-xl",
   headRow: "border-b border-(--accent-2) bg-(--text-color)/3",
-  th: "px-4 py-3 md:px-6 md:py-4 text-left whitespace-nowrap text-base font-semibold uppercase tracking-wide text-(--text-color)/76",
+  th: "px-4 py-3 md:px-6 md:py-4 text-left whitespace-nowrap text-xl lg:text-base font-semibold uppercase tracking-wide text-(--text-color)/76",
   // `group` lets the pinned column follow the row's hover tint.
   row: "group border-b border-(--accent-2) last:border-b-0 transition-colors hover:bg-black/6",
   td: "px-4 py-3 md:px-6 md:py-4 text-left whitespace-nowrap text-(--text-color)",
   actions: "flex items-center gap-2 flex-nowrap",
-  empty: "px-4 md:px-6 py-10 text-center text-lg text-(--text-color)/68",
+  empty: "px-4 md:px-6 py-10 text-center text-xl lg:text-lg text-(--text-color)/68",
   // The pinned name/ID column - whatever identifies a row (a guest, a room
   // type, a booking) stays in view while a wide table scrolls sideways.
   // Compose with th/td: `${table.th} ${table.stickyTh}`. Position-based, so
@@ -97,10 +98,11 @@ export const table = {
   // scrolled - so it is color-mix()ed against the card colour; and the
   // divider is a box-shadow, never a border, because a collapsed border is
   // drawn from the un-scrolled table and comes loose from a sticky cell.
-  // Below lg the pinned cell may wrap, inside a minimum width, so a long
-  // name takes two lines rather than a phone's whole width.
+  // It hugs its contents (w-[1%]), leaving the width to the other columns
+  // (owner, 2026-11-06: it took half a phone). Below lg it may wrap, inside a
+  // small minimum width, so a long name takes two lines instead.
   stickyTh:
     "sticky left-0 z-10 bg-[color-mix(in_srgb,var(--text-color)_3%,var(--card))] [box-shadow:inset_-1px_0_0_var(--accent-2)]",
   stickyTd:
-    "sticky left-0 z-10 max-lg:whitespace-normal! max-lg:min-w-[18rem] bg-(--card) group-hover:bg-[color-mix(in_srgb,black_6%,var(--card))] [box-shadow:inset_-1px_0_0_var(--accent-2)]",
+    "sticky left-0 z-10 w-[1%] max-lg:whitespace-normal! max-lg:min-w-[12rem] bg-(--card) group-hover:bg-[color-mix(in_srgb,black_6%,var(--card))] [box-shadow:inset_-1px_0_0_var(--accent-2)]",
 };

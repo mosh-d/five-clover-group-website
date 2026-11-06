@@ -686,7 +686,7 @@ export default function InventoryPage() {
                                   aria-label={`More for ${i.name}`}
                                   value=""
                                   onChange={(e) => e.target.value && open(e.target.value, i)}
-                                  className={`${field.select} text-lg! py-2!`}
+                                  className={`${field.select} text-lg! py-2! max-w-[15rem]`}
                                 >
                                   <option value="">More...</option>
                                   <option value="history">History</option>

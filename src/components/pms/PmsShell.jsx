@@ -279,7 +279,7 @@ function Frame({ pathname, shifts, banner, extras, children }) {
       {banner}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <PmsSidebar mobileOpen={menuOpen} onCloseMobile={closeMenu} />
-        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-16 max-sm:px-4 py-16">{refused ? <Refused item={item} /> : children}</main>
+        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-16 max-sm:px-4 py-16" style={{ paddingBottom: "max(4rem, calc(var(--pms-safe-bottom) + 2rem))" }}>{refused ? <Refused item={item} /> : children}</main>
       </div>
       {extras}
     </div>

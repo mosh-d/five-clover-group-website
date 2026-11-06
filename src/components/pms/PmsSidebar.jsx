@@ -84,6 +84,9 @@ export default function PmsSidebar({ mobileOpen = false, onCloseMobile }) {
             />
             <MotionDiv
               className="absolute top-0 right-0 h-full w-xl max-w-[85vw] p-6 flex flex-col gap-6 shadow-xl overflow-y-auto overscroll-contain bg-(--card)"
+              // Below the status bar's blur, and clear of the home indicator,
+              // when installed on an iPhone (globals.css).
+              style={{ paddingTop: "max(1.5rem, var(--pms-safe-top))", paddingBottom: "max(1.5rem, var(--pms-safe-bottom))" }}
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}

@@ -62,8 +62,9 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
     <header
       className="w-full flex items-center justify-between gap-6 px-6 py-4 shadow-sm shrink-0 bg-(--text-color)"
       // Installed on an iPhone, the app runs under the status bar: the bar's
-      // own colour reaches up behind the time and battery.
-      style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+      // own colour reaches up behind the time and battery, and its content
+      // starts below the band iOS blurs (--pms-safe-top, globals.css).
+      style={{ paddingTop: "max(1rem, var(--pms-safe-top))" }}
     >
       <Link href={landingPath(role, scope)} className="flex flex-col items-center gap-3 shrink-0">
         <div className="relative size-36">

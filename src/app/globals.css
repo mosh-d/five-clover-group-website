@@ -306,6 +306,26 @@ select:focus {
   height: 100vh;
   height: 100dvh;
 }
+/* Pinned to all four edges of the screen. Installed on an iPhone, the app
+   runs under the status bar, but 100dvh there leaves the status bar's height
+   out - the frame stopped that much short of the bottom, a dark band under
+   the page (owner, 2026-11-06). Pinned, it always reaches every edge. */
+.pms-frame {
+  position: fixed;
+  inset: 0;
+  height: auto;
+}
+
+/* The space iOS keeps for itself at the top of the installed app: the status
+   bar, and the blur it draws behind and just below it (iOS 26). Content
+   inside that band is blurred, so the top bar and the phone menu start below
+   it - over the plain colour, the blur can't be seen. 0 in a browser, where
+   the safe-area inset is 0, so nothing moves there. */
+:root {
+  /* + 20px only where there is a status bar to clear (inset > 0): min() turns the extra into 0 in a browser. */
+  --pms-safe-top: calc(env(safe-area-inset-top, 0px) + min(20px, env(safe-area-inset-top, 0px) * 100));
+  --pms-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
 html:has(.pms-frame),
 html:has(.pms-frame) body {
   height: 100%;

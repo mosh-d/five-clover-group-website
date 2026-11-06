@@ -26,6 +26,12 @@ export const viewport = {
   themeColor: "#2b2622",
 };
 
+// .pms-type: the PMS's own type sizes, not the public site's minimums
+// (globals.css). display: contents, so it adds nothing to the layout.
 export default function PmsLayout({ children }) {
-  return <PmsShell>{children}</PmsShell>;
+  return (
+    <div className="pms-type contents">
+      <PmsShell>{children}</PmsShell>
+    </div>
+  );
 }

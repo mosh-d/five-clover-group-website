@@ -87,6 +87,29 @@ body {
   }
 }
 
+/* The PMS keeps its own sizes (owner, 2026-11-06: "we really just needed the
+   font fix for the fields to avoid the Safari zooming"): inside /pms the
+   scale is Tailwind's own again - no minimums - and text with no size of its
+   own follows the root, as before. Only the 16px phone fields above still
+   apply there. The public website keeps the minimums. PmsLayout's .pms-type
+   marker turns this on; :root:has() so dialogs portalled outside it follow
+   too. */
+:root:has(.pms-type) {
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+}
+:root:has(.pms-type) body {
+  font-size: 100%;
+}
+
 body {
   font-family: var(--font-family-primary);
   /* Text with no size of its own reads at the scale's body size. */

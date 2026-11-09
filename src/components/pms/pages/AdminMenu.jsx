@@ -151,10 +151,9 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
   // Stock adjustment (drinks only — recordStock is undefined for food) —
   // feeds the Bar Stock report (Reports → Bar Stock), separate from is_active
   // ("In Stock"/"Out of Stock" above, which is really just menu availability).
-  const [stockAdjustId, setStockAdjustId] = useState(null);
-  const [stockForm, setStockForm] = useState({ movement_type: "added", quantity: "", notes: "", unit_cost: "" });
-  const [savingStockId, setSavingStockId] = useState(null);
-  const [stockSuccessId, setStockSuccessId] = useState(null);
+  // In a dialog, like Edit (owner, 2026-11-09: edits are popups, stock
+  // adjustments included).
+  const [stockItem, setStockItem] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -241,52 +240,10 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
     return { label: "In Stock", className: "bg-green-100 text-green-700" };
   };
 
-  // A drink the store supplies gets its bar stock only from Inventory (owner,
-  // 2026-11-05), so its adjust starts on Damaged and offers no Added.
-  const startStockAdjust = (item) => {
-    setStockAdjustId(item.id);
-    setStockForm({ movement_type: item.store_item_name ? "damaged" : "added", quantity: "", notes: "", unit_cost: "" });
-  };
-
-  const handleSaveStockAdjust = async (id) => {
-    const qty = Number(stockForm.quantity);
-    // Added/damaged are always a positive count. Correction is the odd one
-    // out: the field holds the real, physically-counted stock total (never
-    // negative, and 0 is a genuine valid count — fully out of stock) — the
-    // server works out the ledger delta against the live current stock.
-    const valid = stockForm.movement_type === "correction"
-      ? stockForm.quantity !== "" && qty >= 0
-      : qty >= 1;
-    if (!valid) return;
-    try {
-      setSavingStockId(id);
-      setError(null);
-      await recordStock(id, {
-        movement_type: stockForm.movement_type,
-        quantity: Number(stockForm.quantity),
-        notes: stockForm.notes.trim() || undefined,
-        // A restock's cost each, if given: it becomes the drink's cost price.
-        ...(stockForm.movement_type === "added" && stockForm.unit_cost !== "" ? { unit_cost: Number(stockForm.unit_cost) } : {}),
-      });
-      setStockAdjustId(null);
-      setStockSuccessId(id);
-      setTimeout(() => setStockSuccessId(null), 4000);
-      await load(); // reflect the new current_stock/status without a reload
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to record stock movement.");
-    } finally {
-      setSavingStockId(null);
-    }
-  };
-
   // Stock is a drinks-only column — Name, Price, Service Charge, Status,
   // Actions is 5 for food; drinks get a 6th for it. Cost Price is one more
   // for whoever edits the menu.
   const columnCount = (recordStock ? 6 : 5) + (canEdit ? 1 : 0);
-
-  const stockQtyValid = (stockForm.movement_type === "correction"
-    ? stockForm.quantity !== "" && Number(stockForm.quantity) >= 0
-    : Number(stockForm.quantity) >= 1) && !(stockForm.movement_type === "added" && badCost(stockForm.unit_cost));
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -345,8 +302,8 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                                 </button>
                               )}
                               {recordStock && (
-                                <button onClick={() => startStockAdjust(item)} className={btn.rowSecondary}>
-                                  {stockSuccessId === item.id ? "Recorded ✓" : "Adjust Stock"}
+                                <button onClick={() => setStockItem(item)} className={btn.rowSecondary}>
+                                  Adjust Stock
                                 </button>
                               )}
                               {canEdit && deleteItem && (
@@ -365,65 +322,6 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                           </td>
                       </>
                     </tr>
-                    {recordStock && stockAdjustId === item.id && (
-                      <tr className={table.row}>
-                        <td colSpan={columnCount} className={`${table.td} bg-[color:var(--text-color)]/3`}>
-                          <div className="flex flex-wrap gap-4 items-end">
-                            <span className="text-xl font-semibold whitespace-nowrap">Adjust stock — {item.name}</span>
-                            {item.store_item_name && (
-                              <span className={`w-full text-lg ${"text-(--text-color)/68"}`}>
-                                Restocked from the store (&quot;{item.store_item_name}&quot;) - issue it to the Bar on Inventory.
-                              </span>
-                            )}
-                            <div className="flex flex-col gap-2">
-                              <label className={field.label}>Type<Tip id="menu.stock.type" /></label>
-                              <select value={stockForm.movement_type} onChange={(e) => setStockForm({ ...stockForm, movement_type: e.target.value })} className={`${field.select} text-xl!`}>
-                                {!item.store_item_name && <option value="added">Added (restock)</option>}
-                                <option value="damaged">Damaged (breakage/spillage/expiry)</option>
-                                <option value="correction">Correction (set the real, counted total)</option>
-                              </select>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                              <label className={field.label}>{stockForm.movement_type === "correction" ? "Actual Count" : "Quantity"}<Tip id="menu.stock.quantity" /></label>
-                              <input
-                                type="number"
-                                min="0"
-                                value={stockForm.quantity}
-                                onChange={(e) => setStockForm({ ...stockForm, quantity: e.target.value })}
-                                className={`${field.input} text-xl! w-32`}
-                              />
-                              {stockForm.movement_type === "correction" && (
-                                <span className="text-base text-[color:var(--text-color)]/60">The real total counted on the shelf right now, not a +/- adjustment</span>
-                              )}
-                            </div>
-                            {stockForm.movement_type === "added" && canEdit && (
-                              <div className="flex flex-col gap-2">
-                                <label htmlFor={`unit-cost-${item.id}`} className={field.label}>Unit Cost (₦, optional)<Tip id="menu.stock.unitCost" /></label>
-                                <input
-                                  id={`unit-cost-${item.id}`}
-                                  type="number"
-                                  min="0"
-                                  value={stockForm.unit_cost}
-                                  onChange={(e) => setStockForm({ ...stockForm, unit_cost: e.target.value })}
-                                  className={`${field.input} text-xl! w-32`}
-                                />
-                                <span className="text-base text-[color:var(--text-color)]/60">What each one cost. It becomes the drink&apos;s cost price.</span>
-                              </div>
-                            )}
-                            <div className="flex flex-col gap-2 flex-1 min-w-48">
-                              <label className={field.label}>Notes (optional)<Tip id="menu.stock.notes" /></label>
-                              <AutoGrowTextarea value={stockForm.notes} onChange={(e) => setStockForm({ ...stockForm, notes: e.target.value })} className={`${field.textarea} text-xl!`} />
-                            </div>
-                            <div className={table.actions}>
-                              <button onClick={() => handleSaveStockAdjust(item.id)} disabled={savingStockId === item.id || !stockQtyValid} className={btn.rowPrimary}>
-                                {savingStockId === item.id ? "Saving..." : "Save"}
-                              </button>
-                              <button onClick={() => setStockAdjustId(null)} className={btn.rowSecondary}>Cancel</button>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
                   </Fragment>
                 ))
               )}
@@ -463,6 +361,21 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
             </button>
           </div>
         </form>
+      )}
+
+      {stockItem && (
+        <StockDialog
+          item={stockItem}
+          recordStock={recordStock}
+          canEdit={canEdit}
+          onClose={() => setStockItem(null)}
+          onDone={async (message) => {
+            setStockItem(null);
+            setError(null);
+            setNotice(message);
+            await load(); // the new stock and status without a reload
+          }}
+        />
       )}
 
       {editItem && (
@@ -576,6 +489,130 @@ function MenuItemDialog({ item, label, updateItem, onClose, onDone }) {
             "The change is recorded in the Audit Trail.",
           ]}
           confirmLabel="Yes, save it"
+          busyLabel="Saving..."
+          busy={busy}
+          error={error}
+          onBack={onClose}
+          onConfirm={confirm}
+        />
+      </div>
+    </Modal>
+  );
+}
+
+const STOCK_TYPES = {
+  added: "Added (restock)",
+  damaged: "Damaged (breakage, spillage, expiry)",
+  correction: "Correction (set the real, counted total)",
+};
+
+// Adjust a drink's bar stock: a restock, a breakage, or the real count. A
+// drink the store supplies gets its bar stock only from Inventory (owner,
+// 2026-11-05), so it starts on Damaged and offers no Added.
+function StockDialog({ item, recordStock, canEdit, onClose, onDone }) {
+  const fromStore = Boolean(item.store_item_name);
+  const [form, setForm] = useState({ movement_type: fromStore ? "damaged" : "added", quantity: "", notes: "", unit_cost: "" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  // A change clears what was wrong before.
+  const set = (k) => (e) => {
+    setError(null);
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+  };
+  const correction = form.movement_type === "correction";
+  const qty = Number(form.quantity);
+  const now = item.current_stock ?? null;
+
+  const confirm = async () => {
+    // Added/damaged are a positive count. A correction is the real total
+    // counted on the shelf (0 is a genuine count) - the server works out the
+    // difference from the stock it holds.
+    const problem = correction
+      ? form.quantity === "" || !(qty >= 0)
+        ? "Give the number counted on the shelf - 0 or more."
+        : null
+      : !(qty >= 1)
+        ? "Give a quantity of 1 or more."
+        : form.movement_type === "added" && badCost(form.unit_cost)
+          ? "A unit cost can't be below 0. Leave it empty for none."
+          : null;
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    try {
+      setBusy(true);
+      setError(null);
+      await recordStock(item.id, {
+        movement_type: form.movement_type,
+        quantity: qty,
+        notes: form.notes.trim() || undefined,
+        // A restock's cost each, if given: it becomes the drink's cost price.
+        ...(form.movement_type === "added" && form.unit_cost !== "" ? { unit_cost: Number(form.unit_cost) } : {}),
+      });
+      onDone(
+        correction
+          ? `${item.name}: stock set to ${qty}.`
+          : `${item.name}: ${qty} ${form.movement_type === "added" ? "added" : "recorded as damaged"}.`,
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed to record the stock change.");
+      setBusy(false);
+    }
+  };
+
+  const question =
+    form.quantity === ""
+      ? `Adjust the stock of ${item.name}?`
+      : correction
+        ? `Set the stock of ${item.name} to ${qty}?`
+        : form.movement_type === "added"
+          ? `Add ${qty} to the stock of ${item.name}?`
+          : `Take ${qty} off the stock of ${item.name} as damaged?`;
+
+  return (
+    <Modal onClose={busy ? undefined : onClose} title={`Adjust Stock - ${item.name}`} size="md">
+      <div className="flex flex-col gap-5">
+        <p className="text-xl">
+          <span className="font-semibold">In stock now: </span>
+          {now === null ? "not tracked yet" : now}
+        </p>
+        {fromStore && (
+          <p className={field.hint}>Restocked from the store (&quot;{item.store_item_name}&quot;) - issue it to the Bar on Inventory.</p>
+        )}
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+          <DialogField id="menu-stock-type" label="Type" tip="menu.stock.type">
+            <select id="menu-stock-type" value={form.movement_type} onChange={set("movement_type")} className={`${field.select} w-full`} disabled={busy}>
+              {Object.entries(STOCK_TYPES)
+                .filter(([k]) => !(fromStore && k === "added"))
+                .map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+            </select>
+          </DialogField>
+          <DialogField id="menu-stock-qty" label={correction ? "Actual Count" : "Quantity"} tip="menu.stock.quantity">
+            <input id="menu-stock-qty" type="number" min="0" value={form.quantity} onChange={set("quantity")} className={field.input} disabled={busy} />
+          </DialogField>
+        </div>
+        {correction && <p className={field.hint}>The real total counted on the shelf right now, not a +/- adjustment.</p>}
+        {form.movement_type === "added" && canEdit && (
+          <DialogField id="menu-stock-cost" label="Unit Cost (₦, optional)" tip="menu.stock.unitCost">
+            <input id="menu-stock-cost" type="number" min="0" placeholder="None" value={form.unit_cost} onChange={set("unit_cost")} className={field.input} disabled={busy} />
+          </DialogField>
+        )}
+        <DialogField id="menu-stock-notes" label="Notes (optional)" tip="menu.stock.notes">
+          <AutoGrowTextarea id="menu-stock-notes" value={form.notes} onChange={set("notes")} className={field.textarea} maxLength={500} disabled={busy} />
+        </DialogField>
+        <ConfirmPanel
+          question={question}
+          details={[
+            "It feeds the Bar Stock report.",
+            ...(form.movement_type === "added" && form.unit_cost !== "" ? ["The unit cost becomes the drink's cost price."] : []),
+            "The change is recorded in the Audit Trail.",
+          ]}
+          confirmLabel="Yes, record it"
           busyLabel="Saving..."
           busy={busy}
           error={error}

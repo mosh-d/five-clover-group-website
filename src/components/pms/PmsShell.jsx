@@ -188,6 +188,28 @@ export default function PmsShell({ children }) {
     router.replace("/pms");
   }, [router]);
 
+  // A developer's notification from another branch opens with ?branch=<id>
+  // (backend PushService.watchUrl, owner 2026-11-10): switch there, then
+  // drop it from the address so a refresh doesn't switch again.
+  const sessionBranchId = session?.branch?.id ?? null;
+  const sessionRealRole = session?.realRole ?? null;
+  useEffect(() => {
+    if (sessionRealRole !== "developer") return;
+    const params = new URLSearchParams(window.location.search);
+    const wanted = Number(params.get("branch"));
+    if (!params.has("branch")) return;
+    params.delete("branch");
+    const rest = params.toString();
+    const clean = `${window.location.pathname}${rest ? `?${rest}` : ""}`;
+    if (!wanted || wanted === sessionBranchId) {
+      router.replace(clean);
+      return;
+    }
+    switchBranch(wanted)
+      .catch(() => {})
+      .finally(() => router.replace(clean));
+  }, [sessionRealRole, sessionBranchId, switchBranch, router]);
+
   const value = useMemo(
     () =>
       session

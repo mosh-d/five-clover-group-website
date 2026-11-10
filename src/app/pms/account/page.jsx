@@ -10,6 +10,7 @@ import { btn, card, field, page } from "@/components/pms/ui";
 import { changePassword } from "@/lib/pms/api/auth-api";
 import { Tip } from "@/components/pms/Tip";
 import ThisDevice from "@/components/pms/ThisDevice";
+import AllBranchesNotifications from "@/components/pms/AllBranchesNotifications";
 
 const EMPTY = { current_password: "", new_password: "", confirm_password: "" };
 const ROLE_LABELS = {
@@ -156,6 +157,7 @@ export default function PmsAccountPage() {
       </section>
 
       <ThisDevice />
+      <AllBranchesNotifications />
     </div>
   );
 }

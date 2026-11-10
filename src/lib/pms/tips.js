@@ -35,6 +35,8 @@ export const TIPS = {
   "maintenance.col.reported": "When the room was set out of order, and by whom.",
   "maintenance.col.done": "When the room came back into service, and how: fixed by maintenance (with what was done), or put back from Rooms or Housekeeping.",
   "maintenance.fixed.note": "What you did - whoever set the room out of order sees this.",
+  "account.allBranches": "Notifications from every branch at once - for Head Office. Each one says which branch it is from.",
+  "account.allBranches.status": "Whether your account gets every branch's notifications, on each device you turned notifications on for.",
   "housekeeping.page": "Cleaning the rooms guests leave: housekeepers clean and submit, the supervisor approves or sends back.",
   "housekeeping.status": "Whether this branch runs housekeeping. Off, rooms are ready again as soon as a guest checks out, as before. Only the developer switches it.",
   "housekeeping.mode": "Open: every housekeeper sees every room waiting, and the first to start one takes it. Assigned: you give each room to a housekeeper, and only they see it.",

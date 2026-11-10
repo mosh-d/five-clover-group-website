@@ -23,7 +23,7 @@ const KEYS = {
 // Head Office (owner, 2026-10-01: Head Office features will be gated per
 // role too).
 export const SIMULATABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper", "maintenance"];
-export const SIMULATABLE_HQ_ROLES = ["head_hr", "hr"];
+export const SIMULATABLE_HQ_ROLES = ["head_hr", "hr", "head_marketer"];
 
 const hasStorage = () => typeof window !== "undefined";
 

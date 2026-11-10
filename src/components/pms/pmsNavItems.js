@@ -27,6 +27,7 @@ import {
   IoCalculatorOutline,
   IoWalletOutline,
   IoConstructOutline,
+  IoAnalyticsOutline,
 } from "react-icons/io5";
 import { readPmsSession } from "@/lib/pms/session";
 
@@ -54,6 +55,9 @@ const REPORT_ROLES = ROLES.filter((role) => !HOUSEKEEPING.includes(role) && role
 const OVERSIGHT = ["manager", "receptionist"];
 const FRONT_DESK = ["receptionist"];
 const HEAD_OFFICE = ["head_hr", "hr"];
+// The Head Digital Marketer (backend phase-96): a Head Office account with its
+// own page, Web Analytics, and Account - none of Head HR's pages.
+const MARKETING = ["head_marketer"];
 
 export const PMS_NAV_ITEMS = [
   // Head Office, in the order its sidebar lists them; Critical is where
@@ -62,6 +66,9 @@ export const PMS_NAV_ITEMS = [
   { slug: "decision-support", label: "DECISION SUPPORT", icon: IoBulbOutline, hq: HEAD_OFFICE },
   { slug: "metrics", label: "METRICS", icon: IoStatsChartOutline, hq: HEAD_OFFICE },
   { slug: "staff-accounts", label: "STAFF ACCOUNTS", icon: IoPeopleOutline, hq: HEAD_OFFICE },
+  // Every branch's website bookings, with the guests - where the Head Digital
+  // Marketer lands (owner, 2026-11-10).
+  { slug: "web-analytics", label: "WEB ANALYTICS", icon: IoAnalyticsOutline, hq: MARKETING },
   // A branch.
   { slug: "overview", label: "OVERVIEW", icon: IoGridOutline, roles: OVERSIGHT },
   // The accountant's own page, and where an accountant lands (docs/ACCOUNTING-PLAN.md, 2026-10-08).
@@ -104,7 +111,7 @@ export const PMS_NAV_ITEMS = [
   // supervisor and housekeepers (Housekeeping, Laundry), maintenance
   // (Maintenance) and the manager (any department).
   { slug: "store-requests", label: "STORE REQUESTS", icon: IoBasketOutline, roles: ["waitron", "receptionist", "housekeeping_supervisor", "housekeeper", "maintenance", "manager"] },
-  { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE, hq: HEAD_OFFICE },
+  { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE, hq: [...HEAD_OFFICE, ...MARKETING] },
   { slug: "help", label: "HELP", icon: IoHelpCircleOutline, roles: EVERY_ROLE },
 ].map((item) => ({ ...item, href: `/pms/${item.slug}` }));
 

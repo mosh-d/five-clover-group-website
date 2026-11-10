@@ -15,6 +15,7 @@ import AllBranchesNotifications from "@/components/pms/AllBranchesNotifications"
 const EMPTY = { current_password: "", new_password: "", confirm_password: "" };
 const ROLE_LABELS = {
   head_hr: "Head HR",
+  head_marketer: "Head Digital Marketer",
   hr: "HR",
   developer: "Developer",
   manager: "Manager",

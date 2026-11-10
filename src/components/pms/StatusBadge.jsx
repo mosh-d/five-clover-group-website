@@ -23,6 +23,7 @@ const STYLES = {
   housekeeping_supervisor: "bg-cyan-100 text-cyan-700",
   housekeeper: "bg-sky-100 text-sky-700",
   maintenance: "bg-lime-100 text-lime-800",
+  head_marketer: "bg-pink-100 text-pink-700",
   auto: "bg-slate-100 text-slate-700",
   paid: "bg-green-100 text-green-700",
   owing: "bg-red-100 text-red-700",

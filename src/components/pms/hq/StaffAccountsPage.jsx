@@ -31,9 +31,10 @@ import { Tip } from "@/components/pms/Tip";
 // or the dialog says why it wasn't.
 
 const BRANCH_ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitron", "storekeeper", "housekeeping_supervisor", "housekeeper", "maintenance"];
-// Only role creatable/assignable at Head Office - developer/head_hr stay
-// CLI-only (see manage-staff-account.ts), never offered here.
-const HEAD_OFFICE_ASSIGNABLE_ROLES = ["hr"];
+// The roles creatable/assignable at Head Office - developer/head_hr stay
+// CLI-only (see manage-staff-account.ts), never offered here. The Head
+// Digital Marketer is a Head Office account too (phase-96).
+const HEAD_OFFICE_ASSIGNABLE_ROLES = ["hr", "head_marketer"];
 // developer/head_hr accounts are listed at Head Office and can be managed
 // here (reset password, deactivate, reactivate) - the page is already gated
 // to Head Office. Their ROLE stays fixed (the backend refuses a change), so
@@ -51,6 +52,7 @@ const ROLE_LABELS = {
   maintenance: "Maintenance",
   hr: "HR",
   head_hr: "Head HR",
+  head_marketer: "Head Digital Marketer",
   developer: "Developer",
 };
 const roleLabel = (role) => ROLE_LABELS[role] || role;

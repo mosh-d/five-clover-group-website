@@ -75,7 +75,7 @@ const ROLE_LABELS = {
 // moved into the PMS from /hq) - where head_hr and hr act, so they join the
 // role filter there.
 const HEAD_OFFICE = "head_office";
-const HEAD_OFFICE_ROLE_LABELS = { ...ROLE_LABELS, head_hr: "Head HR", hr: "HR" };
+const HEAD_OFFICE_ROLE_LABELS = { ...ROLE_LABELS, head_hr: "Head HR", hr: "HR", head_marketer: "Head Digital Marketer" };
 
 // Explicit timeZone so this always shows the hotel's own local time
 // (Africa/Lagos) — without it, toLocaleString renders in whatever timezone

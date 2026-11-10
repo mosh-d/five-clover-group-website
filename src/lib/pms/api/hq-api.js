@@ -7,6 +7,11 @@ import { pmsRequest } from "../client";
 
 export const fetchBranches = () => pmsRequest("/api/branches");
 
+// Web Analytics (backend phase-96): one page of website bookings with the
+// range's totals, and every booking in the range for the CSV.
+export const fetchWebBookings = (query) => pmsRequest("/api/hq/web-analytics/bookings", { query });
+export const fetchWebBookingsExport = (query) => pmsRequest("/api/hq/web-analytics/bookings/export", { query });
+
 export const fetchHqStaff = (branchId) => pmsRequest("/api/hq/staff", { query: { branch_id: branchId } });
 export const createHqStaff = (payload) => pmsRequest("/api/hq/staff", { method: "POST", body: payload });
 export const updateHqStaff = (id, payload) => pmsRequest(`/api/hq/staff/${id}`, { method: "PATCH", body: payload });

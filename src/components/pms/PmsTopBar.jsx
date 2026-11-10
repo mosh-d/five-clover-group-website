@@ -16,6 +16,7 @@ import { Tip } from "@/components/pms/Tip";
 
 const ROLE_LABELS = {
   head_hr: "Head HR",
+  head_marketer: "Head Digital Marketer",
   hr: "HR",
   developer: "Developer",
   manager: "Manager",

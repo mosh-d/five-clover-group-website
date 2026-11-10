@@ -96,7 +96,8 @@ export const PMS_NAV_ITEMS = [
   { slug: "cash-up", label: "CASH-UP", icon: IoWalletOutline, roles: ["receptionist", "waitron"], badge: "cashUp" },
   // badge: carries a live count (PmsSidebar) - open alerts; OTA payments
   // still to arrive.
-  { slug: "alerts", label: "ALERTS", icon: IoNotificationsOutline, roles: OVERSIGHT, badge: "alerts" },
+  // The accountant reads it too, and nudges the front desk (owner, 2026-11-10).
+  { slug: "alerts", label: "ALERTS", icon: IoNotificationsOutline, roles: [...OVERSIGHT, "accountant"], badge: "alerts" },
   // The accountant marks an OTA's money received, with its commission
   // (Accounting, Step 11; owner, 2026-10-08).
   { slug: "ota-payments", label: "OTA PAYMENTS", icon: IoBusinessOutline, roles: ["receptionist", "accountant"], badge: "ota" },

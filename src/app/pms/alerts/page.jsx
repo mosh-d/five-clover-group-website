@@ -13,7 +13,10 @@ import Toast from "@/components/pms/Toast";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
 import { usePmsLive, useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
-import { fetchAlerts } from "@/lib/pms/api/alerts-api";
+import { fetchAlerts, nudgeFrontDesk } from "@/lib/pms/api/alerts-api";
+import Modal from "@/components/pms/Modal";
+import ConfirmPanel from "@/components/pms/ConfirmPanel";
+import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { fetchFlaggedExceptions } from "@/lib/pms/api/accounting-api";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { markNoShow } from "@/lib/pms/api/reservations-pms-api";
@@ -56,6 +59,10 @@ export default function PmsAlertsPage() {
   // What the accountant flagged is the manager's to see (Accounting, Step 3).
   const role = usePmsSession()?.role;
   const seesFlags = role === "manager" || role === "developer";
+  // The accountant reads Alerts and nudges the front desk to deal with one,
+  // in place of View (owner, 2026-11-10).
+  const nudges = role === "accountant";
+  const [nudging, setNudging] = useState(null);
   const [tab, setTab] = useState("missed");
   const [pages, setPages] = useState({});
   const [data, setData] = useState(null);
@@ -115,11 +122,17 @@ export default function PmsAlertsPage() {
       {ref && <div className={`text-base ${page.muted}`}>{ref}</div>}
     </>
   );
-  const view = (label, href) => (
-    <button onClick={() => router.push(href)} className={btn.rowPrimary}>
-      {label}
-    </button>
-  );
+  // `nudge`: { kind, id, about } - what the accountant's Nudge names.
+  const view = (label, href, nudge) =>
+    nudges ? (
+      <button onClick={() => setNudging(nudge)} className={btn.rowPrimary}>
+        Nudge
+      </button>
+    ) : (
+      <button onClick={() => router.push(href)} className={btn.rowPrimary}>
+        {label}
+      </button>
+    );
 
   const TABS = [
     {
@@ -147,10 +160,12 @@ export default function PmsAlertsPage() {
           head: "Actions",
           cell: (r) => (
             <div className={table.actions}>
-              {view("View", `/pms/reservations?reservation_id=${r.id}`)}
-              <button onClick={() => handleMarkNoShow(r.id, r.guest_name)} disabled={actionLoading === r.id} className={btn.rowSecondary}>
-                {actionLoading === r.id ? <LoadingSpinner size="sm" /> : "No-Show"}
-              </button>
+              {view("View", `/pms/reservations?reservation_id=${r.id}`, { kind: "missed", id: r.id, about: `${r.guest_name}'s missed check-in` })}
+              {!nudges && (
+                <button onClick={() => handleMarkNoShow(r.id, r.guest_name)} disabled={actionLoading === r.id} className={btn.rowSecondary}>
+                  {actionLoading === r.id ? <LoadingSpinner size="sm" /> : "No-Show"}
+                </button>
+              )}
             </div>
           ),
         },
@@ -177,7 +192,7 @@ export default function PmsAlertsPage() {
               <span className="text-base text-orange-600 font-semibold">{timeUntil(r.expires_at, now)}</span>
             ),
         },
-        { head: "Actions", cell: (r) => <div className={table.actions}>{view("View", `/pms/reservations?reservation_id=${r.id}`)}</div> },
+        { head: "Actions", cell: (r) => <div className={table.actions}>{view("View", `/pms/reservations?reservation_id=${r.id}`, { kind: "unconfirmed", id: r.id, about: `${r.guest_name}'s unconfirmed booking` })}</div> },
       ],
     },
     {
@@ -200,7 +215,7 @@ export default function PmsAlertsPage() {
             </>
           ),
         },
-        { head: "Actions", cell: (r) => <div className={table.actions}>{view("Go to In-House", `/pms/in-house?reservation_id=${r.id}`)}</div> },
+        { head: "Actions", cell: (r) => <div className={table.actions}>{view("Go to In-House", `/pms/in-house?reservation_id=${r.id}`, { kind: "overdue", id: r.id, about: `${r.guest_name}'s overdue checkout` })}</div> },
       ],
     },
     {
@@ -215,7 +230,7 @@ export default function PmsAlertsPage() {
         { head: "Folio #", wide: true, cell: (f) => f.folio_number },
         { head: "Checked Out", wide: true, cell: (f) => formatDate(f.reservation?.check_out) },
         { head: "Balance Due", cell: (f) => <span className="font-bold text-red-600">{money(f.balance)}</span> },
-        { head: "Actions", cell: (f) => <div className={table.actions}>{view("Go to Folio", `/pms/folios?folio_id=${f.id}`)}</div> },
+        { head: "Actions", cell: (f) => <div className={table.actions}>{view("Go to Folio", `/pms/folios?folio_id=${f.id}`, { kind: "balances", id: f.id, about: `${f.reservation?.guest_name || `folio ${f.folio_number}`}'s unpaid balance` })}</div> },
       ],
     },
     {
@@ -233,7 +248,7 @@ export default function PmsAlertsPage() {
         { head: "Credit", cell: (c) => <span className="font-bold text-green-700">{money(c.amount_available)}</span> },
         { head: "Taken", wide: true, cell: (c) => formatDate(c.deposit_date) },
         { head: "Checked Out", wide: true, cell: (c) => formatDate(c.actual_check_out) },
-        { head: "Actions", cell: (c) => <div className={table.actions}>{view("View", `/pms/folios?reservation_id=${c.reservation_id}`)}</div> },
+        { head: "Actions", cell: (c) => <div className={table.actions}>{view("View", `/pms/folios?reservation_id=${c.reservation_id}`, { kind: "credits", id: c.reservation_id, about: `the credit owed back to ${c.guest_name}` })}</div> },
       ],
     },
   ];
@@ -279,6 +294,16 @@ export default function PmsAlertsPage() {
   return (
     <>
       <Toast message={toast} onClose={clearToast} />
+      {nudging && (
+        <NudgeDialog
+          nudge={nudging}
+          onClose={() => setNudging(null)}
+          onDone={(message) => {
+            setNudging(null);
+            setToast(message);
+          }}
+        />
+      )}
 
       <div className={`${page.wrap} gap-[3rem]!`}>
         <PageHeader
@@ -338,6 +363,61 @@ export default function PmsAlertsPage() {
         )}
       </div>
     </>
+  );
+}
+
+// The accountant's Nudge: a notification to the branch's front desk naming
+// the alert, with a note if there is something to add. Asked first, like
+// every change.
+function NudgeDialog({ nudge, onClose, onDone }) {
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const confirm = async () => {
+    try {
+      setBusy(true);
+      setError(null);
+      await nudgeFrontDesk({ kind: nudge.kind, id: nudge.id, note: note.trim() || undefined });
+      onDone(`The front desk has been nudged about ${nudge.about}.`);
+    } catch (err) {
+      setError(err.message || "That didn't go through.");
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal onClose={busy ? undefined : onClose} title="Nudge the Front Desk" size="md">
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="nudge-note" className={field.label}>
+            Note (optional)<Tip id="alerts.nudge.note" />
+          </label>
+          <AutoGrowTextarea
+            id="nudge-note"
+            value={note}
+            onChange={(e) => {
+              setError(null);
+              setNote(e.target.value);
+            }}
+            className={field.textarea}
+            maxLength={300}
+            disabled={busy}
+          />
+        </div>
+        <ConfirmPanel
+          question={`Nudge the front desk about ${nudge.about}?`}
+          details={[
+            "The receptionists' phones and computers with notifications on get it, and tapping it opens the booking or folio.",
+            "It goes in the Audit Trail.",
+          ]}
+          confirmLabel="Yes, nudge"
+          busyLabel="Sending..."
+          busy={busy}
+          error={error}
+          onBack={onClose}
+          onConfirm={confirm}
+        />
+      </div>
+    </Modal>
   );
 }
 

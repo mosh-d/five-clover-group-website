@@ -60,6 +60,7 @@ export const TIPS = {
   "inventory.reports.search": "Narrows Stock by Item to items whose name holds what you type. The totals above stay for everything.",
   "storeRequests.search": "Narrows your requests to those whose item or department holds what you type.",
   "menu.search": "Narrows the list to items whose name holds what you type.",
+  "alerts.nudge.note": "Anything the front desk should know - what to do, or by when. They see it in the notification.",
   "housekeeping.page": "Cleaning the rooms guests leave: housekeepers clean and submit, the supervisor approves or sends back.",
   "housekeeping.status": "Whether this branch runs housekeeping. Off, rooms are ready again as soon as a guest checks out, as before. Only the developer switches it.",
   "housekeeping.mode": "Open: every housekeeper sees every room waiting, and the first to start one takes it. Assigned: you give each room to a housekeeper, and only they see it.",

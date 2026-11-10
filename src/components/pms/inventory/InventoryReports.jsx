@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SearchField, { matchesSearch } from "@/components/pms/SearchField";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
@@ -106,6 +107,7 @@ export default function InventoryReports() {
   const [from, setFrom] = useState(addDaysISO(today, -6));
   const [to, setTo] = useState(today);
   const [report, setReport] = useState(null);
+  const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
   useEffect(() => {
     if (!from || !to || to < from) return undefined;
@@ -168,6 +170,7 @@ export default function InventoryReports() {
               <Stat label="Closing Value" value={money(t.closing_value)} tip="inventory.reports.closingValue" />
             </div>
 
+            <SearchField id="inv-report-search" value={search} onChange={setSearch} placeholder="Item name" tip="inventory.reports.search" />
             <Section
               id="inv-report-items"
               title="Stock by Item"
@@ -183,7 +186,7 @@ export default function InventoryReports() {
                 ["Closing", "inventory.reports.col.closing"],
                 ["Closing Value", "inventory.reports.col.closingValue"],
               ]}
-              rows={report.items.map((i) => [
+              rows={report.items.filter((i) => matchesSearch(search, i.name)).map((i) => [
                 i.name,
                 qtyCell(i.opening, i.unit),
                 qtyCell(i.received, i.unit),

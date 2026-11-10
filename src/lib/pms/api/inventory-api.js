@@ -34,4 +34,7 @@ export const fetchRequestable = async () => (await http.get(`/api/inventory/requ
 
 export const createStoreRequest = async (fields) => (await http.post(`/api/inventory/requests`, fields)).data;
 
+// Several items for one department at once: { department, items: [{ item_id, quantity, note }] }.
+export const createStoreRequests = async (fields) => (await http.post(`/api/inventory/requests/batch`, fields)).data;
+
 export const withdrawStoreRequest = async (requestId) => (await http.post(`/api/inventory/requests/${requestId}/withdraw`)).data;

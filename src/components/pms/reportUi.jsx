@@ -20,7 +20,7 @@ export function ReportSection({ title, subtitle, children, footer, tip }) {
         <h2 className="text-3xl font-bold text-[color:var(--black)]">{title}{tip && <Tip id={tip} />}</h2>
         {subtitle && <p className="text-xl text-[color:var(--text-color)]/68 mt-1">{subtitle}</p>}
       </div>
-      <div className="overflow-x-auto">{children}</div>
+      <div className={table.scroll}>{children}</div>
       {footer}
     </div>
   );

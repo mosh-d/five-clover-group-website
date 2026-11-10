@@ -32,6 +32,7 @@ import { Tip } from "@/components/pms/Tip";
 import Modal from "@/components/pms/Modal";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Notice from "@/components/pms/Notice";
+import SearchField, { matchesSearch } from "@/components/pms/SearchField";
 
 const EMPTY_LAUNDRY_FORM = { name: "", wash_and_iron_price: "", ironing_only_price: "" };
 
@@ -133,6 +134,8 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
+  const [search, setSearch] = useState("");
+  const shown = items.filter((i) => matchesSearch(search, i.name));
 
   const [addForm, setAddForm] = useState(EMPTY_MENU_FORM);
   const [adding, setAdding] = useState(false);
@@ -250,11 +253,14 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
       <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>}
 
-      <label className="flex items-center gap-3 text-xl cursor-pointer">
-        <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="w-5 h-5 cursor-pointer" />
-        Show out-of-stock items
-        <Tip id="menu.showInactive" />
-      </label>
+      <div className="flex flex-wrap items-end gap-4">
+        <SearchField id={`menu-search-${label.split(" ")[0]}`} value={search} onChange={setSearch} placeholder="Item name" tip="menu.search" />
+        <label className="flex items-center gap-3 text-xl cursor-pointer pb-3">
+          <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="w-5 h-5 cursor-pointer" />
+          Show out-of-stock items
+          <Tip id="menu.showInactive" />
+        </label>
+      </div>
 
       <div className={table.card}>
         <div className={table.scroll}>
@@ -273,10 +279,10 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
             <tbody>
               {loading ? (
                 <tr><td colSpan={columnCount} className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
-              ) : items.length === 0 ? (
-                <tr><td colSpan={columnCount} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No {label}s yet.</td></tr>
+              ) : shown.length === 0 ? (
+                <tr><td colSpan={columnCount} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">{items.length && search.trim() ? `No ${label} matches "${search.trim()}".` : `No ${label}s yet.`}</td></tr>
               ) : (
-                items.map((item) => (
+                shown.map((item) => (
                   <Fragment key={item.id}>
                     <tr className={table.row}>
                       <>
@@ -703,6 +709,8 @@ function LaundrySection({ canEdit }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
+  const [search, setSearch] = useState("");
+  const shown = items.filter((i) => matchesSearch(search, i.name));
   const [editItem, setEditItem] = useState(null);
   const [notice, setNotice] = useState(null);
   const [addForm, setAddForm] = useState(EMPTY_LAUNDRY_FORM);
@@ -749,11 +757,14 @@ function LaundrySection({ canEdit }) {
       <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3 w-full">{error}</p>}
 
-      <label className="flex items-center gap-2 text-xl cursor-pointer">
-        <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="w-5 h-5 cursor-pointer" />
-        Show inactive items
-        <Tip id="menu.laundry.showInactive" />
-      </label>
+      <div className="flex flex-wrap items-end gap-4">
+        <SearchField id="menu-search-laundry" value={search} onChange={setSearch} placeholder="Clothing item" tip="menu.search" />
+        <label className="flex items-center gap-2 text-xl cursor-pointer pb-3">
+          <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="w-5 h-5 cursor-pointer" />
+          Show inactive items
+          <Tip id="menu.laundry.showInactive" />
+        </label>
+      </div>
 
       {loading ? (
         <LoadingSpinner size="lg" />
@@ -771,10 +782,10 @@ function LaundrySection({ canEdit }) {
                 </tr>
               </thead>
               <tbody>
-                {items.length === 0 ? (
-                  <tr><td colSpan={canEdit ? 5 : 4} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No laundry items yet.</td></tr>
+                {shown.length === 0 ? (
+                  <tr><td colSpan={canEdit ? 5 : 4} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">{items.length && search.trim() ? `No laundry item matches "${search.trim()}".` : "No laundry items yet."}</td></tr>
                 ) : (
-                  items.map((item) => (
+                  shown.map((item) => (
                       <tr key={item.id} className={table.row}>
                         <td className={`${table.td} ${table.stickyTd} font-medium`}>{item.name}</td>
                         <td className={table.td}>{money(item.wash_and_iron_price)}</td>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import SearchField, { matchesSearch } from "@/components/pms/SearchField";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Modal from "@/components/pms/Modal";
@@ -118,6 +119,7 @@ export default function RequestsTab({ canEdit, onDone }) {
   const [error, setError] = useState(null);
   const [dialog, setDialog] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [search, setSearch] = useState("");
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
   useLiveRefresh(reload, ["inventory"]);
 
@@ -159,8 +161,9 @@ export default function RequestsTab({ canEdit, onDone }) {
             {waiting ? `${waiting} waiting. ` : "Nothing waiting. "}
             Requests from the departments - waiting ones first, then the last 30 days.
           </p>
+          <SearchField id="inv-request-search" value={search} onChange={setSearch} placeholder="Item, department or who asked" tip="inventory.requestSearch" />
           <RequestsTable
-            requests={data.requests}
+            requests={data.requests.filter((r) => matchesSearch(search, r.item_name, r.department_label, r.requested_by_name, r.note))}
             showOnHand
             empty="No requests yet. The departments ask from their Store Requests page."
             actions={(r) =>

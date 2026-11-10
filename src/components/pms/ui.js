@@ -75,7 +75,10 @@ export const card = {
 export const table = {
   // <div className={table.card}><div className={table.scroll}><table className={table.el}>...
   card: "w-full rounded-xl border border-(--accent-2) bg-(--card) overflow-hidden",
-  scroll: "overflow-x-auto",
+  // Scrolls both ways inside a box no taller than 70% of the screen, so the
+  // heading row stays in view like the first column (owner, 2026-11-10) -
+  // the .pms-table-scroll rule in globals.css pins every thead cell.
+  scroll: "pms-table-scroll overflow-x-auto",
   // Compact (owner, 2026-11-06: more data on the screen), and a step up on
   // phones and tablets once the PMS dropped the public site's minimum sizes
   // (owner, same day: "a bit" bigger): 12px on a phone, 12.5px on a laptop.

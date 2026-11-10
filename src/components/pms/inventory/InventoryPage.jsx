@@ -10,6 +10,7 @@ import Modal from "@/components/pms/Modal";
 import Notice from "@/components/pms/Notice";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { Tip } from "@/components/pms/Tip";
+import SearchField, { matchesSearch } from "@/components/pms/SearchField";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
 import { useLiveRefresh, usePmsLive } from "@/components/pms/live/PmsLive";
 import RequestsTab from "./RequestsTab";
@@ -511,6 +512,7 @@ export default function InventoryPage() {
   const [tab, setTab] = useState("stock");
   const [dialog, setDialog] = useState(null);
   const [search, setSearch] = useState("");
+  const [supplierSearch, setSupplierSearch] = useState("");
   const [category, setCategory] = useState("");
   const [showRetired, setShowRetired] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -546,8 +548,12 @@ export default function InventoryPage() {
   const items = useMemo(() => {
     if (!data) return [];
     const q = search.trim().toLowerCase();
-    return data.items.filter((i) => (showRetired || i.is_active) && (!category || i.category === category) && (!q || i.name.toLowerCase().includes(q)));
+    return data.items.filter((i) => (showRetired || i.is_active) && (!category || i.category === category) && (!q || matchesSearch(q, i.name, i.drink_name)));
   }, [data, search, category, showRetired]);
+  const suppliers = useMemo(
+    () => (data ? data.suppliers.filter((s) => matchesSearch(supplierSearch, s.name, s.phone, s.email, s.notes)) : []),
+    [data, supplierSearch],
+  );
 
   const open = (kind, item) => setDialog({ kind, item });
 
@@ -603,9 +609,7 @@ export default function InventoryPage() {
             </div>
 
             <div className="flex flex-wrap items-end gap-4">
-              <Field id="inv-search" label="Search" tip="inventory.search">
-                <input id="inv-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} className={field.input} placeholder="Item name" />
-              </Field>
+              <SearchField id="inv-search" value={search} onChange={setSearch} placeholder="Item name" tip="inventory.search" />
               <Field id="inv-filter" label="Category" tip="inventory.filter">
                 <select id="inv-filter" value={category} onChange={(e) => setCategory(e.target.value)} className={field.select}>
                   <option value="">All</option>
@@ -720,6 +724,7 @@ export default function InventoryPage() {
                 </button>
               </div>
             )}
+            <SearchField id="inv-supplier-search" value={supplierSearch} onChange={setSupplierSearch} placeholder="Supplier, phone or email" tip="inventory.supplierSearch" />
             <div className={table.card}>
               <div className={table.scroll}>
                 <table className={table.el}>
@@ -733,14 +738,14 @@ export default function InventoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.suppliers.length === 0 ? (
+                    {suppliers.length === 0 ? (
                       <tr>
                         <td colSpan={canEdit ? 5 : 4} className={table.empty}>
-                          No suppliers yet.
+                          {data.suppliers.length === 0 ? "No suppliers yet." : `No supplier matches "${supplierSearch.trim()}".`}
                         </td>
                       </tr>
                     ) : (
-                      data.suppliers.map((s) => (
+                      suppliers.map((s) => (
                         <tr key={s.id} className={`${table.row} ${s.is_active ? "" : "opacity-60"}`}>
                           <td className={`${table.td} ${table.stickyTd} font-semibold`}>
                             {s.name}

@@ -376,6 +376,25 @@ select:focus {
   z-index: 30;
 }
 
+/* A row under the pointer, and the row last tapped (PmsShell marks it
+   data-picked), in the one hover colour - on every table, so on a phone you
+   can see which row you are reading (owner, 2026-11-10). The pinned first
+   cell is opaque, so it gets the same colour mixed onto the card. */
+@media (hover: hover) {
+  .pms-table-scroll > table > tbody > tr:hover {
+    background-color: rgb(0 0 0 / 0.06);
+  }
+  .pms-table-scroll > table > tbody > tr:hover > td.sticky {
+    background-color: color-mix(in srgb, black 6%, var(--card));
+  }
+}
+.pms-table-scroll > table > tbody > tr[data-picked] {
+  background-color: rgb(0 0 0 / 0.06);
+}
+.pms-table-scroll > table > tbody > tr[data-picked] > td.sticky {
+  background-color: color-mix(in srgb, black 6%, var(--card));
+}
+
 /* PageTabs' row: scrolls sideways on a narrow screen with no scrollbar in
    the way, and fades out at the right edge while there is more to see. */
 .pms-tab-row {

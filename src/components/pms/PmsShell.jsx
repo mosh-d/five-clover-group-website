@@ -55,6 +55,20 @@ export default function PmsShell({ children }) {
     registerServiceWorker();
   }, []);
 
+  // The row you tapped stays in the hover colour until you tap another in
+  // the same table (owner, 2026-11-10: on a phone, hover only showed on rows
+  // that held a link). One listener for every table; globals.css paints it.
+  useEffect(() => {
+    const pick = (e) => {
+      const row = e.target instanceof Element ? e.target.closest(".pms-table-scroll tbody tr") : null;
+      if (!row) return;
+      row.parentElement?.querySelectorAll("tr[data-picked]").forEach((other) => other !== row && other.removeAttribute("data-picked"));
+      row.setAttribute("data-picked", "");
+    };
+    document.addEventListener("pointerdown", pick, { passive: true });
+    return () => document.removeEventListener("pointerdown", pick);
+  }, []);
+
   // Notifications follow whoever is signed in, wherever: a browser that
   // already allows them is signed up for this person and this branch.
   const pushKey = session ? `${session.user?.staff_account_id}-${session.branch?.id ?? "hq"}` : "";

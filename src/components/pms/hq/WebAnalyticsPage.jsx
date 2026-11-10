@@ -146,6 +146,13 @@ function BookingsSection() {
         .map((k) => `${s.by_outcome[k]} ${OUTCOMES[k].label.toLowerCase()}`)
         .join(", ")
     : "";
+  // Missed value by why - expired holds first, the ones nobody attended to.
+  const missedValueText = s
+    ? ["expired", "cancelled", "no_show"]
+        .filter((k) => s.lost_value_by?.[k])
+        .map((k) => `${money(s.lost_value_by[k])} ${OUTCOMES[k].label.toLowerCase()}`)
+        .join(", ")
+    : "";
 
   return (
     <div className="w-full flex flex-col gap-8">
@@ -208,16 +215,19 @@ function BookingsSection() {
       {error && <p className={`${field.error} w-full`}>{error}</p>}
 
       {s && (
-        <StatRow>
-          <StatTile
-            label="Website Bookings"
-            tip="webAnalytics.total"
-            value={s.bookings.toLocaleString()}
-            sub={lostText ? `Including ${lostText}` : "None cancelled, expired or missed"}
-          />
-          <StatTile label="Room-Nights Booked" tip="webAnalytics.roomNights" value={s.room_nights.toLocaleString()} sub={`${s.rooms.toLocaleString()} room${s.rooms !== 1 ? "s" : ""}, not counting cancelled, expired or no-shows`} />
-          <StatTile label="Booked Value" tip="webAnalytics.value" value={money(s.value)} sub="What the website quoted, not counting cancelled, expired or no-shows" />
-        </StatRow>
+        <div className="w-full flex flex-col gap-4">
+          {/* Counts, then money - three of each (owner, 2026-11-10: missed and total value). */}
+          <StatRow>
+            <StatTile label="Website Bookings" tip="webAnalytics.total" value={s.bookings.toLocaleString()} sub={`${(s.bookings - s.lost).toLocaleString()} kept`} />
+            <StatTile label="Room-Nights Booked" tip="webAnalytics.roomNights" value={s.room_nights.toLocaleString()} sub={`${s.rooms.toLocaleString()} room${s.rooms !== 1 ? "s" : ""}, not counting cancelled, expired or no-shows`} />
+            <StatTile label="Missed Bookings" tip="webAnalytics.missed" value={s.lost.toLocaleString()} sub={lostText ? lostText.charAt(0).toUpperCase() + lostText.slice(1) : "None cancelled, expired or missed"} />
+          </StatRow>
+          <StatRow>
+            <StatTile label="Total Value" tip="webAnalytics.totalValue" value={money(s.total_value)} sub="What the website quoted for every booking" />
+            <StatTile label="Booked Value" tip="webAnalytics.value" value={money(s.value)} sub="The bookings kept, not counting cancelled, expired or no-shows" />
+            <StatTile label="Missed Value" tip="webAnalytics.missedValue" value={money(s.lost_value)} sub={missedValueText ? missedValueText.charAt(0).toUpperCase() + missedValueText.slice(1) : "Nothing missed"} />
+          </StatRow>
+        </div>
       )}
 
       {s && s.by_branch.length > 1 && !branch && (
@@ -235,6 +245,7 @@ function BookingsSection() {
                     <th className={table.th}>Lost<Tip id="webAnalytics.col.lost" /></th>
                     <th className={table.th}>Room-Nights<Tip id="webAnalytics.roomNights" /></th>
                     <th className={table.th}>Value<Tip id="webAnalytics.value" /></th>
+                    <th className={table.th}>Missed Value<Tip id="webAnalytics.missedValue" /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -245,6 +256,7 @@ function BookingsSection() {
                       <td className={table.td}>{b.lost}</td>
                       <td className={table.td}>{b.room_nights}</td>
                       <td className={table.td}>{money(b.value)}</td>
+                      <td className={table.td}>{money(b.lost_value)}</td>
                     </tr>
                   ))}
                 </tbody>

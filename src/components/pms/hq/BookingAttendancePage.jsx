@@ -171,9 +171,26 @@ export default function BookingAttendancePage() {
 
             {/* Today's roll call (owner, 2026-11-12): every branch, whatever dates are picked below. */}
             <section className="w-full flex flex-col gap-4">
-              <h2 className={page.sectionTitle}>
-                Today at Every Branch<Tip id="bookingAttendance.today" />
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <h2 className={page.sectionTitle}>
+                  Today at Every Branch<Tip id="bookingAttendance.today" />
+                </h2>
+                <button
+                  type="button"
+                  className={btn.secondary}
+                  disabled={!(data.today || []).length}
+                  onClick={() => {
+                    const day = String(data.today[0]?.business_date || "").slice(0, 10);
+                    csv(
+                      `clock_ins_today_${day}.csv`,
+                      ["Business Day", "Branch", "Clocked In", "Receptionist", "At", "Recorded By"],
+                      data.today.map((t) => [day, t.branch_name, t.clocked_in_at ? "Yes" : "Not yet", t.receptionist || "", t.clocked_in_at ? formatDateTime(t.clocked_in_at) : "", t.recorded_by || ""]),
+                    );
+                  }}
+                >
+                  Download CSV
+                </button>
+              </div>
               <p className={page.sectionIntro}>
                 Whether each branch's receptionist has clocked in for today's business day (6am to 6am), and when. Branches not clocked in yet come first.
               </p>

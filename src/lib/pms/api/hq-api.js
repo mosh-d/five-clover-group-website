@@ -4,6 +4,12 @@
 // someone is working, the "session has ended" prompt, and refusals as a
 // PmsApiError carrying the server's own words.
 import { pmsRequest } from "../client";
+import { http } from "../http";
+
+// Changes go through http, which plays the success and failure sounds, as
+// every branch page's do (2026-11-12: Head Office was silent). Reads stay
+// on pmsRequest.
+const change = async (method, url, body) => (await http[method](url, body)).data;
 
 export const fetchBranches = () => pmsRequest("/api/branches");
 
@@ -13,12 +19,11 @@ export const fetchWebBookings = (query) => pmsRequest("/api/hq/web-analytics/boo
 export const fetchWebBookingsExport = (query) => pmsRequest("/api/hq/web-analytics/bookings/export", { query });
 
 export const fetchHqStaff = (branchId) => pmsRequest("/api/hq/staff", { query: { branch_id: branchId } });
-export const createHqStaff = (payload) => pmsRequest("/api/hq/staff", { method: "POST", body: payload });
-export const updateHqStaff = (id, payload) => pmsRequest(`/api/hq/staff/${id}`, { method: "PATCH", body: payload });
-export const deactivateHqStaff = (id) => pmsRequest(`/api/hq/staff/${id}/deactivate`, { method: "POST", body: {} });
-export const reactivateHqStaff = (id) => pmsRequest(`/api/hq/staff/${id}/reactivate`, { method: "POST", body: {} });
-export const transferHqStaff = (id, newBranchId) =>
-  pmsRequest(`/api/hq/staff/${id}/transfer`, { method: "POST", body: { new_branch_id: newBranchId } });
+export const createHqStaff = (payload) => change("post", "/api/hq/staff", payload);
+export const updateHqStaff = (id, payload) => change("patch", `/api/hq/staff/${id}`, payload);
+export const deactivateHqStaff = (id) => change("post", `/api/hq/staff/${id}/deactivate`, {});
+export const reactivateHqStaff = (id) => change("post", `/api/hq/staff/${id}/reactivate`, {});
+export const transferHqStaff = (id, newBranchId) => change("post", `/api/hq/staff/${id}/transfer`, { new_branch_id: newBranchId });
 
 // Any branch's audit trail, or Head Office's own (branch_id "head_office").
 export const fetchHqAuditLogs = (branchId, params = {}) => pmsRequest("/api/hq/audit-logs", { query: { branch_id: branchId, ...params } });

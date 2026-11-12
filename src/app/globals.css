@@ -365,6 +365,10 @@ select:focus {
 .pms-table-scroll {
   overflow: auto;
   max-height: 70dvh;
+  /* Its pinned heading and column stack only inside the table, so a menu or
+     dropdown from outside it (the Alerts tabs menu on a phone) always opens
+     over it, never under the heading (2026-11-12). */
+  isolation: isolate;
 }
 .pms-table-scroll > table > thead th {
   position: sticky;

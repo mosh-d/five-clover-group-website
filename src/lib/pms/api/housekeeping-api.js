@@ -88,3 +88,8 @@ export const fetchHousekeepingReport = async (from, to) => {
   const response = await http.get(`/api/housekeeping/reports`, { params: { from, to } });
   return response.data;
 };
+
+// Supervisor-only housekeeping (backend phase-98): the developer's switch, and
+// the supervisor marking a room clean.
+export const setSupervisorOnly = async (on) => (await http.patch(`/api/housekeeping/settings`, { supervisor_only: on })).data;
+export const markRoomClean = async (jobId) => (await http.post(`/api/housekeeping/jobs/${jobId}/clean`, {})).data;

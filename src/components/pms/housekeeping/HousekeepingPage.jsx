@@ -29,6 +29,8 @@ import {
   startCleaning,
   submitForReview,
   switchHousekeeping,
+  setSupervisorOnly,
+  markRoomClean,
 } from "@/lib/pms/api/housekeeping-api";
 
 // Housekeeping (backend docs/HOUSEKEEPING-PLAN.md) - the housekeeping
@@ -125,6 +127,39 @@ function ActionDialog({ action, board, onClose, onDone }) {
         const result = await switchHousekeeping(!board.on);
         patchStoredBranch({ housekeeping_on: result.on });
         return { message: `Housekeeping is now ${result.on ? "on" : "off"} at ${result.branch_name}.`, patch: { on: result.on }, sessionChanged: true };
+      },
+    },
+    solo: {
+      title: board.supervisor_only ? "Housekeepers Clean Again" : "Supervisor Only",
+      question: board.supervisor_only
+        ? `Let housekeepers clean and submit rooms again at ${board.branch_name}?`
+        : `Let the supervisor run housekeeping alone at ${board.branch_name}?`,
+      details: board.supervisor_only
+        ? ["The supervisor gives rooms out or housekeepers take them, as before, and approves them.", "The change is recorded in the Audit Trail."]
+        : [
+            "The supervisor marks each room clean when it is - no one cleans, submits or approves on a phone.",
+            "Rooms waiting now stay on the list for the supervisor to mark clean.",
+            "The change is recorded in the Audit Trail.",
+          ],
+      confirmLabel: board.supervisor_only ? "Yes, housekeepers again" : "Yes, supervisor only",
+      busyLabel: "Switching...",
+      run: async () => {
+        const result = await setSupervisorOnly(!board.supervisor_only);
+        return {
+          message: result.supervisor_only ? `The supervisor now runs housekeeping alone at ${result.branch_name}.` : `Housekeepers clean and submit rooms again at ${result.branch_name}.`,
+          patch: { supervisor_only: result.supervisor_only },
+        };
+      },
+    },
+    clean: {
+      title: `Mark ${name} Clean`,
+      question: `Mark ${name} clean?`,
+      details: [`It becomes Clean, ready for a guest.`, "Your name and the time go on it."],
+      confirmLabel: "Yes, it's clean",
+      busyLabel: "Saving...",
+      run: async () => {
+        await markRoomClean(job.id);
+        return `${name} is clean.`;
       },
     },
     hours: {
@@ -474,7 +509,13 @@ function SupervisorView({ board, onAction }) {
   const outOfOrder = board.rooms.filter((r) => r.manual_status === "out_of_order");
   const counts = Object.keys(STATES).map((s) => [s, board.rooms.filter((r) => r.state === s).length]);
   const givenTo = (job) =>
-    job.assigned_to ? `Given to ${job.assigned_to.name}` : board.mode === "assigned" ? "Not given to anyone yet" : "Any housekeeper can take it";
+    board.supervisor_only
+      ? "Mark it clean when it is"
+      : job.assigned_to
+        ? `Given to ${job.assigned_to.name}`
+        : board.mode === "assigned"
+          ? "Not given to anyone yet"
+          : "Any housekeeper can take it";
   return (
     <>
       <div className="w-full flex flex-wrap gap-3" aria-label="Rooms by state">
@@ -517,9 +558,16 @@ function SupervisorView({ board, onAction }) {
               r.occupied && "A guest is in this room",
             ]}
           >
-            <button type="button" onClick={() => onAction({ kind: "assign", room: r })} className={btn.rowSecondary}>
-              Give out
-            </button>
+            {/* Supervisor-only (phase-98): marked clean, not given out. */}
+            {board.supervisor_only ? (
+              <button type="button" onClick={() => onAction({ kind: "clean", room: r })} className={btn.rowSuccess}>
+                Mark clean
+              </button>
+            ) : (
+              <button type="button" onClick={() => onAction({ kind: "assign", room: r })} className={btn.rowSecondary}>
+                Give out
+              </button>
+            )}
           </RoomCard>
         ))}
       </Section>
@@ -689,11 +737,37 @@ export default function HousekeepingPage() {
               <p className={page.sectionIntro}>
                 {!board.on
                   ? "Rooms are ready again as soon as a guest checks out, as before. The developer switches housekeeping on when the branch is ready for it."
-                  : board.mode === "assigned"
+                  : board.supervisor_only
+                    ? "Supervisor only: the supervisor marks each room clean when it is. No one cleans, submits or approves on a phone."
+                    : board.mode === "assigned"
                     ? "Rooms are given out by the supervisor (Assigned): each housekeeper sees the rooms given to them."
                     : "Housekeepers take rooms themselves (Open): every housekeeper sees every room waiting, and the first to start one takes it."}
               </p>
-              {board.on && !isHousekeeper && (
+              {/* The developer's second switch (phase-98): while housekeepers can't use phones on duty. */}
+              {board.on && isDeveloper && (
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <span className={field.label}>
+                    Supervisor Only
+                    <Tip id="housekeeping.supervisorOnly" />
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={Boolean(board.supervisor_only)}
+                    aria-label={`Supervisor-only housekeeping at ${board.branch_name}`}
+                    onClick={() => setAction({ kind: "solo" })}
+                    className={`relative inline-flex items-center shrink-0 h-[3.2rem] w-[6rem] rounded-full cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--emphasis) ${
+                      board.supervisor_only ? "bg-green-600" : "bg-black/25"
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`inline-block h-[2.6rem] w-[2.6rem] rounded-full bg-white shadow transition-transform ${board.supervisor_only ? "translate-x-[3.1rem]" : "translate-x-[0.3rem]"}`}
+                    />
+                  </button>
+                </div>
+              )}
+              {board.on && !isHousekeeper && !board.supervisor_only && (
                 <div className="flex flex-col gap-2">
                   <span className={field.label}>
                     How Rooms Are Given Out

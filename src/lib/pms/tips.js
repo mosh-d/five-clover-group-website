@@ -65,6 +65,7 @@ export const TIPS = {
   "storeRequests.search": "Narrows your requests to those whose item or department holds what you type.",
   "menu.search": "Narrows the list to items whose name holds what you type.",
   "alerts.nudge.note": "Anything the front desk should know - what to do, or by when. They see it in the notification.",
+  "housekeeping.supervisorOnly": "The developer's switch for while housekeepers can't use phones on duty: the supervisor marks each room clean when it is, with no one to give it to.",
   "reservations.col.dealtWith": "Website bookings only: tick one once you have dealt with it. The time is kept, and the developer sees which were missed.",
   "bookingAttendance.page": "For branches not yet on the PMS: their receptionists tick each website booking once dealt with. Who missed which, and when everyone clocked in.",
   "bookingAttendance.branches": "Switch on each branch not yet on the PMS. Its receptionists then get a Dealt With tick on Reservations.",

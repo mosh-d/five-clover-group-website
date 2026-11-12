@@ -36,6 +36,7 @@ export const TIPS = {
   "maintenance.col.done": "When the room came back into service, and how: fixed by maintenance (with what was done), or put back from Rooms or Housekeeping.",
   "maintenance.fixed.note": "What you did - whoever set the room out of order sees this.",
   "account.allBranches": "Notifications from every branch at once - for Head Office. Each one says which branch it is from.",
+  "account.allBranches.kinds": "Which notifications you get - say, website bookings only. Branch staff always get their own; this is your choice.",
   "account.allBranches.status": "Whether your account gets every branch's notifications, on each device you turned notifications on for.",
   "webAnalytics.page": "Bookings made on the hotels' websites, every branch - who booked, when, for what, and what happened to each booking.",
   "webAnalytics.from": "The first day to include, by when the guest booked (Lagos time).",

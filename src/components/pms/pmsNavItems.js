@@ -70,10 +70,10 @@ export const PMS_NAV_ITEMS = [
   // Every branch's website bookings, with the guests - where the Head Digital
   // Marketer lands (owner, 2026-11-10).
   { slug: "web-analytics", label: "WEB ANALYTICS", icon: IoAnalyticsOutline, hq: MARKETING },
-  // The developer's alone (no role listed; a developer opens everything):
-  // branches not yet on the PMS tick their website bookings, and who missed
-  // which (owner, 2026-11-11; backend phase-98).
-  { slug: "booking-attendance", label: "BOOKING ATTENDANCE", icon: IoCheckmarkDoneOutline, hq: [] },
+  // Branches not yet on the PMS tick their website bookings, and who missed
+  // which (owner, 2026-11-11; backend phase-98): the developer's, and Head
+  // HR's and HR's (2026-11-12) - switching a branch on stays the developer's.
+  { slug: "booking-attendance", label: "BOOKING ATTENDANCE", icon: IoCheckmarkDoneOutline, hq: HEAD_OFFICE },
   // A branch.
   { slug: "overview", label: "OVERVIEW", icon: IoGridOutline, roles: OVERSIGHT },
   // The accountant's own page, and where an accountant lands (docs/ACCOUNTING-PLAN.md, 2026-10-08).

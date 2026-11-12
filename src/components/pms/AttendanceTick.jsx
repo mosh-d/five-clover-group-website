@@ -30,6 +30,13 @@ export function useAttendanceTicks(enabled) {
 
 export const isWebsiteBooking = (r) => String(r?.source || "").toLowerCase() === "website";
 
+/**
+ * The status to show for a booking (owner, 2026-11-12): a hold that ran out
+ * with no one attending to it shows Missed, not Cancelled - no one cancelled
+ * it. One a receptionist cancelled stays Cancelled. Every branch.
+ */
+export const reservationStatus = (r) => (r?.status === "cancelled" && r?.is_expired_hold && !r?.attended_at ? "missed" : r?.status);
+
 /** The cell: when it was ticked, or a box to tick it. Not a website booking: nothing to tick. */
 export default function AttendanceTick({ reservation, onTicked }) {
   const [asking, setAsking] = useState(false);
@@ -37,7 +44,8 @@ export default function AttendanceTick({ reservation, onTicked }) {
   const [error, setError] = useState(null);
   if (!isWebsiteBooking(reservation)) return <span className="text-(--text-color)/40">-</span>;
   // Ticked before it was cancelled or ran out: the tick still shows below.
-  // Over without a tick: nothing to deal with now (owner, 2026-11-12).
+  // Over without a tick: nothing to tick now - a hold that ran out says Missed
+  // in the Status column instead (reservationStatus above).
   if (!reservation.attended_at && (reservation.status === "cancelled" || reservation.is_expired_hold)) {
     return <span className="text-(--text-color)/40">-</span>;
   }

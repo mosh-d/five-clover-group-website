@@ -51,7 +51,7 @@ import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import EmailStatusTag from "@/components/pms/EmailStatusTag";
-import AttendanceTick, { useAttendanceTicks } from "@/components/pms/AttendanceTick";
+import AttendanceTick, { reservationStatus, useAttendanceTicks } from "@/components/pms/AttendanceTick";
 import { Tip } from "@/components/pms/Tip";
 const STATUSES = ["hold", "confirmed", "active", "completed", "cancelled"];
 // A reservation's check_in/check_out are UTC-midnight markers for a date.
@@ -1069,7 +1069,7 @@ export default function AdminReservationsPage() {
                       </td>
                       <td className={`${table.td} hidden md:table-cell`}>{formatDate(r.check_in)}</td>
                       <td className={`${table.td} hidden md:table-cell`}>{formatDate(r.check_out)}</td>
-                      <td className={table.td}><StatusBadge status={r.status} /></td>
+                      <td className={table.td}><StatusBadge status={reservationStatus(r)} /></td>
                       {/* "OTA, Walk-in" when an OTA pays for part of the stay
                           and the guest for the rest. Already in the right case,
                           so no capitalize here — it would keep OTA readable but
@@ -1120,7 +1120,7 @@ export default function AdminReservationsPage() {
           subtitle={res ? `Booking Ref: ${res.booking_reference || res.id}` : ""}
           badge={res && (
             <span className="flex items-center gap-2">
-              <StatusBadge status={res.status} />
+              <StatusBadge status={reservationStatus(res)} />
               {res.is_no_show && (
                 <span className="inline-block px-3 py-1 rounded-full text-lg font-bold leading-tight whitespace-nowrap bg-red-100 text-red-700">No-Show</span>
               )}

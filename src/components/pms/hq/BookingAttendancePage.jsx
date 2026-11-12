@@ -13,6 +13,7 @@ import { StatTile, StatRow } from "@/components/pms/hq/metrics/parts";
 import { btn, card, field, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
 import { http } from "@/lib/pms/http";
+import { usePmsSession } from "@/components/pms/PmsSessionContext";
 
 // Booking Attendance (owner, 2026-11-11; backend phase-98): the developer's
 // page. Which branches tick their website bookings (those not yet on the PMS),
@@ -70,6 +71,9 @@ function Table({ head, children, empty, count }) {
 }
 
 export default function BookingAttendancePage() {
+  // Head HR and HR read the report; switching a branch on is the developer's.
+  const { role } = usePmsSession();
+  const canSwitch = role === "developer";
   const today = businessToday();
   const [from, setFrom] = useState(daysBefore(today, 6));
   const [to, setTo] = useState(today);
@@ -135,7 +139,11 @@ export default function BookingAttendancePage() {
               <h2 className={page.sectionTitle}>
                 Branches That Tick Bookings<Tip id="bookingAttendance.branches" />
               </h2>
-              <p className={page.sectionIntro}>Switch on the branches not yet on the PMS. Their receptionists then see a Attended tick on Reservations.</p>
+              <p className={page.sectionIntro}>
+                {canSwitch
+                  ? "Switch on the branches not yet on the PMS. Their receptionists then see an Attended tick on Reservations."
+                  : "The branches whose receptionists tick their website bookings. The developer switches them."}
+              </p>
               <div className={`${card.surface} p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4`}>
                 {data.branches.map((b) => (
                   <div key={b.id} className="flex items-center justify-between gap-4">
@@ -145,8 +153,9 @@ export default function BookingAttendancePage() {
                       role="switch"
                       aria-checked={Boolean(b.attendance_ticks)}
                       aria-label={`Booking ticks at ${b.name}`}
-                      onClick={() => setSwitching(b)}
-                      className={`relative inline-flex items-center shrink-0 h-[3.2rem] w-[6rem] rounded-full cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--emphasis) ${
+                      onClick={() => canSwitch && setSwitching(b)}
+                      disabled={!canSwitch}
+                      className={`relative inline-flex items-center shrink-0 h-[3.2rem] w-[6rem] rounded-full ${canSwitch ? "cursor-pointer" : "cursor-default opacity-70"} transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--emphasis) ${
                         b.attendance_ticks ? "bg-green-600" : "bg-black/25"
                       }`}
                     >
@@ -319,7 +328,7 @@ export default function BookingAttendancePage() {
             details={
               switching.attendance_ticks
                 ? ["Its receptionists no longer see the Attended tick.", "Ticks already made are kept, and stay in the report."]
-                : ["Its receptionists see a Attended tick on each website booking, on Reservations.", "From now on, a booking they don't tick shows as missed here."]
+                : ["Its receptionists see an Attended tick on each website booking, on Reservations.", "From now on, a booking they don't tick shows as missed here."]
             }
             confirmLabel="Yes, switch it"
             busyLabel="Saving..."

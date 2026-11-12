@@ -51,6 +51,7 @@ import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import EmailStatusTag from "@/components/pms/EmailStatusTag";
+import AttendanceTick, { useAttendanceTicks } from "@/components/pms/AttendanceTick";
 import { Tip } from "@/components/pms/Tip";
 const STATUSES = ["hold", "confirmed", "active", "completed", "cancelled"];
 // A reservation's check_in/check_out are UTC-midnight markers for a date.
@@ -64,6 +65,9 @@ export default function AdminReservationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  // A branch not yet on the PMS: website bookings get a Dealt With tick (phase-98).
+  const ticksOn = useAttendanceTicks(true);
+  const columnCount = ticksOn ? 7 : 6;
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -1036,16 +1040,17 @@ export default function AdminReservationsPage() {
                   <th className={`${table.th} hidden md:table-cell`}>Check-Out<Tip id="reservations.col.checkOut" /></th>
                   <th className={table.th}>Status<Tip id="reservations.col.status" /></th>
                   <th className={`${table.th} hidden md:table-cell`}>Source<Tip id="reservations.col.source" /></th>
+                  {ticksOn && <th className={table.th}>Dealt With<Tip id="reservations.col.dealtWith" /></th>}
                   <th className={table.th}>Actions<Tip id="reservations.col.actions" /></th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
+                  <tr><td colSpan={columnCount} className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
                 ) : error ? (
-                  <tr><td colSpan="6" className="px-8 py-10 text-center text-red-600 text-xl">{error}</td></tr>
+                  <tr><td colSpan={columnCount} className="px-8 py-10 text-center text-red-600 text-xl">{error}</td></tr>
                 ) : reservations.length === 0 ? (
-                  <tr><td colSpan="6" className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No reservations match filter.</td></tr>
+                  <tr><td colSpan={columnCount} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No reservations match filter.</td></tr>
                 ) : (
                   reservations.map((r) => (
                     <tr key={r.id} className={table.row}>
@@ -1070,6 +1075,17 @@ export default function AdminReservationsPage() {
                           so no capitalize here — it would keep OTA readable but
                           turn "Walk-in" into "Walk-In". */}
                       <td className={`${table.td} hidden md:table-cell`}>{r.source_label || r.source || "N/A"}</td>
+                      {ticksOn && (
+                        <td className={table.td}>
+                          <AttendanceTick
+                            reservation={r}
+                            onTicked={(message) => {
+                              setSuccessMessage(message);
+                              loadReservations({ quiet: true });
+                            }}
+                          />
+                        </td>
+                      )}
                       <td className={table.td}>
                         <div className={table.actions}>
                           {/* No row-level quick-confirm anymore — confirming

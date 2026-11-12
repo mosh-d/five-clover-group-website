@@ -28,6 +28,7 @@ import {
   IoWalletOutline,
   IoConstructOutline,
   IoAnalyticsOutline,
+  IoCheckmarkDoneOutline,
 } from "react-icons/io5";
 import { readPmsSession } from "@/lib/pms/session";
 
@@ -69,6 +70,10 @@ export const PMS_NAV_ITEMS = [
   // Every branch's website bookings, with the guests - where the Head Digital
   // Marketer lands (owner, 2026-11-10).
   { slug: "web-analytics", label: "WEB ANALYTICS", icon: IoAnalyticsOutline, hq: MARKETING },
+  // The developer's alone (no role listed; a developer opens everything):
+  // branches not yet on the PMS tick their website bookings, and who missed
+  // which (owner, 2026-11-11; backend phase-98).
+  { slug: "booking-attendance", label: "BOOKING ATTENDANCE", icon: IoCheckmarkDoneOutline, hq: [] },
   // A branch.
   { slug: "overview", label: "OVERVIEW", icon: IoGridOutline, roles: OVERSIGHT },
   // The accountant's own page, and where an accountant lands (docs/ACCOUNTING-PLAN.md, 2026-10-08).

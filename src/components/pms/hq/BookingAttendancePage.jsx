@@ -169,6 +169,37 @@ export default function BookingAttendancePage() {
               </div>
             </section>
 
+            {/* Today's roll call (owner, 2026-11-12): every branch, whatever dates are picked below. */}
+            <section className="w-full flex flex-col gap-4">
+              <h2 className={page.sectionTitle}>
+                Today at Every Branch<Tip id="bookingAttendance.today" />
+              </h2>
+              <p className={page.sectionIntro}>
+                Whether each branch's receptionist has clocked in for today's business day (6am to 6am), and when. Branches not clocked in yet come first.
+              </p>
+              <Table
+                head={[["Branch", "bookingAttendance.today.branch"], ["Clocked In", "bookingAttendance.today.status"], ["Receptionist"], ["At", "bookingAttendance.today.at"], ["Recorded By", "bookingAttendance.col.recordedBy"]]}
+                count={(data.today || []).length}
+                empty="No branches."
+              >
+                {(data.today || []).map((t) => (
+                  <tr key={t.branch_id} className={table.row}>
+                    <td className={`${table.td} ${table.stickyTd} font-semibold`}>{t.branch_name}</td>
+                    <td className={table.td}>
+                      {t.clocked_in_at ? (
+                        <span className="text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-green-100 text-green-700">Clocked in</span>
+                      ) : (
+                        <span className="text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-red-100 text-red-700">Not yet</span>
+                      )}
+                    </td>
+                    <td className={table.td}>{t.receptionist || "—"}</td>
+                    <td className={table.td}>{t.clocked_in_at ? formatDateTime(t.clocked_in_at) : "—"}</td>
+                    <td className={table.td}>{t.recorded_by || "—"}</td>
+                  </tr>
+                ))}
+              </Table>
+            </section>
+
             <div className={page.toolbar}>
               <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
                 <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">

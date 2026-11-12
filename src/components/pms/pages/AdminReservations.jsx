@@ -65,7 +65,7 @@ export default function AdminReservationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-  // A branch not yet on the PMS: website bookings get a Dealt With tick (phase-98).
+  // A branch not yet on the PMS: website bookings get a Attended tick (phase-98).
   const ticksOn = useAttendanceTicks(true);
   const columnCount = ticksOn ? 7 : 6;
 
@@ -1040,7 +1040,7 @@ export default function AdminReservationsPage() {
                   <th className={`${table.th} hidden md:table-cell`}>Check-Out<Tip id="reservations.col.checkOut" /></th>
                   <th className={table.th}>Status<Tip id="reservations.col.status" /></th>
                   <th className={`${table.th} hidden md:table-cell`}>Source<Tip id="reservations.col.source" /></th>
-                  {ticksOn && <th className={table.th}>Dealt With<Tip id="reservations.col.dealtWith" /></th>}
+                  {ticksOn && <th className={table.th}>Attended<Tip id="reservations.col.attended" /></th>}
                   <th className={table.th}>Actions<Tip id="reservations.col.actions" /></th>
                 </tr>
               </thead>

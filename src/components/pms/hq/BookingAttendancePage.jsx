@@ -119,7 +119,7 @@ export default function BookingAttendancePage() {
         icon={IoCheckmarkDoneOutline}
         tipId="bookingAttendance.page"
         title="Booking Attendance"
-        description="Branches not yet on the PMS tick each website booking once they have dealt with it. See which were missed, how long the rest took, and every receptionist's clock-in."
+        description="Branches not yet on the PMS tick each website booking once they have attended to it. See which were missed, how long the rest took, and every receptionist's clock-in."
       />
       <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -135,7 +135,7 @@ export default function BookingAttendancePage() {
               <h2 className={page.sectionTitle}>
                 Branches That Tick Bookings<Tip id="bookingAttendance.branches" />
               </h2>
-              <p className={page.sectionIntro}>Switch on the branches not yet on the PMS. Their receptionists then see a Dealt With tick on Reservations.</p>
+              <p className={page.sectionIntro}>Switch on the branches not yet on the PMS. Their receptionists then see a Attended tick on Reservations.</p>
               <div className={`${card.surface} p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4`}>
                 {data.branches.map((b) => (
                   <div key={b.id} className="flex items-center justify-between gap-4">
@@ -192,7 +192,7 @@ export default function BookingAttendancePage() {
 
             <StatRow>
               <StatTile label="Website Bookings" tip="bookingAttendance.total" value={s.bookings.toLocaleString()} sub={`${data.from === data.to ? formatDate(`${data.from}T12:00:00Z`) : `${formatDate(`${data.from}T12:00:00Z`)} to ${formatDate(`${data.to}T12:00:00Z`)}`}`} />
-              <StatTile label="Missed" tip="bookingAttendance.missed" value={s.missed.toLocaleString()} sub={`${s.ticked.toLocaleString()} ticked`} />
+              <StatTile label="Missed" tip="bookingAttendance.missed" value={s.missed.toLocaleString()} sub={`${s.ticked.toLocaleString()} ticked${s.cancelled ? `, ${s.cancelled} cancelled` : ""}`} />
               <StatTile label="Typical Time to Tick" tip="bookingAttendance.median" value={minutesText(s.median_minutes_to_tick)} sub="The middle of the ticked ones" />
             </StatRow>
 
@@ -230,7 +230,7 @@ export default function BookingAttendancePage() {
                     csv(
                       `booking_attendance_${data.from}_to_${data.to}.csv`,
                       ["Booked", "Reference", "Guest", "Branch", "On Duty", "Ticked At", "Ticked By", "Minutes to Tick", "Missed"],
-                      data.bookings.map((b) => [formatDateTime(b.booked_at), b.booking_reference, b.guest_name, b.branch_name, b.on_duty || "", b.attended_at ? formatDateTime(b.attended_at) : "", b.attended_by_name || "", b.minutes_to_tick ?? "", b.missed ? "Yes" : "No"]),
+                      data.bookings.map((b) => [formatDateTime(b.booked_at), b.booking_reference, b.guest_name, b.branch_name, b.on_duty || "", b.attended_at ? formatDateTime(b.attended_at) : "", b.attended_by_name || "", b.minutes_to_tick ?? "", b.missed ? (b.is_expired_hold ? "Yes - hold expired" : "Yes") : b.cancelled ? "Cancelled" : "No"]),
                     )
                   }
                 >
@@ -238,7 +238,7 @@ export default function BookingAttendancePage() {
                 </button>
               </div>
               <Table
-                head={[["Guest", "bookingAttendance.col.guest"], ["Booked", "bookingAttendance.col.booked"], ["Branch"], ["On Duty", "bookingAttendance.col.onDuty"], ["Dealt With", "bookingAttendance.col.dealtWith"]]}
+                head={[["Guest", "bookingAttendance.col.guest"], ["Booked", "bookingAttendance.col.booked"], ["Branch"], ["On Duty", "bookingAttendance.col.onDuty"], ["Attended", "bookingAttendance.col.attended"]]}
                 count={data.bookings.length}
                 empty="No website bookings in these days."
               >
@@ -253,7 +253,11 @@ export default function BookingAttendancePage() {
                     <td className={table.td}>{b.on_duty || <span className="text-(--text-color)/60">No one clocked in</span>}</td>
                     <td className={table.td}>
                       {b.missed ? (
-                        <span className="text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-red-100 text-red-700">Missed</span>
+                        <span className="text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-red-100 text-red-700">
+                          Missed{b.is_expired_hold ? " - hold expired" : ""}
+                        </span>
+                      ) : b.cancelled ? (
+                        <span className="text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">Cancelled</span>
                       ) : (
                         <>
                           {formatDateTime(b.attended_at)}
@@ -314,8 +318,8 @@ export default function BookingAttendancePage() {
             question={`${switching.attendance_ticks ? "Switch off" : "Switch on"} booking ticks at ${switching.name}?`}
             details={
               switching.attendance_ticks
-                ? ["Its receptionists no longer see the Dealt With tick.", "Ticks already made are kept, and stay in the report."]
-                : ["Its receptionists see a Dealt With tick on each website booking, on Reservations.", "From now on, a booking they don't tick shows as missed here."]
+                ? ["Its receptionists no longer see the Attended tick.", "Ticks already made are kept, and stay in the report."]
+                : ["Its receptionists see a Attended tick on each website booking, on Reservations.", "From now on, a booking they don't tick shows as missed here."]
             }
             confirmLabel="Yes, switch it"
             busyLabel="Saving..."

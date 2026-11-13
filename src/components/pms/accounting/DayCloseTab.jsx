@@ -9,7 +9,7 @@ import Pagination from "@/components/pms/Pagination";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { businessDateISO } from "@/lib/pms/dates";
 import { auditFor, businessDayOf } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
@@ -323,14 +323,18 @@ export default function DayCloseTab() {
 
   return (
     <section className="w-full flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h2 className={page.sectionTitle}>
-          Day Close
-          <Tip id="accounting.dayClose" />
-        </h2>
-        <p className={`text-xl ${page.muted}`}>
-          Sign off each business day once you have checked it. If anything is charged into a signed-off day later, it shows here as changed.
-        </p>
+      <ReportScope from={span[0]} to={span[span.length - 1]}>
+      <div className="w-full flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <h2 className={page.sectionTitle}>
+            Day Close
+            <Tip id="accounting.dayClose" />
+          </h2>
+          <p className={`text-xl ${page.muted}`}>
+            Sign off each business day once you have checked it. If anything is charged into a signed-off day later, it shows here as changed.
+          </p>
+        </div>
+        {data && <ExportActions full />}
       </div>
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
@@ -364,11 +368,7 @@ export default function DayCloseTab() {
         </div>
       ) : (
         data && (
-          <ReportScope from={span[0]} to={span[span.length - 1]}>
-          <div className="flex justify-end">
-            <ReportExportAll />
-          </div>
-          <TableCard report="Day Close">
+          <TableCard>
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
@@ -414,9 +414,9 @@ export default function DayCloseTab() {
               </tbody>
             </table>
           </TableCard>
-          </ReportScope>
         )
       )}
+      </ReportScope>
 
       {data && <Pagination page={data.page} totalPages={data.total_pages} onPage={setPageNo} className="mt-0" />}
 

@@ -6,7 +6,7 @@ import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
@@ -104,10 +104,7 @@ export default function MarginTab() {
           <label htmlFor="margin-to" className={field.label}>To<Tip id="accounting.margin.to" /></label>
           <DateInput id="margin-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
         </div>
-        {shown && shown.items.length > 0 && (
-          <button type="button" onClick={() => downloadCsv(shown)} className={btn.secondary}>Download CSV</button>
-        )}
-        {shown && shown.items.length > 0 && <ReportExportAll />}
+        {shown && shown.items.length > 0 && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(shown) }]} />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -141,7 +138,7 @@ export default function MarginTab() {
               <p className={`text-xl ${page.muted}`}>No food or drink was sold in these days.</p>
             ) : (
               <>
-                <TableCard report={"F&B Margin"}>
+                <TableCard>
                   <table className={table.el}>
                     <thead>
                       <tr className={table.headRow}>

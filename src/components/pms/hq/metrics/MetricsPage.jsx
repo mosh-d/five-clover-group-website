@@ -15,7 +15,7 @@ import { METRIC_VIEWS } from "./views";
 import { HowCounted, Choice } from "./parts";
 import { RANGE_PRESETS, presetRange, periodText } from "./format";
 import { Tip } from "@/components/pms/Tip";
-import { ReportScope, ReportExportAll } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope } from "@/components/pms/ReportExport";
 
 // Metrics (Head Office, owner 2026-10-01): five tabs like a branch's Reports
 // page, and under each a sub-menu (a dropdown on smaller screens) to pick
@@ -211,13 +211,25 @@ export default function MetricsPage() {
         </div>
       </PageHeader>
 
+      {/* The report sheet's name and dates (ReportExport.jsx): a snapshot is
+          as things stand when it is exported. */}
+      <ReportScope
+        name={`Metrics - ${metric.label}`}
+        from={metric.snapshot ? undefined : shown?.data?.period?.from}
+        to={metric.snapshot ? undefined : shown?.data?.period?.to}
+        period={metric.snapshot ? (metric.key === "top-guests" ? "All time" : "As things stand now") : undefined}
+      >
       <section aria-labelledby="metric-title" className="w-full flex flex-col gap-6">
+        <div className="w-full flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h2 id="metric-title" className={page.sectionTitle}>{metric.label}</h2>
           <p className={page.sectionIntro}>
             {metric.about}
             {shown?.data?.period && !metric.snapshot ? ` ${periodText(shown.data.period)}.` : ""}
           </p>
+        </div>
+        {/* The metric on one sheet, beside its title. */}
+        {!rangeError && shown?.data && View && <ExportActions full />}
         </div>
 
         {rangeError && <p className={field.error} role="alert">{rangeError}</p>}
@@ -228,25 +240,14 @@ export default function MetricsPage() {
           </div>
         )}
         {!rangeError && shown?.data && View && (
-          // The report sheet's name and dates (ReportExport.jsx): a snapshot is
-          // as things stand when it is exported.
-          <ReportScope
-            name={`Metrics - ${metric.label}`}
-            from={metric.snapshot ? undefined : shown.data.period?.from}
-            to={metric.snapshot ? undefined : shown.data.period?.to}
-            period={metric.snapshot ? (metric.key === "top-guests" ? "All time" : "As things stand now") : undefined}
-          >
-            <div className={`flex flex-col gap-6 transition-opacity ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
-              <div className="flex justify-end">
-                <ReportExportAll />
-              </div>
-              <View key={metric.key} data={shown.data} branchOptions={branches} />
-            </div>
-          </ReportScope>
+          <div className={`flex flex-col gap-6 transition-opacity ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
+            <View key={metric.key} data={shown.data} branchOptions={branches} />
+          </div>
         )}
 
         <HowCounted>{metric.how}</HowCounted>
       </section>
+      </ReportScope>
     </div>
   );
 }

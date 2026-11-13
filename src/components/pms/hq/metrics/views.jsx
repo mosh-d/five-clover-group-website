@@ -102,7 +102,6 @@ function OccupancyView({ data }) {
         />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.occupancy"
         rows={data.rows}
         total={t}
@@ -118,10 +117,9 @@ function OccupancyView({ data }) {
           changeCol("change", "Change", (r) => r.occupancy_pct, (r) => r.prev_occupancy_pct, "pts"),
         ]}
       />
-      <SectionTitle tip="metrics.occupancy.section1" sub={columns[0]?.days.length === 1 ? "Percent full, day by day." : "Percent full, month by month."}>
+      <HeatGrid heading={<SectionTitle tip="metrics.occupancy.section1" sub={columns[0]?.days.length === 1 ? "Percent full, day by day." : "Percent full, month by month."}>
         {columns[0]?.days.length === 1 ? "Day by day" : "Month by month"}
-      </SectionTitle>
-      <HeatGrid report rows={gridRows} columns={columns} max={100} legendLow="0% full" legendHigh="100% full" caption="Occupancy by branch and day" />
+      </SectionTitle>} report rows={gridRows} columns={columns} max={100} legendLow="0% full" legendHigh="100% full" caption="Occupancy by branch and day" />
     </>
   );
 }
@@ -136,7 +134,6 @@ function AdrRevparView({ data }) {
         <StatTile tip="metrics.adr-revpar.tile.room-revenue" label="Room revenue" value={naira(t.room_revenue)} sub={`from ${decimal(t.sold)} room-nights sold`} />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.adr-revpar"
         rows={data.rows}
         total={t}
@@ -167,7 +164,6 @@ function TrevparView({ data }) {
         <StatTile tip="metrics.trevpar.tile.beyond-rooms" label="Beyond rooms" value={percent(t.beyond_rooms_pct)} sub="Share of revenue from breakfast, food, drinks, laundry and other charges" />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.trevpar"
         rows={data.rows}
         total={t}
@@ -200,7 +196,6 @@ function RevenueMixView({ data }) {
       </StatRow>
       {nothingNote(data.rows, (r) => Math.abs(r.total) + Math.abs(r.rooms), "any charges")}
       <DataTable
-        report
         tipPrefix="metrics.revenue-mix"
         rows={data.rows}
         total={t}
@@ -246,7 +241,6 @@ function StayLengthView({ data }) {
       </StatRow>
       {nothingNote(data.rows, (r) => r.all.stays, "any stays")}
       <DataTable
-        report
         tipPrefix="metrics.stay-length"
         rows={data.rows}
         total={t}
@@ -291,7 +285,6 @@ function ChannelsView({ data }) {
       </StatRow>
       {nothingNote(data.rows, (r) => r.revenue, "any room charges")}
       <DataTable
-        report
         tipPrefix="metrics.channels"
         rows={data.rows}
         total={t}
@@ -332,7 +325,6 @@ function CancellationsView({ data }) {
         </Remark>
       )}
       <DataTable
-        report
         tipPrefix="metrics.cancellations"
         rows={data.rows}
         total={t}
@@ -374,7 +366,6 @@ function DiscountsView({ data }) {
         </Remark>
       )}
       <DataTable
-        report
         tipPrefix="metrics.discounts"
         rows={data.rows}
         total={t}
@@ -389,8 +380,8 @@ function DiscountsView({ data }) {
           pctCol("avg", "Average Discount", (r) => r.avg_discount_pct),
         ]}
       />
-      <SectionTitle tip="metrics.discounts.section1" sub="Whoever checked the guest in set the rate; a website booking's price is the website's.">By who set the rate</SectionTitle>
       <DataTable
+        heading={<SectionTitle tip="metrics.discounts.section1" sub="Whoever checked the guest in set the rate; a website booking's price is the website's.">By who set the rate</SectionTitle>}
         report
         tipPrefix="metrics.discounts.staff"
         rows={data.by_staff}
@@ -407,8 +398,8 @@ function DiscountsView({ data }) {
       />
       {data.biggest.length > 0 && (
         <>
-          <SectionTitle tip="metrics.discounts.section2" sub="The biggest discounts in these dates, largest first.">Largest discounts</SectionTitle>
           <DataTable
+            heading={<SectionTitle tip="metrics.discounts.section2" sub="The biggest discounts in these dates, largest first.">Largest discounts</SectionTitle>}
             report
             tipPrefix="metrics.discounts.largest"
             rows={data.biggest}
@@ -445,7 +436,6 @@ function ComplimentaryView({ data }) {
         {data.counted_to ? `Counted up to the night of ${dayText(data.counted_to)}.` : "No night in these dates has ended yet."}
       </p>
       <DataTable
-        report
         tipPrefix="metrics.complimentary"
         rows={data.rows}
         total={t}
@@ -461,8 +451,8 @@ function ComplimentaryView({ data }) {
       />
       {data.stays.length > 0 && (
         <>
-          <SectionTitle tip="metrics.complimentary.section1" sub="Each stay with a night that had no room charge.">The stays</SectionTitle>
           <DataTable
+            heading={<SectionTitle tip="metrics.complimentary.section1" sub="Each stay with a night that had no room charge.">The stays</SectionTitle>}
             report
             tipPrefix="metrics.complimentary.stays"
             rows={data.stays}
@@ -500,7 +490,6 @@ function OutOfOrderView({ data }) {
         <StatTile tip="metrics.out-of-order.tile.counted-to" label="Counted to" value={dayText(data.last_night)} sub="The last night that has ended" />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.out-of-order"
         rows={data.rows}
         total={t}
@@ -551,7 +540,6 @@ function CollectionsView({ data }) {
       </StatRow>
       {nothingNote(data.rows, (r) => r.movements, "any money in or out")}
       <DataTable
-        report
         tipPrefix="metrics.collections"
         rows={data.rows}
         total={t}
@@ -568,10 +556,9 @@ function CollectionsView({ data }) {
       />
       {gridRows.length > 0 && (
         <>
-          <SectionTitle tip="metrics.collections.section1" sub="Money collected each business day (6am to 6am), net of anything paid back out. Branches that collected nothing are left out.">
+          <HeatGrid heading={<SectionTitle tip="metrics.collections.section1" sub="Money collected each business day (6am to 6am), net of anything paid back out. Branches that collected nothing are left out.">
             {columns[0]?.days.length === 1 ? "Day by day" : "Month by month"}
-          </SectionTitle>
-          <HeatGrid report rows={gridRows} columns={columns} max={max} legendLow="Less" legendHigh={`More (${nairaShort(max)})`} caption="Money collected by branch and day" />
+          </SectionTitle>} report rows={gridRows} columns={columns} max={max} legendLow="Less" legendHigh={`More (${nairaShort(max)})`} caption="Money collected by branch and day" />
         </>
       )}
     </>
@@ -597,7 +584,6 @@ function OutstandingView({ data }) {
         <StatTile tip="metrics.outstanding.tile.owed-over-30-days" label="Owed over 30 days" value={naira(t.d31_plus.amount)} sub={`${plural(t.d31_plus.count, "guest")} who left more than a month ago`} />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.outstanding"
         rows={data.rows}
         total={t}
@@ -616,8 +602,8 @@ function OutstandingView({ data }) {
       />
       {data.oldest.length > 0 && (
         <>
-          <SectionTitle tip="metrics.outstanding.section1" sub="The longest-standing debts first.">To chase</SectionTitle>
           <DataTable
+            heading={<SectionTitle tip="metrics.outstanding.section1" sub="The longest-standing debts first.">To chase</SectionTitle>}
             report
             tipPrefix="metrics.outstanding.chase"
             rows={data.oldest}
@@ -650,7 +636,6 @@ function OtaView({ data }) {
         />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.ota"
         rows={data.rows}
         total={t}
@@ -666,8 +651,8 @@ function OtaView({ data }) {
       />
       {data.still_waiting.length > 0 && (
         <>
-          <SectionTitle tip="metrics.ota.section1" sub="Longest waiting first.">Still waiting</SectionTitle>
           <DataTable
+            heading={<SectionTitle tip="metrics.ota.section1" sub="Longest waiting first.">Still waiting</SectionTitle>}
             report
             tipPrefix="metrics.ota.waiting"
             rows={data.still_waiting}
@@ -707,7 +692,6 @@ function CreditHeldView({ data }) {
         <StatTile tip="metrics.credit-held.tile.non-guest-credit" label="Non-guest credit" value={naira(t.non_guests.amount)} sub={plural(t.non_guests.count, "credit")} />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.credit-held"
         rows={data.rows}
         total={t}
@@ -726,8 +710,8 @@ function CreditHeldView({ data }) {
       />
       {data.to_chase.length > 0 && (
         <>
-          <SectionTitle tip="metrics.credit-held.section1" sub="Credit nobody is coming back to the desk for: refund it, or move it to a booking the guest has. Oldest first.">To chase</SectionTitle>
           <DataTable
+            heading={<SectionTitle tip="metrics.credit-held.section1" sub="Credit nobody is coming back to the desk for: refund it, or move it to a booking the guest has. Oldest first.">To chase</SectionTitle>}
             report
             tipPrefix="metrics.credit-held.chase"
             rows={data.to_chase}
@@ -767,7 +751,6 @@ function ExceptionsView({ data, branchOptions }) {
         <StatTile label={<AbbrLabel term="F&B" label="Discounts and free F&B" />} value={naira(t.discounts + t.free_fnb)} sub={`${naira(t.discounts)} in rates, ${naira(t.free_fnb)} in food and drink`} />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.exceptions"
         rows={data.by_branch}
         total={t}
@@ -789,7 +772,6 @@ function ExceptionsView({ data, branchOptions }) {
         <Choice id="exceptions-branch" tip="metrics.branchChoice" label="Branch" value={branch} onChange={setBranch} options={[{ value: "", label: "All branches" }, ...branchOptions]} />
       </div>
       <DataTable
-        report
         tipPrefix="metrics.exceptions.staff"
         rows={people}
         first={{ label: "Staff", render: (r) => r.staff_name, value: (r) => r.staff_name }}
@@ -827,7 +809,6 @@ function RepeatGuestsView({ data }) {
         <Remark>{plural(data.stays_without_phone, "stay")} in these dates had no phone number, so can&apos;t be matched to earlier stays and are left out.</Remark>
       )}
       <DataTable
-        report
         tipPrefix="metrics.repeat-guests"
         rows={data.rows}
         total={t}
@@ -848,7 +829,6 @@ function RepeatGuestsView({ data }) {
 function TopGuestsView({ data }) {
   return (
     <DataTable
-      report
       tipPrefix="metrics.top-guests"
       rows={data.rows}
       first={{
@@ -886,7 +866,6 @@ function ContactabilityView({ data }) {
         <StatTile tip="metrics.contactability.tile.emails-bounced" label="Emails bounced" value={count(t.bounced)} sub="Addresses that couldn't be delivered to" />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.contactability"
         rows={data.rows}
         total={t}
@@ -919,7 +898,6 @@ function FnbSalesView({ data }) {
       </StatRow>
       {nothingNote(data.rows, (r) => r.food_items + r.drink_items, "any food or drink orders")}
       <DataTable
-        report
         tipPrefix="metrics.fnb-sales"
         rows={data.rows}
         total={t}
@@ -961,7 +939,6 @@ function TopItemsView({ data }) {
         />
       </div>
       <DataTable
-        report
         tipPrefix="metrics.top-items"
         rows={items.slice(0, TOP_ITEMS_SHOWN)}
         first={{ label: "Item", render: (r) => r.item_name, value: (r) => r.item_name }}
@@ -1006,7 +983,6 @@ function FnbCompView({ data }) {
       </StatRow>
       {unpriced > 0 && <Remark>{plural(unpriced, "free order")} had no menu price (typed in, or since taken off the menu), so counted at ₦0.</Remark>}
       <DataTable
-        report
         tipPrefix="metrics.fnb-comp"
         rows={data.rows}
         total={t}
@@ -1036,7 +1012,6 @@ function BarStockView({ data, branchOptions }) {
         <StatTile tip="metrics.bar-stock.tile.written-off" label="Written off" value={plural(t.written_off, "unit")} sub={`${percent(t.loss_pct)} of what left the shelf in these dates`} />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.bar-stock"
         rows={data.rows}
         total={t}
@@ -1062,7 +1037,6 @@ function BarStockView({ data, branchOptions }) {
             <Choice id="bar-stock-branch" tip="metrics.branchChoice" label="Branch" value={branch} onChange={setBranch} options={[{ value: "", label: "All branches" }, ...branchOptions]} />
           </div>
           <DataTable
-            report
             tipPrefix="metrics.bar-stock.attention"
             rows={list}
             first={{ label: "Drink", render: (r) => r.item_name, value: (r) => r.item_name }}
@@ -1094,7 +1068,6 @@ function NightAuditsView({ data }) {
         <StatTile tip="metrics.night-audits.tile.run-by-hand" label="Run by hand" value={count(t.by_hand)} sub="The rest ran by themselves at 6am" />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.night-audits"
         rows={data.rows}
         total={t}
@@ -1131,7 +1104,6 @@ function StaffActivityView({ data, branchOptions }) {
         <Choice id="staff-branch" tip="metrics.branchChoice" label="Branch" value={branch} onChange={setBranch} options={[{ value: "", label: "All branches" }, ...branchOptions]} />
       </div>
       <DataTable
-        report
         tipPrefix="metrics.staff-activity"
         rows={rows}
         first={{
@@ -1175,7 +1147,6 @@ function ShiftsView({ data }) {
         <StatTile tip="metrics.shifts.tile.branch-days-with-nobody-on-record" label="Branch-days with nobody on record" value={count(missing)} sub={data.counted_to ? `Up to ${dayText(data.counted_to)}` : ""} />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.shifts"
         rows={data.rows}
         first={BRANCH}
@@ -1214,7 +1185,6 @@ function AlertsView({ data }) {
         <StatTile tip="metrics.alerts.tile.credit-to-return" label="Credit to return" value={naira(t.credit_amount)} sub={`${plural(t.guest_credits, "credit")} held for guests who left`} />
       </StatRow>
       <DataTable
-        report
         tipPrefix="metrics.alerts"
         rows={data.rows}
         total={t}
@@ -1252,7 +1222,6 @@ function AdoptionView({ data }) {
         </Remark>
       )}
       <DataTable
-        report
         tipPrefix="metrics.adoption"
         rows={data.rows}
         total={t}

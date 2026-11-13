@@ -11,7 +11,7 @@ import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import NonGuestCreditsPanel from "@/components/pms/NonGuestCreditsPanel";
 import { Tip } from "@/components/pms/Tip";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { addDaysISO } from "@/lib/pms/dates";
 import { auditFor } from "./audit";
@@ -247,6 +247,21 @@ export default function ReceivablesTab() {
   const housePage = usePagedRows(view?.guest_ledger || []);
   const nonGuest = (view?.non_guest_debts || []).filter((n) => !ngBucket || n.bucket === ngBucket);
   const ngPage = usePagedRows(nonGuest);
+  // Each ledger's heading (and age chips): in the row with its Export Report
+  // when it has rows, above "nobody owes" when it hasn't.
+  const cityHeading = view && (
+    <div className="flex flex-col gap-4">
+      <h3 className="text-2xl font-bold text-(--black)">Left Owing<Tip id="accounting.receivables.city" /></h3>
+      <BucketChips buckets={view.city_buckets} active={bucket} onPick={(b) => { setBucket(b); cityPage.setPage(1); }} />
+    </div>
+  );
+  const houseHeading = <h3 className="text-2xl font-bold text-(--black)">In House<Tip id="accounting.receivables.house" /></h3>;
+  const ngHeading = view && (
+    <div className="flex flex-col gap-4">
+      <h3 className="text-2xl font-bold text-(--black)">Non-Guest Bills<Tip id="accounting.receivables.nonGuest" /></h3>
+      <BucketChips buckets={view.non_guest_buckets} active={ngBucket} onPick={(b) => { setNgBucket(b); ngPage.setPage(1); }} />
+    </div>
+  );
 
   // A guest's stay from the day before it began (a booked date is a calendar
   // day), a non-guest bill from when it was opened - both to today.
@@ -303,18 +318,18 @@ export default function ReceivablesTab() {
               <span data-report-figure className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong data-figure-part="label">In house</strong>: <span data-figure-part="value">{money(view.totals.guest_ledger)}</span></span>
               <span data-report-figure className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong data-figure-part="label">Non-guest bills</strong>: <span data-figure-part="value">{money(view.totals.non_guest)}</span></span>
               <Tip id="accounting.receivables.totals" />
-              <button type="button" onClick={() => downloadCsv(view)} className={btn.secondary}>Download CSV</button>
-              <ReportExportAll />
+              <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(view) }]} />
             </div>
 
             {/* ---- City ledger */}
             <section className="w-full flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-(--black)">Left Owing<Tip id="accounting.receivables.city" /></h3>
-              <BucketChips buckets={view.city_buckets} active={bucket} onPick={(b) => { setBucket(b); cityPage.setPage(1); }} />
               {city.length === 0 ? (
-                <p className={`text-xl ${page.muted}`}>Nobody who left owes anything{bucket ? " in this age band" : ""}.</p>
+                <>
+                  {cityHeading}
+                  <p className={`text-xl ${page.muted}`}>Nobody who left owes anything{bucket ? " in this age band" : ""}.</p>
+                </>
               ) : (
-                <TableCard report="Left Owing">
+                <TableCard report="Left Owing" heading={cityHeading}>
                   <table className={table.el}>
                     <thead>
                       <tr className={table.headRow}>
@@ -349,11 +364,13 @@ export default function ReceivablesTab() {
 
             {/* ---- Guest ledger */}
             <section className="w-full flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-(--black)">In House<Tip id="accounting.receivables.house" /></h3>
               {view.guest_ledger.length === 0 ? (
-                <p className={`text-xl ${page.muted}`}>Nobody in the house owes anything.</p>
+                <>
+                  {houseHeading}
+                  <p className={`text-xl ${page.muted}`}>Nobody in the house owes anything.</p>
+                </>
               ) : (
-                <TableCard report="In House">
+                <TableCard report="In House" heading={houseHeading}>
                   <table className={table.el}>
                     <thead>
                       <tr className={table.headRow}>
@@ -390,12 +407,13 @@ export default function ReceivablesTab() {
 
             {/* ---- Non-guest debts */}
             <section className="w-full flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-(--black)">Non-Guest Bills<Tip id="accounting.receivables.nonGuest" /></h3>
-              <BucketChips buckets={view.non_guest_buckets} active={ngBucket} onPick={(b) => { setNgBucket(b); ngPage.setPage(1); }} />
               {nonGuest.length === 0 ? (
-                <p className={`text-xl ${page.muted}`}>No open non-guest bill owes anything{ngBucket ? " in this age band" : ""}.</p>
+                <>
+                  {ngHeading}
+                  <p className={`text-xl ${page.muted}`}>No open non-guest bill owes anything{ngBucket ? " in this age band" : ""}.</p>
+                </>
               ) : (
-                <TableCard report="Non-Guest Bills">
+                <TableCard report="Non-Guest Bills" heading={ngHeading}>
                   <table className={table.el}>
                     <thead>
                       <tr className={table.headRow}>

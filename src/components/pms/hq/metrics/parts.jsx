@@ -101,7 +101,7 @@ const compareValues = (a, b) => {
  * defaultSort: { key, dir }.
  */
 // `report`: the Export Report button above it (ReportExport.jsx TableCard).
-export function DataTable({ rows, first, columns, total, totalLabel = "All branches", rowKey, defaultSort, empty = "Nothing to show for these dates.", tipPrefix, report }) {
+export function DataTable({ rows, first, columns, total, totalLabel = "All branches", rowKey, defaultSort, empty = "Nothing to show for these dates.", tipPrefix, report, heading }) {
   const tipOf = (col, key) => col.hint || tipText(col.tip || (tipPrefix && `${tipPrefix}.${key}`));
   const [sort, setSort] = useState(defaultSort || null);
   const sortCol = sort && (sort.key === "__first" ? { value: first.value || ((r) => String(first.render(r))) } : columns.find((c) => c.key === sort.key));
@@ -154,7 +154,7 @@ export function DataTable({ rows, first, columns, total, totalLabel = "All branc
   };
 
   return (
-    <TableCard report={report}>
+    <TableCard report={report} heading={heading}>
         <table className={table.el}>
           <thead>
             <tr className={table.headRow}>
@@ -196,7 +196,7 @@ export function DataTable({ rows, first, columns, total, totalLabel = "All branc
  *  columns: [{ key, label, sub }]
  *  report: the Export Report button above it, as DataTable's.
  */
-export function HeatGrid({ rows, columns, max, legendLow, legendHigh, caption, report }) {
+export function HeatGrid({ rows, columns, max, legendLow, legendHigh, caption, report, heading }) {
   const [tip, setTip] = useState(null);
   const show = (e, text) => setTip(tipFor(e.currentTarget, text));
   const fill = (value) => {
@@ -208,7 +208,7 @@ export function HeatGrid({ rows, columns, max, legendLow, legendHigh, caption, r
   };
   return (
     <figure className="w-full flex flex-col gap-3 m-0">
-      <TableCard report={report}>
+      <TableCard report={report} heading={heading}>
         <table className="border-collapse text-lg">
           <caption className="sr-only">{caption}</caption>
           <thead>

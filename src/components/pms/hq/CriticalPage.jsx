@@ -9,7 +9,7 @@ import { page, field, table } from "@/components/pms/ui";
 import { fetchOutOfOrderRooms } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
 import { Tip } from "@/components/pms/Tip";
-import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 
 // Critical (Head Office): every room out of order across the group, oldest
 // first. Kept current over the live socket, not by polling (owner,
@@ -77,7 +77,10 @@ export default function CriticalPage() {
         </p>
       )}
 
+      {/* A live list, so the sheet says when it was taken. */}
+      <ReportScope period={`As at ${sinceText(now)}`}>
       <section className="w-full flex flex-col gap-4">
+        <div className="w-full flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className={page.sectionTitle}>Out of Order Rooms<Tip id="critical.ooo" /></h2>
           {rooms !== null && (
@@ -88,6 +91,8 @@ export default function CriticalPage() {
             </p>
           )}
         </div>
+        {rooms && rooms.length > 0 && <ExportActions full />}
+        </div>
 
         {rooms === null && !error && (
           <div className="flex justify-center py-10">
@@ -96,12 +101,7 @@ export default function CriticalPage() {
         )}
 
         {rooms && rooms.length > 0 && (
-          // A live list, so the sheet says when it was taken.
-          <ReportScope period={`As at ${sinceText(now)}`}>
-            <div className="w-full flex justify-end">
-              <ReportExportAll />
-            </div>
-            <TableCard report="Out of Order Rooms">
+            <TableCard>
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>
@@ -133,9 +133,9 @@ export default function CriticalPage() {
                 </tbody>
               </table>
             </TableCard>
-          </ReportScope>
         )}
       </section>
+      </ReportScope>
     </div>
   );
 }

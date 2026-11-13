@@ -5,7 +5,7 @@ import SearchField, { matchesSearch } from "@/components/pms/SearchField";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
-import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { btn, card, field, page, table } from "@/components/pms/ui";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { money } from "@/lib/pms/format";
@@ -31,11 +31,15 @@ function Stat({ label, value, tip }) {
 function Section({ id, title, tip, head, rows, empty }) {
   return (
     <section aria-labelledby={id} className="w-full flex flex-col gap-3">
-      <h3 id={id} className={page.sectionTitle}>
-        {title}
-        <Tip id={tip} />
-      </h3>
-      <TableCard report={title}>
+      <TableCard
+        report={title}
+        heading={
+          <h3 id={id} className={page.sectionTitle}>
+            {title}
+            <Tip id={tip} />
+          </h3>
+        }
+      >
           <table className={table.el}>
             <thead>
               <tr className={table.headRow}>
@@ -143,12 +147,7 @@ export default function InventoryReports() {
           </label>
           <DateInput id="inv-report-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
         </div>
-        {report && (
-          <button type="button" onClick={() => downloadCsv(report)} className={btn.secondary}>
-            Download CSV
-          </button>
-        )}
-        {report && <ReportExportAll />}
+        {report && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(report) }]} />}
       </div>
 
       {error && <p className={field.error}>{error}</p>}

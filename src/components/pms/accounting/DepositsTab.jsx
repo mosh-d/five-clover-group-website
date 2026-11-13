@@ -9,7 +9,7 @@ import usePagedRows from "@/components/pms/usePagedRows";
 import RefundCreditModal from "@/components/pms/RefundCreditModal";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
@@ -28,18 +28,23 @@ const ago = (days) => (days === 0 ? "today" : days === 1 ? "1 day ago" : `${days
 
 function GroupTable({ group, today, onRefund, onFolio }) {
   const paged = usePagedRows(group.credits);
+  const heading = (
+    <h3 className="text-2xl font-bold text-(--black)">
+      {group.label}
+      <span className={`ml-3 text-xl font-semibold ${page.muted}`}>{group.count} · {money(group.amount)}</span>
+      <Tip id={`accounting.deposits.group.${group.key}`} />
+    </h3>
+  );
   return (
     <section className="w-full flex flex-col gap-4">
-      <h3 className="text-2xl font-bold text-(--black)">
-        {group.label}
-        <span className={`ml-3 text-xl font-semibold ${page.muted}`}>{group.count} · {money(group.amount)}</span>
-        <Tip id={`accounting.deposits.group.${group.key}`} />
-      </h3>
       {group.count === 0 ? (
-        <p className={`text-xl ${page.muted}`}>None.</p>
+        <>
+          {heading}
+          <p className={`text-xl ${page.muted}`}>None.</p>
+        </>
       ) : (
         <>
-          <TableCard report={group.label}>
+          <TableCard report={group.label} heading={heading}>
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
@@ -198,10 +203,7 @@ export default function DepositsTab() {
                 <strong>To chase</strong>: {money(view.totals.to_chase)}
               </span>
               <Tip id="accounting.deposits.totals" />
-              {view.totals.count > 0 && (
-                <button type="button" onClick={() => downloadCsv(view)} className={btn.secondary}>Download CSV</button>
-              )}
-              {view.totals.count > 0 && <ReportExportAll />}
+              {view.totals.count > 0 && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(view) }]} />}
             </div>
             {/* What there is to chase first. */}
             {[...view.groups.filter((g) => g.chase), ...view.groups.filter((g) => !g.chase)]

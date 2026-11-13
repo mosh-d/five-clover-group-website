@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
@@ -119,10 +119,7 @@ export default function TaxTab() {
           <label htmlFor="tax-to" className={field.label}>To<Tip id="accounting.tax.to" /></label>
           <DateInput id="tax-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
         </div>
-        {shown && (
-          <button type="button" onClick={() => downloadCsv(shown)} className={btn.secondary}>Download CSV</button>
-        )}
-        {shown && <ReportExportAll />}
+        {shown && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(shown) }]} />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -147,8 +144,7 @@ export default function TaxTab() {
 
             {/* ---- By day */}
             <section className="w-full flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-(--black)">By Day<Tip id="accounting.tax.daily" /></h3>
-              <TableCard report="By Day">
+              <TableCard report="By Day" heading={<h3 className="text-2xl font-bold text-(--black)">By Day<Tip id="accounting.tax.daily" /></h3>}>
                 <table className={table.el}>
                   <thead>
                     <tr className={table.headRow}>
@@ -192,22 +188,31 @@ export default function TaxTab() {
 
             {/* ---- Tax, line by line */}
             <section className="w-full flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-(--black)">Charges With Tax<Tip id="accounting.tax.tax" /></h3>
               {shown.tax_lines.length === 0 ? (
+                <>
+                <h3 className="text-2xl font-bold text-(--black)">Charges With Tax<Tip id="accounting.tax.tax" /></h3>
                 <p className={`text-xl ${page.muted}`}>
                   No tax was typed on any charge in these days. The PMS adds no tax itself: tax is only what staff type on a charge.
                 </p>
+                </>
               ) : (
                 <>
-                  <div className="flex flex-wrap items-center gap-3">
-                    {shown.tax_by_type.map((t) => (
-                      <span key={t.type} className="px-4 py-2 rounded-lg text-xl bg-black/5">
-                        <strong>{t.label}</strong>: {signed(t.amount)}
-                      </span>
-                    ))}
-                    <Tip id="accounting.tax.byType" />
-                  </div>
-                  <TableCard report="Charges With Tax">
+                  <TableCard
+                    report="Charges With Tax"
+                    heading={
+                      <div className="flex flex-col gap-4">
+                        <h3 className="text-2xl font-bold text-(--black)">Charges With Tax<Tip id="accounting.tax.tax" /></h3>
+                        <div className="flex flex-wrap items-center gap-3">
+                          {shown.tax_by_type.map((t) => (
+                            <span key={t.type} className="px-4 py-2 rounded-lg text-xl bg-black/5">
+                              <strong>{t.label}</strong>: {signed(t.amount)}
+                            </span>
+                          ))}
+                          <Tip id="accounting.tax.byType" />
+                        </div>
+                      </div>
+                    }
+                  >
                     <table className={table.el}>
                       <thead>
                         <tr className={table.headRow}>

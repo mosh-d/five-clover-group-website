@@ -43,7 +43,7 @@ import { isAccountant, isReceptionist, isStorekeeper, isWaitron } from "@/lib/pm
 import { money, pct, formatDate, formatDateTime, formatPaymentMethod } from "@/lib/pms/format";
 import { canViewAuditTrail } from "@/components/pms/pmsNavItems";
 import { page, table } from "@/components/pms/ui";
-import { ReportScope, ReportExportAll } from "@/components/pms/ReportExport";
+import { ReportScope, ReportExportAll, ExportActions } from "@/components/pms/ReportExport";
 import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBadge, StaffActivitySection, MoneyKindTag } from "@/components/pms/reportUi";
 
 import DateInput from "@/components/pms/DateInput";
@@ -637,12 +637,7 @@ function ManifestTab() {
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Accommodation report for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
-            <div className="flex items-center gap-3">
-              <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
-                <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
-              <ReportExportAll />
-            </div>
+            <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting }]} />
           </div>
 
           <ReportSection
@@ -743,12 +738,7 @@ function AnalysisTab() {
       {!loading && data && (
         <ReportScope from={from} to={to}>
         <div className="w-full flex flex-col gap-[2.5rem]">
-          <div className="w-full flex justify-end gap-3">
-            <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex rounded-xl items-center gap-2">
-              <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-            </Button>
-            <ReportExportAll />
-          </div>
+          <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting }]} />
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             <SummaryCard label="Collected" tip="reports.analysis.collected" value={money(data.total_collected)} sub="guest payments and non-guest sales" accent />
@@ -887,12 +877,7 @@ function PmsReportTab() {
               {data.variant === "evening" ? "Evening" : "Morning"} report for{" "}
               <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
-            <div className="flex items-center gap-3">
-              <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
-                <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
-              <ReportExportAll />
-            </div>
+            <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting }]} />
           </div>
 
           {data.previous_night_audit !== undefined && (
@@ -1065,18 +1050,7 @@ function AccommodationReportTab({ shift }) {
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Manifest for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={handleExport}
-                disabled={exporting || (shiftRequired && !shift)}
-                variant="secondary"
-                className="text-xl! flex items-center rounded-xl gap-2"
-                title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
-              >
-                <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
-              <ReportExportAll />
-            </div>
+            <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting || (shiftRequired && !shift), title: shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined }]} />
           </div>
 
           {/* Until the night audit closes the day (6am the next morning), its
@@ -1543,18 +1517,7 @@ function FoodSalesReportTab({ shift }) {
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Food sales for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={handleExport}
-                disabled={exporting || (shiftRequired && !shift)}
-                variant="secondary"
-                className="text-xl! flex items-center rounded-xl gap-2"
-                title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
-              >
-                <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
-              <ReportExportAll />
-            </div>
+            <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting || (shiftRequired && !shift), title: shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined }]} />
           </div>
 
           <SalesTotals data={data} />
@@ -1664,18 +1627,7 @@ function DrinkSalesReportTab({ shift }) {
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Drink sales for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={handleExport}
-                disabled={exporting || (shiftRequired && !shift)}
-                variant="secondary"
-                className="text-xl! flex items-center rounded-xl gap-2"
-                title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
-              >
-                <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
-              <ReportExportAll />
-            </div>
+            <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting || (shiftRequired && !shift), title: shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined }]} />
           </div>
 
           <SalesTotals data={data} />
@@ -1791,18 +1743,7 @@ function BarStockReportTab({ shift }) {
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Bar stock for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={handleExport}
-                disabled={exporting || (shiftRequired && !shift)}
-                variant="secondary"
-                className="text-xl! flex items-center rounded-xl gap-2"
-                title={shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined}
-              >
-                <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-              </Button>
-              <ReportExportAll />
-            </div>
+            <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting || (shiftRequired && !shift), title: shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined }]} />
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">

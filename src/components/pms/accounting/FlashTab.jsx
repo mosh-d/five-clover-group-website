@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AbbrLabel } from "@/components/pms/InfoTip";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
@@ -160,12 +160,7 @@ export default function FlashTab() {
           <label htmlFor="flash-day" className={field.label}>Day<Tip id="accounting.flash.day" /></label>
           <DateInput id="flash-day" value={day} min={rf || undefined} max={today} onChange={(e) => setDay(e.target.value)} />
         </div>
-        {shown && (
-          <button type="button" onClick={download} disabled={downloading} className={btn.secondary}>
-            {downloading ? "Downloading..." : "Download Excel"}
-          </button>
-        )}
-        {shown && <ReportExportAll />}
+        {shown && <ExportActions full className="ml-auto" actions={[{ label: downloading ? "Downloading..." : "Download Excel", onClick: download, disabled: downloading }]} />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -200,7 +195,7 @@ export default function FlashTab() {
               )}
             </div>
 
-            <TableCard report="Flash Report">
+            <TableCard>
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>

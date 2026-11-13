@@ -10,7 +10,7 @@ import { page, field, table, card } from "@/components/pms/ui";
 import { fetchOutOfOrderRanking } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
 import { Tip } from "@/components/pms/Tip";
-import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 
 // Decision Support (Head Office, owner 2026-10-01): insights pulled from the
 // branches' own records, each with a plain suggestion of what to do. First
@@ -89,8 +89,7 @@ function suggestion(group) {
 function FocusTable({ title, head, rows, tip, headTips = [], report }) {
   return (
     <div className="w-full flex flex-col gap-2">
-      <h3 className="text-2xl font-semibold text-(--text-color)">{title}{tip && <Tip id={tip} />}</h3>
-      <TableCard report={report}>
+      <TableCard report={report} heading={<h3 className="text-2xl font-semibold text-(--text-color)">{title}{tip && <Tip id={tip} />}</h3>}>
         <table className={table.el}>
           <thead>
             <tr className={table.headRow}>
@@ -184,7 +183,9 @@ export default function DecisionSupportPage() {
         </p>
       )}
 
+      <ReportScope period={data ? `Up to the night of ${dateText(data.last_night)}` : ""}>
       <section className="w-full flex flex-col gap-6">
+        <div className="w-full flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className={page.sectionTitle}>Out of Order Rooms: What to Fix First<Tip id="decisionSupport.ooo" /></h2>
           {data && (
@@ -195,6 +196,8 @@ export default function DecisionSupportPage() {
             </p>
           )}
         </div>
+        {data && rooms.length > 0 && <ExportActions full />}
+        </div>
 
         {data === null && !error && (
           <div className="flex justify-center py-10">
@@ -203,13 +206,7 @@ export default function DecisionSupportPage() {
         )}
 
         {data && (
-        <ReportScope period={`Up to the night of ${dateText(data.last_night)}`}>
-        {rooms.length > 0 && (
-          <div className="w-full flex justify-end">
-            <ReportExportAll />
-          </div>
-        )}
-
+        <>
         {categories.length > 0 && (
           <div className={`${card.surface} border-2 border-(--emphasis) p-8 flex flex-col gap-3`}>
             <p className="text-xl font-bold uppercase tracking-wide text-(--emphasis)">{costly.length > 0 ? "Suggested: fix these first" : "Suggested"}<Tip id="decisionSupport.suggested" /></p>
@@ -238,8 +235,7 @@ export default function DecisionSupportPage() {
 
         {rooms.length > 0 && (
           <div className="w-full flex flex-col gap-2">
-            <h3 className="text-2xl font-semibold text-(--text-color)">Every room out of order, ranked<Tip id="decisionSupport.ranked" /></h3>
-            <TableCard report="Every room out of order, ranked">
+            <TableCard report="Every room out of order, ranked" heading={<h3 className="text-2xl font-semibold text-(--text-color)">Every room out of order, ranked<Tip id="decisionSupport.ranked" /></h3>}>
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>
@@ -286,9 +282,10 @@ export default function DecisionSupportPage() {
             status changes aren&apos;t recorded.
           </p>
         )}
-        </ReportScope>
+        </>
         )}
       </section>
+      </ReportScope>
     </div>
   );
 }

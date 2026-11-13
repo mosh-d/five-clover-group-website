@@ -6,7 +6,7 @@ import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
@@ -146,10 +146,7 @@ export default function ReceiptsTab() {
           <label htmlFor="receipts-to" className={field.label}>To<Tip id="accounting.receipts.to" /></label>
           <DateInput id="receipts-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
         </div>
-        {view && view.transactions > 0 && (
-          <button type="button" onClick={() => downloadCsv(view)} className={btn.secondary}>Download CSV</button>
-        )}
-        {view && view.transactions > 0 && <ReportExportAll />}
+        {view && view.transactions > 0 && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(view) }]} />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -220,19 +217,28 @@ export default function ReceiptsTab() {
 
             {/* ---- No receipt number */}
             <section className="w-full flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-(--black)">No Receipt Number<Tip id="accounting.receipts.blank" /></h3>
               {view.missing_receipt.lines.length === 0 ? (
-                <p className={`text-xl ${page.muted}`}>Every payment in these days has a receipt number.</p>
+                <>
+                  <h3 className="text-2xl font-bold text-(--black)">No Receipt Number<Tip id="accounting.receipts.blank" /></h3>
+                  <p className={`text-xl ${page.muted}`}>Every payment in these days has a receipt number.</p>
+                </>
               ) : (
                 <>
-                  <div className="flex flex-wrap gap-3">
-                    {view.missing_receipt.by_staff.map((s) => (
-                      <span key={s.taken_by} className="px-4 py-2 rounded-lg text-xl bg-black/5">
-                        <strong>{s.taken_by}</strong>: {s.count} · {money(s.amount)}
-                      </span>
-                    ))}
-                  </div>
-                  <TableCard report="No Receipt Number">
+                  <TableCard
+                    report="No Receipt Number"
+                    heading={
+                      <div className="flex flex-col gap-4">
+                        <h3 className="text-2xl font-bold text-(--black)">No Receipt Number<Tip id="accounting.receipts.blank" /></h3>
+                        <div className="flex flex-wrap gap-3">
+                          {view.missing_receipt.by_staff.map((s) => (
+                            <span key={s.taken_by} className="px-4 py-2 rounded-lg text-xl bg-black/5">
+                              <strong>{s.taken_by}</strong>: {s.count} · {money(s.amount)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    }
+                  >
                     <table className={table.el}>
                       <thead>
                         <tr className={table.headRow}>

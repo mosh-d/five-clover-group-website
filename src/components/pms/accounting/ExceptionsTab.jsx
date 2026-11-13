@@ -10,7 +10,7 @@ import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
@@ -249,10 +249,7 @@ export default function ExceptionsTab() {
             ))}
           </select>
         </div>
-        {view && lines.length > 0 && (
-          <button type="button" onClick={() => downloadCsv(view)} className={btn.secondary}>Download CSV</button>
-        )}
-        {view && lines.length > 0 && <ReportExportAll />}
+        {view && lines.length > 0 && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(view) }]} />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -289,7 +286,7 @@ export default function ExceptionsTab() {
                 {view.counts.all === 0 ? "Nothing was given back or taken off in these days." : `No ${SHOW.find((s) => s.key === show)?.label.toLowerCase()} lines in these days.`}
               </p>
             ) : (
-              <TableCard report="Exceptions">
+              <TableCard>
                 <table className={table.el}>
                   <thead>
                     <tr className={table.headRow}>

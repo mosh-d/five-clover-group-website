@@ -6,7 +6,7 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
@@ -118,10 +118,7 @@ export default function BalanceTab() {
           <label htmlFor="balance-to" className={field.label}>To<Tip id="accounting.balance.to" /></label>
           <DateInput id="balance-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
         </div>
-        {shown && (
-          <button type="button" onClick={() => downloadCsv(shown)} className={btn.secondary}>Download CSV</button>
-        )}
-        {shown && <ReportExportAll />}
+        {shown && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(shown) }]} />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -156,7 +153,7 @@ export default function BalanceTab() {
             </div>
 
             {/* ---- Day by day */}
-            <TableCard report="Day by Day">
+            <TableCard>
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>
@@ -194,13 +191,15 @@ export default function BalanceTab() {
 
             {/* ---- Folios that don't add up */}
             <section className="w-full flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-(--black)">Folios That Don&apos;t Add Up<Tip id="accounting.balance.folios" /></h3>
               {shown.balance_off.length === 0 ? (
+                <>
+                <h3 className="text-2xl font-bold text-(--black)">Folios That Don&apos;t Add Up<Tip id="accounting.balance.folios" /></h3>
                 <p className={`text-xl ${page.muted}`}>
                   Every folio adds up: its balance is its charges, less what was paid on it, plus anything paid back or kept as credit, less the credit it used.
                 </p>
+                </>
               ) : (
-                <TableCard report="Folios That Don't Add Up">
+                <TableCard report="Folios That Don't Add Up" heading={<h3 className="text-2xl font-bold text-(--black)">Folios That Don&apos;t Add Up<Tip id="accounting.balance.folios" /></h3>}>
                   <table className={table.el}>
                     <thead>
                       <tr className={table.headRow}>
@@ -238,11 +237,17 @@ export default function BalanceTab() {
             {/* ---- Right balance, figures that disagree */}
             {shown.figure_off.length > 0 && (
               <section className="w-full flex flex-col gap-4">
-                <h3 className="text-2xl font-bold text-(--black)">Folios Whose Figures Don&apos;t Match<Tip id="accounting.balance.figures" /></h3>
-                <p className={`text-xl ${page.muted}`}>
-                  Their balance adds up, so what is owed is right - but the Charged or Paid figure the folio shows doesn&apos;t match its records.
-                </p>
-                <TableCard report="Folios Whose Figures Don't Match">
+                <TableCard
+                  report="Folios Whose Figures Don't Match"
+                  heading={
+                    <div className="flex flex-col gap-4">
+                      <h3 className="text-2xl font-bold text-(--black)">Folios Whose Figures Don&apos;t Match<Tip id="accounting.balance.figures" /></h3>
+                      <p className={`text-xl ${page.muted}`}>
+                        Their balance adds up, so what is owed is right - but the Charged or Paid figure the folio shows doesn&apos;t match its records.
+                      </p>
+                    </div>
+                  }
+                >
                   <table className={table.el}>
                     <thead>
                       <tr className={table.headRow}>

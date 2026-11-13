@@ -14,7 +14,7 @@ import { btn, card, field, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
 import { http } from "@/lib/pms/http";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
-import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
+import { ReportScope, ExportActions, TableCard } from "@/components/pms/ReportExport";
 
 // Booking Attendance (owner, 2026-11-11; backend phase-98): the developer's
 // page. Which branches tick their website bookings (those not yet on the PMS),
@@ -39,9 +39,10 @@ function csv(name, head, rows) {
   URL.revokeObjectURL(url);
 }
 
-function Table({ head, children, empty, count, report }) {
+// `heading` and `actions` (its CSV) share the row with Export Report.
+function Table({ head, children, empty, count, report, heading, actions }) {
   return (
-    <TableCard report={report}>
+    <TableCard report={report} heading={heading} actions={actions}>
       <table className={table.el}>
         <thead>
           <tr className={table.headRow}>
@@ -134,9 +135,6 @@ export default function BookingAttendancePage() {
       ) : (
         data && (
           <ReportScope from={data.from} to={data.to}>
-            <div className="w-full flex justify-end">
-              <ReportExportAll />
-            </div>
 
             <section className="w-full flex flex-col gap-4">
               <h2 className={page.sectionTitle}>
@@ -175,30 +173,31 @@ export default function BookingAttendancePage() {
             {/* Today's roll call (owner, 2026-11-12): every branch, whatever dates are picked below. */}
             <ReportScope date={String(data.today?.[0]?.business_date || today).slice(0, 10)}>
             <section className="w-full flex flex-col gap-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <h2 className={page.sectionTitle}>
-                  Today at Every Branch<Tip id="bookingAttendance.today" />
-                </h2>
-                <button
-                  type="button"
-                  className={btn.secondary}
-                  disabled={!(data.today || []).length}
-                  onClick={() => {
-                    const day = String(data.today[0]?.business_date || "").slice(0, 10);
-                    csv(
-                      `clock_ins_today_${day}.csv`,
-                      ["Business Day", "Branch", "Clocked In", "Receptionist", "At", "Recorded By"],
-                      data.today.map((t) => [day, t.branch_name, t.clocked_in_at ? "Yes" : "Not yet", t.receptionist || "", t.clocked_in_at ? formatDateTime(t.clocked_in_at) : "", t.recorded_by || ""]),
-                    );
-                  }}
-                >
-                  Download CSV
-                </button>
-              </div>
-              <p className={page.sectionIntro}>
-                Whether each branch's receptionist has clocked in for today's business day (6am to 6am), and when. Branches not clocked in yet come first.
-              </p>
               <Table
+                heading={
+                  <div className="flex flex-col gap-2">
+                    <h2 className={page.sectionTitle}>
+                      Today at Every Branch<Tip id="bookingAttendance.today" />
+                    </h2>
+                    <p className={page.sectionIntro}>
+                      Whether each branch's receptionist has clocked in for today's business day (6am to 6am), and when. Branches not clocked in yet come first.
+                    </p>
+                  </div>
+                }
+                actions={[
+                  {
+                    label: "Download CSV",
+                    disabled: !(data.today || []).length,
+                    onClick: () => {
+                      const day = String(data.today[0]?.business_date || "").slice(0, 10);
+                      csv(
+                        `clock_ins_today_${day}.csv`,
+                        ["Business Day", "Branch", "Clocked In", "Receptionist", "At", "Recorded By"],
+                        data.today.map((t) => [day, t.branch_name, t.clocked_in_at ? "Yes" : "Not yet", t.receptionist || "", t.clocked_in_at ? formatDateTime(t.clocked_in_at) : "", t.recorded_by || ""]),
+                      );
+                    },
+                  },
+                ]}
                 head={[["Branch", "bookingAttendance.today.branch"], ["Clocked In", "bookingAttendance.today.status"], ["Receptionist"], ["At", "bookingAttendance.today.at"], ["Recorded By", "bookingAttendance.col.recordedBy"]]}
                 count={(data.today || []).length}
                 empty="No branches."
@@ -251,6 +250,7 @@ export default function BookingAttendancePage() {
                   ))}
                 </select>
               </div>
+              <ExportActions full className="ml-auto" />
             </div>
 
             <StatRow>
@@ -260,10 +260,12 @@ export default function BookingAttendancePage() {
             </StatRow>
 
             <section className="w-full flex flex-col gap-4">
-              <h2 className={page.sectionTitle}>
-                By Receptionist on Duty<Tip id="bookingAttendance.byReceptionist" />
-              </h2>
               <Table
+                heading={
+                  <h2 className={page.sectionTitle}>
+                    By Receptionist on Duty<Tip id="bookingAttendance.byReceptionist" />
+                  </h2>
+                }
                 head={[["Receptionist", "bookingAttendance.col.receptionist"], ["Bookings", "bookingAttendance.col.bookings"], ["Ticked"], ["Missed"], ["Typical Time to Tick"]]}
                 count={data.by_receptionist.length}
                 empty="No website bookings in these days."
@@ -282,26 +284,24 @@ export default function BookingAttendancePage() {
             </section>
 
             <section className="w-full flex flex-col gap-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <h2 className={page.sectionTitle}>
-                  Every Website Booking<Tip id="bookingAttendance.bookings" />
-                </h2>
-                <button
-                  type="button"
-                  className={btn.secondary}
-                  disabled={!data.bookings.length}
-                  onClick={() =>
-                    csv(
-                      `booking_attendance_${data.from}_to_${data.to}.csv`,
-                      ["Booked", "Reference", "Guest", "Branch", "On Duty", "Ticked At", "Ticked By", "Minutes to Tick", "Missed"],
-                      data.bookings.map((b) => [formatDateTime(b.booked_at), b.booking_reference, b.guest_name, b.branch_name, b.on_duty || "", b.attended_at ? formatDateTime(b.attended_at) : "", b.attended_by_name || "", b.minutes_to_tick ?? "", b.missed ? (b.is_expired_hold ? "Yes - hold expired" : "Yes") : b.cancelled ? "Cancelled" : "No"]),
-                    )
-                  }
-                >
-                  Download Bookings CSV
-                </button>
-              </div>
               <Table
+                heading={
+                  <h2 className={page.sectionTitle}>
+                    Every Website Booking<Tip id="bookingAttendance.bookings" />
+                  </h2>
+                }
+                actions={[
+                  {
+                    label: "Download Bookings CSV",
+                    disabled: !data.bookings.length,
+                    onClick: () =>
+                      csv(
+                        `booking_attendance_${data.from}_to_${data.to}.csv`,
+                        ["Booked", "Reference", "Guest", "Branch", "On Duty", "Ticked At", "Ticked By", "Minutes to Tick", "Missed"],
+                        data.bookings.map((b) => [formatDateTime(b.booked_at), b.booking_reference, b.guest_name, b.branch_name, b.on_duty || "", b.attended_at ? formatDateTime(b.attended_at) : "", b.attended_by_name || "", b.minutes_to_tick ?? "", b.missed ? (b.is_expired_hold ? "Yes - hold expired" : "Yes") : b.cancelled ? "Cancelled" : "No"]),
+                      ),
+                  },
+                ]}
                 head={[["Guest", "bookingAttendance.col.guest"], ["Booked", "bookingAttendance.col.booked"], ["Branch"], ["On Duty", "bookingAttendance.col.onDuty"], ["Attended", "bookingAttendance.col.attended"]]}
                 count={data.bookings.length}
                 empty="No website bookings in these days."
@@ -338,26 +338,24 @@ export default function BookingAttendancePage() {
             </section>
 
             <section className="w-full flex flex-col gap-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <h2 className={page.sectionTitle}>
-                  Receptionist Clock-Ins<Tip id="bookingAttendance.clockIns" />
-                </h2>
-                <button
-                  type="button"
-                  className={btn.secondary}
-                  disabled={!data.clock_ins.length}
-                  onClick={() =>
-                    csv(
-                      `receptionist_clock_ins_${data.from}_to_${data.to}.csv`,
-                      ["Business Day", "Branch", "Receptionist", "Clocked In At", "Recorded By"],
-                      data.clock_ins.map((c) => [c.business_date, c.branch_name, c.receptionist, formatDateTime(c.clocked_in_at), c.recorded_by || ""]),
-                    )
-                  }
-                >
-                  Download Clock-Ins CSV
-                </button>
-              </div>
               <Table
+                heading={
+                  <h2 className={page.sectionTitle}>
+                    Receptionist Clock-Ins<Tip id="bookingAttendance.clockIns" />
+                  </h2>
+                }
+                actions={[
+                  {
+                    label: "Download Clock-Ins CSV",
+                    disabled: !data.clock_ins.length,
+                    onClick: () =>
+                      csv(
+                        `receptionist_clock_ins_${data.from}_to_${data.to}.csv`,
+                        ["Business Day", "Branch", "Receptionist", "Clocked In At", "Recorded By"],
+                        data.clock_ins.map((c) => [c.business_date, c.branch_name, c.receptionist, formatDateTime(c.clocked_in_at), c.recorded_by || ""]),
+                      ),
+                  },
+                ]}
                 head={[["Business Day", "bookingAttendance.col.day"], ["Branch"], ["Receptionist"], ["Clocked In At", "bookingAttendance.col.clockedIn"], ["Recorded By", "bookingAttendance.col.recordedBy"]]}
                 count={data.clock_ins.length}
                 empty="No receptionist clocked in in these days."

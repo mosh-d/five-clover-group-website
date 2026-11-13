@@ -12,7 +12,7 @@ import { StatTile, StatRow } from "@/components/pms/hq/metrics/parts";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime, money } from "@/lib/pms/format";
 import { fetchBranches, fetchWebBookings, fetchWebBookingsExport } from "@/lib/pms/api/hq-api";
-import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 
 // Web Analytics (owner, 2026-11-10; backend phase-96): the Head Digital
 // Marketer's page. Its first section, Bookings, logs every booking made on the
@@ -224,10 +224,7 @@ function BookingsSection() {
           </label>
           <input id="wa-search" type="search" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Guest name or reference" className={field.input} />
         </div>
-        <button type="button" onClick={exportCsv} disabled={exporting || !data?.total} className={btn.secondary}>
-          {exporting ? "Preparing..." : "Download CSV"}
-        </button>
-        {data && <ReportExportAll />}
+        <ExportActions full={Boolean(data)} className="ml-auto" actions={[{ label: exporting ? "Preparing..." : "Download CSV", onClick: exportCsv, disabled: exporting || !data?.total }]} />
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -250,10 +247,14 @@ function BookingsSection() {
 
       {s && s.by_branch.length > 1 && !branch && (
         <section className="w-full flex flex-col gap-4">
-          <h2 className={page.sectionTitle}>
-            By Branch<Tip id="webAnalytics.byBranch" />
-          </h2>
-          <TableCard report="By Branch">
+          <TableCard
+            report="By Branch"
+            heading={
+              <h2 className={page.sectionTitle}>
+                By Branch<Tip id="webAnalytics.byBranch" />
+              </h2>
+            }
+          >
             <table className={table.el}>
               <thead>
                 <tr className={table.headRow}>
@@ -283,11 +284,17 @@ function BookingsSection() {
       )}
 
       <section className="w-full flex flex-col gap-4">
-        <h2 className={page.sectionTitle}>
-          Every Website Booking<Tip id="webAnalytics.log" />
-        </h2>
-        <p className={page.sectionIntro}>Newest first. Days are when the guest booked, by the Lagos calendar.</p>
-        <TableCard report={sheetReport}>
+        <TableCard
+          report={sheetReport}
+          heading={
+            <div className="flex flex-col gap-2">
+              <h2 className={page.sectionTitle}>
+                Every Website Booking<Tip id="webAnalytics.log" />
+              </h2>
+              <p className={page.sectionIntro}>Newest first. Days are when the guest booked, by the Lagos calendar.</p>
+            </div>
+          }
+        >
           <table className={table.el}>
             <thead>
               <tr className={table.headRow}>

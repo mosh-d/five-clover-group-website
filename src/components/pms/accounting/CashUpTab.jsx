@@ -9,7 +9,7 @@ import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
-import { ReportExportAll, ReportScope } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, card, field, page, table } from "@/components/pms/ui";
@@ -275,10 +275,7 @@ export default function CashUpTab() {
           <label htmlFor="cashup-date" className={field.label}>Business Day<Tip id="accounting.cashUp.day" /></label>
           <DateInput id="cashup-date" value={date} max={today} onChange={(e) => setDate(e.target.value)} />
         </div>
-        {shown && shown.people.length > 0 && (
-          <button type="button" onClick={() => downloadCsv(shown)} className={btn.secondary}>Download CSV</button>
-        )}
-        {shown && shown.people.length > 0 && <ReportExportAll />}
+        {shown && shown.people.length > 0 && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(shown) }]} />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}

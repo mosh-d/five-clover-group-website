@@ -6,7 +6,7 @@ import DateInput from "@/components/pms/DateInput";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Notice from "@/components/pms/Notice";
 import { Tip } from "@/components/pms/Tip";
-import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
+import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
@@ -320,10 +320,11 @@ export default function ExportsTab() {
                   <strong>Debits</strong> {money(shown.totals.debit)} {shown.totals.debit === shown.totals.credit ? "=" : "≠"} <strong>Credits</strong> {money(shown.totals.credit)}
                 </span>
                 <Tip id="accounting.exports.totals" />
-                <button type="button" onClick={download} disabled={downloading || posted.length === 0} className={btn.secondary}>
-                  {downloading ? "Downloading..." : "Download CSV"}
-                </button>
-                {posted.length > 0 && <ReportExportAll />}
+                <ExportActions
+                  full={posted.length > 0}
+                  className="ml-auto"
+                  actions={[{ label: downloading ? "Downloading..." : "Download CSV", onClick: download, disabled: downloading || posted.length === 0 }]}
+                />
               </div>
               {shown.no_code.length > 0 && (
                 <p className="text-xl text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
@@ -333,7 +334,7 @@ export default function ExportsTab() {
                 </p>
               )}
 
-              <TableCard report="Journal">
+              <TableCard>
                 <table className={table.el}>
                   <thead>
                     <tr className={table.headRow}>
@@ -374,11 +375,15 @@ export default function ExportsTab() {
 
               {day && (
                 <div className="w-full flex flex-col gap-3">
-                  <h4 className="text-xl font-bold text-(--black)">
-                    {day.journal_no} - {dayText(day.date)}
-                    <Tip id="accounting.exports.entry" />
-                  </h4>
-                  <TableCard report={`${day.journal_no} - ${dayText(day.date)}`}>
+                  <TableCard
+                    report={`${day.journal_no} - ${dayText(day.date)}`}
+                    heading={
+                      <h4 className="text-xl font-bold text-(--black)">
+                        {day.journal_no} - {dayText(day.date)}
+                        <Tip id="accounting.exports.entry" />
+                      </h4>
+                    }
+                  >
                     <table className={table.el}>
                       <thead>
                         <tr className={table.headRow}>

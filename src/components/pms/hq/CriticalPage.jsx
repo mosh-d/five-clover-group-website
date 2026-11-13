@@ -9,6 +9,7 @@ import { page, field, table } from "@/components/pms/ui";
 import { fetchOutOfOrderRooms } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
 import { Tip } from "@/components/pms/Tip";
+import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
 
 // Critical (Head Office): every room out of order across the group, oldest
 // first. Kept current over the live socket, not by polling (owner,
@@ -95,8 +96,12 @@ export default function CriticalPage() {
         )}
 
         {rooms && rooms.length > 0 && (
-          <div className={table.card}>
-            <div className={table.scroll}>
+          // A live list, so the sheet says when it was taken.
+          <ReportScope period={`As at ${sinceText(now)}`}>
+            <div className="w-full flex justify-end">
+              <ReportExportAll />
+            </div>
+            <TableCard report="Out of Order Rooms">
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>
@@ -127,8 +132,8 @@ export default function CriticalPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
+            </TableCard>
+          </ReportScope>
         )}
       </section>
     </div>

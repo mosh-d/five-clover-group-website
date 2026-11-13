@@ -14,6 +14,7 @@ import { btn, card, field, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
 import { http } from "@/lib/pms/http";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
+import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
 
 // Booking Attendance (owner, 2026-11-11; backend phase-98): the developer's
 // page. Which branches tick their website bookings (those not yet on the PMS),
@@ -38,35 +39,33 @@ function csv(name, head, rows) {
   URL.revokeObjectURL(url);
 }
 
-function Table({ head, children, empty, count }) {
+function Table({ head, children, empty, count, report }) {
   return (
-    <div className={table.card}>
-      <div className={table.scroll}>
-        <table className={table.el}>
-          <thead>
-            <tr className={table.headRow}>
-              {head.map(([label, tip], i) => (
-                <th key={label} className={`${table.th} ${i === 0 ? table.stickyTh : ""}`}>
-                  {label}
-                  {tip && <Tip id={tip} />}
-                </th>
-              ))}
+    <TableCard report={report}>
+      <table className={table.el}>
+        <thead>
+          <tr className={table.headRow}>
+            {head.map(([label, tip], i) => (
+              <th key={label} className={`${table.th} ${i === 0 ? table.stickyTh : ""}`}>
+                {label}
+                {tip && <Tip id={tip} />}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {count === 0 ? (
+            <tr>
+              <td colSpan={head.length} className={table.empty}>
+                {empty}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {count === 0 ? (
-              <tr>
-                <td colSpan={head.length} className={table.empty}>
-                  {empty}
-                </td>
-              </tr>
-            ) : (
-              children
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          ) : (
+            children
+          )}
+        </tbody>
+      </table>
+    </TableCard>
   );
 }
 
@@ -134,7 +133,11 @@ export default function BookingAttendancePage() {
         </div>
       ) : (
         data && (
-          <>
+          <ReportScope from={data.from} to={data.to}>
+            <div className="w-full flex justify-end">
+              <ReportExportAll />
+            </div>
+
             <section className="w-full flex flex-col gap-4">
               <h2 className={page.sectionTitle}>
                 Branches That Tick Bookings<Tip id="bookingAttendance.branches" />
@@ -170,6 +173,7 @@ export default function BookingAttendancePage() {
             </section>
 
             {/* Today's roll call (owner, 2026-11-12): every branch, whatever dates are picked below. */}
+            <ReportScope date={String(data.today?.[0]?.business_date || today).slice(0, 10)}>
             <section className="w-full flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <h2 className={page.sectionTitle}>
@@ -198,6 +202,7 @@ export default function BookingAttendancePage() {
                 head={[["Branch", "bookingAttendance.today.branch"], ["Clocked In", "bookingAttendance.today.status"], ["Receptionist"], ["At", "bookingAttendance.today.at"], ["Recorded By", "bookingAttendance.col.recordedBy"]]}
                 count={(data.today || []).length}
                 empty="No branches."
+                report="Today at Every Branch"
               >
                 {(data.today || []).map((t) => (
                   <tr key={t.branch_id} className={table.row}>
@@ -216,6 +221,7 @@ export default function BookingAttendancePage() {
                 ))}
               </Table>
             </section>
+            </ReportScope>
 
             <div className={page.toolbar}>
               <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
@@ -261,6 +267,7 @@ export default function BookingAttendancePage() {
                 head={[["Receptionist", "bookingAttendance.col.receptionist"], ["Bookings", "bookingAttendance.col.bookings"], ["Ticked"], ["Missed"], ["Typical Time to Tick"]]}
                 count={data.by_receptionist.length}
                 empty="No website bookings in these days."
+                report="By Receptionist on Duty"
               >
                 {data.by_receptionist.map((p) => (
                   <tr key={p.receptionist} className={table.row}>
@@ -298,6 +305,7 @@ export default function BookingAttendancePage() {
                 head={[["Guest", "bookingAttendance.col.guest"], ["Booked", "bookingAttendance.col.booked"], ["Branch"], ["On Duty", "bookingAttendance.col.onDuty"], ["Attended", "bookingAttendance.col.attended"]]}
                 count={data.bookings.length}
                 empty="No website bookings in these days."
+                report="Every Website Booking"
               >
                 {data.bookings.map((b) => (
                   <tr key={b.id} className={table.row}>
@@ -353,6 +361,7 @@ export default function BookingAttendancePage() {
                 head={[["Business Day", "bookingAttendance.col.day"], ["Branch"], ["Receptionist"], ["Clocked In At", "bookingAttendance.col.clockedIn"], ["Recorded By", "bookingAttendance.col.recordedBy"]]}
                 count={data.clock_ins.length}
                 empty="No receptionist clocked in in these days."
+                report="Receptionist Clock-Ins"
               >
                 {data.clock_ins.map((c) => (
                   <tr key={c.id} className={table.row}>
@@ -365,7 +374,7 @@ export default function BookingAttendancePage() {
                 ))}
               </Table>
             </section>
-          </>
+          </ReportScope>
         )
       )}
 

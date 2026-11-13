@@ -9,6 +9,7 @@ import usePagedRows from "@/components/pms/usePagedRows";
 import RefundCreditModal from "@/components/pms/RefundCreditModal";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
@@ -38,62 +39,60 @@ function GroupTable({ group, today, onRefund, onFolio }) {
         <p className={`text-xl ${page.muted}`}>None.</p>
       ) : (
         <>
-          <div className={table.card}>
-            <div className={table.scroll}>
-              <table className={table.el}>
-                <thead>
-                  <tr className={table.headRow}>
-                    <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="accounting.deposits.col.guest" /></th>
-                    <th className={table.th}>Taken<Tip id="accounting.deposits.col.taken" /></th>
-                    {group.chase && <th className={table.th}>Waiting<Tip id="accounting.deposits.col.waiting" /></th>}
-                    <th className={`${table.th} hidden md:table-cell`}>Receipt<Tip id="accounting.deposits.col.receipt" /></th>
-                    <th className={`${table.th} text-right!`}>Credit<Tip id="accounting.deposits.col.credit" /></th>
-                    <th className={table.th}>Actions<Tip id="accounting.deposits.col.actions" /></th>
+          <TableCard report={group.label}>
+            <table className={table.el}>
+              <thead>
+                <tr className={table.headRow}>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="accounting.deposits.col.guest" /></th>
+                  <th className={table.th}>Taken<Tip id="accounting.deposits.col.taken" /></th>
+                  {group.chase && <th className={table.th}>Waiting<Tip id="accounting.deposits.col.waiting" /></th>}
+                  <th className={`${table.th} hidden md:table-cell`}>Receipt<Tip id="accounting.deposits.col.receipt" /></th>
+                  <th className={`${table.th} text-right!`}>Credit<Tip id="accounting.deposits.col.credit" /></th>
+                  <th className={table.th}>Actions<Tip id="accounting.deposits.col.actions" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {paged.rows.map((c) => (
+                  <tr key={c.id} className={table.row}>
+                    <td className={`${table.td} ${table.stickyTd}`}>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{c.guest_name || "No booking"}</span>
+                        <span className={`text-lg ${page.muted}`}>
+                          {[c.booking_reference && `Booking ${c.booking_reference}`, c.phone].filter(Boolean).join(" · ")}
+                        </span>
+                        {group.key === "arriving" && c.check_in && <span className={`text-lg ${page.muted}`}>Arrives {formatDate(c.check_in)}</span>}
+                      </div>
+                    </td>
+                    <td className={table.td}>
+                      <div>{formatDate(`${c.taken}T12:00:00Z`)}</div>
+                      <div className={`text-lg ${page.muted}`}>{[ago(c.taken_days), c.taken_by].filter(Boolean).join(" · ")}</div>
+                    </td>
+                    {group.chase && (
+                      <td className={`${table.td} ${c.waiting_days > 30 ? "text-red-600 font-semibold" : ""}`}>{ago(c.waiting_days)}</td>
+                    )}
+                    <td className={`${table.td} hidden md:table-cell`}>
+                      <div className="font-mono text-lg">{c.deposit_reference}</div>
+                      <div className={`text-lg ${page.muted}`}>{c.receipt_number ? `Receipt #${c.receipt_number}` : "No receipt number"}</div>
+                    </td>
+                    <td className={`${table.td} text-right!`}>
+                      <div className="font-bold text-green-700">{money(c.available)}</div>
+                      <div className={`text-lg ${page.muted}`}>
+                        {[c.method, c.from_overpayment ? "overpayment" : "paid ahead"].filter(Boolean).join(" · ")}
+                        {c.amount_applied > 0 ? ` · ${money(c.amount_applied)} of ${money(c.amount)} used` : ""}
+                      </div>
+                    </td>
+                    <td className={table.td}>
+                      <div className={table.actions}>
+                        <button type="button" onClick={() => onRefund(c)} className={btn.rowDanger}>Refund</button>
+                        {c.folio_id && <button type="button" onClick={() => onFolio(c.folio_id)} className={btn.rowSecondary}>Folio</button>}
+                        <AuditLink audit={auditFor({ search: c.guest_name || c.deposit_reference, from: c.taken, to: today })} />
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {paged.rows.map((c) => (
-                    <tr key={c.id} className={table.row}>
-                      <td className={`${table.td} ${table.stickyTd}`}>
-                        <div className="flex flex-col">
-                          <span className="font-semibold">{c.guest_name || "No booking"}</span>
-                          <span className={`text-lg ${page.muted}`}>
-                            {[c.booking_reference && `Booking ${c.booking_reference}`, c.phone].filter(Boolean).join(" · ")}
-                          </span>
-                          {group.key === "arriving" && c.check_in && <span className={`text-lg ${page.muted}`}>Arrives {formatDate(c.check_in)}</span>}
-                        </div>
-                      </td>
-                      <td className={table.td}>
-                        <div>{formatDate(`${c.taken}T12:00:00Z`)}</div>
-                        <div className={`text-lg ${page.muted}`}>{[ago(c.taken_days), c.taken_by].filter(Boolean).join(" · ")}</div>
-                      </td>
-                      {group.chase && (
-                        <td className={`${table.td} ${c.waiting_days > 30 ? "text-red-600 font-semibold" : ""}`}>{ago(c.waiting_days)}</td>
-                      )}
-                      <td className={`${table.td} hidden md:table-cell`}>
-                        <div className="font-mono text-lg">{c.deposit_reference}</div>
-                        <div className={`text-lg ${page.muted}`}>{c.receipt_number ? `Receipt #${c.receipt_number}` : "No receipt number"}</div>
-                      </td>
-                      <td className={`${table.td} text-right!`}>
-                        <div className="font-bold text-green-700">{money(c.available)}</div>
-                        <div className={`text-lg ${page.muted}`}>
-                          {[c.method, c.from_overpayment ? "overpayment" : "paid ahead"].filter(Boolean).join(" · ")}
-                          {c.amount_applied > 0 ? ` · ${money(c.amount_applied)} of ${money(c.amount)} used` : ""}
-                        </div>
-                      </td>
-                      <td className={table.td}>
-                        <div className={table.actions}>
-                          <button type="button" onClick={() => onRefund(c)} className={btn.rowDanger}>Refund</button>
-                          {c.folio_id && <button type="button" onClick={() => onFolio(c.folio_id)} className={btn.rowSecondary}>Folio</button>}
-                          <AuditLink audit={auditFor({ search: c.guest_name || c.deposit_reference, from: c.taken, to: today })} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                ))}
+              </tbody>
+            </table>
+          </TableCard>
           <Pagination page={paged.page} totalPages={paged.totalPages} onPage={paged.setPage} className="mt-0" />
         </>
       )}
@@ -192,7 +191,7 @@ export default function DepositsTab() {
         </div>
       ) : (
         view && (
-          <>
+          <ReportScope date={view.today}>
             <div className="flex flex-wrap items-center gap-3">
               <span className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong>Held</strong>: {money(view.totals.held)} ({view.totals.count})</span>
               <span className={`px-4 py-2 rounded-lg text-xl ${view.totals.to_chase > 0 ? "bg-orange-100 text-orange-700" : "bg-black/5"}`}>
@@ -202,6 +201,7 @@ export default function DepositsTab() {
               {view.totals.count > 0 && (
                 <button type="button" onClick={() => downloadCsv(view)} className={btn.secondary}>Download CSV</button>
               )}
+              {view.totals.count > 0 && <ReportExportAll />}
             </div>
             {/* What there is to chase first. */}
             {[...view.groups.filter((g) => g.chase), ...view.groups.filter((g) => !g.chase)]
@@ -209,7 +209,7 @@ export default function DepositsTab() {
               .map((g) => (
                 <GroupTable key={g.key} group={g} today={view.today} onRefund={setRefundTarget} onFolio={(id) => router.push(`/pms/folios?folio_id=${id}`)} />
               ))}
-          </>
+          </ReportScope>
         )
       )}
 

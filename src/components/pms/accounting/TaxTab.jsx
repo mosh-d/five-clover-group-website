@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
@@ -107,6 +108,8 @@ export default function TaxTab() {
         </p>
       </div>
 
+      {/* The scope starts at the date row, so Export Full Report can sit beside the downloads. */}
+      <ReportScope from={shown?.from ?? from} to={shown?.to ?? to}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">
           <label htmlFor="tax-from" className={field.label}>From<Tip id="accounting.tax.from" /></label>
@@ -119,6 +122,7 @@ export default function TaxTab() {
         {shown && (
           <button type="button" onClick={() => downloadCsv(shown)} className={btn.secondary}>Download CSV</button>
         )}
+        {shown && <ReportExportAll />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -144,48 +148,46 @@ export default function TaxTab() {
             {/* ---- By day */}
             <section className="w-full flex flex-col gap-4">
               <h3 className="text-2xl font-bold text-(--black)">By Day<Tip id="accounting.tax.daily" /></h3>
-              <div className={table.card}>
-                <div className={table.scroll}>
-                  <table className={table.el}>
-                    <thead>
-                      <tr className={table.headRow}>
-                        <th className={`${table.th} ${table.stickyTh}`}>Day<Tip id="accounting.tax.col.day" /></th>
-                        {SERVICE_COLUMNS.map((c) => (
-                          <th key={c.key} className={`${table.th} ${num}`}>{c.label}<Tip id={c.tip} /></th>
-                        ))}
-                        <th className={`${table.th} ${num}`}>Service Charge<Tip id="accounting.tax.col.service" /></th>
-                        <th className={`${table.th} ${num}`}>Tax<Tip id="accounting.tax.col.tax" /></th>
-                        <th className={`${table.th} px-4!`}>Action<Tip id="accounting.col.viewLog" /></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {shown.days.map((d) => (
-                        <tr key={d.date} className={table.row}>
-                          <td className={`${table.td} ${table.stickyTd}`}>
-                            {shortDay(d.date)}
-                            {d.date === shown.today && <span className={`text-lg ${page.muted}`}> (so far)</span>}
-                          </td>
-                          {SERVICE_COLUMNS.map((c) => (
-                            <td key={c.key} className={`${table.td} ${num}`}>{cell(d.service[c.key])}</td>
-                          ))}
-                          <td className={`${table.td} ${num} font-bold`}>{cell(d.service.total)}</td>
-                          <td className={`${table.td} ${num} ${d.tax ? "font-bold text-orange-700" : ""}`}>{cell(d.tax)}</td>
-                          <td className={`${table.td} px-4!`}><AuditLink audit={auditFor({ from: d.date })} /></td>
-                        </tr>
+              <TableCard report="By Day">
+                <table className={table.el}>
+                  <thead>
+                    <tr className={table.headRow}>
+                      <th className={`${table.th} ${table.stickyTh}`}>Day<Tip id="accounting.tax.col.day" /></th>
+                      {SERVICE_COLUMNS.map((c) => (
+                        <th key={c.key} className={`${table.th} ${num}`}>{c.label}<Tip id={c.tip} /></th>
                       ))}
-                      <tr className={`${table.row} bg-(--text-color)/3`}>
-                        <td className={`${table.td} ${table.stickyTd} font-bold`}>Total</td>
+                      <th className={`${table.th} ${num}`}>Service Charge<Tip id="accounting.tax.col.service" /></th>
+                      <th className={`${table.th} ${num}`}>Tax<Tip id="accounting.tax.col.tax" /></th>
+                      <th className={`${table.th} px-4!`}>Action<Tip id="accounting.col.viewLog" /></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shown.days.map((d) => (
+                      <tr key={d.date} className={table.row}>
+                        <td className={`${table.td} ${table.stickyTd}`}>
+                          {shortDay(d.date)}
+                          {d.date === shown.today && <span className={`text-lg ${page.muted}`}> (so far)</span>}
+                        </td>
                         {SERVICE_COLUMNS.map((c) => (
-                          <td key={c.key} className={`${table.td} ${num} font-bold`}>{signed(shown.totals.service[c.key])}</td>
+                          <td key={c.key} className={`${table.td} ${num}`}>{cell(d.service[c.key])}</td>
                         ))}
-                        <td className={`${table.td} ${num} font-bold`}>{signed(shown.totals.service.total)}</td>
-                        <td className={`${table.td} ${num} font-bold`}>{signed(shown.totals.tax)}</td>
-                        <td className={`${table.td} px-4!`}><AuditLink audit={auditFor({ from: shown.from, to: shown.to })} /></td>
+                        <td className={`${table.td} ${num} font-bold`}>{cell(d.service.total)}</td>
+                        <td className={`${table.td} ${num} ${d.tax ? "font-bold text-orange-700" : ""}`}>{cell(d.tax)}</td>
+                        <td className={`${table.td} px-4!`}><AuditLink audit={auditFor({ from: d.date })} /></td>
                       </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    ))}
+                    <tr className={`${table.row} bg-(--text-color)/3`}>
+                      <td className={`${table.td} ${table.stickyTd} font-bold`}>Total</td>
+                      {SERVICE_COLUMNS.map((c) => (
+                        <td key={c.key} className={`${table.td} ${num} font-bold`}>{signed(shown.totals.service[c.key])}</td>
+                      ))}
+                      <td className={`${table.td} ${num} font-bold`}>{signed(shown.totals.service.total)}</td>
+                      <td className={`${table.td} ${num} font-bold`}>{signed(shown.totals.tax)}</td>
+                      <td className={`${table.td} px-4!`}><AuditLink audit={auditFor({ from: shown.from, to: shown.to })} /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </TableCard>
             </section>
 
             {/* ---- Tax, line by line */}
@@ -205,53 +207,52 @@ export default function TaxTab() {
                     ))}
                     <Tip id="accounting.tax.byType" />
                   </div>
-                  <div className={table.card}>
-                    <div className={table.scroll}>
-                      <table className={table.el}>
-                        <thead>
-                          <tr className={table.headRow}>
-                            <th className={`${table.th} ${table.stickyTh}`}>Day<Tip id="accounting.tax.lines.col.when" /></th>
-                            <th className={table.th}>Folio<Tip id="accounting.tax.lines.col.folio" /></th>
-                            <th className={table.th}>Charge<Tip id="accounting.tax.lines.col.charge" /></th>
-                            <th className={`${table.th} text-right!`}>Charged<Tip id="accounting.tax.lines.col.charged" /></th>
-                            <th className={`${table.th} text-right!`}>Tax<Tip id="accounting.tax.lines.col.tax" /></th>
-                            <th className={`${table.th} hidden md:table-cell`}>Posted By<Tip id="accounting.tax.lines.col.by" /></th>
-                            <th className={table.th}>Actions<Tip id="accounting.tax.lines.col.actions" /></th>
+                  <TableCard report="Charges With Tax">
+                    <table className={table.el}>
+                      <thead>
+                        <tr className={table.headRow}>
+                          <th className={`${table.th} ${table.stickyTh}`}>Day<Tip id="accounting.tax.lines.col.when" /></th>
+                          <th className={table.th}>Folio<Tip id="accounting.tax.lines.col.folio" /></th>
+                          <th className={table.th}>Charge<Tip id="accounting.tax.lines.col.charge" /></th>
+                          <th className={`${table.th} text-right!`}>Charged<Tip id="accounting.tax.lines.col.charged" /></th>
+                          <th className={`${table.th} text-right!`}>Tax<Tip id="accounting.tax.lines.col.tax" /></th>
+                          <th className={`${table.th} hidden md:table-cell`}>Posted By<Tip id="accounting.tax.lines.col.by" /></th>
+                          <th className={table.th}>Actions<Tip id="accounting.tax.lines.col.actions" /></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shown.tax_lines.map((t) => (
+                          <tr key={t.id} className={table.row}>
+                            <td className={`${table.td} ${table.stickyTd}`}>{dayText(t.day)}</td>
+                            <td className={table.td}>
+                              <div className="font-semibold">{t.guest_name || "Guest"}</div>
+                              <div className={`text-lg ${page.muted}`}>{t.folio_number}</div>
+                            </td>
+                            <td className={`${table.td} whitespace-normal!`}>
+                              <div className="font-semibold">{t.type}</div>
+                              <div className={`text-lg ${page.muted}`}>{t.description}</div>
+                            </td>
+                            <td className={`${table.td} text-right!`}>{signed(t.amount)}</td>
+                            <td className={`${table.td} text-right! font-bold text-orange-700`}>{signed(t.tax)}</td>
+                            <td className={`${table.td} hidden md:table-cell`}>{t.posted_by || "-"}</td>
+                            <td className={table.td}>
+                              <div className={table.actions}>
+                                <button type="button" onClick={() => router.push(`/pms/folios?folio_id=${t.folio_id}`)} className={btn.rowPrimary}>Folio</button>
+                                <AuditLink audit={auditFor({ staffId: t.posted_by_id, search: t.guest_name || t.folio_number, from: t.day })} />
+                              </div>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {shown.tax_lines.map((t) => (
-                            <tr key={t.id} className={table.row}>
-                              <td className={`${table.td} ${table.stickyTd}`}>{dayText(t.day)}</td>
-                              <td className={table.td}>
-                                <div className="font-semibold">{t.guest_name || "Guest"}</div>
-                                <div className={`text-lg ${page.muted}`}>{t.folio_number}</div>
-                              </td>
-                              <td className={`${table.td} whitespace-normal!`}>
-                                <div className="font-semibold">{t.type}</div>
-                                <div className={`text-lg ${page.muted}`}>{t.description}</div>
-                              </td>
-                              <td className={`${table.td} text-right!`}>{signed(t.amount)}</td>
-                              <td className={`${table.td} text-right! font-bold text-orange-700`}>{signed(t.tax)}</td>
-                              <td className={`${table.td} hidden md:table-cell`}>{t.posted_by || "-"}</td>
-                              <td className={table.td}>
-                                <div className={table.actions}>
-                                  <button type="button" onClick={() => router.push(`/pms/folios?folio_id=${t.folio_id}`)} className={btn.rowPrimary}>Folio</button>
-                                  <AuditLink audit={auditFor({ staffId: t.posted_by_id, search: t.guest_name || t.folio_number, from: t.day })} />
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </TableCard>
                 </>
               )}
             </section>
           </>
         )
       )}
+      </ReportScope>
     </section>
   );
 }

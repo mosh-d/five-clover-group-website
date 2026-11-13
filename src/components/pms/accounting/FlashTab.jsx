@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AbbrLabel } from "@/components/pms/InfoTip";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
@@ -52,7 +53,8 @@ const counted = (n, [one, many] = ["item", "items"]) => `${n} ${n === 1 ? one : 
 function Snapshot({ title, tip, rows, total, counts, tab, linkText }) {
   const router = useRouter();
   return (
-    <div className={table.card}>
+    // A section of the full report sheet of its own (ReportExport.jsx).
+    <div data-report-section data-report-title={title} className={table.card}>
       <div className="flex flex-wrap items-center justify-between gap-3 px-8 py-4 border-b border-(--accent-2) bg-(--text-color)/3">
         <h3 className="text-2xl font-bold text-(--black)">{title}<Tip id={tip} /></h3>
         <button type="button" className={btn.link} onClick={() => router.replace(`/pms/accounting?tab=${tab}`, { scroll: false })}>
@@ -151,6 +153,8 @@ export default function FlashTab() {
         </p>
       </div>
 
+      {/* The scope starts at the date row, so Export Full Report can sit beside the downloads. */}
+      <ReportScope date={view?.date ?? day}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">
           <label htmlFor="flash-day" className={field.label}>Day<Tip id="accounting.flash.day" /></label>
@@ -161,6 +165,7 @@ export default function FlashTab() {
             {downloading ? "Downloading..." : "Download Excel"}
           </button>
         )}
+        {shown && <ReportExportAll />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -195,62 +200,60 @@ export default function FlashTab() {
               )}
             </div>
 
-            <div className={table.card}>
-              <div className={table.scroll}>
-                <table className={table.el}>
-                  <thead>
-                    <tr className={table.headRow}>
-                      <th className={`${table.th} ${table.stickyTh}`}>Figure<Tip id="accounting.flash.col.figure" /></th>
-                      {cols.map((c) => (
-                        <th key={`${c.key}-${c.year}`} className={`${table.th} text-right!`}>
-                          <div>
-                            {c.key === "day" && c.year === "this" && view.date === view.today ? "Today So Far" : c.label}
-                            {c.year === "this" && <Tip id={`accounting.flash.col.${c.key}`} />}
+            <TableCard report="Flash Report">
+              <table className={table.el}>
+                <thead>
+                  <tr className={table.headRow}>
+                    <th className={`${table.th} ${table.stickyTh}`}>Figure<Tip id="accounting.flash.col.figure" /></th>
+                    {cols.map((c) => (
+                      <th key={`${c.key}-${c.year}`} className={`${table.th} text-right!`}>
+                        <div>
+                          {c.key === "day" && c.year === "this" && view.date === view.today ? "Today So Far" : c.label}
+                          {c.year === "this" && <Tip id={`accounting.flash.col.${c.key}`} />}
+                        </div>
+                        {view.has_last_year && <div>{c.year === "this" ? "This Year" : "Last Year"}</div>}
+                        <div className="text-lg font-normal normal-case tracking-normal">{span(c)}</div>
+                        {c.from && (
+                          <div className="normal-case tracking-normal">
+                            <AuditLink audit={auditFor({ from: c.from, to: c.to })} />
                           </div>
-                          {view.has_last_year && <div>{c.year === "this" ? "This Year" : "Last Year"}</div>}
-                          <div className="text-lg font-normal normal-case tracking-normal">{span(c)}</div>
-                          {c.from && (
-                            <div className="normal-case tracking-normal">
-                              <AuditLink audit={auditFor({ from: c.from, to: c.to })} />
-                            </div>
-                          )}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {SECTIONS.map((s) => (
-                      <Fragment key={s.key}>
-                        <tr className={table.headRow}>
-                          <th scope="colgroup" colSpan={cols.length + 1} className="px-8 py-3 text-left text-xl font-bold text-(--black)">
-                            {s.label}
-                            <Tip id={`accounting.flash.${s.key}`} />
-                          </th>
-                        </tr>
-                        {view.lines
-                          .filter((l) => l.section === s.key)
-                          .map((l) => (
-                            <tr key={l.key} className={table.row}>
-                              <td className={`${table.td} ${table.stickyTd} ${l.total ? "font-bold" : ""}`}>
-                                {ABBREVIATED[l.key] ? <AbbrLabel term={ABBREVIATED[l.key]} label={l.label} /> : l.label}
-                                {!ABBREVIATED[l.key] && <Tip id={`accounting.flash.${l.key}`} />}
-                              </td>
-                              {cols.map((c) => {
-                                const v = l.values[c.i];
-                                return (
-                                  <td key={c.i} className={`${table.td} text-right! ${l.total ? "font-bold" : ""} ${v < 0 ? "text-red-600" : ""}`}>
-                                    {valueText(l.unit, v)}
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          ))}
-                      </Fragment>
+                        )}
+                      </th>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  {SECTIONS.map((s) => (
+                    <Fragment key={s.key}>
+                      <tr className={table.headRow}>
+                        <th scope="colgroup" colSpan={cols.length + 1} className="px-8 py-3 text-left text-xl font-bold text-(--black)">
+                          {s.label}
+                          <Tip id={`accounting.flash.${s.key}`} />
+                        </th>
+                      </tr>
+                      {view.lines
+                        .filter((l) => l.section === s.key)
+                        .map((l) => (
+                          <tr key={l.key} className={table.row}>
+                            <td className={`${table.td} ${table.stickyTd} ${l.total ? "font-bold" : ""}`}>
+                              {ABBREVIATED[l.key] ? <AbbrLabel term={ABBREVIATED[l.key]} label={l.label} /> : l.label}
+                              {!ABBREVIATED[l.key] && <Tip id={`accounting.flash.${l.key}`} />}
+                            </td>
+                            {cols.map((c) => {
+                              const v = l.values[c.i];
+                              return (
+                                <td key={c.i} className={`${table.td} text-right! ${l.total ? "font-bold" : ""} ${v < 0 ? "text-red-600" : ""}`}>
+                                  {valueText(l.unit, v)}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </TableCard>
 
             <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
               <Snapshot title="Owed to the Branch, Now" tip="accounting.flash.owed" rows={view.owed.rows} total={view.owed.total} counts={OWED_COUNTS} tab="receivables" linkText="Open Receivables" />
@@ -262,6 +265,7 @@ export default function FlashTab() {
           </>
         )
       )}
+      </ReportScope>
     </section>
   );
 }

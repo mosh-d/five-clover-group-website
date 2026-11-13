@@ -6,6 +6,7 @@ import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
@@ -134,6 +135,8 @@ export default function ReceiptsTab() {
         </p>
       </div>
 
+      {/* The scope starts at the date row, so Export Full Report can sit beside the downloads. */}
+      <ReportScope from={view?.from ?? from} to={view?.to ?? to}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">
           <label htmlFor="receipts-from" className={field.label}>From<Tip id="accounting.receipts.from" /></label>
@@ -146,6 +149,7 @@ export default function ReceiptsTab() {
         {view && view.transactions > 0 && (
           <button type="button" onClick={() => downloadCsv(view)} className={btn.secondary}>Download CSV</button>
         )}
+        {view && view.transactions > 0 && <ReportExportAll />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -228,37 +232,35 @@ export default function ReceiptsTab() {
                       </span>
                     ))}
                   </div>
-                  <div className={table.card}>
-                    <div className={table.scroll}>
-                      <table className={table.el}>
-                        <thead>
-                          <tr className={table.headRow}>
-                            <th className={table.th}>When<Tip id="accounting.receipts.col.when" /></th>
-                            <th className={table.th}>What<Tip id="accounting.receipts.col.what" /></th>
-                            <th className={`${table.th} hidden md:table-cell`}>Taken By<Tip id="accounting.receipts.col.by" /></th>
-                            <th className={`${table.th} text-right!`}>Amount<Tip id="accounting.receipts.col.amount" /></th>
-                            <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+                  <TableCard report="No Receipt Number">
+                    <table className={table.el}>
+                      <thead>
+                        <tr className={table.headRow}>
+                          <th className={table.th}>When<Tip id="accounting.receipts.col.when" /></th>
+                          <th className={table.th}>What<Tip id="accounting.receipts.col.what" /></th>
+                          <th className={`${table.th} hidden md:table-cell`}>Taken By<Tip id="accounting.receipts.col.by" /></th>
+                          <th className={`${table.th} text-right!`}>Amount<Tip id="accounting.receipts.col.amount" /></th>
+                          <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {blankPage.rows.map((l, i) => (
+                          <tr key={`${l.at}-${i}`} className={table.row}>
+                            <td className={`${table.td} whitespace-nowrap`}>{formatDateTime(l.at)}</td>
+                            <td className={`${table.td} whitespace-normal!`}>
+                              <div className="font-semibold">{l.kind_label}</div>
+                              <div className={`text-lg ${page.muted}`}>{[l.guest, l.reference, l.method].filter(Boolean).join(" · ")}</div>
+                            </td>
+                            <td className={`${table.td} hidden md:table-cell`}>{l.taken_by || "-"}</td>
+                            <td className={`${table.td} text-right! font-bold`}>{money(l.amount)}</td>
+                            <td className={table.td}>
+                              <AuditLink audit={auditFor({ staffId: l.taken_by_id, search: l.guest || l.reference, from: l.day })} />
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {blankPage.rows.map((l, i) => (
-                            <tr key={`${l.at}-${i}`} className={table.row}>
-                              <td className={`${table.td} whitespace-nowrap`}>{formatDateTime(l.at)}</td>
-                              <td className={`${table.td} whitespace-normal!`}>
-                                <div className="font-semibold">{l.kind_label}</div>
-                                <div className={`text-lg ${page.muted}`}>{[l.guest, l.reference, l.method].filter(Boolean).join(" · ")}</div>
-                              </td>
-                              <td className={`${table.td} hidden md:table-cell`}>{l.taken_by || "-"}</td>
-                              <td className={`${table.td} text-right! font-bold`}>{money(l.amount)}</td>
-                              <td className={table.td}>
-                                <AuditLink audit={auditFor({ staffId: l.taken_by_id, search: l.guest || l.reference, from: l.day })} />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </TableCard>
                   <Pagination page={blankPage.page} totalPages={blankPage.totalPages} onPage={blankPage.setPage} className="mt-0" />
                 </>
               )}
@@ -266,6 +268,7 @@ export default function ReceiptsTab() {
           </>
         )
       )}
+      </ReportScope>
     </section>
   );
 }

@@ -5,6 +5,7 @@ import SearchField, { matchesSearch } from "@/components/pms/SearchField";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
+import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
 import { btn, card, field, page, table } from "@/components/pms/ui";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { money } from "@/lib/pms/format";
@@ -17,12 +18,12 @@ import { num } from "./storeRequestUi";
 
 function Stat({ label, value, tip }) {
   return (
-    <div className={`${card.surface} p-5 flex flex-col gap-1`}>
-      <span className={field.label}>
+    <div data-report-figure className={`${card.surface} p-5 flex flex-col gap-1`}>
+      <span data-figure-part="label" className={field.label}>
         {label}
         <Tip id={tip} />
       </span>
-      <span className="text-3xl font-bold text-(--black)">{value}</span>
+      <span data-figure-part="value" className="text-3xl font-bold text-(--black)">{value}</span>
     </div>
   );
 }
@@ -34,8 +35,7 @@ function Section({ id, title, tip, head, rows, empty }) {
         {title}
         <Tip id={tip} />
       </h3>
-      <div className={table.card}>
-        <div className={table.scroll}>
+      <TableCard report={title}>
           <table className={table.el}>
             <thead>
               <tr className={table.headRow}>
@@ -67,8 +67,7 @@ function Section({ id, title, tip, head, rows, empty }) {
               )}
             </tbody>
           </table>
-        </div>
-      </div>
+      </TableCard>
     </section>
   );
 }
@@ -128,6 +127,8 @@ export default function InventoryReports() {
   const t = report?.totals;
   const qtyCell = (v, unit) => (v ? `${num(v)} ${unit}` : "—");
   return (
+    // The branded report sheet (ReportExport.jsx): the dates the report covers.
+    <ReportScope from={report?.from ?? from} to={report?.to ?? to}>
     <div className="w-full flex flex-col gap-8">
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2">
@@ -147,6 +148,7 @@ export default function InventoryReports() {
             Download CSV
           </button>
         )}
+        {report && <ReportExportAll />}
       </div>
 
       {error && <p className={field.error}>{error}</p>}
@@ -240,5 +242,6 @@ export default function InventoryReports() {
         )
       )}
     </div>
+    </ReportScope>
   );
 }

@@ -6,6 +6,7 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
@@ -106,6 +107,8 @@ export default function BalanceTab() {
         </p>
       </div>
 
+      {/* The scope starts at the date row, so Export Full Report can sit beside Download CSV. */}
+      <ReportScope from={shown?.from} to={shown?.to}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">
           <label htmlFor="balance-from" className={field.label}>From<Tip id="accounting.balance.from" /></label>
@@ -118,6 +121,7 @@ export default function BalanceTab() {
         {shown && (
           <button type="button" onClick={() => downloadCsv(shown)} className={btn.secondary}>Download CSV</button>
         )}
+        {shown && <ReportExportAll />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -152,43 +156,41 @@ export default function BalanceTab() {
             </div>
 
             {/* ---- Day by day */}
-            <div className={table.card}>
-              <div className={table.scroll}>
-                <table className={table.el}>
-                  <thead>
-                    <tr className={table.headRow}>
-                      <th className={`${table.th} ${table.stickyTh}`}>Day<Tip id="accounting.balance.col.day" /></th>
-                      <th className={`${table.th} text-right!`}>At the Start<Tip id="accounting.balance.col.start" /></th>
-                      <th className={`${table.th} text-right!`}>Charged<Tip id="accounting.balance.col.charged" /></th>
-                      <th className={`${table.th} text-right!`}>Paid<Tip id="accounting.balance.col.paid" /></th>
-                      <th className={`${table.th} text-right!`}>Paid Ahead<Tip id="accounting.balance.col.paidAhead" /></th>
-                      {shown.credit_given && <th className={`${table.th} text-right!`}>Credit Given<Tip id="accounting.balance.col.creditGiven" /></th>}
-                      <th className={`${table.th} text-right!`}>Paid Back<Tip id="accounting.balance.col.paidBack" /></th>
-                      <th className={`${table.th} text-right!`}>At the End<Tip id="accounting.balance.col.end" /></th>
-                      <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+            <TableCard report="Day by Day">
+              <table className={table.el}>
+                <thead>
+                  <tr className={table.headRow}>
+                    <th className={`${table.th} ${table.stickyTh}`}>Day<Tip id="accounting.balance.col.day" /></th>
+                    <th className={`${table.th} text-right!`}>At the Start<Tip id="accounting.balance.col.start" /></th>
+                    <th className={`${table.th} text-right!`}>Charged<Tip id="accounting.balance.col.charged" /></th>
+                    <th className={`${table.th} text-right!`}>Paid<Tip id="accounting.balance.col.paid" /></th>
+                    <th className={`${table.th} text-right!`}>Paid Ahead<Tip id="accounting.balance.col.paidAhead" /></th>
+                    {shown.credit_given && <th className={`${table.th} text-right!`}>Credit Given<Tip id="accounting.balance.col.creditGiven" /></th>}
+                    <th className={`${table.th} text-right!`}>Paid Back<Tip id="accounting.balance.col.paidBack" /></th>
+                    <th className={`${table.th} text-right!`}>At the End<Tip id="accounting.balance.col.end" /></th>
+                    <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.days.map((d) => (
+                    <tr key={d.date} className={table.row}>
+                      <td className={`${table.td} ${table.stickyTd}`}>
+                        {dayText(d.date)}
+                        {d.date === shown.today && <span className={`text-lg ${page.muted}`}> (so far)</span>}
+                      </td>
+                      <td className={`${table.td} text-right!`}>{signed(d.at_start)}</td>
+                      <td className={`${table.td} text-right!`}>{d.charged ? `+${signed(d.charged)}` : "-"}</td>
+                      <td className={`${table.td} text-right!`}>{d.paid ? signed(-d.paid) : "-"}</td>
+                      <td className={`${table.td} text-right!`}>{d.paid_ahead ? signed(-d.paid_ahead) : "-"}</td>
+                      {shown.credit_given && <td className={`${table.td} text-right!`}>{d.credit_given ? signed(-d.credit_given) : "-"}</td>}
+                      <td className={`${table.td} text-right!`}>{d.paid_back ? `+${signed(d.paid_back)}` : "-"}</td>
+                      <td className={`${table.td} text-right! font-bold`}>{signed(d.at_end)}</td>
+                      <td className={table.td}><AuditLink audit={auditFor({ from: d.date })} /></td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {shown.days.map((d) => (
-                      <tr key={d.date} className={table.row}>
-                        <td className={`${table.td} ${table.stickyTd}`}>
-                          {dayText(d.date)}
-                          {d.date === shown.today && <span className={`text-lg ${page.muted}`}> (so far)</span>}
-                        </td>
-                        <td className={`${table.td} text-right!`}>{signed(d.at_start)}</td>
-                        <td className={`${table.td} text-right!`}>{d.charged ? `+${signed(d.charged)}` : "-"}</td>
-                        <td className={`${table.td} text-right!`}>{d.paid ? signed(-d.paid) : "-"}</td>
-                        <td className={`${table.td} text-right!`}>{d.paid_ahead ? signed(-d.paid_ahead) : "-"}</td>
-                        {shown.credit_given && <td className={`${table.td} text-right!`}>{d.credit_given ? signed(-d.credit_given) : "-"}</td>}
-                        <td className={`${table.td} text-right!`}>{d.paid_back ? `+${signed(d.paid_back)}` : "-"}</td>
-                        <td className={`${table.td} text-right! font-bold`}>{signed(d.at_end)}</td>
-                        <td className={table.td}><AuditLink audit={auditFor({ from: d.date })} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                  ))}
+                </tbody>
+              </table>
+            </TableCard>
 
             {/* ---- Folios that don't add up */}
             <section className="w-full flex flex-col gap-4">
@@ -198,40 +200,38 @@ export default function BalanceTab() {
                   Every folio adds up: its balance is its charges, less what was paid on it, plus anything paid back or kept as credit, less the credit it used.
                 </p>
               ) : (
-                <div className={table.card}>
-                  <div className={table.scroll}>
-                    <table className={table.el}>
-                      <thead>
-                        <tr className={table.headRow}>
-                          <th className={`${table.th} ${table.stickyTh}`}>Folio<Tip id="accounting.balance.col.folio" /></th>
-                          <th className={`${table.th} text-right!`}>Should Be<Tip id="accounting.balance.col.shouldBe" /></th>
-                          <th className={`${table.th} text-right!`}>Balance<Tip id="accounting.balance.col.balance" /></th>
-                          <th className={`${table.th} text-right!`}>Difference<Tip id="accounting.balance.col.difference" /></th>
-                          <th className={table.th}>Actions<Tip id="accounting.balance.col.actions" /></th>
+                <TableCard report="Folios That Don't Add Up">
+                  <table className={table.el}>
+                    <thead>
+                      <tr className={table.headRow}>
+                        <th className={`${table.th} ${table.stickyTh}`}>Folio<Tip id="accounting.balance.col.folio" /></th>
+                        <th className={`${table.th} text-right!`}>Should Be<Tip id="accounting.balance.col.shouldBe" /></th>
+                        <th className={`${table.th} text-right!`}>Balance<Tip id="accounting.balance.col.balance" /></th>
+                        <th className={`${table.th} text-right!`}>Difference<Tip id="accounting.balance.col.difference" /></th>
+                        <th className={table.th}>Actions<Tip id="accounting.balance.col.actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shown.balance_off.map((f) => (
+                        <tr key={f.folio_id} className={table.row}>
+                          <td className={`${table.td} ${table.stickyTd}`}>
+                            <div className="font-semibold">{f.guest_name || "Guest"}</div>
+                            <div className={`text-lg ${page.muted}`}>{f.folio_number}</div>
+                          </td>
+                          <td className={`${table.td} text-right!`}>{signed(f.should_be)}</td>
+                          <td className={`${table.td} text-right!`}>{signed(f.balance)}</td>
+                          <td className={`${table.td} text-right! font-bold text-red-600`}>{signed(f.difference)}</td>
+                          <td className={table.td}>
+                            <div className={table.actions}>
+                              <button type="button" onClick={() => openFolio(f.folio_id)} className={btn.rowPrimary}>Folio</button>
+                              <AuditLink audit={auditFor({ search: f.guest_name || f.folio_number, from: f.opened, to: shown.today })} />
+                            </div>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {shown.balance_off.map((f) => (
-                          <tr key={f.folio_id} className={table.row}>
-                            <td className={`${table.td} ${table.stickyTd}`}>
-                              <div className="font-semibold">{f.guest_name || "Guest"}</div>
-                              <div className={`text-lg ${page.muted}`}>{f.folio_number}</div>
-                            </td>
-                            <td className={`${table.td} text-right!`}>{signed(f.should_be)}</td>
-                            <td className={`${table.td} text-right!`}>{signed(f.balance)}</td>
-                            <td className={`${table.td} text-right! font-bold text-red-600`}>{signed(f.difference)}</td>
-                            <td className={table.td}>
-                              <div className={table.actions}>
-                                <button type="button" onClick={() => openFolio(f.folio_id)} className={btn.rowPrimary}>Folio</button>
-                                <AuditLink audit={auditFor({ search: f.guest_name || f.folio_number, from: f.opened, to: shown.today })} />
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableCard>
               )}
             </section>
 
@@ -242,49 +242,48 @@ export default function BalanceTab() {
                 <p className={`text-xl ${page.muted}`}>
                   Their balance adds up, so what is owed is right - but the Charged or Paid figure the folio shows doesn&apos;t match its records.
                 </p>
-                <div className={table.card}>
-                  <div className={table.scroll}>
-                    <table className={table.el}>
-                      <thead>
-                        <tr className={table.headRow}>
-                          <th className={`${table.th} ${table.stickyTh}`}>Folio<Tip id="accounting.balance.col.folio" /></th>
-                          <th className={`${table.th} text-right!`}>Charged Figure<Tip id="accounting.balance.col.chargedFigure" /></th>
-                          <th className={`${table.th} text-right!`}>Paid Figure<Tip id="accounting.balance.col.paidFigure" /></th>
-                          <th className={table.th}>Actions<Tip id="accounting.balance.col.actions" /></th>
+                <TableCard report="Folios Whose Figures Don't Match">
+                  <table className={table.el}>
+                    <thead>
+                      <tr className={table.headRow}>
+                        <th className={`${table.th} ${table.stickyTh}`}>Folio<Tip id="accounting.balance.col.folio" /></th>
+                        <th className={`${table.th} text-right!`}>Charged Figure<Tip id="accounting.balance.col.chargedFigure" /></th>
+                        <th className={`${table.th} text-right!`}>Paid Figure<Tip id="accounting.balance.col.paidFigure" /></th>
+                        <th className={table.th}>Actions<Tip id="accounting.balance.col.actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shown.figure_off.map((f) => (
+                        <tr key={f.folio_id} className={table.row}>
+                          <td className={`${table.td} ${table.stickyTd}`}>
+                            <div className="font-semibold">{f.guest_name || "Guest"}</div>
+                            <div className={`text-lg ${page.muted}`}>{f.folio_number}</div>
+                          </td>
+                          <td className={`${table.td} text-right!`}>
+                            <div>{money(f.total_amount)}</div>
+                            {f.charged_difference !== 0 && <div className="text-lg text-red-600">its lines: {signed(f.charged)}</div>}
+                          </td>
+                          <td className={`${table.td} text-right!`}>
+                            <div>{money(f.amount_paid)}</div>
+                            {f.paid_difference !== 0 && <div className="text-lg text-red-600">should be {signed(f.total_amount - f.balance)}</div>}
+                          </td>
+                          <td className={table.td}>
+                            <div className={table.actions}>
+                              <button type="button" onClick={() => openFolio(f.folio_id)} className={btn.rowPrimary}>Folio</button>
+                              <AuditLink audit={auditFor({ search: f.guest_name || f.folio_number, from: f.opened, to: shown.today })} />
+                            </div>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {shown.figure_off.map((f) => (
-                          <tr key={f.folio_id} className={table.row}>
-                            <td className={`${table.td} ${table.stickyTd}`}>
-                              <div className="font-semibold">{f.guest_name || "Guest"}</div>
-                              <div className={`text-lg ${page.muted}`}>{f.folio_number}</div>
-                            </td>
-                            <td className={`${table.td} text-right!`}>
-                              <div>{money(f.total_amount)}</div>
-                              {f.charged_difference !== 0 && <div className="text-lg text-red-600">its lines: {signed(f.charged)}</div>}
-                            </td>
-                            <td className={`${table.td} text-right!`}>
-                              <div>{money(f.amount_paid)}</div>
-                              {f.paid_difference !== 0 && <div className="text-lg text-red-600">should be {signed(f.total_amount - f.balance)}</div>}
-                            </td>
-                            <td className={table.td}>
-                              <div className={table.actions}>
-                                <button type="button" onClick={() => openFolio(f.folio_id)} className={btn.rowPrimary}>Folio</button>
-                                <AuditLink audit={auditFor({ search: f.guest_name || f.folio_number, from: f.opened, to: shown.today })} />
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableCard>
               </section>
             )}
           </>
         )
       )}
+      </ReportScope>
     </section>
   );
 }

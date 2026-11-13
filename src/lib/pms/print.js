@@ -28,7 +28,17 @@ export function printDocument(html) {
           setTimeout(done, 3000);
         }),
   );
-  Promise.all(loaded).then(() => {
+  // And for its images - a report sheet's logos - so none prints blank.
+  const images = [...doc.images].map((img) =>
+    img.complete
+      ? Promise.resolve()
+      : new Promise((done) => {
+          img.onload = done;
+          img.onerror = done;
+          setTimeout(done, 5000);
+        }),
+  );
+  Promise.all([...loaded, ...images]).then(() => {
     frame.contentWindow.focus();
     frame.contentWindow.print();
     // Gone once the print dialog has had it.

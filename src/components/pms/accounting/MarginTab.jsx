@@ -6,6 +6,7 @@ import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
@@ -92,6 +93,8 @@ export default function MarginTab() {
         </p>
       </div>
 
+      {/* The scope starts at the date row, so Export Full Report can sit beside Download CSV. */}
+      <ReportScope from={shown?.from} to={shown?.to}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">
           <label htmlFor="margin-from" className={field.label}>From<Tip id="accounting.margin.from" /></label>
@@ -104,6 +107,7 @@ export default function MarginTab() {
         {shown && shown.items.length > 0 && (
           <button type="button" onClick={() => downloadCsv(shown)} className={btn.secondary}>Download CSV</button>
         )}
+        {shown && shown.items.length > 0 && <ReportExportAll />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -137,56 +141,55 @@ export default function MarginTab() {
               <p className={`text-xl ${page.muted}`}>No food or drink was sold in these days.</p>
             ) : (
               <>
-                <div className={table.card}>
-                  <div className={table.scroll}>
-                    <table className={table.el}>
-                      <thead>
-                        <tr className={table.headRow}>
-                          <th className={`${table.th} ${table.stickyTh}`}>Item<Tip id="accounting.margin.col.item" /></th>
-                          <th className={`${table.th} text-right!`}>Sold<Tip id="accounting.margin.col.sold" /></th>
-                          <th className={`${table.th} text-right! hidden md:table-cell`}>Free<Tip id="accounting.margin.col.free" /></th>
-                          <th className={`${table.th} text-right!`}>Sales<Tip id="accounting.margin.col.sales" /></th>
-                          <th className={`${table.th} text-right!`}>Cost<Tip id="accounting.margin.col.cost" /></th>
-                          <th className={`${table.th} text-right!`}>Margin<Tip id="accounting.margin.col.margin" /></th>
-                          <th className={`${table.th} text-right! hidden md:table-cell`}>Margin %<Tip id="accounting.margin.col.marginPct" /></th>
-                          <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+                <TableCard report={"F&B Margin"}>
+                  <table className={table.el}>
+                    <thead>
+                      <tr className={table.headRow}>
+                        <th className={`${table.th} ${table.stickyTh}`}>Item<Tip id="accounting.margin.col.item" /></th>
+                        <th className={`${table.th} text-right!`}>Sold<Tip id="accounting.margin.col.sold" /></th>
+                        <th className={`${table.th} text-right! hidden md:table-cell`}>Free<Tip id="accounting.margin.col.free" /></th>
+                        <th className={`${table.th} text-right!`}>Sales<Tip id="accounting.margin.col.sales" /></th>
+                        <th className={`${table.th} text-right!`}>Cost<Tip id="accounting.margin.col.cost" /></th>
+                        <th className={`${table.th} text-right!`}>Margin<Tip id="accounting.margin.col.margin" /></th>
+                        <th className={`${table.th} text-right! hidden md:table-cell`}>Margin %<Tip id="accounting.margin.col.marginPct" /></th>
+                        <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paged.rows.map((i) => (
+                        <tr key={i.key} className={table.row}>
+                          <td className={`${table.td} ${table.stickyTd}`}>
+                            <div className="font-semibold">{i.name}</div>
+                            <div className={`text-lg ${page.muted}`}>
+                              {i.kind === "food" ? "Food" : "Drink"}
+                              {i.item_id ? "" : " · typed in, not from the menu"}
+                            </div>
+                          </td>
+                          <td className={`${table.td} text-right!`}>{i.sold}</td>
+                          <td className={`${table.td} text-right! hidden md:table-cell`}>{i.free || "-"}</td>
+                          <td className={`${table.td} text-right!`}>{money(i.sales)}</td>
+                          <td className={`${table.td} text-right!`}>
+                            {i.cost === null ? <span className="text-lg text-orange-700">No cost</span> : money(i.cost)}
+                          </td>
+                          <td className={`${table.td} text-right! font-bold ${i.margin !== null && i.margin < 0 ? "text-red-600" : ""}`}>
+                            {i.margin === null ? "-" : signed(i.margin)}
+                          </td>
+                          <td className={`${table.td} text-right! hidden md:table-cell`}>{i.margin_pct === null ? "-" : pct(i.margin_pct)}</td>
+                          <td className={table.td}>
+                            <AuditLink audit={auditFor({ search: i.name, from: shown.from, to: shown.to })} />
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {paged.rows.map((i) => (
-                          <tr key={i.key} className={table.row}>
-                            <td className={`${table.td} ${table.stickyTd}`}>
-                              <div className="font-semibold">{i.name}</div>
-                              <div className={`text-lg ${page.muted}`}>
-                                {i.kind === "food" ? "Food" : "Drink"}
-                                {i.item_id ? "" : " · typed in, not from the menu"}
-                              </div>
-                            </td>
-                            <td className={`${table.td} text-right!`}>{i.sold}</td>
-                            <td className={`${table.td} text-right! hidden md:table-cell`}>{i.free || "-"}</td>
-                            <td className={`${table.td} text-right!`}>{money(i.sales)}</td>
-                            <td className={`${table.td} text-right!`}>
-                              {i.cost === null ? <span className="text-lg text-orange-700">No cost</span> : money(i.cost)}
-                            </td>
-                            <td className={`${table.td} text-right! font-bold ${i.margin !== null && i.margin < 0 ? "text-red-600" : ""}`}>
-                              {i.margin === null ? "-" : signed(i.margin)}
-                            </td>
-                            <td className={`${table.td} text-right! hidden md:table-cell`}>{i.margin_pct === null ? "-" : pct(i.margin_pct)}</td>
-                            <td className={table.td}>
-                              <AuditLink audit={auditFor({ search: i.name, from: shown.from, to: shown.to })} />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableCard>
                 <Pagination page={paged.page} totalPages={paged.totalPages} onPage={paged.setPage} className="mt-0" />
               </>
             )}
           </>
         )
       )}
+      </ReportScope>
     </section>
   );
 }

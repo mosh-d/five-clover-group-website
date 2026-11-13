@@ -10,6 +10,7 @@ import { page, field, table, card } from "@/components/pms/ui";
 import { fetchOutOfOrderRanking } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
 import { Tip } from "@/components/pms/Tip";
+import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
 
 // Decision Support (Head Office, owner 2026-10-01): insights pulled from the
 // branches' own records, each with a plain suggestion of what to do. First
@@ -85,32 +86,30 @@ function suggestion(group) {
 }
 
 // A small ranking table: its first column pinned, as every PMS table's is.
-function FocusTable({ title, head, rows, tip, headTips = [] }) {
+function FocusTable({ title, head, rows, tip, headTips = [], report }) {
   return (
     <div className="w-full flex flex-col gap-2">
       <h3 className="text-2xl font-semibold text-(--text-color)">{title}{tip && <Tip id={tip} />}</h3>
-      <div className={table.card}>
-        <div className={table.scroll}>
-          <table className={table.el}>
-            <thead>
-              <tr className={table.headRow}>
-                {head.map((h, i) => (
-                  <th key={i} className={`${table.th} ${i === 0 ? table.stickyTh : ""}`}>{h}{headTips[i] && <Tip id={headTips[i]} />}</th>
+      <TableCard report={report}>
+        <table className={table.el}>
+          <thead>
+            <tr className={table.headRow}>
+              {head.map((h, i) => (
+                <th key={i} className={`${table.th} ${i === 0 ? table.stickyTh : ""}`}>{h}{headTips[i] && <Tip id={headTips[i]} />}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((cells) => (
+              <tr key={cells[0]} className={table.row}>
+                {cells.map((c, i) => (
+                  <td key={i} className={`${table.td} ${i === 0 ? `${table.stickyTd} font-semibold` : ""} ${i === cells.length - 1 ? "font-semibold" : ""}`}>{c}</td>
                 ))}
               </tr>
-            </thead>
-            <tbody>
-              {rows.map((cells) => (
-                <tr key={cells[0]} className={table.row}>
-                  {cells.map((c, i) => (
-                    <td key={i} className={`${table.td} ${i === 0 ? `${table.stickyTd} font-semibold` : ""} ${i === cells.length - 1 ? "font-semibold" : ""}`}>{c}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            ))}
+          </tbody>
+        </table>
+      </TableCard>
     </div>
   );
 }
@@ -203,6 +202,14 @@ export default function DecisionSupportPage() {
           </div>
         )}
 
+        {data && (
+        <ReportScope period={`Up to the night of ${dateText(data.last_night)}`}>
+        {rooms.length > 0 && (
+          <div className="w-full flex justify-end">
+            <ReportExportAll />
+          </div>
+        )}
+
         {categories.length > 0 && (
           <div className={`${card.surface} border-2 border-(--emphasis) p-8 flex flex-col gap-3`}>
             <p className="text-xl font-bold uppercase tracking-wide text-(--emphasis)">{costly.length > 0 ? "Suggested: fix these first" : "Suggested"}<Tip id="decisionSupport.suggested" /></p>
@@ -224,50 +231,48 @@ export default function DecisionSupportPage() {
           // One above the other: side by side, the room-type table ran
           // wider than its half and hid its last column.
           <div className="w-full flex flex-col gap-6">
-            <FocusTable title="By branch" tip="decisionSupport.byBranch" head={["Branch", <OooLabel key="ooo" label="Rooms OOO" />, "Potential Loss"]} headTips={["decisionSupport.col.branch", null, "decisionSupport.col.loss"]} rows={byBranch} />
-            <FocusTable title="By room type" tip="decisionSupport.byType" head={["Room Type", <OooLabel key="ooo" />, "Sold-Out Nights", "Potential Loss"]} headTips={["decisionSupport.col.roomType", null, "decisionSupport.col.soldOut", "decisionSupport.col.loss"]} rows={byType} />
+            <FocusTable title="By branch" tip="decisionSupport.byBranch" head={["Branch", <OooLabel key="ooo" label="Rooms OOO" />, "Potential Loss"]} headTips={["decisionSupport.col.branch", null, "decisionSupport.col.loss"]} rows={byBranch} report="By branch" />
+            <FocusTable title="By room type" tip="decisionSupport.byType" head={["Room Type", <OooLabel key="ooo" />, "Sold-Out Nights", "Potential Loss"]} headTips={["decisionSupport.col.roomType", null, "decisionSupport.col.soldOut", "decisionSupport.col.loss"]} rows={byType} report="By room type" />
           </div>
         )}
 
         {rooms.length > 0 && (
           <div className="w-full flex flex-col gap-2">
             <h3 className="text-2xl font-semibold text-(--text-color)">Every room out of order, ranked<Tip id="decisionSupport.ranked" /></h3>
-            <div className={table.card}>
-              <div className={table.scroll}>
-                <table className={table.el}>
-                  <thead>
-                    <tr className={table.headRow}>
-                      <th className={`${table.th} ${table.stickyTh}`}>Room<Tip id="decisionSupport.col.room" /></th>
-                      <th className={table.th}>Branch<Tip id="decisionSupport.col.branch" /></th>
-                      <th className={table.th}>Room Type<Tip id="critical.col.roomType" /></th>
-                      <th className={table.th}>Price a Night<Tip id="decisionSupport.col.price" /></th>
-                      <th className={table.th}><OooLabel label="OOO For" /></th>
-                      <th className={table.th}>Sold-Out Nights<Tip id="decisionSupport.col.roomSoldOut" /></th>
-                      <th className={table.th}>Potential Loss<Tip id="decisionSupport.col.roomLoss" /></th>
-                      <th className={table.th}>Why<Tip id="critical.col.why" /></th>
+            <TableCard report="Every room out of order, ranked">
+              <table className={table.el}>
+                <thead>
+                  <tr className={table.headRow}>
+                    <th className={`${table.th} ${table.stickyTh}`}>Room<Tip id="decisionSupport.col.room" /></th>
+                    <th className={table.th}>Branch<Tip id="decisionSupport.col.branch" /></th>
+                    <th className={table.th}>Room Type<Tip id="critical.col.roomType" /></th>
+                    <th className={table.th}>Price a Night<Tip id="decisionSupport.col.price" /></th>
+                    <th className={table.th}><OooLabel label="OOO For" /></th>
+                    <th className={table.th}>Sold-Out Nights<Tip id="decisionSupport.col.roomSoldOut" /></th>
+                    <th className={table.th}>Potential Loss<Tip id="decisionSupport.col.roomLoss" /></th>
+                    <th className={table.th}>Why<Tip id="critical.col.why" /></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rooms.map((r, i) => (
+                    <tr key={r.id} className={table.row}>
+                      <td className={`${table.td} ${table.stickyTd} font-semibold`}>
+                        <span className="text-(--text-color)/55 font-normal">{i + 1}.</span> {r.room_number}
+                      </td>
+                      <td className={table.td}>{r.branch_name}</td>
+                      <td className={table.td}>
+                        {r.room_type_name} <span className={page.muted}>({r.rooms_in_type} rooms)</span>
+                      </td>
+                      <td className={table.td}>{naira(r.price)}</td>
+                      <td className={table.td}>{r.since ? plural(daysOut(r.since, now), "day") : "Not recorded"}</td>
+                      <td className={table.td}>{r.since ? `${r.sold_out_nights} of ${r.nights_out}` : "—"}</td>
+                      <td className={`${table.td} font-semibold ${r.lost_up_to > 0 ? "text-red-700" : ""}`}>{naira(r.lost_up_to)}</td>
+                      <td className={`${table.td} whitespace-normal! min-w-[22rem]`}>{r.reason || "Not recorded"}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {rooms.map((r, i) => (
-                      <tr key={r.id} className={table.row}>
-                        <td className={`${table.td} ${table.stickyTd} font-semibold`}>
-                          <span className="text-(--text-color)/55 font-normal">{i + 1}.</span> {r.room_number}
-                        </td>
-                        <td className={table.td}>{r.branch_name}</td>
-                        <td className={table.td}>
-                          {r.room_type_name} <span className={page.muted}>({r.rooms_in_type} rooms)</span>
-                        </td>
-                        <td className={table.td}>{naira(r.price)}</td>
-                        <td className={table.td}>{r.since ? plural(daysOut(r.since, now), "day") : "Not recorded"}</td>
-                        <td className={table.td}>{r.since ? `${r.sold_out_nights} of ${r.nights_out}` : "—"}</td>
-                        <td className={`${table.td} font-semibold ${r.lost_up_to > 0 ? "text-red-700" : ""}`}>{naira(r.lost_up_to)}</td>
-                        <td className={`${table.td} whitespace-normal! min-w-[22rem]`}>{r.reason || "Not recorded"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                  ))}
+                </tbody>
+              </table>
+            </TableCard>
           </div>
         )}
 
@@ -280,6 +285,8 @@ export default function DecisionSupportPage() {
             have sold; a single room&apos;s own row is its high end. Rooms out of order or set aside are taken from their current status; earlier
             status changes aren&apos;t recorded.
           </p>
+        )}
+        </ReportScope>
         )}
       </section>
     </div>

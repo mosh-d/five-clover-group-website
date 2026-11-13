@@ -11,6 +11,7 @@ import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import NonGuestCreditsPanel from "@/components/pms/NonGuestCreditsPanel";
 import { Tip } from "@/components/pms/Tip";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { addDaysISO } from "@/lib/pms/dates";
 import { auditFor } from "./audit";
@@ -288,6 +289,8 @@ export default function ReceivablesTab() {
       <Notice message={notice} onDismiss={() => setNotice(null)} />
       {error && <p className={`${field.error} w-full`}>{error}</p>}
 
+      {/* Owed as at today: the report sheet's date (ReportExport.jsx). */}
+      <ReportScope date={view?.today}>
       {!view && !error ? (
         <div className="flex justify-center py-10 w-full">
           <LoadingSpinner size="lg" />
@@ -296,11 +299,12 @@ export default function ReceivablesTab() {
         view && (
           <>
             <div className="flex flex-wrap items-center gap-3">
-              <span className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong>Left owing</strong>: {money(view.totals.city_ledger)}</span>
-              <span className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong>In house</strong>: {money(view.totals.guest_ledger)}</span>
-              <span className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong>Non-guest bills</strong>: {money(view.totals.non_guest)}</span>
+              <span data-report-figure className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong data-figure-part="label">Left owing</strong>: <span data-figure-part="value">{money(view.totals.city_ledger)}</span></span>
+              <span data-report-figure className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong data-figure-part="label">In house</strong>: <span data-figure-part="value">{money(view.totals.guest_ledger)}</span></span>
+              <span data-report-figure className="px-4 py-2 rounded-lg text-xl bg-black/5"><strong data-figure-part="label">Non-guest bills</strong>: <span data-figure-part="value">{money(view.totals.non_guest)}</span></span>
               <Tip id="accounting.receivables.totals" />
               <button type="button" onClick={() => downloadCsv(view)} className={btn.secondary}>Download CSV</button>
+              <ReportExportAll />
             </div>
 
             {/* ---- City ledger */}
@@ -310,37 +314,35 @@ export default function ReceivablesTab() {
               {city.length === 0 ? (
                 <p className={`text-xl ${page.muted}`}>Nobody who left owes anything{bucket ? " in this age band" : ""}.</p>
               ) : (
-                <div className={table.card}>
-                  <div className={table.scroll}>
-                    <table className={table.el}>
-                      <thead>
-                        <tr className={table.headRow}>
-                          <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="accounting.receivables.col.guest" /></th>
-                          <th className={table.th}>Left<Tip id="accounting.receivables.col.left" /></th>
-                          <th className={`${table.th} text-right!`}>Owes<Tip id="accounting.receivables.col.owes" /></th>
-                          <th className={`${table.th} hidden md:table-cell`}>Last Payment<Tip id="accounting.receivables.col.lastPayment" /></th>
-                          <th className={`${table.th} hidden lg:table-cell`}>Latest Note<Tip id="accounting.receivables.col.note" /></th>
-                          <th className={table.th}>Actions<Tip id="accounting.receivables.col.actions" /></th>
+                <TableCard report="Left Owing">
+                  <table className={table.el}>
+                    <thead>
+                      <tr className={table.headRow}>
+                        <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="accounting.receivables.col.guest" /></th>
+                        <th className={table.th}>Left<Tip id="accounting.receivables.col.left" /></th>
+                        <th className={`${table.th} text-right!`}>Owes<Tip id="accounting.receivables.col.owes" /></th>
+                        <th className={`${table.th} hidden md:table-cell`}>Last Payment<Tip id="accounting.receivables.col.lastPayment" /></th>
+                        <th className={`${table.th} hidden lg:table-cell`}>Latest Note<Tip id="accounting.receivables.col.note" /></th>
+                        <th className={table.th}>Actions<Tip id="accounting.receivables.col.actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cityPage.rows.map((c) => (
+                        <tr key={c.folio_id} className={table.row}>
+                          <td className={`${table.td} ${table.stickyTd}`}>{guestCell(c)}</td>
+                          <td className={table.td}>
+                            <div>{formatDate(`${c.owed_since}T12:00:00Z`)}</div>
+                            <div className={`text-lg ${c.days > 30 ? "text-red-600 font-semibold" : page.muted}`}>{ago(c.days)}</div>
+                          </td>
+                          <td className={`${table.td} text-right! font-bold text-red-600`}>{money(c.guest_due)}</td>
+                          <td className={`${table.td} hidden md:table-cell`}><LastPayment payment={c.last_payment} /></td>
+                          <td className={`${table.td} hidden lg:table-cell`}><LatestNote note={c.latest_note} /></td>
+                          <td className={table.td}>{actions(c)}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {cityPage.rows.map((c) => (
-                          <tr key={c.folio_id} className={table.row}>
-                            <td className={`${table.td} ${table.stickyTd}`}>{guestCell(c)}</td>
-                            <td className={table.td}>
-                              <div>{formatDate(`${c.owed_since}T12:00:00Z`)}</div>
-                              <div className={`text-lg ${c.days > 30 ? "text-red-600 font-semibold" : page.muted}`}>{ago(c.days)}</div>
-                            </td>
-                            <td className={`${table.td} text-right! font-bold text-red-600`}>{money(c.guest_due)}</td>
-                            <td className={`${table.td} hidden md:table-cell`}><LastPayment payment={c.last_payment} /></td>
-                            <td className={`${table.td} hidden lg:table-cell`}><LatestNote note={c.latest_note} /></td>
-                            <td className={table.td}>{actions(c)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableCard>
               )}
               <Pagination page={cityPage.page} totalPages={cityPage.totalPages} onPage={cityPage.setPage} className="mt-0" />
             </section>
@@ -351,34 +353,32 @@ export default function ReceivablesTab() {
               {view.guest_ledger.length === 0 ? (
                 <p className={`text-xl ${page.muted}`}>Nobody in the house owes anything.</p>
               ) : (
-                <div className={table.card}>
-                  <div className={table.scroll}>
-                    <table className={table.el}>
-                      <thead>
-                        <tr className={table.headRow}>
-                          <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="accounting.receivables.col.guest" /></th>
-                          <th className={`${table.th} hidden md:table-cell`}>Room<Tip id="accounting.receivables.col.room" /></th>
-                          <th className={`${table.th} hidden md:table-cell`}>Due Out<Tip id="accounting.receivables.col.dueOut" /></th>
-                          <th className={`${table.th} text-right!`}>Owes Now<Tip id="accounting.receivables.col.owesNow" /></th>
-                          <th className={`${table.th} hidden lg:table-cell`}>Latest Note<Tip id="accounting.receivables.col.note" /></th>
-                          <th className={table.th}>Actions<Tip id="accounting.receivables.col.actions" /></th>
+                <TableCard report="In House">
+                  <table className={table.el}>
+                    <thead>
+                      <tr className={table.headRow}>
+                        <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="accounting.receivables.col.guest" /></th>
+                        <th className={`${table.th} hidden md:table-cell`}>Room<Tip id="accounting.receivables.col.room" /></th>
+                        <th className={`${table.th} hidden md:table-cell`}>Due Out<Tip id="accounting.receivables.col.dueOut" /></th>
+                        <th className={`${table.th} text-right!`}>Owes Now<Tip id="accounting.receivables.col.owesNow" /></th>
+                        <th className={`${table.th} hidden lg:table-cell`}>Latest Note<Tip id="accounting.receivables.col.note" /></th>
+                        <th className={table.th}>Actions<Tip id="accounting.receivables.col.actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {housePage.rows.map((g) => (
+                        <tr key={g.folio_id} className={table.row}>
+                          <td className={`${table.td} ${table.stickyTd}`}>{guestCell(g)}</td>
+                          <td className={`${table.td} hidden md:table-cell`}>{g.rooms || "-"}</td>
+                          <td className={`${table.td} hidden md:table-cell`}>{formatDate(g.check_out)}</td>
+                          <td className={`${table.td} text-right! font-bold text-red-600`}>{money(g.guest_due)}</td>
+                          <td className={`${table.td} hidden lg:table-cell`}><LatestNote note={g.latest_note} /></td>
+                          <td className={table.td}>{actions(g)}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {housePage.rows.map((g) => (
-                          <tr key={g.folio_id} className={table.row}>
-                            <td className={`${table.td} ${table.stickyTd}`}>{guestCell(g)}</td>
-                            <td className={`${table.td} hidden md:table-cell`}>{g.rooms || "-"}</td>
-                            <td className={`${table.td} hidden md:table-cell`}>{formatDate(g.check_out)}</td>
-                            <td className={`${table.td} text-right! font-bold text-red-600`}>{money(g.guest_due)}</td>
-                            <td className={`${table.td} hidden lg:table-cell`}><LatestNote note={g.latest_note} /></td>
-                            <td className={table.td}>{actions(g)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableCard>
               )}
               <Pagination page={housePage.page} totalPages={housePage.totalPages} onPage={housePage.setPage} className="mt-0" />
               {view.in_house_settled > 0 && (
@@ -395,42 +395,40 @@ export default function ReceivablesTab() {
               {nonGuest.length === 0 ? (
                 <p className={`text-xl ${page.muted}`}>No open non-guest bill owes anything{ngBucket ? " in this age band" : ""}.</p>
               ) : (
-                <div className={table.card}>
-                  <div className={table.scroll}>
-                    <table className={table.el}>
-                      <thead>
-                        <tr className={table.headRow}>
-                          <th className={`${table.th} ${table.stickyTh}`}>Bill<Tip id="accounting.receivables.col.bill" /></th>
-                          <th className={table.th}>Opened<Tip id="accounting.receivables.col.opened" /></th>
-                          <th className={`${table.th} text-right!`}>Owes<Tip id="accounting.receivables.col.owes" /></th>
-                          <th className={`${table.th} hidden md:table-cell`}>Last Payment<Tip id="accounting.receivables.col.lastPayment" /></th>
-                          <th className={`${table.th} hidden lg:table-cell`}>Latest Note<Tip id="accounting.receivables.col.note" /></th>
-                          <th className={table.th}>Actions<Tip id="accounting.receivables.col.actions" /></th>
+                <TableCard report="Non-Guest Bills">
+                  <table className={table.el}>
+                    <thead>
+                      <tr className={table.headRow}>
+                        <th className={`${table.th} ${table.stickyTh}`}>Bill<Tip id="accounting.receivables.col.bill" /></th>
+                        <th className={table.th}>Opened<Tip id="accounting.receivables.col.opened" /></th>
+                        <th className={`${table.th} text-right!`}>Owes<Tip id="accounting.receivables.col.owes" /></th>
+                        <th className={`${table.th} hidden md:table-cell`}>Last Payment<Tip id="accounting.receivables.col.lastPayment" /></th>
+                        <th className={`${table.th} hidden lg:table-cell`}>Latest Note<Tip id="accounting.receivables.col.note" /></th>
+                        <th className={table.th}>Actions<Tip id="accounting.receivables.col.actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ngPage.rows.map((n) => (
+                        <tr key={n.non_guest_folio_id} className={table.row}>
+                          <td className={`${table.td} ${table.stickyTd}`}>
+                            <div className="flex flex-col">
+                              <span className="font-semibold">{n.guest_name || "Unnamed"}</span>
+                              <span className={`text-lg ${page.muted}`}>{[n.folio_number, n.service, n.phone].filter(Boolean).join(" · ")}</span>
+                            </div>
+                          </td>
+                          <td className={table.td}>
+                            <div>{formatDate(`${n.owed_since}T12:00:00Z`)}</div>
+                            <div className={`text-lg ${n.days > 30 ? "text-red-600 font-semibold" : page.muted}`}>{ago(n.days)}</div>
+                          </td>
+                          <td className={`${table.td} text-right! font-bold text-red-600`}>{money(n.balance)}</td>
+                          <td className={`${table.td} hidden md:table-cell`}><LastPayment payment={n.last_payment} /></td>
+                          <td className={`${table.td} hidden lg:table-cell`}><LatestNote note={n.latest_note} /></td>
+                          <td className={table.td}>{actions(n, { statement: false })}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {ngPage.rows.map((n) => (
-                          <tr key={n.non_guest_folio_id} className={table.row}>
-                            <td className={`${table.td} ${table.stickyTd}`}>
-                              <div className="flex flex-col">
-                                <span className="font-semibold">{n.guest_name || "Unnamed"}</span>
-                                <span className={`text-lg ${page.muted}`}>{[n.folio_number, n.service, n.phone].filter(Boolean).join(" · ")}</span>
-                              </div>
-                            </td>
-                            <td className={table.td}>
-                              <div>{formatDate(`${n.owed_since}T12:00:00Z`)}</div>
-                              <div className={`text-lg ${n.days > 30 ? "text-red-600 font-semibold" : page.muted}`}>{ago(n.days)}</div>
-                            </td>
-                            <td className={`${table.td} text-right! font-bold text-red-600`}>{money(n.balance)}</td>
-                            <td className={`${table.td} hidden md:table-cell`}><LastPayment payment={n.last_payment} /></td>
-                            <td className={`${table.td} hidden lg:table-cell`}><LatestNote note={n.latest_note} /></td>
-                            <td className={table.td}>{actions(n, { statement: false })}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableCard>
               )}
               <Pagination page={ngPage.page} totalPages={ngPage.totalPages} onPage={ngPage.setPage} className="mt-0" />
             </section>
@@ -452,6 +450,7 @@ export default function ReceivablesTab() {
           }}
         />
       )}
+      </ReportScope>
       {statementFor && <StatementDialog folioId={statementFor} onClose={() => setStatementFor(null)} />}
     </section>
   );

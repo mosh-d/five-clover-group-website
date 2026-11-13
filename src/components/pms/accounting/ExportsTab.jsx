@@ -6,6 +6,7 @@ import DateInput from "@/components/pms/DateInput";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Notice from "@/components/pms/Notice";
 import { Tip } from "@/components/pms/Tip";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
@@ -282,6 +283,7 @@ export default function ExportsTab() {
       {/* ---- The journal */}
       <section className="w-full flex flex-col gap-4">
         <h3 className="text-2xl font-bold text-(--black)">Journal<Tip id="accounting.exports.journal" /></h3>
+        <ReportScope name="Journal" from={shown?.from ?? from} to={shown?.to ?? to}>
         <div className="flex flex-wrap items-end gap-6">
           <div className="flex flex-col gap-2">
             <label htmlFor="journal-from" className={field.label}>From<Tip id="accounting.exports.from" /></label>
@@ -321,6 +323,7 @@ export default function ExportsTab() {
                 <button type="button" onClick={download} disabled={downloading || posted.length === 0} className={btn.secondary}>
                   {downloading ? "Downloading..." : "Download CSV"}
                 </button>
+                {posted.length > 0 && <ReportExportAll />}
               </div>
               {shown.no_code.length > 0 && (
                 <p className="text-xl text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
@@ -330,46 +333,44 @@ export default function ExportsTab() {
                 </p>
               )}
 
-              <div className={table.card}>
-                <div className={table.scroll}>
-                  <table className={table.el}>
-                    <thead>
-                      <tr className={table.headRow}>
-                        <th className={`${table.th} ${table.stickyTh}`}>Day<Tip id="accounting.exports.col.day" /></th>
-                        <th className={`${table.th} hidden md:table-cell`}>Entry<Tip id="accounting.exports.col.journalNo" /></th>
-                        <th className={`${table.th} text-right!`}>Lines<Tip id="accounting.exports.col.lines" /></th>
-                        <th className={`${table.th} text-right!`}>Debits<Tip id="accounting.exports.col.debits" /></th>
-                        <th className={`${table.th} text-right! hidden md:table-cell`}>Credits<Tip id="accounting.exports.col.credits" /></th>
-                        <th className={table.th}>Actions<Tip id="accounting.exports.col.actions" /></th>
+              <TableCard report="Journal">
+                <table className={table.el}>
+                  <thead>
+                    <tr className={table.headRow}>
+                      <th className={`${table.th} ${table.stickyTh}`}>Day<Tip id="accounting.exports.col.day" /></th>
+                      <th className={`${table.th} hidden md:table-cell`}>Entry<Tip id="accounting.exports.col.journalNo" /></th>
+                      <th className={`${table.th} text-right!`}>Lines<Tip id="accounting.exports.col.lines" /></th>
+                      <th className={`${table.th} text-right!`}>Debits<Tip id="accounting.exports.col.debits" /></th>
+                      <th className={`${table.th} text-right! hidden md:table-cell`}>Credits<Tip id="accounting.exports.col.credits" /></th>
+                      <th className={table.th}>Actions<Tip id="accounting.exports.col.actions" /></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shown.days.map((d) => (
+                      <tr key={d.date} className={table.row}>
+                        <td className={`${table.td} ${table.stickyTd}`}>
+                          {dayText(d.date)}
+                          {d.date === shown.today && <span className={`text-lg ${page.muted}`}> (so far)</span>}
+                        </td>
+                        <td className={`${table.td} hidden md:table-cell font-mono text-xl`}>{d.lines.length ? d.journal_no : "-"}</td>
+                        <td className={`${table.td} text-right!`}>{d.lines.length || "-"}</td>
+                        <td className={`${table.td} text-right!`}>{d.lines.length ? money(d.debit) : "-"}</td>
+                        <td className={`${table.td} text-right! hidden md:table-cell ${d.debit !== d.credit ? "text-red-600 font-bold" : ""}`}>{d.lines.length ? money(d.credit) : "-"}</td>
+                        <td className={table.td}>
+                          <div className={table.actions}>
+                            {d.lines.length > 0 && (
+                              <button type="button" onClick={() => setOpenDay(openDay === d.date ? null : d.date)} className={btn.rowSecondary}>
+                                {openDay === d.date ? "Hide" : "View"}
+                              </button>
+                            )}
+                            <AuditLink audit={auditFor({ from: d.date })} />
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {shown.days.map((d) => (
-                        <tr key={d.date} className={table.row}>
-                          <td className={`${table.td} ${table.stickyTd}`}>
-                            {dayText(d.date)}
-                            {d.date === shown.today && <span className={`text-lg ${page.muted}`}> (so far)</span>}
-                          </td>
-                          <td className={`${table.td} hidden md:table-cell font-mono text-xl`}>{d.lines.length ? d.journal_no : "-"}</td>
-                          <td className={`${table.td} text-right!`}>{d.lines.length || "-"}</td>
-                          <td className={`${table.td} text-right!`}>{d.lines.length ? money(d.debit) : "-"}</td>
-                          <td className={`${table.td} text-right! hidden md:table-cell ${d.debit !== d.credit ? "text-red-600 font-bold" : ""}`}>{d.lines.length ? money(d.credit) : "-"}</td>
-                          <td className={table.td}>
-                            <div className={table.actions}>
-                              {d.lines.length > 0 && (
-                                <button type="button" onClick={() => setOpenDay(openDay === d.date ? null : d.date)} className={btn.rowSecondary}>
-                                  {openDay === d.date ? "Hide" : "View"}
-                                </button>
-                              )}
-                              <AuditLink audit={auditFor({ from: d.date })} />
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    ))}
+                  </tbody>
+                </table>
+              </TableCard>
 
               {day && (
                 <div className="w-full flex flex-col gap-3">
@@ -377,47 +378,46 @@ export default function ExportsTab() {
                     {day.journal_no} - {dayText(day.date)}
                     <Tip id="accounting.exports.entry" />
                   </h4>
-                  <div className={table.card}>
-                    <div className={table.scroll}>
-                      <table className={table.el}>
-                        <thead>
-                          <tr className={table.headRow}>
-                            <th className={`${table.th} ${table.stickyTh}`}>Account<Tip id="accounting.exports.lines.col.account" /></th>
-                            <th className={table.th}>Description<Tip id="accounting.exports.lines.col.description" /></th>
-                            <th className={`${table.th} text-right!`}>Debit<Tip id="accounting.exports.lines.col.debit" /></th>
-                            <th className={`${table.th} text-right!`}>Credit<Tip id="accounting.exports.lines.col.credit" /></th>
-                            <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+                  <TableCard report={`${day.journal_no} - ${dayText(day.date)}`}>
+                    <table className={table.el}>
+                      <thead>
+                        <tr className={table.headRow}>
+                          <th className={`${table.th} ${table.stickyTh}`}>Account<Tip id="accounting.exports.lines.col.account" /></th>
+                          <th className={table.th}>Description<Tip id="accounting.exports.lines.col.description" /></th>
+                          <th className={`${table.th} text-right!`}>Debit<Tip id="accounting.exports.lines.col.debit" /></th>
+                          <th className={`${table.th} text-right!`}>Credit<Tip id="accounting.exports.lines.col.credit" /></th>
+                          <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {day.lines.map((l, i) => (
+                          <tr key={`${l.key}-${l.description}-${i}`} className={table.row}>
+                            <td className={`${table.td} ${table.stickyTd}`}>
+                              <div>{l.name}</div>
+                              <div className={`text-lg ${l.code ? page.muted : "text-orange-700"}`}>{l.code || "no code yet"}</div>
+                            </td>
+                            <td className={`${table.td} whitespace-normal!`}>{l.description}</td>
+                            <td className={`${table.td} text-right!`}>{l.debit ? money(l.debit) : ""}</td>
+                            <td className={`${table.td} text-right!`}>{l.credit ? money(l.credit) : ""}</td>
+                            <td className={table.td}><AuditLink audit={auditFor({ from: day.date })} /></td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {day.lines.map((l, i) => (
-                            <tr key={`${l.key}-${l.description}-${i}`} className={table.row}>
-                              <td className={`${table.td} ${table.stickyTd}`}>
-                                <div>{l.name}</div>
-                                <div className={`text-lg ${l.code ? page.muted : "text-orange-700"}`}>{l.code || "no code yet"}</div>
-                              </td>
-                              <td className={`${table.td} whitespace-normal!`}>{l.description}</td>
-                              <td className={`${table.td} text-right!`}>{l.debit ? money(l.debit) : ""}</td>
-                              <td className={`${table.td} text-right!`}>{l.credit ? money(l.credit) : ""}</td>
-                              <td className={table.td}><AuditLink audit={auditFor({ from: day.date })} /></td>
-                            </tr>
-                          ))}
-                          <tr className={`${table.row} bg-(--text-color)/3`}>
-                            <td className={`${table.td} ${table.stickyTd} font-bold`}>Total</td>
-                            <td className={table.td} />
-                            <td className={`${table.td} text-right! font-bold`}>{money(day.debit)}</td>
-                            <td className={`${table.td} text-right! font-bold`}>{money(day.credit)}</td>
-                            <td className={table.td} />
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                        ))}
+                        <tr className={`${table.row} bg-(--text-color)/3`}>
+                          <td className={`${table.td} ${table.stickyTd} font-bold`}>Total</td>
+                          <td className={table.td} />
+                          <td className={`${table.td} text-right! font-bold`}>{money(day.debit)}</td>
+                          <td className={`${table.td} text-right! font-bold`}>{money(day.credit)}</td>
+                          <td className={table.td} />
+                        </tr>
+                      </tbody>
+                    </table>
+                  </TableCard>
                 </div>
               )}
             </>
           )
         )}
+        </ReportScope>
       </section>
 
       {/* ---- Account codes */}

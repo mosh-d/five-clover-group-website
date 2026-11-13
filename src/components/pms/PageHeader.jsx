@@ -16,7 +16,8 @@ import { page } from "./ui";
 // </PageHeader>
 export default function PageHeader({ icon, tipId, title, badge, description, actions, children }) {
   return (
-    <header className={page.header}>
+    // data-report-page: the name a report sheet takes (ReportExport.jsx).
+    <header className={page.header} data-report-page={typeof title === "string" ? title : undefined}>
       <div className="w-full flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <PageHeading icon={icon} tipId={tipId} badge={badge}>
           {title}

@@ -9,6 +9,7 @@ import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
+import { ReportExportAll, ReportScope } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, card, field, page, table } from "@/components/pms/ui";
@@ -267,6 +268,8 @@ export default function CashUpTab() {
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
 
+      {/* The scope starts at the date row, so Export Full Report can sit beside Download CSV. */}
+      <ReportScope date={shown?.date}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">
           <label htmlFor="cashup-date" className={field.label}>Business Day<Tip id="accounting.cashUp.day" /></label>
@@ -275,6 +278,7 @@ export default function CashUpTab() {
         {shown && shown.people.length > 0 && (
           <button type="button" onClick={() => downloadCsv(shown)} className={btn.secondary}>Download CSV</button>
         )}
+        {shown && shown.people.length > 0 && <ReportExportAll />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -312,6 +316,7 @@ export default function CashUpTab() {
           </div>
         )
       )}
+      </ReportScope>
 
       {verifying && shown && (
         <VerifyDialog

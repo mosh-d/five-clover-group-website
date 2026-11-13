@@ -43,6 +43,7 @@ import { isAccountant, isReceptionist, isStorekeeper, isWaitron } from "@/lib/pm
 import { money, pct, formatDate, formatDateTime, formatPaymentMethod } from "@/lib/pms/format";
 import { canViewAuditTrail } from "@/components/pms/pmsNavItems";
 import { page, table } from "@/components/pms/ui";
+import { ReportScope, ReportExportAll } from "@/components/pms/ReportExport";
 import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBadge, StaffActivitySection, MoneyKindTag } from "@/components/pms/reportUi";
 
 import DateInput from "@/components/pms/DateInput";
@@ -375,13 +376,17 @@ function DashboardTab() {
       )}
 
       {!loading && data && (
+        <ReportScope from={period?.from || from} to={period?.to || to}>
         <div className="w-full flex flex-col gap-[2.5rem]">
-          {period && (
-            <p className="text-2xl text-[color:var(--text-color)]/76">
-              Showing data for <strong className="text-[color:var(--black)]">{period.from}</strong> to{" "}
-              <strong className="text-[color:var(--black)]">{period.to}</strong> ({period.days} business day{period.days !== 1 ? "s" : ""}, 6am to 6am)
-            </p>
-          )}
+          <div className="w-full flex flex-wrap items-center justify-between gap-4">
+            {period && (
+              <p className="text-2xl text-[color:var(--text-color)]/76">
+                Showing data for <strong className="text-[color:var(--black)]">{period.from}</strong> to{" "}
+                <strong className="text-[color:var(--black)]">{period.to}</strong> ({period.days} business day{period.days !== 1 ? "s" : ""}, 6am to 6am)
+              </p>
+            )}
+            <ReportExportAll />
+          </div>
 
           {/* Summary cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -399,15 +404,10 @@ function DashboardTab() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Revenue by room type */}
-            <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
-              <div className="px-6 py-5 border-b border-(--accent-2)">
-                <h2 className="text-3xl font-bold text-[color:var(--black)]">Revenue by Room Type<Tip id="reports.dash.revenueByType" /></h2>
-                <p className={`${page.sectionIntro} mt-1`}>Room and breakfast charged for the nights in this period</p>
-              </div>
+            <ReportSection report title="Revenue by Room Type" tip="reports.dash.revenueByType" subtitle="Room and breakfast charged for the nights in this period">
               {revenueByRoomType.length === 0 ? (
                 <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No data for this period.</p>
               ) : (
-                <div className={table.scroll}>
                   <table className="w-full text-2xl">
                     <thead>
                       <tr className={table.headRow}>
@@ -428,20 +428,14 @@ function DashboardTab() {
                       ))}
                     </tbody>
                   </table>
-                </div>
               )}
-            </div>
+            </ReportSection>
 
             {/* Payment methods */}
-            <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
-              <div className="px-6 py-5 border-b border-(--accent-2)">
-                <h2 className="text-3xl font-bold text-[color:var(--black)]">Payments by Method<Tip id="reports.dash.paymentsByMethod" /></h2>
-                <p className={`${page.sectionIntro} mt-1`}>Payments and non-guest sales, less payment and credit refunds — the same total as Analysis</p>
-              </div>
+            <ReportSection report title="Payments by Method" tip="reports.dash.paymentsByMethod" subtitle="Payments and non-guest sales, less payment and credit refunds — the same total as Analysis">
               {paymentMethods.length === 0 ? (
                 <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No payments recorded in this period.</p>
               ) : (
-                <div className={table.scroll}>
                   <table className="w-full text-2xl">
                     <thead>
                       <tr className={table.headRow}>
@@ -474,21 +468,15 @@ function DashboardTab() {
                       </tr>
                     </tfoot>
                   </table>
-                </div>
               )}
-            </div>
+            </ReportSection>
           </div>
 
           {/* Occupancy */}
-          <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden">
-            <div className="px-6 py-5 border-b border-(--accent-2)">
-              <h2 className="text-3xl font-bold text-[color:var(--black)]">Occupancy by Room Type<Tip id="reports.dash.occupancy" /></h2>
-              <p className={`${page.sectionIntro} mt-1`}>Room nights booked (no-shows left out) vs available across the selected period</p>
-            </div>
+          <ReportSection report title="Occupancy by Room Type" tip="reports.dash.occupancy" subtitle="Room nights booked (no-shows left out) vs available across the selected period">
             {occupancy.length === 0 ? (
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No data for this period.</p>
             ) : (
-              <div className={table.scroll}>
                 <table className="w-full text-2xl">
                   <thead>
                     <tr className={table.headRow}>
@@ -513,12 +501,12 @@ function DashboardTab() {
                     ))}
                   </tbody>
                 </table>
-              </div>
             )}
-          </div>
+          </ReportSection>
 
           <StaffActivitySection activity={data.staff_activity} money={money} />
         </div>
+        </ReportScope>
       )}
 
       {!loading && !data && !error && (
@@ -536,12 +524,12 @@ function DashboardTab() {
 // 2026-09-18).
 function TotalLine({ label, amount, note, emphasis = false, tip }) {
   return (
-    <div className="flex flex-col items-start gap-1 px-6 py-4 border-t border-(--accent-2)">
+    <div data-report-total className="flex flex-col items-start gap-1 px-6 py-4 border-t border-(--accent-2)">
       <p className="text-xl">
-        <span className="text-[color:var(--text-color)]/68 uppercase tracking-wide font-semibold">{label}{tip && <Tip id={tip} />}</span>{" "}
-        <span className={`font-bold ml-3 ${emphasis ? "text-[color:var(--emphasis)]" : "text-[color:var(--black)]"}`}>{money(amount)}</span>
+        <span data-total-part="label" className="text-[color:var(--text-color)]/68 uppercase tracking-wide font-semibold">{label}{tip && <Tip id={tip} />}</span>{" "}
+        <span data-total-part="value" className={`font-bold ml-3 ${emphasis ? "text-[color:var(--emphasis)]" : "text-[color:var(--black)]"}`}>{money(amount)}</span>
       </p>
-      {note && <p className="text-lg text-[color:var(--text-color)]/60">{note}</p>}
+      {note && <p data-total-part="note" className="text-lg text-[color:var(--text-color)]/60">{note}</p>}
     </div>
   );
 }
@@ -643,6 +631,7 @@ function ManifestTab() {
       {loading && <div className="flex justify-center py-20 w-full"><LoadingSpinner size="lg" /></div>}
 
       {!loading && data && (
+        <ReportScope date={data.report_date}>
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex flex-wrap items-center justify-between gap-4">
             <p className="text-2xl text-[color:var(--text-color)]/76">
@@ -652,10 +641,12 @@ function ManifestTab() {
               <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
               </Button>
+              <ReportExportAll />
             </div>
           </div>
 
           <ReportSection
+            report
             title="Check-Ins"
             subtitle="Everyone due to arrive this business day"
             tip="reports.manifest.checkIns"
@@ -672,6 +663,7 @@ function ManifestTab() {
           </ReportSection>
 
           <ReportSection
+            report
             title="Check-Outs"
             subtitle="Everyone due to depart this business day"
             tip="reports.manifest.checkOuts"
@@ -689,6 +681,7 @@ function ManifestTab() {
 
           <StaffActivitySection activity={data.staff_activity} money={money} />
         </div>
+        </ReportScope>
       )}
 
       {!loading && !data && !error && (
@@ -748,11 +741,13 @@ function AnalysisTab() {
       {loading && <div className="flex justify-center py-20 w-full"><LoadingSpinner size="lg" /></div>}
 
       {!loading && data && (
+        <ReportScope from={from} to={to}>
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex justify-end gap-3">
             <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex rounded-xl items-center gap-2">
               <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
             </Button>
+            <ReportExportAll />
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 w-full">
@@ -762,6 +757,7 @@ function AnalysisTab() {
           </div>
 
           <ReportSection
+            report
             title="All Payments"
             tip="reports.analysis.all"
             subtitle={`${data.payments.length} transaction(s)`}
@@ -801,6 +797,7 @@ function AnalysisTab() {
 
           <StaffActivitySection activity={data.staff_activity} money={money} />
         </div>
+        </ReportScope>
       )}
 
       {!loading && !data && !error && (
@@ -883,6 +880,7 @@ function PmsReportTab() {
       {loading && <div className="flex justify-center py-20 w-full"><LoadingSpinner size="lg" /></div>}
 
       {!loading && data && (
+        <ReportScope date={data.report_date}>
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex flex-wrap items-center justify-between gap-4">
             <p className="text-2xl text-[color:var(--text-color)]/76">
@@ -893,6 +891,7 @@ function PmsReportTab() {
               <Button onClick={handleExport} disabled={exporting} variant="secondary" className="text-xl! flex items-center rounded-xl gap-2">
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
               </Button>
+              <ReportExportAll />
             </div>
           </div>
 
@@ -904,7 +903,7 @@ function PmsReportTab() {
             </div>
           )}
 
-          <ReportSection title="Stay-Overs" subtitle="Currently in-house, not arriving or departing today" tip="reports.pms.stayOvers">
+          <ReportSection report title="Stay-Overs" subtitle="Currently in-house, not arriving or departing today" tip="reports.pms.stayOvers">
             {data.stay_overs.length === 0 ? (
               <EmptyRow />
             ) : (
@@ -927,7 +926,7 @@ function PmsReportTab() {
             )}
           </ReportSection>
 
-          <ReportSection title="Arrivals" tip="reports.pms.arrivals">
+          <ReportSection report title="Arrivals" tip="reports.pms.arrivals">
             {data.arrivals.length === 0 ? (
               <EmptyRow />
             ) : (
@@ -949,7 +948,7 @@ function PmsReportTab() {
             )}
           </ReportSection>
 
-          <ReportSection title="Departures" tip="reports.pms.departures">
+          <ReportSection report title="Departures" tip="reports.pms.departures">
             {data.departures.length === 0 ? (
               <EmptyRow />
             ) : (
@@ -971,7 +970,7 @@ function PmsReportTab() {
             )}
           </ReportSection>
 
-          <ReportSection title="Room Status" tip="reports.pms.roomStatus">
+          <ReportSection report title="Room Status" tip="reports.pms.roomStatus">
             <div className="flex flex-col gap-4 p-6">
               <RoomStatusLine label="Vacant" tip="reports.pms.vacant" count={data.room_status.vacant.length} rooms={roomNumberList(data.room_status.vacant)} />
               <RoomStatusLine label="Occupied" tip="reports.pms.occupied" count={data.room_status.occupied.length} rooms={roomNumberList(data.room_status.occupied)} />
@@ -984,6 +983,7 @@ function PmsReportTab() {
 
           <StaffActivitySection activity={data.staff_activity} money={money} />
         </div>
+        </ReportScope>
       )}
 
       {!loading && !data && !error && (
@@ -1059,6 +1059,7 @@ function AccommodationReportTab({ shift }) {
       {loading && <div className="flex justify-center py-20 w-full"><LoadingSpinner size="lg" /></div>}
 
       {!loading && data && (
+        <ReportScope date={data.report_date}>
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex flex-wrap items-center justify-between gap-4">
             <p className="text-2xl text-[color:var(--text-color)]/76">
@@ -1074,6 +1075,7 @@ function AccommodationReportTab({ shift }) {
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
               </Button>
+              <ReportExportAll />
             </div>
           </div>
 
@@ -1096,6 +1098,7 @@ function AccommodationReportTab({ shift }) {
               (Credit) on the day it was paid, and counting it again here would
               count it twice (owner, 2026-09-18). */}
           <ReportSection
+            report
             title="Rooms in Use"
             tip="reports.acc.rooms"
             footer={
@@ -1170,7 +1173,7 @@ function AccommodationReportTab({ shift }) {
               and any room set aside for a manager. Managers are never checked in,
               so there is no guest record to name; the row just says "Manager".
               Out-of-order rooms are not listed, since nobody stayed in them. */}
-          <ReportSection title="Non-Revenue Rooms" subtitle="Complementary stays and manager's rooms" tip="reports.acc.nonRevenue">
+          <ReportSection report title="Non-Revenue Rooms" subtitle="Complementary stays and manager's rooms" tip="reports.acc.nonRevenue">
             {(data.non_revenue_rooms || []).length === 0 ? (
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No complementary rooms or manager rooms in use.</p>
             ) : (
@@ -1197,12 +1200,13 @@ function AccommodationReportTab({ shift }) {
               refund stays listed under its method, tagged, and is netted out
               of that method's total. */}
           {(data.payments_by_method || []).length === 0 ? (
-            <ReportSection title="Payments by Method" subtitle="Every payment, non-guest sale, refund and credit refund this business day, grouped" tip="reports.acc.byMethod">
+            <ReportSection report title="Payments by Method" subtitle="Every payment, non-guest sale, refund and credit refund this business day, grouped" tip="reports.acc.byMethod">
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No payments recorded for this business day.</p>
             </ReportSection>
           ) : (
             data.payments_by_method.map((group) => (
               <ReportSection
+            report
                 key={group.payment_method}
                 title={`Payments — ${formatPaymentMethod(group.payment_method)}`}
                 tip="reports.acc.byMethod"
@@ -1240,6 +1244,7 @@ function AccommodationReportTab({ shift }) {
           {/* Both totals show even on a day with no advance payments, so the
               combined figure is always there to read off. */}
           <ReportSection
+            report
             title="Reservation (Credit)"
             subtitle="Advance payments recorded this business day"
             tip="reports.acc.reservation"
@@ -1273,6 +1278,7 @@ function AccommodationReportTab({ shift }) {
           </ReportSection>
 
           <ReportSection
+            report
             title="Debt Recovery"
             subtitle="Old debt cleared by a payment received this business day"
             tip="reports.acc.debt"
@@ -1304,7 +1310,7 @@ function AccommodationReportTab({ shift }) {
           {/* One figure: the Manifest Total, advance money taken today
               (Reservation) and old debt paid off today (Debt Recovery),
               added together (owner, 2026-09-18). */}
-          <ReportSection title="Grand Total" subtitle="Manifest Total + Reservation Total + Debt Recovery Total" tip="reports.acc.grand">
+          <ReportSection report title="Grand Total" subtitle="Manifest Total + Reservation Total + Debt Recovery Total" tip="reports.acc.grand">
             <TotalLine label="Manifest + Reservation + Debt Recovery" amount={data.grand_total} emphasis tip="reports.acc.grandLine" />
           </ReportSection>
 
@@ -1312,7 +1318,7 @@ function AccommodationReportTab({ shift }) {
               food and drink — laundry, penalties, adjustments, corrections —
               with the description and remark it was posted with, followed by
               the guests' own notes (owner's ask, 2026-09-14). */}
-          <ReportSection title="Notes" tip="reports.acc.notes">
+          <ReportSection report title="Notes" tip="reports.acc.notes">
             {(data.other_charges || []).length === 0 && data.notes.length === 0 ? (
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No other charges or guest notes for this business day.</p>
             ) : (
@@ -1344,7 +1350,7 @@ function AccommodationReportTab({ shift }) {
                   </table>
                 )}
                 {data.notes.length > 0 && (
-                  <div className="flex flex-col gap-2 px-6 py-4">
+                  <div data-report-note className="flex flex-col gap-2 px-6 py-4">
                     {data.notes.map((n, i) => (
                       <p key={i} className="text-xl">
                         <span className="font-bold"><GuestName name={n.guest_name} tags={n.guest_tags} /></span>{" "}
@@ -1359,6 +1365,7 @@ function AccommodationReportTab({ shift }) {
 
           <StaffActivitySection activity={data.staff_activity} money={money} />
         </div>
+        </ReportScope>
       )}
 
       {!loading && !data && !error && (
@@ -1405,7 +1412,7 @@ function SalesTotals({ data }) {
 function SalesByStaff({ data }) {
   const showAudit = canViewAuditTrail();
   return (
-    <ReportSection title="By Staff" subtitle="Who posted each charge" tip="reports.sales.byStaff">
+    <ReportSection report title="By Staff" subtitle="Who posted each charge" tip="reports.sales.byStaff">
       {data.staff_breakdown.length === 0 ? <EmptyRow /> : (
         <table className="w-full text-xl">
           <TableHead cells={["Staff", "Total", ...(showAudit ? ["Action"] : [])]} rightAlign={["Total"]} tips={{ Staff: "reports.sales.byStaff.col.staff", Total: "reports.sales.byStaff.col.total" }} />
@@ -1445,9 +1452,9 @@ function SalesNotes({ data }) {
   const totalServiceCharge = rows.reduce((s, r) => s + Number(r.service_charge), 0);
 
   return (
-    <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-col gap-3 w-full">
+    <div data-report-section data-report-title="Notes" className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-col gap-3 w-full">
       <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Notes<Tip id="reports.sales.notes" /></p>
-      <ul className="flex flex-col gap-2 text-xl text-[color:var(--text-color)]/84 list-disc pl-6">
+      <ul data-report-body className="flex flex-col gap-2 text-xl text-[color:var(--text-color)]/84 list-disc pl-6">
         <li>
           Payment methods: {data.payment_breakdown.length === 0 ? "none" : data.payment_breakdown.map((p, i) => (
             <span key={i}>
@@ -1530,6 +1537,7 @@ function FoodSalesReportTab({ shift }) {
       {loading && <div className="flex justify-center py-20 w-full"><LoadingSpinner size="lg" /></div>}
 
       {!loading && data && (
+        <ReportScope date={data.report_date}>
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex flex-wrap items-center justify-between gap-4">
             <p className="text-2xl text-[color:var(--text-color)]/76">
@@ -1545,12 +1553,13 @@ function FoodSalesReportTab({ shift }) {
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
               </Button>
+              <ReportExportAll />
             </div>
           </div>
 
           <SalesTotals data={data} />
 
-          <ReportSection title="Food Orders" tip="reports.sales.food">
+          <ReportSection report title="Food Orders" tip="reports.sales.food">
             {data.rows.length === 0 ? (
               <EmptyRow />
             ) : (
@@ -1579,6 +1588,7 @@ function FoodSalesReportTab({ shift }) {
 
           <SalesByStaff data={data} />
         </div>
+        </ReportScope>
       )}
 
       {!loading && !data && !error && (
@@ -1648,6 +1658,7 @@ function DrinkSalesReportTab({ shift }) {
       {loading && <div className="flex justify-center py-20 w-full"><LoadingSpinner size="lg" /></div>}
 
       {!loading && data && (
+        <ReportScope date={data.report_date}>
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex flex-wrap items-center justify-between gap-4">
             <p className="text-2xl text-[color:var(--text-color)]/76">
@@ -1663,12 +1674,13 @@ function DrinkSalesReportTab({ shift }) {
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
               </Button>
+              <ReportExportAll />
             </div>
           </div>
 
           <SalesTotals data={data} />
 
-          <ReportSection title="Drink Orders" tip="reports.sales.drink">
+          <ReportSection report title="Drink Orders" tip="reports.sales.drink">
             {data.rows.length === 0 ? (
               <EmptyRow />
             ) : (
@@ -1697,6 +1709,7 @@ function DrinkSalesReportTab({ shift }) {
 
           <SalesByStaff data={data} />
         </div>
+        </ReportScope>
       )}
 
       {!loading && !data && !error && (
@@ -1772,6 +1785,7 @@ function BarStockReportTab({ shift }) {
       {loading && <div className="flex justify-center py-20 w-full"><LoadingSpinner size="lg" /></div>}
 
       {!loading && data && (
+        <ReportScope date={data.report_date}>
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex flex-wrap items-center justify-between gap-4">
             <p className="text-2xl text-[color:var(--text-color)]/76">
@@ -1787,6 +1801,7 @@ function BarStockReportTab({ shift }) {
               >
                 <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
               </Button>
+              <ReportExportAll />
             </div>
           </div>
 
@@ -1795,7 +1810,7 @@ function BarStockReportTab({ shift }) {
             <SummaryCard label="Total Amount" value={money(totalAmount)} tip="reports.bar.totalAmount" />
           </div>
 
-          <ReportSection title="Stock" tip="reports.bar.stock">
+          <ReportSection report title="Stock" tip="reports.bar.stock">
             {data.rows.length === 0 ? (
               <EmptyRow />
             ) : (
@@ -1827,7 +1842,7 @@ function BarStockReportTab({ shift }) {
           </ReportSection>
 
           {data.summary && (
-            <ReportSection title="Daily Totals" subtitle="Combined Food + Drink figures for this business day" tip="reports.bar.daily">
+            <ReportSection report title="Daily Totals" subtitle="Combined Food + Drink figures for this business day" tip="reports.bar.daily">
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 p-6">
                 <SummaryCard label="Food" tip="reports.bar.food" value={money(data.summary.food)} />
                 <SummaryCard label="Drink" tip="reports.bar.drink" value={money(data.summary.drink)} />
@@ -1845,6 +1860,7 @@ function BarStockReportTab({ shift }) {
             </ReportSection>
           )}
         </div>
+        </ReportScope>
       )}
 
       {!loading && !data && !error && (

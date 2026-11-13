@@ -12,6 +12,7 @@ import { StatTile, StatRow } from "@/components/pms/hq/metrics/parts";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime, money } from "@/lib/pms/format";
 import { fetchBranches, fetchWebBookings, fetchWebBookingsExport } from "@/lib/pms/api/hq-api";
+import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
 
 // Web Analytics (owner, 2026-11-10; backend phase-96): the Head Digital
 // Marketer's page. Its first section, Bookings, logs every booking made on the
@@ -38,11 +39,12 @@ function Outcome({ outcome }) {
   return <span className={`text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${o.className}`}>{o.label}</span>;
 }
 
-function downloadCsv(view) {
-  const quote = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const lines = [["Booked", "Reference", "Branch", "Guest", "Email", "Phone", "Room Type", "Rooms", "Check-In", "Check-Out", "Nights", "Value", "Status", "Special Requests"]];
-  for (const r of view.rows) {
-    lines.push([
+const BOOKING_COLUMNS = ["Booked", "Reference", "Branch", "Guest", "Email", "Phone", "Room Type", "Rooms", "Check-In", "Check-Out", "Nights", "Value", "Status", "Special Requests"];
+
+// Every booking in the range as rows - the CSV's, and the report sheet's
+// (ReportExport.jsx), since the table on the screen is one page of them.
+function bookingRows(view, value = (v) => v ?? "") {
+  return view.rows.map((r) => [
       formatDateTime(r.booked_at),
       r.booking_reference,
       r.branch_name,
@@ -54,11 +56,15 @@ function downloadCsv(view) {
       String(r.check_in).slice(0, 10),
       String(r.check_out).slice(0, 10),
       r.nights,
-      r.total ?? "",
+      value(r.total),
       (OUTCOMES[r.outcome] || OUTCOMES.held).label,
       r.special_requests,
     ]);
-  }
+}
+
+function downloadCsv(view) {
+  const quote = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lines = [BOOKING_COLUMNS, ...bookingRows(view)];
   const blob = new Blob([lines.map((l) => l.map(quote).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -126,6 +132,16 @@ function BookingsSection() {
     if (next.to !== undefined) setTo(next.to);
   }, []);
 
+  // The report sheet loads every booking in the range, as the CSV does.
+  const sheetReport = {
+    title: "Every Website Booking",
+    load: async () => ({
+      columns: BOOKING_COLUMNS,
+      rows: bookingRows(await fetchWebBookingsExport({ from, to, branch_id: branch || undefined }), (v) => (v === null || v === undefined ? "" : money(v))),
+      right: ["Rooms", "Nights", "Value"],
+    }),
+  };
+
   const exportCsv = async () => {
     try {
       setExporting(true);
@@ -156,6 +172,7 @@ function BookingsSection() {
 
   return (
     <div className="w-full flex flex-col gap-8">
+      <ReportScope from={data?.from || from} to={data?.to || to}>
       <div className={page.toolbar}>
         <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
           <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
@@ -210,6 +227,7 @@ function BookingsSection() {
         <button type="button" onClick={exportCsv} disabled={exporting || !data?.total} className={btn.secondary}>
           {exporting ? "Preparing..." : "Download CSV"}
         </button>
+        {data && <ReportExportAll />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -235,34 +253,32 @@ function BookingsSection() {
           <h2 className={page.sectionTitle}>
             By Branch<Tip id="webAnalytics.byBranch" />
           </h2>
-          <div className={table.card}>
-            <div className={table.scroll}>
-              <table className={table.el}>
-                <thead>
-                  <tr className={table.headRow}>
-                    <th className={`${table.th} ${table.stickyTh}`}>Branch<Tip id="webAnalytics.col.branch" /></th>
-                    <th className={table.th}>Bookings<Tip id="webAnalytics.col.bookings" /></th>
-                    <th className={table.th}>Lost<Tip id="webAnalytics.col.lost" /></th>
-                    <th className={table.th}>Room-Nights<Tip id="webAnalytics.roomNights" /></th>
-                    <th className={table.th}>Value<Tip id="webAnalytics.value" /></th>
-                    <th className={table.th}>Missed Value<Tip id="webAnalytics.missedValue" /></th>
+          <TableCard report="By Branch">
+            <table className={table.el}>
+              <thead>
+                <tr className={table.headRow}>
+                  <th className={`${table.th} ${table.stickyTh}`}>Branch<Tip id="webAnalytics.col.branch" /></th>
+                  <th className={table.th}>Bookings<Tip id="webAnalytics.col.bookings" /></th>
+                  <th className={table.th}>Lost<Tip id="webAnalytics.col.lost" /></th>
+                  <th className={table.th}>Room-Nights<Tip id="webAnalytics.roomNights" /></th>
+                  <th className={table.th}>Value<Tip id="webAnalytics.value" /></th>
+                  <th className={table.th}>Missed Value<Tip id="webAnalytics.missedValue" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {s.by_branch.map((b) => (
+                  <tr key={b.branch_id} className={table.row}>
+                    <td className={`${table.td} ${table.stickyTd} font-semibold`}>{b.branch_name}</td>
+                    <td className={table.td}>{b.bookings}</td>
+                    <td className={table.td}>{b.lost}</td>
+                    <td className={table.td}>{b.room_nights}</td>
+                    <td className={table.td}>{money(b.value)}</td>
+                    <td className={table.td}>{money(b.lost_value)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {s.by_branch.map((b) => (
-                    <tr key={b.branch_id} className={table.row}>
-                      <td className={`${table.td} ${table.stickyTd} font-semibold`}>{b.branch_name}</td>
-                      <td className={table.td}>{b.bookings}</td>
-                      <td className={table.td}>{b.lost}</td>
-                      <td className={table.td}>{b.room_nights}</td>
-                      <td className={table.td}>{money(b.value)}</td>
-                      <td className={table.td}>{money(b.lost_value)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                ))}
+              </tbody>
+            </table>
+          </TableCard>
         </section>
       )}
 
@@ -271,67 +287,66 @@ function BookingsSection() {
           Every Website Booking<Tip id="webAnalytics.log" />
         </h2>
         <p className={page.sectionIntro}>Newest first. Days are when the guest booked, by the Lagos calendar.</p>
-        <div className={table.card}>
-          <div className={table.scroll}>
-            <table className={table.el}>
-              <thead>
-                <tr className={table.headRow}>
-                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="webAnalytics.col.guest" /></th>
-                  <th className={table.th}>Booked<Tip id="webAnalytics.col.booked" /></th>
-                  <th className={table.th}>Branch<Tip id="webAnalytics.col.branch" /></th>
-                  <th className={table.th}>Stay<Tip id="webAnalytics.col.stay" /></th>
-                  <th className={table.th}>Value<Tip id="webAnalytics.col.value" /></th>
-                  <th className={table.th}>Status<Tip id="webAnalytics.col.status" /></th>
+        <TableCard report={sheetReport}>
+          <table className={table.el}>
+            <thead>
+              <tr className={table.headRow}>
+                <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="webAnalytics.col.guest" /></th>
+                <th className={table.th}>Booked<Tip id="webAnalytics.col.booked" /></th>
+                <th className={table.th}>Branch<Tip id="webAnalytics.col.branch" /></th>
+                <th className={table.th}>Stay<Tip id="webAnalytics.col.stay" /></th>
+                <th className={table.th}>Value<Tip id="webAnalytics.col.value" /></th>
+                <th className={table.th}>Status<Tip id="webAnalytics.col.status" /></th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && !data ? (
+                <tr>
+                  <td colSpan={6} className={table.empty}>
+                    <LoadingSpinner />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {loading && !data ? (
-                  <tr>
-                    <td colSpan={6} className={table.empty}>
-                      <LoadingSpinner />
+              ) : !data?.rows.length ? (
+                <tr>
+                  <td colSpan={6} className={table.empty}>
+                    {search ? `No website bookings match "${search}" in these days.` : "No website bookings in these days."}
+                  </td>
+                </tr>
+              ) : (
+                data.rows.map((r) => (
+                  <tr key={r.id} className={table.row}>
+                    <td className={`${table.td} ${table.stickyTd}`}>
+                      <span className="font-semibold">{r.guest_name}</span>
+                      {r.guest_email && <span className="block text-lg break-all">{r.guest_email}</span>}
+                      {r.guest_phone && <span className="block text-lg">{r.guest_phone}</span>}
+                    </td>
+                    <td className={table.td}>
+                      {formatDateTime(r.booked_at)}
+                      <span className="block text-lg text-(--text-color)/68">{r.booking_reference}</span>
+                    </td>
+                    <td className={table.td}>{r.branch_name}</td>
+                    <td className={`${table.td} whitespace-normal! min-w-[16rem]`}>
+                      <span className="font-semibold">
+                        {r.rooms} × {r.room_type || "Room"}
+                      </span>
+                      <span className="block text-lg">
+                        {formatDate(String(r.check_in).slice(0, 10) + "T12:00:00Z")} to {formatDate(String(r.check_out).slice(0, 10) + "T12:00:00Z")} ({r.nights} night{r.nights !== 1 ? "s" : ""})
+                      </span>
+                      {r.special_requests && <span className="block text-lg text-(--text-color)/68">&quot;{r.special_requests}&quot;</span>}
+                    </td>
+                    <td className={table.td}>{r.total === null ? "—" : money(r.total)}</td>
+                    <td className={table.td}>
+                      <Outcome outcome={r.outcome} />
                     </td>
                   </tr>
-                ) : !data?.rows.length ? (
-                  <tr>
-                    <td colSpan={6} className={table.empty}>
-                      {search ? `No website bookings match "${search}" in these days.` : "No website bookings in these days."}
-                    </td>
-                  </tr>
-                ) : (
-                  data.rows.map((r) => (
-                    <tr key={r.id} className={table.row}>
-                      <td className={`${table.td} ${table.stickyTd}`}>
-                        <span className="font-semibold">{r.guest_name}</span>
-                        {r.guest_email && <span className="block text-lg break-all">{r.guest_email}</span>}
-                        {r.guest_phone && <span className="block text-lg">{r.guest_phone}</span>}
-                      </td>
-                      <td className={table.td}>
-                        {formatDateTime(r.booked_at)}
-                        <span className="block text-lg text-(--text-color)/68">{r.booking_reference}</span>
-                      </td>
-                      <td className={table.td}>{r.branch_name}</td>
-                      <td className={`${table.td} whitespace-normal! min-w-[16rem]`}>
-                        <span className="font-semibold">
-                          {r.rooms} × {r.room_type || "Room"}
-                        </span>
-                        <span className="block text-lg">
-                          {formatDate(String(r.check_in).slice(0, 10) + "T12:00:00Z")} to {formatDate(String(r.check_out).slice(0, 10) + "T12:00:00Z")} ({r.nights} night{r.nights !== 1 ? "s" : ""})
-                        </span>
-                        {r.special_requests && <span className="block text-lg text-(--text-color)/68">&quot;{r.special_requests}&quot;</span>}
-                      </td>
-                      <td className={table.td}>{r.total === null ? "—" : money(r.total)}</td>
-                      <td className={table.td}>
-                        <Outcome outcome={r.outcome} />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        </TableCard>
         <Pagination page={pageNo} totalPages={totalPages} onPage={setPageNo} />
       </section>
+      </ReportScope>
     </div>
   );
 }

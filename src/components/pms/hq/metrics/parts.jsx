@@ -7,6 +7,7 @@ import InfoTip, { FloatingTip, tipFor } from "@/components/pms/InfoTip";
 import { Tip } from "@/components/pms/Tip";
 import { tipText } from "@/lib/pms/tips";
 import { DASH } from "./format";
+import { TableCard } from "@/components/pms/ReportExport";
 
 // Pieces the Metrics page's views are built from: headline tiles, the
 // branch table (first column pinned, sortable, an All Branches total, an
@@ -43,12 +44,12 @@ export function StatTile({ label, value, sub, delta, upIsGood = true, vs, tip })
     !delta || delta.direction === "flat" || upIsGood === null ? "neutral" : (delta.direction === "up") === upIsGood ? "good" : "bad";
   const Icon = !delta ? null : delta.direction === "up" ? IoArrowUp : delta.direction === "down" ? IoArrowDown : IoRemove;
   return (
-    <div className={`${card.surface} p-6 flex flex-col gap-2 min-w-0`}>
-      <p className={`text-xl font-semibold ${muted}`}>
+    <div data-report-figure className={`${card.surface} p-6 flex flex-col gap-2 min-w-0`}>
+      <p data-figure-part="label" className={`text-xl font-semibold ${muted}`}>
         {label}
         {tip && <Tip id={tip} />}
       </p>
-      <p className="text-4xl font-semibold leading-tight break-words text-(--text-color)">{value}</p>
+      <p data-figure-part="value" className="text-4xl font-semibold leading-tight break-words text-(--text-color)">{value}</p>
       {delta && (
         <p className={`text-lg font-semibold inline-flex items-center gap-1.5 ${DELTA_CLASS[tone]}`}>
           <Icon aria-hidden="true" />
@@ -58,7 +59,7 @@ export function StatTile({ label, value, sub, delta, upIsGood = true, vs, tip })
           </span>
         </p>
       )}
-      {sub && <p className={`text-lg ${muted}`}>{sub}</p>}
+      {sub && <p data-figure-part="sub" className={`text-lg ${muted}`}>{sub}</p>}
     </div>
   );
 }
@@ -99,7 +100,8 @@ const compareValues = (a, b) => {
  * total: the All Branches row (rendered with the same columns), or null;
  * defaultSort: { key, dir }.
  */
-export function DataTable({ rows, first, columns, total, totalLabel = "All branches", rowKey, defaultSort, empty = "Nothing to show for these dates.", tipPrefix }) {
+// `report`: the Export Report button above it (ReportExport.jsx TableCard).
+export function DataTable({ rows, first, columns, total, totalLabel = "All branches", rowKey, defaultSort, empty = "Nothing to show for these dates.", tipPrefix, report }) {
   const tipOf = (col, key) => col.hint || tipText(col.tip || (tipPrefix && `${tipPrefix}.${key}`));
   const [sort, setSort] = useState(defaultSort || null);
   const sortCol = sort && (sort.key === "__first" ? { value: first.value || ((r) => String(first.render(r))) } : columns.find((c) => c.key === sort.key));
@@ -152,8 +154,7 @@ export function DataTable({ rows, first, columns, total, totalLabel = "All branc
   };
 
   return (
-    <div className={table.card}>
-      <div className={table.scroll}>
+    <TableCard report={report}>
         <table className={table.el}>
           <thead>
             <tr className={table.headRow}>
@@ -181,8 +182,7 @@ export function DataTable({ rows, first, columns, total, totalLabel = "All branc
             )}
           </tbody>
         </table>
-      </div>
-    </div>
+    </TableCard>
   );
 }
 
@@ -194,8 +194,9 @@ export function DataTable({ rows, first, columns, total, totalLabel = "All branc
  * value printed in it. Hover or focus a cell for what it is.
  *  rows: [{ key, label, cells: { [columnKey]: { value, text, tip } } }]
  *  columns: [{ key, label, sub }]
+ *  report: the Export Report button above it, as DataTable's.
  */
-export function HeatGrid({ rows, columns, max, legendLow, legendHigh, caption }) {
+export function HeatGrid({ rows, columns, max, legendLow, legendHigh, caption, report }) {
   const [tip, setTip] = useState(null);
   const show = (e, text) => setTip(tipFor(e.currentTarget, text));
   const fill = (value) => {
@@ -207,49 +208,47 @@ export function HeatGrid({ rows, columns, max, legendLow, legendHigh, caption })
   };
   return (
     <figure className="w-full flex flex-col gap-3 m-0">
-      <div className={table.card}>
-        <div className={table.scroll}>
-          <table className="border-collapse text-lg">
-            <caption className="sr-only">{caption}</caption>
-            <thead>
-              <tr className={table.headRow}>
-                <th className={`${table.th} ${table.stickyTh}`}>Branch</th>
-                {columns.map((c) => (
-                  <th key={c.key} className="px-1 py-3 text-center font-semibold whitespace-nowrap min-w-[4.6rem] text-(--text-color)/76">
-                    <span className="block">{c.label}</span>
-                    {c.sub && <span className={`block font-normal ${muted}`}>{c.sub}</span>}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.key} className="group border-b border-(--accent-2) last:border-b-0">
-                  <td className={`px-6 py-3 font-semibold whitespace-nowrap text-(--text-color) ${table.stickyTd}`}>{row.label}</td>
-                  {columns.map((c) => {
-                    const cellData = row.cells[c.key] || {};
-                    return (
-                      <td
-                        key={c.key}
-                        tabIndex={0}
-                        aria-label={cellData.tip}
-                        onPointerEnter={(e) => show(e, cellData.tip)}
-                        onPointerLeave={() => setTip(null)}
-                        onFocus={(e) => show(e, cellData.tip)}
-                        onBlur={() => setTip(null)}
-                        className="px-1 py-3 text-center whitespace-nowrap border-l-2 border-(--card) outline-none focus-visible:ring-2 focus-visible:ring-(--emphasis) hover:brightness-95"
-                        style={{ background: fill(cellData.value) }}
-                      >
-                        <span className={cellData.value ? "text-(--text-color)" : muted}>{cellData.text ?? DASH}</span>
-                      </td>
-                    );
-                  })}
-                </tr>
+      <TableCard report={report}>
+        <table className="border-collapse text-lg">
+          <caption className="sr-only">{caption}</caption>
+          <thead>
+            <tr className={table.headRow}>
+              <th className={`${table.th} ${table.stickyTh}`}>Branch</th>
+              {columns.map((c) => (
+                <th key={c.key} className="px-1 py-3 text-center font-semibold whitespace-nowrap min-w-[4.6rem] text-(--text-color)/76">
+                  <span className="block">{c.label}</span>
+                  {c.sub && <span className={`block font-normal ${muted}`}>{c.sub}</span>}
+                </th>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.key} className="group border-b border-(--accent-2) last:border-b-0">
+                <td className={`px-6 py-3 font-semibold whitespace-nowrap text-(--text-color) ${table.stickyTd}`}>{row.label}</td>
+                {columns.map((c) => {
+                  const cellData = row.cells[c.key] || {};
+                  return (
+                    <td
+                      key={c.key}
+                      tabIndex={0}
+                      aria-label={cellData.tip}
+                      onPointerEnter={(e) => show(e, cellData.tip)}
+                      onPointerLeave={() => setTip(null)}
+                      onFocus={(e) => show(e, cellData.tip)}
+                      onBlur={() => setTip(null)}
+                      className="px-1 py-3 text-center whitespace-nowrap border-l-2 border-(--card) outline-none focus-visible:ring-2 focus-visible:ring-(--emphasis) hover:brightness-95"
+                      style={{ background: fill(cellData.value) }}
+                    >
+                      <span className={cellData.value ? "text-(--text-color)" : muted}>{cellData.text ?? DASH}</span>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableCard>
       <figcaption className={`flex items-center gap-3 text-lg ${muted}`}>
         <span>{legendLow}</span>
         <span

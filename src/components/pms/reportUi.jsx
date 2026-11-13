@@ -7,20 +7,28 @@ import { Link } from "@/lib/pms/router";
 import { accessDenial, canViewAuditTrail } from "@/components/pms/pmsNavItems";
 import { table } from "@/components/pms/ui";
 import { Tip } from "@/components/pms/Tip";
+import { ReportExportButton, reportProps } from "@/components/pms/ReportExport";
+import { useRef } from "react";
 
 // Small render pieces shared by every report tab in AdminReports.jsx —
 // kept in one place so each report looks and behaves identically.
 
 // `footer` sits outside the horizontal scroll area, so a total put there
 // stays in view however far a wide table is scrolled (owner, 2026-09-18).
-export function ReportSection({ title, subtitle, children, footer, tip }) {
+// `report` puts the Export Report button in its heading (ReportExport.jsx):
+// true for the section's own title, or a title / { title, subtitle, figures }.
+export function ReportSection({ title, subtitle, children, footer, tip, report }) {
+  const ref = useRef(null);
   return (
-    <div className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden w-full">
-      <div className="px-6 py-5 border-b border-(--accent-2)">
-        <h2 className="text-3xl font-bold text-[color:var(--black)]">{title}{tip && <Tip id={tip} />}</h2>
-        {subtitle && <p className="text-xl text-[color:var(--text-color)]/68 mt-1">{subtitle}</p>}
+    <div ref={ref} data-report-section data-report-title={typeof title === "string" ? title : undefined} className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden w-full">
+      <div className="px-6 py-5 border-b border-(--accent-2) flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-[color:var(--black)]">{title}{tip && <Tip id={tip} />}</h2>
+          {subtitle && <p className="text-xl text-[color:var(--text-color)]/68 mt-1">{subtitle}</p>}
+        </div>
+        {report && <ReportExportButton target={ref} title={typeof title === "string" ? title : undefined} subtitle={typeof subtitle === "string" ? subtitle : undefined} {...(report === true ? {} : reportProps(report))} />}
       </div>
-      <div className={table.scroll}>{children}</div>
+      <div data-report-body className={table.scroll}>{children}</div>
       {footer}
     </div>
   );
@@ -77,16 +85,16 @@ export function EmptyRow() {
 
 export function SummaryCard({ label, value, sub, accent, warn, tip }) {
   return (
-    <div className={`rounded-xl border p-6 ${accent ? "bg-[color:var(--emphasis)] border-transparent text-white" : warn ? "bg-(--card) border-orange-200" : "bg-(--card) border-(--accent-2)"}`}>
-      <p className={`text-xl font-semibold uppercase tracking-wide mb-2 ${accent ? "text-white/70" : "text-[color:var(--text-color)]/68"}`}>
+    <div data-report-figure className={`rounded-xl border p-6 ${accent ? "bg-[color:var(--emphasis)] border-transparent text-white" : warn ? "bg-(--card) border-orange-200" : "bg-(--card) border-(--accent-2)"}`}>
+      <p data-figure-part="label" className={`text-xl font-semibold uppercase tracking-wide mb-2 ${accent ? "text-white/70" : "text-[color:var(--text-color)]/68"}`}>
         {label}
         {tip && <Tip id={tip} light={accent} />}
       </p>
-      <p className={`text-4xl font-bold ${accent ? "text-white" : warn ? "text-orange-600" : "text-[color:var(--black)]"}`}>
+      <p data-figure-part="value" className={`text-4xl font-bold ${accent ? "text-white" : warn ? "text-orange-600" : "text-[color:var(--black)]"}`}>
         {value}
       </p>
       {sub && (
-        <p className={`text-xl mt-1 ${accent ? "text-white/60" : "text-[color:var(--text-color)]/60"}`}>{sub}</p>
+        <p data-figure-part="sub" className={`text-xl mt-1 ${accent ? "text-white/60" : "text-[color:var(--text-color)]/60"}`}>{sub}</p>
       )}
     </div>
   );
@@ -170,14 +178,14 @@ export function StaffActivitySection({ activity, money }) {
 
   if (groups.length === 0) {
     return (
-      <ReportSection title="By Staff" subtitle="Who handled this day's activity" tip="reports.byStaff">
+      <ReportSection report title="By Staff" subtitle="Who handled this day's activity" tip="reports.byStaff">
         <EmptyRow />
       </ReportSection>
     );
   }
 
   return (
-    <ReportSection title="By Staff" subtitle="Who handled this activity — check-ins, check-outs and payments counted separately" tip="reports.byStaff">
+    <ReportSection report title="By Staff" subtitle="Who handled this activity — check-ins, check-outs and payments counted separately" tip="reports.byStaff">
       <div className="flex flex-col gap-8 p-6">
         {groups.map((g) => {
           const rows = activity[g.key];

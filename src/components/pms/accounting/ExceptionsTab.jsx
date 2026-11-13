@@ -10,6 +10,7 @@ import DateInput from "@/components/pms/DateInput";
 import Pagination from "@/components/pms/Pagination";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
@@ -227,6 +228,8 @@ export default function ExceptionsTab() {
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
 
+      {/* The scope starts at the date row, so Export Full Report can sit beside Download CSV. */}
+      <ReportScope from={view?.from} to={view?.to}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">
           <label htmlFor="exceptions-from" className={field.label}>From<Tip id="accounting.exceptions.from" /></label>
@@ -249,6 +252,7 @@ export default function ExceptionsTab() {
         {view && lines.length > 0 && (
           <button type="button" onClick={() => downloadCsv(view)} className={btn.secondary}>Download CSV</button>
         )}
+        {view && lines.length > 0 && <ReportExportAll />}
       </div>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
@@ -285,71 +289,70 @@ export default function ExceptionsTab() {
                 {view.counts.all === 0 ? "Nothing was given back or taken off in these days." : `No ${SHOW.find((s) => s.key === show)?.label.toLowerCase()} lines in these days.`}
               </p>
             ) : (
-              <div className={table.card}>
-                <div className={table.scroll}>
-                  <table className={table.el}>
-                    <thead>
-                      <tr className={table.headRow}>
-                        <th className={`${table.th} w-12`}>
-                          <input type="checkbox" aria-label="Select every line on this page" checked={allShownPicked} onChange={toggleShown} className="w-5 h-5 cursor-pointer" />
-                        </th>
-                        <th className={table.th}>When<Tip id="accounting.exceptions.col.when" /></th>
-                        <th className={table.th}>What<Tip id="accounting.exceptions.col.what" /></th>
-                        <th className={`${table.th} text-right!`}>Amount<Tip id="accounting.exceptions.col.amount" /></th>
-                        <th className={`${table.th} hidden md:table-cell`}>By<Tip id="accounting.exceptions.col.by" /></th>
-                        <th className={`${table.th} hidden lg:table-cell`}>Guest / Bill<Tip id="accounting.exceptions.col.guest" /></th>
-                        <th className={`${table.th} hidden lg:table-cell`}>Reason<Tip id="accounting.exceptions.col.reason" /></th>
-                        <th className={table.th}>Review<Tip id="accounting.exceptions.col.review" /></th>
-                        <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+              <TableCard report="Exceptions">
+                <table className={table.el}>
+                  <thead>
+                    <tr className={table.headRow}>
+                      <th className={`${table.th} w-12`}>
+                        <input type="checkbox" aria-label="Select every line on this page" checked={allShownPicked} onChange={toggleShown} className="w-5 h-5 cursor-pointer" />
+                      </th>
+                      <th className={table.th}>When<Tip id="accounting.exceptions.col.when" /></th>
+                      <th className={table.th}>What<Tip id="accounting.exceptions.col.what" /></th>
+                      <th className={`${table.th} text-right!`}>Amount<Tip id="accounting.exceptions.col.amount" /></th>
+                      <th className={`${table.th} hidden md:table-cell`}>By<Tip id="accounting.exceptions.col.by" /></th>
+                      <th className={`${table.th} hidden lg:table-cell`}>Guest / Bill<Tip id="accounting.exceptions.col.guest" /></th>
+                      <th className={`${table.th} hidden lg:table-cell`}>Reason<Tip id="accounting.exceptions.col.reason" /></th>
+                      <th className={table.th}>Review<Tip id="accounting.exceptions.col.review" /></th>
+                      <th className={table.th}>Action<Tip id="accounting.col.viewLog" /></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shown.map((l) => (
+                      <tr key={l.key} className={table.row}>
+                        <td className={table.td}>
+                          <input type="checkbox" aria-label={`Select ${l.kind_label} ${amountText(l.amount)}`} checked={selected.has(l.key)} onChange={() => toggle(l.key)} className="w-5 h-5 cursor-pointer" />
+                        </td>
+                        <td className={table.td}>
+                          <div className="font-semibold">{dayText(l.day)}</div>
+                          <div className={`text-lg ${page.muted}`}>{formatTime(l.at)}</div>
+                        </td>
+                        <td className={`${table.td} whitespace-normal! min-w-[16rem]`}>
+                          <div className="font-semibold">{l.kind_label}</div>
+                          <div className={`text-lg ${page.muted}`}>{l.details}</div>
+                          <div className={`text-lg md:hidden ${page.muted}`}>{[l.by, l.guest || l.reference].filter(Boolean).join(" · ")}</div>
+                        </td>
+                        <td className={`${table.td} text-right!`}>
+                          <div className={`font-bold ${l.amount !== null && l.amount < 0 ? "text-red-600" : ""}`}>{amountText(l.amount)}</div>
+                          {l.amount_note && <div className={`text-lg ${page.muted}`}>{l.amount_note}</div>}
+                        </td>
+                        <td className={`${table.td} hidden md:table-cell`}>{l.by || "-"}</td>
+                        <td className={`${table.td} hidden lg:table-cell`}>
+                          <div>{l.guest || "-"}</div>
+                          {l.reference && <div className={`text-lg ${page.muted}`}>{l.reference}</div>}
+                        </td>
+                        <td className={`${table.td} hidden lg:table-cell whitespace-normal! max-w-[20rem]`}>{l.reason || <span className={page.muted}>-</span>}</td>
+                        <td className={`${table.td} whitespace-normal!`}>
+                          <ReviewPill review={l.review} />
+                          {l.review && (
+                            <div className={`text-lg mt-1 ${page.muted}`} title={formatDateTime(l.review.at)}>
+                              {l.review.by || "a former account"}{l.review.note ? `: ${l.review.note}` : ""}
+                            </div>
+                          )}
+                        </td>
+                        <td className={table.td}>
+                          <AuditLink audit={auditFor({ staffId: l.by_id, search: l.guest || l.reference, from: l.day })} />
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {shown.map((l) => (
-                        <tr key={l.key} className={table.row}>
-                          <td className={table.td}>
-                            <input type="checkbox" aria-label={`Select ${l.kind_label} ${amountText(l.amount)}`} checked={selected.has(l.key)} onChange={() => toggle(l.key)} className="w-5 h-5 cursor-pointer" />
-                          </td>
-                          <td className={table.td}>
-                            <div className="font-semibold">{dayText(l.day)}</div>
-                            <div className={`text-lg ${page.muted}`}>{formatTime(l.at)}</div>
-                          </td>
-                          <td className={`${table.td} whitespace-normal! min-w-[16rem]`}>
-                            <div className="font-semibold">{l.kind_label}</div>
-                            <div className={`text-lg ${page.muted}`}>{l.details}</div>
-                            <div className={`text-lg md:hidden ${page.muted}`}>{[l.by, l.guest || l.reference].filter(Boolean).join(" · ")}</div>
-                          </td>
-                          <td className={`${table.td} text-right!`}>
-                            <div className={`font-bold ${l.amount !== null && l.amount < 0 ? "text-red-600" : ""}`}>{amountText(l.amount)}</div>
-                            {l.amount_note && <div className={`text-lg ${page.muted}`}>{l.amount_note}</div>}
-                          </td>
-                          <td className={`${table.td} hidden md:table-cell`}>{l.by || "-"}</td>
-                          <td className={`${table.td} hidden lg:table-cell`}>
-                            <div>{l.guest || "-"}</div>
-                            {l.reference && <div className={`text-lg ${page.muted}`}>{l.reference}</div>}
-                          </td>
-                          <td className={`${table.td} hidden lg:table-cell whitespace-normal! max-w-[20rem]`}>{l.reason || <span className={page.muted}>-</span>}</td>
-                          <td className={`${table.td} whitespace-normal!`}>
-                            <ReviewPill review={l.review} />
-                            {l.review && (
-                              <div className={`text-lg mt-1 ${page.muted}`} title={formatDateTime(l.review.at)}>
-                                {l.review.by || "a former account"}{l.review.note ? `: ${l.review.note}` : ""}
-                              </div>
-                            )}
-                          </td>
-                          <td className={table.td}>
-                            <AuditLink audit={auditFor({ staffId: l.by_id, search: l.guest || l.reference, from: l.day })} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    ))}
+                  </tbody>
+                </table>
+              </TableCard>
             )}
             <Pagination page={current} totalPages={totalPages} onPage={setPageNo} className="mt-0" />
           </>
         )
       )}
+      </ReportScope>
 
       {reviewing && view && (
         <ReviewDialog

@@ -9,6 +9,7 @@ import Pagination from "@/components/pms/Pagination";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
+import { ReportExportAll, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { businessDateISO } from "@/lib/pms/dates";
 import { auditFor, businessDayOf } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
@@ -317,6 +318,8 @@ export default function DayCloseTab() {
   const days = data?.days || [];
   const changedDays = data?.changed_days || [];
   const ready = data?.ready_to_sign_off || 0;
+  // The days on this page, earliest to latest, for the report sheet.
+  const span = days.map((d) => d.date).sort();
 
   return (
     <section className="w-full flex flex-col gap-6">
@@ -361,54 +364,57 @@ export default function DayCloseTab() {
         </div>
       ) : (
         data && (
-          <div className={table.card}>
-            <div className={table.scroll}>
-              <table className={table.el}>
-                <thead>
-                  <tr className={table.headRow}>
-                    <th className={`${table.th} ${table.stickyTh}`}>Business Day<Tip id="accounting.days.col.day" /></th>
-                    <th className={`${table.th} hidden md:table-cell`}>Night Audit<Tip id="accounting.days.col.audit" /></th>
-                    <th className={`${table.th} text-right! hidden md:table-cell`}>Collected<Tip id="accounting.days.col.collected" /></th>
-                    <th className={`${table.th} text-right! hidden md:table-cell`}>Charged<Tip id="accounting.days.col.charged" /></th>
-                    <th className={table.th}>Status<Tip id="accounting.days.col.status" /></th>
-                    <th className={table.th}>Actions<Tip id="accounting.days.col.actions" /></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {days.map((d) => (
-                    <tr key={d.date} className={table.row}>
-                      <td className={`${table.td} ${table.stickyTd} font-semibold`}>{dayText(d.date)}</td>
-                      <td className={`${table.td} hidden md:table-cell`}>
-                        {d.night_audit ? (
-                          <span className={page.muted}>{d.night_audit.auto_run ? "Ran by itself" : "Run by hand"}</span>
-                        ) : (
-                          <span className="text-orange-600 font-semibold">Not run yet</span>
-                        )}
-                      </td>
-                      <td className={`${table.td} text-right! hidden md:table-cell`}>{money(d.collected)}</td>
-                      <td className={`${table.td} text-right! hidden md:table-cell`}>{money(d.charged)}</td>
-                      <td className={table.td}>
-                        <div className="flex flex-col items-start gap-1">
-                          <StatusPill status={d.status} />
-                          {d.status !== "open" && d.signed_off_by && (
-                            <span className={`text-lg ${page.muted}`}>{d.signed_off_by}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className={table.td}>
-                        <div className={table.actions}>
-                          <button type="button" onClick={() => setOpen(d.date)} className={d.status === "changed" || d.can_sign_off ? btn.rowPrimary : btn.rowSecondary}>
-                            {d.status === "changed" ? "See what changed" : d.can_sign_off ? "Review and sign off" : "View"}
-                          </button>
-                          <AuditLink audit={auditFor({ from: d.date })} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <ReportScope from={span[0]} to={span[span.length - 1]}>
+          <div className="flex justify-end">
+            <ReportExportAll />
           </div>
+          <TableCard report="Day Close">
+            <table className={table.el}>
+              <thead>
+                <tr className={table.headRow}>
+                  <th className={`${table.th} ${table.stickyTh}`}>Business Day<Tip id="accounting.days.col.day" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Night Audit<Tip id="accounting.days.col.audit" /></th>
+                  <th className={`${table.th} text-right! hidden md:table-cell`}>Collected<Tip id="accounting.days.col.collected" /></th>
+                  <th className={`${table.th} text-right! hidden md:table-cell`}>Charged<Tip id="accounting.days.col.charged" /></th>
+                  <th className={table.th}>Status<Tip id="accounting.days.col.status" /></th>
+                  <th className={table.th}>Actions<Tip id="accounting.days.col.actions" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {days.map((d) => (
+                  <tr key={d.date} className={table.row}>
+                    <td className={`${table.td} ${table.stickyTd} font-semibold`}>{dayText(d.date)}</td>
+                    <td className={`${table.td} hidden md:table-cell`}>
+                      {d.night_audit ? (
+                        <span className={page.muted}>{d.night_audit.auto_run ? "Ran by itself" : "Run by hand"}</span>
+                      ) : (
+                        <span className="text-orange-600 font-semibold">Not run yet</span>
+                      )}
+                    </td>
+                    <td className={`${table.td} text-right! hidden md:table-cell`}>{money(d.collected)}</td>
+                    <td className={`${table.td} text-right! hidden md:table-cell`}>{money(d.charged)}</td>
+                    <td className={table.td}>
+                      <div className="flex flex-col items-start gap-1">
+                        <StatusPill status={d.status} />
+                        {d.status !== "open" && d.signed_off_by && (
+                          <span className={`text-lg ${page.muted}`}>{d.signed_off_by}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className={table.td}>
+                      <div className={table.actions}>
+                        <button type="button" onClick={() => setOpen(d.date)} className={d.status === "changed" || d.can_sign_off ? btn.rowPrimary : btn.rowSecondary}>
+                          {d.status === "changed" ? "See what changed" : d.can_sign_off ? "Review and sign off" : "View"}
+                        </button>
+                        <AuditLink audit={auditFor({ from: d.date })} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableCard>
+          </ReportScope>
         )
       )}
 

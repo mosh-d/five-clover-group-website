@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
+import { ReportScope, ReportExportAll, TableCard } from "@/components/pms/ReportExport";
 import { btn, card, field, page, table } from "@/components/pms/ui";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { formatDateTime } from "@/lib/pms/format";
@@ -28,13 +29,13 @@ const WHY = { check_out: "Check-out", room_move: "Room move", marked_dirty: "Mar
 
 function Stat({ label, value, sub, tip }) {
   return (
-    <div className={`${card.surface} p-5 flex flex-col gap-1`}>
-      <span className={field.label}>
+    <div data-report-figure className={`${card.surface} p-5 flex flex-col gap-1`}>
+      <span data-figure-part="label" className={field.label}>
         {label}
         <Tip id={tip} />
       </span>
-      <span className="text-3xl font-bold text-(--black)">{value}</span>
-      {sub && <span className={`text-lg ${page.muted}`}>{sub}</span>}
+      <span data-figure-part="value" className="text-3xl font-bold text-(--black)">{value}</span>
+      {sub && <span data-figure-part="sub" className={`text-lg ${page.muted}`}>{sub}</span>}
     </div>
   );
 }
@@ -46,8 +47,7 @@ function Table({ id, title, tip, head, rows, empty }) {
         {title}
         <Tip id={tip} />
       </h3>
-      <div className={table.card}>
-        <div className={table.scroll}>
+      <TableCard report={title}>
           <table className={table.el}>
             <thead>
               <tr className={table.headRow}>
@@ -79,8 +79,7 @@ function Table({ id, title, tip, head, rows, empty }) {
               )}
             </tbody>
           </table>
-        </div>
-      </div>
+      </TableCard>
     </section>
   );
 }
@@ -133,6 +132,8 @@ export default function HousekeepingReports() {
   const pct = (n, of) => (of ? `${Math.round((n / of) * 100)}%` : "—");
 
   return (
+    // The branded report sheet (ReportExport.jsx): the dates the report covers.
+    <ReportScope from={report?.from ?? from} to={report?.to ?? to}>
     <div className="w-full flex flex-col gap-8">
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2">
@@ -152,6 +153,7 @@ export default function HousekeepingReports() {
             Download CSV
           </button>
         )}
+        {report && <ReportExportAll />}
       </div>
 
       {error && <p className={field.error}>{error}</p>}
@@ -273,5 +275,6 @@ export default function HousekeepingReports() {
         )
       )}
     </div>
+    </ReportScope>
   );
 }

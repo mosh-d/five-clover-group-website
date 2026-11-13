@@ -39,7 +39,7 @@ function csv(name, head, rows) {
   URL.revokeObjectURL(url);
 }
 
-// `heading` and `actions` (its CSV) share the row with Export Report.
+// `heading` and `actions` (its CSV) share the row with Print Report.
 function Table({ head, children, empty, count, report, heading, actions }) {
   return (
     <TableCard report={report} heading={heading} actions={actions}>

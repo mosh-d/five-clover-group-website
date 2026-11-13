@@ -107,7 +107,7 @@ export default function BalanceTab() {
         </p>
       </div>
 
-      {/* The scope starts at the date row, so Export Full Report can sit beside Download CSV. */}
+      {/* The scope starts at the date row, so Print Full Report can sit beside Download CSV. */}
       <ReportScope from={shown?.from} to={shown?.to}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">

@@ -228,7 +228,7 @@ export default function ExceptionsTab() {
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />
 
-      {/* The scope starts at the date row, so Export Full Report can sit beside Download CSV. */}
+      {/* The scope starts at the date row, so Print Full Report can sit beside Download CSV. */}
       <ReportScope from={view?.from} to={view?.to}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">

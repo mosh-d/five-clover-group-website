@@ -15,7 +15,7 @@ import { useRef } from "react";
 
 // `footer` sits outside the horizontal scroll area, so a total put there
 // stays in view however far a wide table is scrolled (owner, 2026-09-18).
-// `report` puts the Export Report button in its heading (ReportExport.jsx):
+// `report` puts the Print Report button in its heading (ReportExport.jsx):
 // true for the section's own title, or a title / { title, subtitle, figures }.
 export function ReportSection({ title, subtitle, children, footer, tip, report }) {
   const ref = useRef(null);

@@ -247,7 +247,7 @@ export default function ReceivablesTab() {
   const housePage = usePagedRows(view?.guest_ledger || []);
   const nonGuest = (view?.non_guest_debts || []).filter((n) => !ngBucket || n.bucket === ngBucket);
   const ngPage = usePagedRows(nonGuest);
-  // Each ledger's heading (and age chips): in the row with its Export Report
+  // Each ledger's heading (and age chips): in the row with its Print Report
   // when it has rows, above "nobody owes" when it hasn't.
   const cityHeading = view && (
     <div className="flex flex-col gap-4">

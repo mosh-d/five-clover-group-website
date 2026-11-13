@@ -135,7 +135,7 @@ export default function ReceiptsTab() {
         </p>
       </div>
 
-      {/* The scope starts at the date row, so Export Full Report can sit beside the downloads. */}
+      {/* The scope starts at the date row, so Print Full Report can sit beside the downloads. */}
       <ReportScope from={view?.from ?? from} to={view?.to ?? to}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">

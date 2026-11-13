@@ -153,7 +153,7 @@ export default function FlashTab() {
         </p>
       </div>
 
-      {/* The scope starts at the date row, so Export Full Report can sit beside the downloads. */}
+      {/* The scope starts at the date row, so Print Full Report can sit beside the downloads. */}
       <ReportScope date={view?.date ?? day}>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2">

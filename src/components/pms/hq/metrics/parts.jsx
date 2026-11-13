@@ -100,7 +100,7 @@ const compareValues = (a, b) => {
  * total: the All Branches row (rendered with the same columns), or null;
  * defaultSort: { key, dir }.
  */
-// `report`: the Export Report button above it (ReportExport.jsx TableCard).
+// `report`: the Print Report button above it (ReportExport.jsx TableCard).
 export function DataTable({ rows, first, columns, total, totalLabel = "All branches", rowKey, defaultSort, empty = "Nothing to show for these dates.", tipPrefix, report, heading }) {
   const tipOf = (col, key) => col.hint || tipText(col.tip || (tipPrefix && `${tipPrefix}.${key}`));
   const [sort, setSort] = useState(defaultSort || null);
@@ -194,7 +194,7 @@ export function DataTable({ rows, first, columns, total, totalLabel = "All branc
  * value printed in it. Hover or focus a cell for what it is.
  *  rows: [{ key, label, cells: { [columnKey]: { value, text, tip } } }]
  *  columns: [{ key, label, sub }]
- *  report: the Export Report button above it, as DataTable's.
+ *  report: the Print Report button above it, as DataTable's.
  */
 export function HeatGrid({ rows, columns, max, legendLow, legendHigh, caption, report, heading }) {
   const [tip, setTip] = useState(null);

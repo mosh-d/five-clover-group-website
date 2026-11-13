@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { IoChevronDown, IoDocumentTextOutline } from "react-icons/io5";
+import { IoChevronDown, IoPrintOutline } from "react-icons/io5";
 import { btn, table } from "@/components/pms/ui";
 import { getStoredBranch, getStoredStaffUsername } from "@/lib/pms/auth";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
@@ -19,7 +19,7 @@ import { BRANDS, GROUP_BRAND, brandForBranch, logoForBranch } from "@/components
 //   <ReportSection title="Arrivals" report>                  <table>...</table> </ReportSection>
 //   <DataTable ... report="Occupancy by Branch" />
 //
-// and gets an Export Report button that prints exactly what the table shows -
+// and gets a Print Report button that prints exactly what the table shows -
 // every row, a paged list's other pages included - on a sheet wearing the
 // branch's logo and colours (lib/pms/reportSheet.js). A report wraps its
 // content in <ReportScope> to say which dates it covers; `report={{ title,
@@ -118,14 +118,14 @@ function useReportExport({ target, title, subtitle, figures = false }) {
   return { run, busy, failed };
 }
 
-const SheetIcon = () => <IoDocumentTextOutline size={20} aria-hidden="true" className="shrink-0" />;
+const SheetIcon = () => <IoPrintOutline size={20} aria-hidden="true" className="shrink-0" />;
 
 /**
  * A table's or a report's download buttons, side by side - and on a phone,
  * when there are two or more, one Export menu holding them.
  *   actions: [{ label, onClick, disabled, title }] - its own (CSV, Excel);
- *   report:  { target, title, subtitle, figures } - adds Export Report;
- *   full:    adds Export Full Report (the whole <ReportScope> it is in).
+ *   report:  { target, title, subtitle, figures } - adds Print Report;
+ *   full:    adds Print Full Report (the whole <ReportScope> it is in).
  */
 export function ExportActions({ actions = [], report, full = false, className = "" }) {
   const scope = useContext(ScopeContext);
@@ -142,8 +142,8 @@ export function ExportActions({ actions = [], report, full = false, className = 
 
   const list = [
     ...actions.filter(Boolean),
-    ...(report ? [{ label: one.busy ? "Preparing..." : "Export Report", onClick: one.run, disabled: one.busy, sheet: true }] : []),
-    ...(full && scope ? [{ label: all.busy ? "Preparing..." : "Export Full Report", onClick: all.run, disabled: all.busy, sheet: true }] : []),
+    ...(report ? [{ label: one.busy ? "Preparing..." : "Print Report", onClick: one.run, disabled: one.busy, sheet: true }] : []),
+    ...(full && scope ? [{ label: all.busy ? "Preparing..." : "Print Full Report", onClick: all.run, disabled: all.busy, sheet: true }] : []),
   ];
   const failed = one.failed || all.failed;
   if (!list.length) return null;
@@ -204,7 +204,7 @@ export function ExportActions({ actions = [], report, full = false, className = 
   );
 }
 
-/** One Export Report button (a ReportSection's heading). */
+/** One Print Report button (a ReportSection's heading). */
 export function ReportExportButton({ target, title, subtitle, figures = false }) {
   return <ExportActions report={{ target, title, subtitle, figures }} />;
 }
@@ -231,7 +231,7 @@ export const reportProps = (report) => {
 
 /**
  * The PMS's table card (table.card + table.scroll). With `report` it gets an
- * Export Report button; `heading` (the table's title) and `actions` (its other
+ * Print Report button; `heading` (the table's title) and `actions` (its other
  * downloads) share that one row with it, the buttons on the right.
  */
 export function TableCard({ report, heading, actions, className = "", children }) {

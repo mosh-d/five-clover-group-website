@@ -9,6 +9,7 @@ import { fetchMyCashUpDue, CASH_UP_CHANGED_EVENT } from "@/lib/pms/api/cash-up-a
 import { fetchHousekeepingCounts } from "@/lib/pms/api/housekeeping-api";
 import { fetchInventoryCounts } from "@/lib/pms/api/inventory-api";
 import { fetchMaintenanceCounts } from "@/lib/pms/api/maintenance-api";
+import { fetchLogBookCounts } from "@/lib/pms/api/log-book-api";
 import { playSound } from "@/lib/pms/sounds";
 
 // The PMS's live connection to the backend (Socket.IO) - the branch PMS's
@@ -53,8 +54,8 @@ const chime = () => playSound("alert");
 // one sounds and notifies.
 // canSeeMaintenance: a role with the Maintenance page. chimeOnMaintenance:
 // the maintenance staff, told by sound and notification of a new job.
-export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, canCashUp, canHousekeep, chimeOnHousekeeping, canSeeInventory, storeKeeper, canSeeMaintenance, chimeOnMaintenance, children }) {
-  const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set(), housekeeping: new Set(), inventory: new Set(), maintenance: new Set() });
+export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, canCashUp, canHousekeep, chimeOnHousekeeping, canSeeInventory, storeKeeper, canSeeMaintenance, chimeOnMaintenance, canSeeLogBook, children }) {
+  const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set(), housekeeping: new Set(), inventory: new Set(), maintenance: new Set(), logbook: new Set() });
   const reservationTimerRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
   // Ticks every DISCONNECTED_FALLBACK_MS only while disconnected - pages
@@ -237,6 +238,36 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
     return subscribe(refreshMaintenanceCount, "maintenance");
   }, [canSeeMaintenance, refreshMaintenanceCount, subscribe]);
 
+  // The Log Book badge (phase-99): notes someone else left that no one has
+  // marked read. A new one chimes, as a nudge to read it.
+  const [logBookCount, setLogBookCount] = useState(0);
+  const prevLogBookRef = useRef(null);
+  const refreshLogBookCount = useCallback(() => {
+    if (!canSeeLogBook) {
+      prevLogBookRef.current = null;
+      return;
+    }
+    fetchLogBookCounts()
+      .then((c) => {
+        const count = Number(c?.unread) || 0;
+        const previous = prevLogBookRef.current;
+        prevLogBookRef.current = count;
+        setLogBookCount(count);
+        if (previous === null || count <= previous) return;
+        chime();
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Log Book", { body: `${count} note${count !== 1 ? "s" : ""} not read yet.`, tag: "log-book" });
+        }
+      })
+      .catch(() => {});
+  }, [canSeeLogBook]);
+
+  useEffect(() => {
+    refreshLogBookCount();
+    if (!canSeeLogBook) return undefined;
+    return subscribe(refreshLogBookCount, "logbook");
+  }, [canSeeLogBook, refreshLogBookCount, subscribe]);
+
   // Anything announced while the socket was down is lost: recount on
   // reconnecting, and every 30s while it stays down.
   useEffect(() => {
@@ -244,8 +275,9 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
       refreshHousekeepingCount();
       refreshInventoryCount();
       refreshMaintenanceCount();
+      refreshLogBookCount();
     }
-  }, [isConnected, disconnectedRefreshTick, refreshHousekeepingCount, refreshInventoryCount, refreshMaintenanceCount]);
+  }, [isConnected, disconnectedRefreshTick, refreshHousekeepingCount, refreshInventoryCount, refreshMaintenanceCount, refreshLogBookCount]);
 
   useEffect(() => {
     if (!branchId) return undefined;
@@ -291,6 +323,7 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
     socket.on("housekeeping_updated", (data) => forThisBranch(data) && notify("housekeeping", data));
     socket.on("inventory_updated", (data) => forThisBranch(data) && notify("inventory", data));
     socket.on("maintenance_updated", (data) => forThisBranch(data) && notify("maintenance", data));
+    socket.on("logbook_updated", (data) => forThisBranch(data) && notify("logbook", data));
 
     socket.on("alerts_updated", (data) => {
       if (!forThisBranch(data)) return;
@@ -339,6 +372,8 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
         refreshInventoryCount,
         maintenanceCount: canSeeMaintenance ? maintenanceCount : 0,
         refreshMaintenanceCount,
+        logBookCount: canSeeLogBook ? logBookCount : 0,
+        refreshLogBookCount,
         disconnectedRefreshTick,
       }}
     >
@@ -369,6 +404,8 @@ const HEAD_OFFICE_LIVE = {
   refreshInventoryCount: () => {},
   maintenanceCount: 0,
   refreshMaintenanceCount: () => {},
+  logBookCount: 0,
+  refreshLogBookCount: () => {},
   disconnectedRefreshTick: 0,
 };
 

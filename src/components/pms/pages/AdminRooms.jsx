@@ -2,6 +2,7 @@
 "use no memo";
 
 // Carried over from the branch PMS's admin_pages/AdminRooms.jsx (2026-09-28).
+import Toast from "@/components/pms/Toast";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "@/lib/pms/router";
 import { http } from "@/lib/pms/http";
@@ -1522,29 +1523,9 @@ export default function AdminRoomsPage() {
   return (
     <>
       {/* ── Notifications ── */}
-      {successMessage && (
-        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl z-[2500] flex items-center gap-4 max-w-sm shadow-lg">
-          <span className="text-xl">{successMessage}</span>
-          <button
-            onClick={() => setSuccessMessage("")}
-            className="text-green-700 hover:text-green-900 flex-shrink-0 cursor-pointer"
-          >
-            <IoClose size={20} />
-          </button>
-        </div>
-      )}
+      <Toast message={successMessage} onClose={() => setSuccessMessage("")} />
 
-      {error && (
-        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl z-[2500] flex items-center gap-4 max-w-sm shadow-lg">
-          <span className="text-xl">{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-700 hover:text-red-900 flex-shrink-0 cursor-pointer"
-          >
-            <IoClose size={20} />
-          </button>
-        </div>
-      )}
+      <Toast tone="error" message={error} onClose={() => setError(null)} />
 
       {/* ── Page ── */}
       <div

@@ -2,6 +2,7 @@
 "use no memo";
 
 // Carried over from the branch PMS's admin_pages/AdminGuests.jsx (2026-09-28).
+import Toast from "@/components/pms/Toast";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from "@/lib/pms/router";
 import { IoClose, IoFilter, IoPeopleOutline } from 'react-icons/io5';
@@ -285,17 +286,7 @@ export default function AdminGuestsPage() {
 
   return (
     <>
-      {successMessage && (
-        <div className='fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl z-[2500] flex items-center gap-4 shadow-lg'>
-          <span className='text-xl font-bold'>{successMessage}</span>
-          <button
-            onClick={() => setSuccessMessage('')}
-            className='text-green-700 hover:text-green-900 cursor-pointer'
-          >
-            <IoClose size={24} />
-          </button>
-        </div>
-      )}
+      <Toast message={successMessage} onClose={() => setSuccessMessage("")} />
 
       <div
         data-component='AdminGuests'

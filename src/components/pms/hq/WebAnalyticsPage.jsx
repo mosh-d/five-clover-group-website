@@ -34,12 +34,37 @@ const OUTCOMES = {
   expired: { label: "Expired", className: "bg-gray-100 text-gray-600" },
 };
 
+// Whether the front desk attended to it (Booking Attendance, owner
+// 2026-11-18: its list moved here). Only a branch that ticks bookings has an
+// answer; elsewhere it's a dash.
+const minutesText = (m) => (m === null || m === undefined ? "" : m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")} min`);
+const attendedText = (r) =>
+  r.attended_at ? `Attended ${formatDateTime(r.attended_at)}${r.attended_by_name ? ` by ${r.attended_by_name}` : ""}` : r.missed ? `Missed${r.outcome === "expired" ? " - hold expired" : ""}` : "";
+
+function Attended({ r }) {
+  if (r.attended_at) {
+    return (
+      <>
+        <span className="text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap bg-green-100 text-green-700">Attended</span>
+        <span className="block text-lg mt-1">{formatDateTime(r.attended_at)}</span>
+        <span className="block text-lg text-(--text-color)/68">
+          {r.attended_by_name || "—"}, after {minutesText(r.minutes_to_tick)}
+        </span>
+      </>
+    );
+  }
+  if (r.missed) {
+    return <span className="text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap bg-red-100 text-red-700">Missed{r.outcome === "expired" ? " - hold expired" : ""}</span>;
+  }
+  return <span className="text-(--text-color)/40">—</span>;
+}
+
 function Outcome({ outcome }) {
   const o = OUTCOMES[outcome] || OUTCOMES.held;
   return <span className={`text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${o.className}`}>{o.label}</span>;
 }
 
-const BOOKING_COLUMNS = ["Booked", "Reference", "Branch", "Guest", "Email", "Phone", "Room Type", "Rooms", "Check-In", "Check-Out", "Nights", "Value", "Status", "Special Requests"];
+const BOOKING_COLUMNS = ["Booked", "Reference", "Branch", "Guest", "Email", "Phone", "Room Type", "Rooms", "Check-In", "Check-Out", "Nights", "Value", "Status", "On Duty", "Attended", "Special Requests"];
 
 // Every booking in the range as rows - the CSV's, and the report sheet's
 // (ReportExport.jsx), since the table on the screen is one page of them.
@@ -58,6 +83,8 @@ function bookingRows(view, value = (v) => v ?? "") {
       r.nights,
       value(r.total),
       (OUTCOMES[r.outcome] || OUTCOMES.held).label,
+      r.on_duty || "",
+      attendedText(r),
       r.special_requests,
     ]);
 }
@@ -304,18 +331,20 @@ function BookingsSection() {
                 <th className={table.th}>Stay<Tip id="webAnalytics.col.stay" /></th>
                 <th className={table.th}>Value<Tip id="webAnalytics.col.value" /></th>
                 <th className={table.th}>Status<Tip id="webAnalytics.col.status" /></th>
+                <th className={table.th}>On Duty<Tip id="webAnalytics.col.onDuty" /></th>
+                <th className={table.th}>Attended<Tip id="webAnalytics.col.attended" /></th>
               </tr>
             </thead>
             <tbody>
               {loading && !data ? (
                 <tr>
-                  <td colSpan={6} className={table.empty}>
+                  <td colSpan={8} className={table.empty}>
                     <LoadingSpinner />
                   </td>
                 </tr>
               ) : !data?.rows.length ? (
                 <tr>
-                  <td colSpan={6} className={table.empty}>
+                  <td colSpan={8} className={table.empty}>
                     {search ? `No website bookings match "${search}" in these days.` : "No website bookings in these days."}
                   </td>
                 </tr>
@@ -344,6 +373,10 @@ function BookingsSection() {
                     <td className={table.td}>{r.total === null ? "—" : money(r.total)}</td>
                     <td className={table.td}>
                       <Outcome outcome={r.outcome} />
+                    </td>
+                    <td className={table.td}>{r.on_duty || <span className="text-(--text-color)/60">No one clocked in</span>}</td>
+                    <td className={table.td}>
+                      <Attended r={r} />
                     </td>
                   </tr>
                 ))

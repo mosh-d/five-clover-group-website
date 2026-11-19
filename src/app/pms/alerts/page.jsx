@@ -251,6 +251,23 @@ export default function PmsAlertsPage() {
         { head: "Actions", cell: (c) => <div className={table.actions}>{view("View", `/pms/folios?reservation_id=${c.reservation_id}`, { kind: "credits", id: c.reservation_id, about: `the credit owed back to ${c.guest_name}` })}</div> },
       ],
     },
+    {
+      // Money paid on a booking with no dates yet (owner, 2026-11-18; backend
+      // phase-100): here for as long as it is held - "always remind, never
+      // forget" - until the booking gets its dates or the money is refunded.
+      key: "awaiting",
+      colTips: { "Guest": "alerts.col.guest", "Held": "alerts.awaiting.held", "Kept Since": "alerts.awaiting.since", "Actions": "alerts.awaiting.actions" },
+      label: "Awaiting Dates",
+      rows: data?.awaiting_dates || [],
+      empty: "No money held on a booking without dates.",
+      intro: "Guests who paid before knowing when they will stay. Set the dates once the guest is sure, or refund the money - until then it stays here.",
+      columns: [
+        { head: "Guest", cell: (a) => guestCell(a.guest_name, a.guest_tags, a.booking_reference) },
+        { head: "Held", cell: (a) => <span className="font-bold text-green-700">{money(a.amount_held)}</span> },
+        { head: "Kept Since", wide: true, cell: (a) => daysAgo(a.created_at, now) },
+        { head: "Actions", cell: (a) => <div className={table.actions}>{view("View", "/pms/reservations?tab=awaiting", { kind: "awaiting", id: a.reservation_id, about: `${a.guest_name}'s booking awaiting dates` })}</div> },
+      ],
+    },
   ];
   if (seesFlags) {
     TABS.push({

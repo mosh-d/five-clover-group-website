@@ -77,6 +77,8 @@ export default function BookingAttendancePage() {
   const today = businessToday();
   const [from, setFrom] = useState(daysBefore(today, 6));
   const [to, setTo] = useState(today);
+  const [clockFrom, setClockFrom] = useState(daysBefore(today, 6));
+  const [clockTo, setClockTo] = useState(today);
   const [branch, setBranch] = useState("");
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -88,7 +90,7 @@ export default function BookingAttendancePage() {
 
   useEffect(() => {
     let cancelled = false;
-    http.get("/api/hq/booking-attendance", { params: { from, to, branch_id: branch || undefined } }).then(
+    http.get("/api/hq/booking-attendance", { params: { from, to, branch_id: branch || undefined, clock_from: clockFrom, clock_to: clockTo } }).then(
       ({ data: d }) => {
         if (cancelled) return;
         setData(d);
@@ -99,7 +101,7 @@ export default function BookingAttendancePage() {
     return () => {
       cancelled = true;
     };
-  }, [from, to, branch, reloadKey]);
+  }, [from, to, branch, clockFrom, clockTo, reloadKey]);
 
   const confirmSwitch = async () => {
     try {
@@ -283,66 +285,39 @@ export default function BookingAttendancePage() {
               </Table>
             </section>
 
-            <section className="w-full flex flex-col gap-4">
-              <Table
-                heading={
-                  <h2 className={page.sectionTitle}>
-                    Every Website Booking<Tip id="bookingAttendance.bookings" />
-                  </h2>
-                }
-                actions={[
-                  {
-                    label: "Download Bookings CSV",
-                    disabled: !data.bookings.length,
-                    onClick: () =>
-                      csv(
-                        `booking_attendance_${data.from}_to_${data.to}.csv`,
-                        ["Booked", "Reference", "Guest", "Branch", "On Duty", "Ticked At", "Ticked By", "Minutes to Tick", "Missed"],
-                        data.bookings.map((b) => [formatDateTime(b.booked_at), b.booking_reference, b.guest_name, b.branch_name, b.on_duty || "", b.attended_at ? formatDateTime(b.attended_at) : "", b.attended_by_name || "", b.minutes_to_tick ?? "", b.missed ? (b.is_expired_hold ? "Yes - hold expired" : "Yes") : b.cancelled ? "Cancelled" : "No"]),
-                      ),
-                  },
-                ]}
-                head={[["Guest", "bookingAttendance.col.guest"], ["Booked", "bookingAttendance.col.booked"], ["Branch"], ["On Duty", "bookingAttendance.col.onDuty"], ["Attended", "bookingAttendance.col.attended"]]}
-                count={data.bookings.length}
-                empty="No website bookings in these days."
-                report="Every Website Booking"
-              >
-                {data.bookings.map((b) => (
-                  <tr key={b.id} className={table.row}>
-                    <td className={`${table.td} ${table.stickyTd}`}>
-                      <span className="font-semibold">{b.guest_name}</span>
-                      <span className="block text-lg text-(--text-color)/68">{b.booking_reference}</span>
-                    </td>
-                    <td className={table.td}>{formatDateTime(b.booked_at)}</td>
-                    <td className={table.td}>{b.branch_name}</td>
-                    <td className={table.td}>{b.on_duty || <span className="text-(--text-color)/60">No one clocked in</span>}</td>
-                    <td className={table.td}>
-                      {b.missed ? (
-                        <span className="text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-red-100 text-red-700">
-                          Missed{b.is_expired_hold ? " - hold expired" : ""}
-                        </span>
-                      ) : b.cancelled ? (
-                        <span className="text-sm font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">Cancelled</span>
-                      ) : (
-                        <>
-                          {formatDateTime(b.attended_at)}
-                          <span className="block text-lg text-(--text-color)/68">
-                            {b.attended_by_name || "—"}, after {minutesText(b.minutes_to_tick)}
-                          </span>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </Table>
-            </section>
+            {/* Every website booking, with whether it was attended, is on Web
+                Analytics now (owner, 2026-11-18). */}
 
+            {/* Its own dates (owner, 2026-11-18), apart from the report's above. */}
+            <ReportScope from={data.clock_from} to={data.clock_to}>
             <section className="w-full flex flex-col gap-4">
               <Table
                 heading={
-                  <h2 className={page.sectionTitle}>
-                    Receptionist Clock-Ins<Tip id="bookingAttendance.clockIns" />
-                  </h2>
+                  <div className="flex flex-col gap-4">
+                    <h2 className={page.sectionTitle}>
+                      Receptionist Clock-Ins<Tip id="bookingAttendance.clockIns" />
+                    </h2>
+                    <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
+                      <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
+                        <label htmlFor="ba-clock-from" className={field.label}>
+                          From<Tip id="bookingAttendance.clockIns.range" />
+                        </label>
+                        <DateInput
+                          id="ba-clock-from"
+                          value={clockFrom}
+                          max={today}
+                          onChange={(e) => ISO.test(e.target.value) && (setClockFrom(e.target.value), e.target.value > clockTo && setClockTo(e.target.value))}
+                          className={field.input}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
+                        <label htmlFor="ba-clock-to" className={field.label}>
+                          To
+                        </label>
+                        <DateInput id="ba-clock-to" value={clockTo} min={clockFrom} max={today} onChange={(e) => ISO.test(e.target.value) && setClockTo(e.target.value)} className={field.input} />
+                      </div>
+                    </div>
+                  </div>
                 }
                 actions={[
                   {
@@ -350,7 +325,7 @@ export default function BookingAttendancePage() {
                     disabled: !data.clock_ins.length,
                     onClick: () =>
                       csv(
-                        `receptionist_clock_ins_${data.from}_to_${data.to}.csv`,
+                        `receptionist_clock_ins_${data.clock_from}_to_${data.clock_to}.csv`,
                         ["Business Day", "Branch", "Receptionist", "Clocked In At", "Recorded By"],
                         data.clock_ins.map((c) => [c.business_date, c.branch_name, c.receptionist, formatDateTime(c.clocked_in_at), c.recorded_by || ""]),
                       ),
@@ -372,6 +347,7 @@ export default function BookingAttendancePage() {
                 ))}
               </Table>
             </section>
+            </ReportScope>
           </ReportScope>
         )
       )}

@@ -1494,8 +1494,14 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
   );
 }
 
-function FutureBookingForm() {
-  const [form, setForm] = useState(EMPTY_FUTURE_BOOKING);
+// Also the Reservations page's Set Dates (owner, 2026-11-18; backend
+// phase-100): a booking awaiting dates is made into a real one here, with
+// `prefill` (the guest, and the room type if one was picked) and
+// `afterBooked(hold)` run once the booking is confirmed - it moves the money
+// across - inside the same try, so a failure shows on this form. `inDialog`
+// drops the card frame and the heading, which the dialog gives.
+export function FutureBookingForm({ prefill = null, afterBooked = null, inDialog = false } = {}) {
+  const [form, setForm] = useState(() => ({ ...EMPTY_FUTURE_BOOKING, ...(prefill || {}) }));
   const [availability, setAvailability] = useState(null);
   const [rooms, setRooms] = useState(null);
   const [checking, setChecking] = useState(false);
@@ -1658,6 +1664,10 @@ function FutureBookingForm() {
       // a real number, future-dated or not.
       await assignRoom(hold.internal_id, chosenRooms);
       await confirmReservationById(hold.internal_id);
+      if (afterBooked) {
+        await afterBooked(hold);
+        return;
+      }
 
       // Same as the walk-in form: the folio exists once the reservation is
       // confirmed, and a failure here must not read as a failed booking.
@@ -1690,8 +1700,8 @@ function FutureBookingForm() {
   };
 
   return (
-    <div className="w-full bg-(--card) rounded-xl border border-(--accent-2) p-8 flex flex-col gap-6">
-      <div>
+    <div className={inDialog ? "w-full flex flex-col gap-6" : "w-full bg-(--card) rounded-xl border border-(--accent-2) p-8 flex flex-col gap-6"}>
+      <div className={inDialog ? "hidden" : ""}>
         <h2 className="text-3xl font-bold text-[color:var(--black)]">Future Booking<Tip id="checkIns.future.heading" /></h2>
         <p className={`${page.sectionIntro} mt-1`}>
           For a guest booking a later date in person. A room number is required — it holds a real room for those

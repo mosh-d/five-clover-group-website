@@ -8,6 +8,9 @@ import { useSearchParams, useNavigate } from "@/lib/pms/router";
 import { IoClose, IoFilter, IoCalendarOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
 import PageHeader from "@/components/pms/PageHeader";
+import PageTabs from "@/components/pms/PageTabs";
+import AwaitingDatesPanel from "@/components/pms/reservations/AwaitingDatesPanel";
+import { fetchAwaitingDates } from "@/lib/pms/api/awaiting-dates-api";
 import StatusBadge from "@/components/pms/StatusBadge";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import RoomAssignmentPicker from "@/components/pms/RoomAssignmentPicker";
@@ -61,6 +64,13 @@ const nightsBetween = (fromISO, toISO) =>
   fromISO && toISO ? Math.round((Date.parse(toISO) - Date.parse(fromISO)) / (24 * 60 * 60 * 1000)) : 0;
 
 export default function AdminReservationsPage() {
+  // Bookings, or the bookings awaiting dates (phase-100); the tab opens on
+  // ?tab=awaiting, as Alerts links to it.
+  const [tab, setTab] = useState(() => (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "awaiting" ? "awaiting" : "bookings"));
+  const [awaitingCount, setAwaitingCount] = useState(0);
+  useEffect(() => {
+    fetchAwaitingDates().then((d) => setAwaitingCount((d || []).length), () => {});
+  }, []);
   const navigate = useNavigate();
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -949,6 +959,7 @@ export default function AdminReservationsPage() {
           tipId="reservations.page"
           title="Reservations"
           actions={
+            tab === "awaiting" ? null : (
             <>
               <div className="relative" ref={filterDropdownRef}>
                 <button
@@ -1021,8 +1032,24 @@ export default function AdminReservationsPage() {
               </div>
               <button onClick={() => setIsExportOpen(true)} className={btn.primary}>Export</button>
             </>
+            )
           }
-        />
+        >
+          {/* Bookings awaiting dates (owner, 2026-11-18; backend phase-100). */}
+          <PageTabs
+            tabs={[
+              { key: "bookings", label: "Bookings" },
+              { key: "awaiting", label: "Awaiting Dates", badge: awaitingCount, badgeLabel: "bookings awaiting dates" },
+            ]}
+            active={tab}
+            onChange={setTab}
+          />
+        </PageHeader>
+
+        {tab === "awaiting" ? (
+          <AwaitingDatesPanel onCount={setAwaitingCount} onMessage={setSuccessMessage} />
+        ) : (
+        <>
 
         <div className={table.card}>
           <div className={table.scroll}>
@@ -1103,6 +1130,8 @@ export default function AdminReservationsPage() {
         </div>
 
         <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+        </>
+        )}
       </div>
 
       {/* ==== Reservation Detail Modal ==== */}

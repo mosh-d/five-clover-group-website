@@ -28,6 +28,25 @@ export function useAttendanceTicks(enabled) {
   return enabled && on;
 }
 
+// A booking that comes in overnight - 10pm to 6am, Lagos - stays tickable
+// until 9am that morning, even once its hold has run out (owner, 2026-11-18:
+// so the receptionist can sleep and still tick it). The 9am, or null for one
+// made in the day. Mirrors the backend's overnightTickUntil.
+const HOUR = 60 * 60 * 1000;
+export function overnightTickUntil(createdAt) {
+  const t = new Date(createdAt).getTime();
+  if (!Number.isFinite(t)) return null;
+  const local = new Date(t + HOUR);
+  const hour = local.getUTCHours();
+  if (hour >= 6 && hour < 22) return null;
+  const day = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()) + (hour >= 22 ? 24 * HOUR : 0);
+  return new Date(day + 9 * HOUR - HOUR);
+}
+const inOvernightGrace = (r) => {
+  const until = r?.is_expired_hold ? overnightTickUntil(r.created_at) : null;
+  return Boolean(until) && Date.now() < until.getTime();
+};
+
 export const isWebsiteBooking = (r) => String(r?.source || "").toLowerCase() === "website";
 
 /**
@@ -46,7 +65,7 @@ export default function AttendanceTick({ reservation, onTicked }) {
   // Ticked before it was cancelled or ran out: the tick still shows below.
   // Over without a tick: nothing to tick now - a hold that ran out says Missed
   // in the Status column instead (reservationStatus above).
-  if (!reservation.attended_at && (reservation.status === "cancelled" || reservation.is_expired_hold)) {
+  if (!reservation.attended_at && (reservation.status === "cancelled" || reservation.is_expired_hold) && !inOvernightGrace(reservation)) {
     return <span className="text-(--text-color)/40">-</span>;
   }
   if (reservation.attended_at) {

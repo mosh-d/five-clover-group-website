@@ -30,6 +30,7 @@ import {
   IoAnalyticsOutline,
   IoCheckmarkDoneOutline,
   IoBookOutline,
+  IoCheckboxOutline,
 } from "react-icons/io5";
 import { readPmsSession } from "@/lib/pms/session";
 
@@ -101,6 +102,9 @@ export const PMS_NAV_ITEMS = [
   // Notes for the next shift (owner, 2026-11-18; backend phase-99); its
   // badge counts the ones someone else left that no one has read.
   { slug: "log-book", label: "LOG BOOK", icon: IoBookOutline, roles: OVERSIGHT, badge: "logBook" },
+  // The front desk's and the porters' daily checklists (owner, 2026-11-19;
+  // backend phase-102). Porters fill theirs in on the front desk computer.
+  { slug: "daily-checklist", label: "DAILY CHECKLIST", icon: IoCheckboxOutline, roles: OVERSIGHT },
   // Whoever holds a drawer counts it (docs/ACCOUNTING-PLAN.md, Step 2).
   { slug: "cash-up", label: "CASH-UP", icon: IoWalletOutline, roles: ["receptionist", "waitron"], badge: "cashUp" },
   // badge: carries a live count (PmsSidebar) - open alerts; OTA payments

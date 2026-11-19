@@ -55,7 +55,7 @@ const chime = () => playSound("alert");
 // canSeeMaintenance: a role with the Maintenance page. chimeOnMaintenance:
 // the maintenance staff, told by sound and notification of a new job.
 export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, canCashUp, canHousekeep, chimeOnHousekeeping, canSeeInventory, storeKeeper, canSeeMaintenance, chimeOnMaintenance, canSeeLogBook, children }) {
-  const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set(), housekeeping: new Set(), inventory: new Set(), maintenance: new Set(), logbook: new Set() });
+  const listenersRef = useRef({ rooms: new Set(), reservations: new Set(), new_reservation: new Set(), alerts: new Set(), housekeeping: new Set(), inventory: new Set(), maintenance: new Set(), logbook: new Set(), checklist: new Set() });
   const reservationTimerRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
   // Ticks every DISCONNECTED_FALLBACK_MS only while disconnected - pages
@@ -324,6 +324,7 @@ export function PmsLiveProvider({ branchId, canSeeAlerts, canSeeOtaPayments, can
     socket.on("inventory_updated", (data) => forThisBranch(data) && notify("inventory", data));
     socket.on("maintenance_updated", (data) => forThisBranch(data) && notify("maintenance", data));
     socket.on("logbook_updated", (data) => forThisBranch(data) && notify("logbook", data));
+    socket.on("checklist_updated", (data) => forThisBranch(data) && notify("checklist", data));
 
     socket.on("alerts_updated", (data) => {
       if (!forThisBranch(data)) return;

@@ -110,6 +110,10 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
   const [error, setError] = useState(null);
   const filling = mode === "new" || mode === "edit";
   const supervising = mode === "confirm";
+  // The manager's confirmation is asked twice (owner, 2026-11-19: "double
+  // opt in"): Confirm Checklist, then a second Yes - each saying it can't be
+  // edited afterwards. The ticks are frozen on the second step.
+  const [sure, setSure] = useState(false);
   const showSupervisor = supervising || Boolean(checklist?.confirmed_at);
   const setItem = (n, patch) => {
     setError(null);
@@ -230,7 +234,7 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
                             type="checkbox"
                             checked={confirmed.has(t.n)}
                             onChange={(e) => toggleConfirmed(t.n, e.target.checked)}
-                            disabled={busy || !saved?.done}
+                            disabled={busy || sure || !saved?.done}
                             className="w-6 h-6 cursor-pointer accent-(--emphasis)"
                             aria-label={`Confirm task ${t.n}`}
                           />
@@ -278,8 +282,14 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
             <label htmlFor="checklist-note" className={field.label}>
               Supervisor&apos;s Remarks (optional)<Tip id="checklist.supervisorNote" />
             </label>
-            <AutoGrowTextarea id="checklist-note" value={note} onChange={(e) => setNote(e.target.value)} className={field.textarea} maxLength={MAX_REMARKS} disabled={busy} />
+            <AutoGrowTextarea id="checklist-note" value={note} onChange={(e) => setNote(e.target.value)} className={field.textarea} maxLength={MAX_REMARKS} disabled={busy || sure} />
           </div>
+        )}
+
+        {supervising && (
+          <p role="note" className="text-lg font-semibold text-amber-900 bg-amber-50 border border-amber-300 rounded-lg px-4 py-3">
+            Once you confirm, this checklist can&apos;t be edited - not by the front desk, and not by you.
+          </p>
         )}
 
         {mode === "view" ? (
@@ -293,6 +303,15 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
               </button>
             )}
           </div>
+        ) : supervising && !sure ? (
+          <div className="flex flex-wrap gap-3">
+            <button type="button" onClick={onClose} className={btn.secondary}>
+              Back
+            </button>
+            <button type="button" onClick={() => setSure(true)} className={btn.primary}>
+              Confirm Checklist
+            </button>
+          </div>
         ) : (
           <ConfirmPanel
             question={
@@ -300,18 +319,18 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
                 ? `Save this checklist, ${done} of ${tasks.filter((t) => !t.notApplicable).length} done?`
                 : mode === "edit"
                   ? `Save the changes, ${done} of ${tasks.filter((t) => !t.notApplicable).length} done?`
-                  : `Confirm ${confirmed.size} of ${ticked.length} ticked tasks as supervisor?`
+                  : `Are you sure? Confirm ${confirmed.size} of ${ticked.length} ticked tasks as supervisor?`
             }
             details={
               supervising
-                ? ["Once confirmed, the checklist can't be changed.", "Your name and the time are kept, in the Audit Trail too."]
+                ? ["After this, the checklist can't be edited by anyone.", "Your name and the time are kept, in the Audit Trail too."]
                 : ["You can come back and tick more during the shift, until the manager confirms it.", "It is recorded in the Audit Trail."]
             }
             confirmLabel={supervising ? "Yes, confirm it" : "Yes, save it"}
             busyLabel="Saving..."
             busy={busy}
             error={error}
-            onBack={onClose}
+            onBack={supervising ? () => setSure(false) : onClose}
             onConfirm={save}
           />
         )}

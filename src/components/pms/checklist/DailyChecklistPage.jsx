@@ -13,8 +13,11 @@ import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { Tip } from "@/components/pms/Tip";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
-import { formatDate, formatTime } from "@/lib/pms/format";
-import { isManager } from "@/lib/pms/auth";
+import { formatDate, formatDateTime, formatTime } from "@/lib/pms/format";
+import { getStoredBranch, getStoredStaffUsername, isManager } from "@/lib/pms/auth";
+import { printDocument } from "@/lib/pms/print";
+import { buildReportSheet, dataTable } from "@/lib/pms/reportSheet";
+import { BRANDS, GROUP_BRAND, brandForBranch, logoForBranch } from "@/components/pms/theme/brands";
 import { confirmChecklist, createChecklist, fetchChecklists, updateChecklist } from "@/lib/pms/api/daily-checklist-api";
 
 // Daily checklists (owner, 2026-11-19; backend phase-102): the front desk's
@@ -32,12 +35,68 @@ const MAX_REMARKS = 500;
 const dayLabel = (day) => formatDate(`${String(day).slice(0, 10)}T12:00:00Z`);
 const doneCount = (items) => (items || []).filter((i) => i.done).length;
 const confirmedCount = (items) => (items || []).filter((i) => i.confirmed).length;
+const absolute = (img) => (img ? new URL(typeof img === "string" ? img : img.src, window.location.href).href : "");
+
+/**
+ * A confirmed checklist on the branded report sheet, laid out like the paper
+ * one - S/N, task, responsible staff, completed, supervisor's confirmation,
+ * remarks - for the receptionist to hand to HR (owner, 2026-11-19).
+ */
+export function printChecklist(data, c) {
+  const byN = new Map((c.items || []).map((i) => [Number(i.n), i]));
+  const frontDesk = data.kind === "front_desk";
+  const columns = ["S/N", "Tasks", ...(frontDesk ? ["Responsible Staff"] : []), "Completed", "Supervisor's Confirmation", "Remarks"];
+  const rows = data.tasks.map((t) => {
+    const i = byN.get(t.n) || {};
+    return [
+      String(t.n),
+      t.task,
+      ...(frontDesk ? [t.responsible || ""] : []),
+      t.notApplicable ? "N/A" : i.done ? "✓" : "",
+      t.notApplicable ? "N/A" : i.confirmed ? "✓" : "",
+      i.remarks || "",
+    ];
+  });
+  // Head Office prints any branch's: the checklist says which.
+  const branch = c.branch_name ? { name: c.branch_name, branch_code: c.branch_code } : getStoredBranch();
+  const brand = branch ? brandForBranch(branch) : GROUP_BRAND;
+  const applicable = data.tasks.filter((t) => !t.notApplicable).length;
+  printDocument(
+    buildReportSheet({
+      brand,
+      logo: absolute(branch ? logoForBranch(branch) : GROUP_BRAND.logo),
+      marks: [BRANDS.fc, BRANDS.ci, BRANDS.rr].map((b) => ({ name: b.name, src: absolute(b.logoOnLight) })),
+      place: branch?.name || "",
+      report: "Daily Checklist",
+      title: data.title,
+      period: dayLabel(c.business_date),
+      preparedBy: getStoredStaffUsername(),
+      generatedAt: formatDateTime(new Date()),
+      figures: [
+        { label: "Date", value: dayLabel(c.business_date) },
+        { label: "Shift", value: c.shift },
+        { label: "Staff Name", value: c.staff_name },
+        { label: "Completed", value: `${doneCount(c.items)} of ${applicable}` },
+        { label: "Supervisor", value: c.confirmed_by_name || "-", sub: c.confirmed_at ? `Confirmed ${formatDateTime(c.confirmed_at)}` : "Not confirmed" },
+      ],
+      sections: [
+        {
+          heading: data.title,
+          ...dataTable({ columns, rows }),
+          totals: [],
+          figures: [],
+          note: c.supervisor_note ? `Supervisor's remarks: ${c.supervisor_note}` : "",
+        },
+      ],
+    }),
+  );
+}
 
 /**
  * One checklist in a dialog. mode: "new" (fill one in), "edit" (tick more
  * during the shift), "confirm" (the manager's supervisor ticks) or "view".
  */
-function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
+export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
   const tasks = data.tasks;
   const byN = new Map((checklist?.items || []).map((i) => [Number(i.n), i]));
   const [shift, setShift] = useState(checklist?.shift || "");
@@ -224,10 +283,15 @@ function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
         )}
 
         {mode === "view" ? (
-          <div>
+          <div className="flex flex-wrap gap-3">
             <button type="button" onClick={onClose} className={btn.secondary}>
               Close
             </button>
+            {checklist.confirmed_at && (
+              <button type="button" onClick={() => printChecklist(data, checklist)} className={btn.primary}>
+                Print Checklist
+              </button>
+            )}
           </div>
         ) : (
           <ConfirmPanel
@@ -359,6 +423,12 @@ export default function DailyChecklistPage() {
                               <button type="button" onClick={() => setDialog({ mode: "view", checklist: c })} className={btn.rowSecondary}>
                                 View
                               </button>
+                              {/* Confirmed: printed on the branded sheet for HR. */}
+                              {c.confirmed_at && (
+                                <button type="button" onClick={() => printChecklist(shown, c)} className={btn.rowPrimary}>
+                                  Print Checklist
+                                </button>
+                              )}
                               {today && !c.confirmed_at && (
                                 <button type="button" onClick={() => setDialog({ mode: "edit", checklist: c })} className={btn.rowSecondary}>
                                   Update

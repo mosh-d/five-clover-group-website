@@ -76,6 +76,8 @@ export const PMS_NAV_ITEMS = [
   // which (owner, 2026-11-11; backend phase-98): the developer's, and Head
   // HR's and HR's (2026-11-12) - switching a branch on stays the developer's.
   { slug: "booking-attendance", label: "BOOKING ATTENDANCE", icon: IoCheckmarkDoneOutline, hq: HEAD_OFFICE },
+  // Every branch's daily checklists (owner, 2026-11-19; backend phase-102).
+  { slug: "checklists", label: "DAILY CHECKLISTS", icon: IoCheckboxOutline, hq: HEAD_OFFICE },
   // A branch.
   { slug: "overview", label: "OVERVIEW", icon: IoGridOutline, roles: OVERSIGHT },
   // The accountant's own page, and where an accountant lands (docs/ACCOUNTING-PLAN.md, 2026-10-08).

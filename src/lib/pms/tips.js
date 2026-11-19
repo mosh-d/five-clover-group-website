@@ -384,6 +384,7 @@ export const TIPS = {
   "reservations.info.checkOut": "The day the guest is booked to leave.",
   "reservations.info.rooms": "How many rooms this booking takes.",
   "reservations.info.source": "Where the booking came from.",
+  "reservations.info.breakfast": "Whether this booking has breakfast. A website guest ticks it when booking; it is charged each night with the room.",
   "reservations.stayDates": "Change the arrival or departure date before the guest arrives. The price follows the new number of nights at this booking's own rate.",
   "reservations.checkInDate": "The day the guest arrives. Today at the earliest.",
   "reservations.checkOutDate": "The day the guest leaves. At least one night after the check-in date.",

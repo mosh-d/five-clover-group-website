@@ -57,6 +57,7 @@ import Pagination from "@/components/pms/Pagination";
 import EmailStatusTag from "@/components/pms/EmailStatusTag";
 import AttendanceTick, { reservationStatus, useAttendanceTicks } from "@/components/pms/AttendanceTick";
 import { Tip } from "@/components/pms/Tip";
+import HoldCountdown from "@/components/pms/HoldCountdown";
 const STATUSES = ["hold", "confirmed", "active", "completed", "cancelled"];
 // A reservation's check_in/check_out are UTC-midnight markers for a date.
 const isoDateOf = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
@@ -1100,7 +1101,10 @@ export default function AdminReservationsPage() {
                       {/* When the booking was made (Lagos time) - owner, 2026-11-19: to see when a website booking came in. */}
                       <td className={`${table.td} hidden md:table-cell whitespace-nowrap`}>
                         <div>{formatDate(r.created_at)}</div>
-                        <div className="text-base text-(--text-color)/68">{formatTime(r.created_at)}</div>
+                        <div className="text-base text-(--text-color)/68 flex items-center gap-2">
+                          {formatTime(r.created_at)}
+                          <HoldCountdown reservation={r} />
+                        </div>
                       </td>
                       {ticksOn && (
                         <td className={table.td}>
@@ -1249,6 +1253,16 @@ export default function AdminReservationsPage() {
                 <InfoCard label="Check-Out" tip="reservations.info.checkOut" value={formatDate(res.check_out)} />
                 <InfoCard label="Rooms" tip="reservations.info.rooms" value={res.rooms_booked} />
                 <InfoCard label="Source" tip="reservations.info.source" value={res.source_label || res.source || "N/A"} />
+                {/* The guest's breakfast choice - ticked on the website, or set
+                    at the desk (owner, 2026-11-19). Only where the room type
+                    has a breakfast price. */}
+                {Number(res.room_type?.breakfast_rate || 0) > 0 && (
+                  <InfoCard
+                    label="Breakfast"
+                    tip="reservations.info.breakfast"
+                    value={res.without_breakfast ? "Not included" : `Included (${money(res.room_type.breakfast_rate)} per room, per night)`}
+                  />
+                )}
               </div>
 
               {/* Contact */}

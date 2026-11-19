@@ -378,6 +378,7 @@ export const TIPS = {
   "reservations.col.checkOut": "The day the guest is booked to leave.",
   "reservations.col.status": "Where the booking stands: hold, confirmed, active, completed, cancelled, or missed - a hold that ran out with no one attending to it (no one cancelled it). No-Show: the guest never arrived. Hold Expired: a website booking not paid within 2 hours, so its room was released.",
   "reservations.col.source": "Where the booking came from, e.g. the website, a walk-in or an OTA.",
+  "reservations.col.booked": "When the booking was made, in Lagos time - for a website booking, when the guest booked online.",
   "reservations.col.actions": "View: the booking's details, dates, credit, rooms and actions. Cancel: calls off a booking that has not checked in.",
   "reservations.info.checkIn": "The day the guest is booked to arrive.",
   "reservations.info.checkOut": "The day the guest is booked to leave.",

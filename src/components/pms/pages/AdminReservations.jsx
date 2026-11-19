@@ -46,7 +46,7 @@ import { fetchInHouse } from "@/lib/pms/api/front-office-api";
 import { canRefund } from "@/lib/pms/auth";
 import { fetchRoomDetails } from "@/lib/pms/api/room-data";
 import { hasPassedNoonCutoff, currentBusinessDateISO, addDaysISO } from "@/lib/pms/dates";
-import { formatPaymentMethod, money, formatDate } from "@/lib/pms/format";
+import { formatPaymentMethod, money, formatDate, formatTime } from "@/lib/pms/format";
 
 import DateInput from "@/components/pms/DateInput";
 import { adjustmentProblem, adjustmentMax } from "@/lib/pms/validation";
@@ -78,7 +78,7 @@ export default function AdminReservationsPage() {
   const [successMessage, setSuccessMessage] = useState("");
   // A branch not yet on the PMS: website bookings get a Attended tick (phase-98).
   const ticksOn = useAttendanceTicks(true);
-  const columnCount = ticksOn ? 7 : 6;
+  const columnCount = ticksOn ? 8 : 7;
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -1061,6 +1061,7 @@ export default function AdminReservationsPage() {
                   <th className={`${table.th} hidden md:table-cell`}>Check-Out<Tip id="reservations.col.checkOut" /></th>
                   <th className={table.th}>Status<Tip id="reservations.col.status" /></th>
                   <th className={`${table.th} hidden md:table-cell`}>Source<Tip id="reservations.col.source" /></th>
+                  <th className={`${table.th} hidden md:table-cell`}>Booked<Tip id="reservations.col.booked" /></th>
                   {ticksOn && <th className={table.th}>Attended<Tip id="reservations.col.attended" /></th>}
                   <th className={table.th}>Actions<Tip id="reservations.col.actions" /></th>
                 </tr>
@@ -1096,6 +1097,11 @@ export default function AdminReservationsPage() {
                           so no capitalize here — it would keep OTA readable but
                           turn "Walk-in" into "Walk-In". */}
                       <td className={`${table.td} hidden md:table-cell`}>{r.source_label || r.source || "N/A"}</td>
+                      {/* When the booking was made (Lagos time) - owner, 2026-11-19: to see when a website booking came in. */}
+                      <td className={`${table.td} hidden md:table-cell whitespace-nowrap`}>
+                        <div>{formatDate(r.created_at)}</div>
+                        <div className="text-base text-(--text-color)/68">{formatTime(r.created_at)}</div>
+                      </td>
                       {ticksOn && (
                         <td className={table.td}>
                           <AttendanceTick

@@ -146,10 +146,9 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
   const [savingId, setSavingId] = useState(null);
 
   // Delete is only allowed for an item with zero order/stock history (the
-  // backend rejects anything else with a 409) — a two-click confirm avoids
-  // a native confirm() popup for something this rarely used and hard to undo.
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
+  // backend rejects anything else with a 409). It asks in a dialog, like
+  // every other delete, and a refusal shows there (owner, 2026-11-19).
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Stock adjustment (drinks only — recordStock is undefined for food) —
   // feeds the Bar Stock report (Reports → Bar Stock), separate from is_active
@@ -205,21 +204,6 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
       setError(err.response?.data?.message || `Failed to update ${label}.`);
     } finally {
       setSavingId(null);
-    }
-  };
-
-  const handleDelete = async (item) => {
-    try {
-      setDeletingId(item.id);
-      setError(null);
-      await deleteItem(item.id);
-      setConfirmDeleteId(null);
-      await load();
-    } catch (err) {
-      setError(err.response?.data?.message || `Failed to delete ${label}.`);
-      setConfirmDeleteId(null);
-    } finally {
-      setDeletingId(null);
     }
   };
 
@@ -313,16 +297,7 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
                                 </button>
                               )}
                               {canEdit && deleteItem && (
-                                confirmDeleteId === item.id ? (
-                                  <>
-                                    <button onClick={() => handleDelete(item)} disabled={deletingId === item.id} className={btn.rowDanger}>
-                                      {deletingId === item.id ? "Deleting..." : "Confirm Delete"}
-                                    </button>
-                                    <button onClick={() => setConfirmDeleteId(null)} className={btn.rowSecondary}>Cancel</button>
-                                  </>
-                                ) : (
-                                  <button onClick={() => setConfirmDeleteId(item.id)} className={btn.rowSecondary}>Delete</button>
-                                )
+                                <button onClick={() => setDeleteTarget(item)} className={btn.rowSecondary}>Delete</button>
                               )}
                             </div>
                           </td>
@@ -398,7 +373,63 @@ function MenuSection({ label, fetchItems, createItem, updateItem, deleteItem, re
           }}
         />
       )}
+
+      {deleteTarget && (
+        <DeleteItemDialog
+          item={deleteTarget}
+          remove={() => deleteItem(deleteTarget.id)}
+          keepNote={recordStock ? "A drink whose stock was ever recorded can't be deleted either." : 'To take it off the menu instead, use "Set Out of Stock".'}
+          onClose={() => setDeleteTarget(null)}
+          onDone={async (message) => {
+            setDeleteTarget(null);
+            setError(null);
+            setNotice(message);
+            await load();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+// Delete a menu or laundry item, in a dialog like every other delete (owner,
+// 2026-11-19). The server refuses an item that was ever sold or stocked - its
+// reason shows here, where the person is looking, not above the table.
+function DeleteItemDialog({ item, remove, keepNote, onClose, onDone }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  const confirm = async () => {
+    try {
+      setBusy(true);
+      setError(null);
+      await remove();
+      onDone(`${item.name} deleted.`);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || `Failed to delete ${item.name}.`);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal onClose={busy ? undefined : onClose} title={`Delete ${item.name}`} size="md">
+      <ConfirmPanel
+        question={`Delete ${item.name}?`}
+        details={[
+          "Only an item that was never sold can be deleted - one added by mistake, for example.",
+          keepNote,
+          "It can't be undone. The delete is recorded in the Audit Trail.",
+        ]}
+        confirmLabel="Yes, delete it"
+        busyLabel="Deleting..."
+        busy={busy}
+        danger
+        error={error}
+        onBack={onClose}
+        onConfirm={confirm}
+        backLabel={error ? "Close" : "Back"}
+      />
+    </Modal>
   );
 }
 
@@ -712,6 +743,7 @@ function LaundrySection({ canEdit }) {
   const [search, setSearch] = useState("");
   const shown = items.filter((i) => matchesSearch(search, i.name));
   const [editItem, setEditItem] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [notice, setNotice] = useState(null);
   const [addForm, setAddForm] = useState(EMPTY_LAUNDRY_FORM);
   const [saving, setSaving] = useState(false);
@@ -803,7 +835,7 @@ function LaundrySection({ canEdit }) {
                               {/* Deleting is blocked server-side once an item
                                   has sale history — the button stays, the
                                   backend explains why when it refuses. */}
-                              <button disabled={saving} onClick={() => submit(() => deleteLaundryItem(item.id))} className={btn.rowDanger}>Delete</button>
+                              <button disabled={saving} onClick={() => setDeleteTarget(item)} className={btn.rowDanger}>Delete</button>
                             </div>
                           </td>
                         )}
@@ -848,6 +880,21 @@ function LaundrySection({ canEdit }) {
           onClose={() => setEditItem(null)}
           onDone={async (message) => {
             setEditItem(null);
+            setError(null);
+            setNotice(message);
+            await load();
+          }}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteItemDialog
+          item={deleteTarget}
+          remove={() => deleteLaundryItem(deleteTarget.id)}
+          keepNote='To take it off the list instead, use "Deactivate".'
+          onClose={() => setDeleteTarget(null)}
+          onDone={async (message) => {
+            setDeleteTarget(null);
             setError(null);
             setNotice(message);
             await load();

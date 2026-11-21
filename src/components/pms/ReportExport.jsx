@@ -1,12 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { IoChevronDown, IoPrintOutline } from "react-icons/io5";
 import { btn, table } from "@/components/pms/ui";
 import { getStoredBranch, getStoredStaffUsername } from "@/lib/pms/auth";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
-import { printDocument } from "@/lib/pms/print";
+import { openPrintTab, printDocument } from "@/lib/pms/print";
 import { buildReportSheet, dataTable, headingNear, periodLabel, readFigures, readSections } from "@/lib/pms/reportSheet";
 import { setShowAllRows } from "@/components/pms/usePagedRows";
 import { BRANDS, GROUP_BRAND, brandForBranch, logoForBranch } from "@/components/pms/theme/brands";
@@ -71,6 +71,9 @@ function useReportExport({ target, title, subtitle, figures = false }) {
   const run = async () => {
     const root = target?.current;
     if (!root) return;
+    // A phone prints from a new tab, which has to open now, at the tap -
+    // not after the rows below have loaded (lib/pms/print.js).
+    const tab = openPrintTab();
     // Every paged list shows all its rows for this one render.
     let sections;
     flushSync(() => setShowAllRows(true));
@@ -87,6 +90,7 @@ function useReportExport({ target, title, subtitle, figures = false }) {
         sections = await Promise.all(sections.map(async (s) => (s.loadId && loaders.has(s.loadId) ? { ...s, ...dataTable(await loaders.get(s.loadId)()) } : s)));
       } catch (err) {
         setFailed(err?.message || "Could not load the rows for the report.");
+        tab?.close();
         return;
       } finally {
         setBusy(false);
@@ -113,6 +117,7 @@ function useReportExport({ target, title, subtitle, figures = false }) {
         figures: figures ? readFigures(scope?.ref.current) : [],
         sections: sections.length ? sections : [{ heading, columns: [], rows: [], totals: [], note: "" }],
       }),
+      tab,
     );
   };
   return { run, busy, failed };
@@ -132,7 +137,19 @@ export function ExportActions({ actions = [], report, full = false, className = 
   const one = useReportExport(report || {});
   const all = useReportExport({ target: scope?.ref, title: scope?.name, figures: true });
   const [open, setOpen] = useState(false);
+  // Which edge of the Export button the menu lines up with: its right edge,
+  // unless that would run it off the left of the screen (owner, 2026-11-21:
+  // the menu bled off a phone's screen when Export sat on the left).
+  const [align, setAlign] = useState("right");
   const menuRef = useRef(null);
+  const listRef = useRef(null);
+  useLayoutEffect(() => {
+    if (!open || !menuRef.current || !listRef.current) return;
+    const button = menuRef.current.getBoundingClientRect();
+    const width = listRef.current.offsetWidth;
+    const gutter = 8;
+    setAlign(button.right - width >= gutter || button.left + width > window.innerWidth - gutter ? "right" : "left");
+  }, [open]);
   useEffect(() => {
     if (!open) return undefined;
     const outside = (e) => menuRef.current && !menuRef.current.contains(e.target) && setOpen(false);
@@ -173,7 +190,7 @@ export function ExportActions({ actions = [], report, full = false, className = 
             <IoChevronDown size={18} aria-hidden="true" className={`transition-transform ${open ? "rotate-180" : ""}`} />
           </button>
           {open && (
-            <div role="menu" className="absolute right-0 z-30 mt-2 min-w-[15rem] bg-(--card) border border-(--accent-2) rounded-xl shadow-lg overflow-hidden">
+            <div ref={listRef} role="menu" className={`absolute ${align === "left" ? "left-0" : "right-0"} z-30 mt-2 min-w-[15rem] max-w-[calc(100vw-1rem)] bg-(--card) border border-(--accent-2) rounded-xl shadow-lg overflow-hidden`}>
               {list.map((a) => (
                 <button
                   key={a.label}

@@ -292,9 +292,11 @@ function SetDatesDialog({ booking, onClose, onDone }) {
       <div className="flex flex-col gap-4">
         <p className={page.sectionIntro}>
           Book the stay as a Future Booking. Once it is confirmed, the {money(booking.credit_held)} paid moves onto it and is used as Paid Before (PB) when the guest arrives.
+          Check-in can be today: the guest then shows under today&apos;s Expected Arrivals on Check-Ins, ready to check in.
         </p>
         <FutureBookingForm
           inDialog
+          fromToday
           prefill={prefill}
           afterBooked={async (hold) => {
             const r = await markAwaitingDated(booking.id, hold.internal_id);

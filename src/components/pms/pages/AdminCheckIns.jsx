@@ -1500,7 +1500,11 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
 // `afterBooked(hold)` run once the booking is confirmed - it moves the money
 // across - inside the same try, so a failure shows on this form. `inDialog`
 // drops the card frame and the heading, which the dialog gives.
-export function FutureBookingForm({ prefill = null, afterBooked = null, inDialog = false } = {}) {
+// `fromToday` lets check-in be today's business date: Set Dates on a booking
+// awaiting dates, where the guest who paid ahead may turn up today (owner,
+// 2026-11-21: "I should be able to register the same day as a check in
+// date"). The Future Booking tab itself starts tomorrow - today is a Walk-In.
+export function FutureBookingForm({ prefill = null, afterBooked = null, inDialog = false, fromToday = false } = {}) {
   const [form, setForm] = useState(() => ({ ...EMPTY_FUTURE_BOOKING, ...(prefill || {}) }));
   const [availability, setAvailability] = useState(null);
   const [rooms, setRooms] = useState(null);
@@ -1512,13 +1516,15 @@ export function FutureBookingForm({ prefill = null, afterBooked = null, inDialog
   const [guestMatches, setGuestMatches] = useState([]);
   const [activeGuestField, setActiveGuestField] = useState(null);
 
-  const minCheckIn = minWalkInCheckOutISO(); // tomorrow — today's walk-ins use the tab above
+  const minCheckIn = fromToday ? walkInCheckInISO() : minWalkInCheckOutISO(); // tomorrow — today's walk-ins use the tab above
   // Kept the way the guest booking sites keep them (owner, 2026-10-02):
   // check-in from tomorrow, check-out at least the night after, and moving
   // check-in onto or past check-out moves check-out along with it.
   const minCheckOut = addDaysISO(form.checkIn && form.checkIn >= minCheckIn ? form.checkIn : minCheckIn, 1);
   const datesProblem = form.checkIn && form.checkIn < minCheckIn
-    ? `Check-in has to be ${formatDate(minCheckIn)} or later — a guest arriving today is a Walk-In.`
+    ? fromToday
+      ? `Check-in has to be ${formatDate(minCheckIn)} (today) or later.`
+      : `Check-in has to be ${formatDate(minCheckIn)} or later — a guest arriving today is a Walk-In.`
     : form.checkIn && form.checkOut && form.checkOut <= form.checkIn
       ? "Check-out has to be at least one night after check-in."
       : "";

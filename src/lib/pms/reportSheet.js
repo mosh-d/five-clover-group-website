@@ -9,7 +9,8 @@
 //     logo on its brand's dark band, the report's name, place and dates, the
 //     key figures, the tables, and the group's three marks at the foot.
 // The document is printed through lib/pms/print.js, where "Save as PDF" in
-// the print window makes the file.
+// the print window makes the file - and on a phone, lib/pms/pdf.js makes the
+// PDF itself (landscape pages for a landscape sheet).
 
 const escapeHtml = (v) =>
   String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);

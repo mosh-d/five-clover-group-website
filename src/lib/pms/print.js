@@ -4,16 +4,19 @@
 // document of its own and prints from there: nothing else on the page shows,
 // and something long runs over as many sheets as it needs.
 //
-// A phone or tablet opens it in a new tab instead (owner, 2026-11-21:
-// "printing the branded reports does nothing on mobile"). Mobile Safari and
-// Chrome on Android don't print a hidden frame - they print the page behind
-// it, or nothing. The tab shows the sheet with a Print / Save as PDF bar
-// above it (never printed), so it can always be printed or shared from there.
+// A phone or tablet gets a PDF file instead (owner, 2026-11-21: "printing the
+// branded reports does nothing on mobile", then "the print/save as pdf does
+// nothing" on a print tab). Phone browsers don't print a hidden frame, and an
+// iPhone ignores print requests altogether in the home-screen app. The PDF
+// (lib/pms/pdf.js) is handed to the phone's own share menu - Print, Save to
+// Files, WhatsApp - or opened, from a small box that says when it is ready.
+
+import { htmlToPdf, whenLoaded } from "./pdf";
 
 const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // A phone or tablet: a touch screen with no mouse, or a mobile browser.
-export function printsInNewTab() {
+export function printsAsPdf() {
   if (typeof window === "undefined") return false;
   const ua = navigator.userAgent || "";
   // iPadOS reports itself as a Mac; its touch points give it away.
@@ -22,85 +25,119 @@ export function printsInNewTab() {
   return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || ipad || Boolean(touchOnly);
 }
 
-/**
- * Opens the tab a phone prints from, at the moment of the tap - a browser
- * only lets a page open a tab while it is handling one. A print that has to
- * load something first (a report fetching its rows) calls this before it
- * waits, and passes what it returns to printDocument. Null on a computer, or
- * when the browser blocked the tab (the hidden frame is used then).
- */
-export function openPrintTab() {
-  if (!printsInNewTab()) return null;
-  const tab = window.open("", "_blank");
-  if (!tab) return null;
+// ---- The "PDF ready" box (plain DOM: this file isn't a component) --------
+
+const BOX_ID = "pms-pdf-box";
+const css = {
+  shade: "position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(20,16,12,.55)",
+  card: "width:100%;max-width:420px;background:#fff;color:#2e2a26;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:16px;font:16px/1.45 Helvetica,Arial,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.3)",
+  title: "margin:0;font-size:20px;font-weight:700",
+  text: "margin:0;color:#5d554d;overflow-wrap:anywhere",
+  primary: "font:600 17px Helvetica,Arial,sans-serif;padding:14px 18px;border-radius:10px;border:1px solid #2e2a26;background:#2e2a26;color:#fff;cursor:pointer;text-align:center;text-decoration:none",
+  secondary: "font:600 17px Helvetica,Arial,sans-serif;padding:14px 18px;border-radius:10px;border:1px solid #2e2a26;background:#fff;color:#2e2a26;cursor:pointer;text-align:center;text-decoration:none",
+  spinner: "width:28px;height:28px;border-radius:50%;border:3px solid #ddd6cc;border-top-color:#2e2a26;animation:pms-pdf-spin .8s linear infinite",
+};
+
+function el(tag, style, text) {
+  const node = document.createElement(tag);
+  if (style) node.style.cssText = style;
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+function openBox() {
+  document.getElementById(BOX_ID)?.remove();
+  const shade = el("div", css.shade);
+  shade.id = BOX_ID;
+  const card = el("div", css.card);
+  card.setAttribute("role", "dialog");
+  card.setAttribute("aria-modal", "true");
+  card.setAttribute("aria-labelledby", `${BOX_ID}-title`);
+  shade.appendChild(card);
+  const cleanups = [];
+  const close = () => {
+    cleanups.forEach((fn) => fn());
+    shade.remove();
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e) => e.key === "Escape" && close();
+  document.addEventListener("keydown", onKey);
+
+  const show = (heading, message, buttons = [], busy = false) => {
+    card.replaceChildren();
+    const h = el("h2", css.title, heading);
+    h.id = `${BOX_ID}-title`;
+    card.appendChild(h);
+    if (busy) {
+      const style = el("style", null, "@keyframes pms-pdf-spin{to{transform:rotate(360deg)}}");
+      card.append(style, el("div", css.spinner));
+      card.lastChild.setAttribute("aria-hidden", "true");
+    }
+    if (message) card.appendChild(el("p", css.text, message));
+    buttons.forEach((b) => card.appendChild(b));
+    (buttons[0] || card).focus?.();
+  };
+  const closeButton = (label = "Close") => {
+    const b = el("button", css.secondary, label);
+    b.type = "button";
+    b.onclick = close;
+    return b;
+  };
+
+  document.body.appendChild(shade);
+  return { show, close, closeButton, onClose: (fn) => cleanups.push(fn) };
+}
+
+let making = false;
+
+/** Makes the PDF and offers it: Share / Print, Open PDF, Close. */
+export async function offerPdf(html) {
+  if (making) return;
+  making = true;
+  const box = openBox();
+  box.show("Making the PDF", "This takes a few seconds.", [], true);
   try {
-    tab.document.write('<!doctype html><title>Preparing...</title><p style="font:16px sans-serif;padding:24px">Preparing...</p>');
-  } catch {
-    // Some browsers won't let the page write before it has loaded; fine.
+    const { blob, name } = await htmlToPdf(html);
+    const file = typeof File === "function" ? new File([blob], name, { type: "application/pdf" }) : null;
+    const url = URL.createObjectURL(blob);
+    box.onClose(() => setTimeout(() => URL.revokeObjectURL(url), 60000));
+    const buttons = [];
+    // The phone's share menu has Print and Save to Files. It needs a fresh
+    // tap, which is why the box asks for one rather than opening it itself.
+    if (file && navigator.canShare?.({ files: [file] })) {
+      const share = el("button", css.primary, "Share / Print");
+      share.type = "button";
+      share.onclick = async () => {
+        try {
+          await navigator.share({ files: [file], title: name.replace(/\.pdf$/, "") });
+          box.close();
+        } catch (err) {
+          // Closing the share menu is not a failure.
+          if (err?.name !== "AbortError") box.show("Couldn't share the PDF", "Use Open PDF instead.", buttons);
+        }
+      };
+      buttons.push(share);
+    }
+    const open = el("a", buttons.length ? css.secondary : css.primary, "Open PDF");
+    open.href = url;
+    open.download = name;
+    open.target = "_blank";
+    open.rel = "noopener";
+    buttons.push(open, box.closeButton());
+    box.show("Your PDF is ready", name, buttons);
+  } catch (err) {
+    box.show("Couldn't make the PDF", err?.message || "Something went wrong. Try again.", [box.closeButton()]);
+  } finally {
+    making = false;
   }
-  return tab;
 }
 
-// The bar above the sheet in the tab: never printed.
-const tabBar =
-  '<style>.pms-print-bar{position:sticky;top:0;z-index:10;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:12px;background:#f4f1ec;border-bottom:1px solid #ddd6cc;font:600 16px/1.2 Helvetica,Arial,sans-serif}' +
-  ".pms-print-bar button{font:inherit;padding:12px 20px;border-radius:10px;border:1px solid #2e2a26;background:#2e2a26;color:#fff;cursor:pointer}" +
-  ".pms-print-bar button.pms-close{background:#fff;color:#2e2a26}@media print{.pms-print-bar{display:none!important}}</style>" +
-  '<div class="pms-print-bar"><button type="button" onclick="window.print()">Print / Save as PDF</button><button type="button" class="pms-close" onclick="window.close()">Close</button></div>';
-
-// The document for the tab: links resolve against the PMS (the tab starts
-// blank), and the bar goes in at the top of its body.
-function forTab(html) {
-  const base = `<base href="${escapeHtml(window.location.href)}">`;
-  let out = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (m) => `${m}${base}`) : `${base}${html}`;
-  out = /<body[^>]*>/i.test(out) ? out.replace(/<body[^>]*>/i, (m) => `${m}${tabBar}`) : `${tabBar}${out}`;
-  // A phone lays the sheet out at its own width, not a desktop's.
-  if (!/name=["']?viewport/i.test(out)) out = out.replace(base, `${base}<meta name="viewport" content="width=device-width, initial-scale=1">`);
-  return out;
-}
-
-// Waits for the stylesheets and images a document links to, so the print
-// isn't unstyled and no logo prints blank.
-function whenLoaded(doc) {
-  const links = [...doc.querySelectorAll('link[rel="stylesheet"]')].map((link) =>
-    link.sheet
-      ? Promise.resolve()
-      : new Promise((done) => {
-          link.onload = done;
-          link.onerror = done;
-          setTimeout(done, 3000);
-        }),
-  );
-  const images = [...doc.images].map((img) =>
-    img.complete
-      ? Promise.resolve()
-      : new Promise((done) => {
-          img.onload = done;
-          img.onerror = done;
-          setTimeout(done, 5000);
-        }),
-  );
-  return Promise.all([...links, ...images]);
-}
+// ---- Printing ---------------------------------------------------------------
 
 // Prints a whole HTML document (a statement of account builds its own).
-// `tab`: one openPrintTab gave, when the print had to wait for something.
-export function printDocument(html, tab = undefined) {
-  const into = tab === undefined ? openPrintTab() : tab;
-  if (into && !into.closed) {
-    into.document.open();
-    into.document.write(forTab(html));
-    into.document.close();
-    // Straight to the print dialog where the browser allows it; the bar's
-    // button is there where it doesn't.
-    whenLoaded(into.document).then(() => {
-      try {
-        into.focus();
-        into.print();
-      } catch {
-        // The bar's button prints it.
-      }
-    });
+export function printDocument(html) {
+  if (printsAsPdf()) {
+    offerPdf(html);
     return;
   }
   const frame = document.createElement("iframe");
@@ -125,7 +162,7 @@ export function printElement(element, title = document.title) {
   if (!element) return;
   const styles = [...document.querySelectorAll('link[rel="stylesheet"], style')].map((n) => n.outerHTML).join("");
   printDocument(
-    `<!doctype html><html class="${escapeHtml(document.documentElement.className)}"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>${styles}` +
+    `<!doctype html><html class="${escapeHtml(document.documentElement.className)}"><head><meta charset="utf-8"><base href="${escapeHtml(window.location.href)}"><title>${escapeHtml(title)}</title>${styles}` +
       `<style>body{margin:24px;background:#fff}</style></head><body class="${escapeHtml(document.body.className)}">${element.outerHTML}</body></html>`,
   );
 }

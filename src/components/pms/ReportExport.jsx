@@ -6,7 +6,7 @@ import { IoChevronDown, IoPrintOutline } from "react-icons/io5";
 import { btn, table } from "@/components/pms/ui";
 import { getStoredBranch, getStoredStaffUsername } from "@/lib/pms/auth";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
-import { openPrintTab, printDocument } from "@/lib/pms/print";
+import { printDocument } from "@/lib/pms/print";
 import { buildReportSheet, dataTable, headingNear, periodLabel, readFigures, readSections } from "@/lib/pms/reportSheet";
 import { setShowAllRows } from "@/components/pms/usePagedRows";
 import { BRANDS, GROUP_BRAND, brandForBranch, logoForBranch } from "@/components/pms/theme/brands";
@@ -71,9 +71,6 @@ function useReportExport({ target, title, subtitle, figures = false }) {
   const run = async () => {
     const root = target?.current;
     if (!root) return;
-    // A phone prints from a new tab, which has to open now, at the tap -
-    // not after the rows below have loaded (lib/pms/print.js).
-    const tab = openPrintTab();
     // Every paged list shows all its rows for this one render.
     let sections;
     flushSync(() => setShowAllRows(true));
@@ -90,7 +87,6 @@ function useReportExport({ target, title, subtitle, figures = false }) {
         sections = await Promise.all(sections.map(async (s) => (s.loadId && loaders.has(s.loadId) ? { ...s, ...dataTable(await loaders.get(s.loadId)()) } : s)));
       } catch (err) {
         setFailed(err?.message || "Could not load the rows for the report.");
-        tab?.close();
         return;
       } finally {
         setBusy(false);
@@ -117,7 +113,6 @@ function useReportExport({ target, title, subtitle, figures = false }) {
         figures: figures ? readFigures(scope?.ref.current) : [],
         sections: sections.length ? sections : [{ heading, columns: [], rows: [], totals: [], note: "" }],
       }),
-      tab,
     );
   };
   return { run, busy, failed };

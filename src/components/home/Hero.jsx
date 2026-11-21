@@ -51,8 +51,8 @@ export default function Hero() {
             Welcome to Five Clover Hotels, the premier hotel management company
             behind four distinct brands: Five Clover Hotel, Caritas Inn,
             RingRuby Hotel, and The Cordis Hotel. Together, our 3 Five Clover
-            properties, 4 Caritas Inn locations, 4 Ringruby Hotels, and 1 Cordis
-            Hotel curate exceptional experiences across Lagos, delivering a
+            properties, 4 Caritas Inn locations, 5 Ringruby Hotels (3 in GRA
+            Ikeja and 2 in Sangotedo), and 1 Cordis Hotel curate exceptional experiences across Lagos, delivering a
             unified promise of elegance, comfort, and personalized service, each
             with its own unique character.
           </p>

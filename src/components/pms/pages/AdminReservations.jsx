@@ -1792,7 +1792,7 @@ export default function AdminReservationsPage() {
             <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{confirmError}</p>
           )}
           <p className="text-xl text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
-            Have you confirmed the guest has made payment? The guest must pay before you can confirm their reservation.
+            Confirm once the guest has paid, or has agreed to pay on arrival.
           </p>
         </Modal>
       )}

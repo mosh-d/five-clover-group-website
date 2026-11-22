@@ -209,12 +209,14 @@ function tableHtml(section) {
  * The whole document. `brand` is { name, hue, emphasis } (theme/brands.js);
  * `logo` and `marks` are absolute image URLs.
  */
-export function buildReportSheet({ brand, logo, marks = [], place, report, title, subtitle, period, preparedBy, generatedAt, figures = [], sections = [] }) {
+// `named`: the title is the sheet's whole name - the file's too, with no
+// report, place or dates added ("Clock In Report for Nov 22, 2026").
+export function buildReportSheet({ brand, logo, marks = [], place, report, title, subtitle, period, preparedBy, generatedAt, figures = [], sections = [], named = false }) {
   const hue = brand.hue;
   const widest = Math.max(0, ...sections.map((s) => s.columns.length));
   const landscape = widest > 6;
   const dense = widest > 9;
-  const docTitle = [report, title !== report ? title : null, place, period].filter(Boolean).join(" - ");
+  const docTitle = named ? title : [report, title !== report ? title : null, place, period].filter(Boolean).join(" - ");
   const many = sections.length > 1;
 
   const figuresHtml = (list) =>

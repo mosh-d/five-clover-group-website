@@ -64,7 +64,7 @@ const absolute = (img) => (img ? new URL(typeof img === "string" ? img : img.src
  * names it on the sheet (the heading above it when not given). Returns
  * { run, busy, failed }.
  */
-function useReportExport({ target, title, subtitle, figures = false }) {
+function useReportExport({ target, title, subtitle, figures = false, named = false }) {
   const scope = useContext(ScopeContext);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(null);
@@ -112,6 +112,7 @@ function useReportExport({ target, title, subtitle, figures = false }) {
         generatedAt: formatDateTime(new Date()),
         figures: figures ? readFigures(scope?.ref.current) : [],
         sections: sections.length ? sections : [{ heading, columns: [], rows: [], totals: [], note: "" }],
+        named: named && !whole,
       }),
     );
   };
@@ -232,7 +233,8 @@ export function ReportExportAll({ className = "" }) {
 }
 
 // `report`: a title string, true (the heading above the table), or
-// { title, subtitle, figures, load }. `load` is for a table the server pages:
+// { title, subtitle, figures, load, named } - `named`: the title is the
+// sheet's whole name, the file's too ("Clock In Report for Nov 22, 2026"). `load` is for a table the server pages:
 // it fetches every row as { columns, rows, right } (lib/pms/reportSheet.js
 // dataTable), so the sheet isn't just the page on the screen.
 export const reportProps = (report) => {

@@ -89,6 +89,28 @@ function bookingRows(view, value = (v) => v ?? "") {
     ]);
 }
 
+// The printed report's own columns (owner, 2026-11-22): no email or phone,
+// the status beside the guest, and the stay in one column, so it fits the
+// page. The CSV keeps every column.
+const SHEET_COLUMNS = ["Booked", "Reference", "Branch", "Guest", "Status", "Room", "Stay", "Value", "On Duty", "Attended", "Special Requests"];
+const day = (iso) => formatDate(`${String(iso).slice(0, 10)}T12:00:00Z`);
+
+function sheetRows(view) {
+  return view.rows.map((r) => [
+    formatDateTime(r.booked_at),
+    r.booking_reference,
+    r.branch_name,
+    r.guest_name,
+    (OUTCOMES[r.outcome] || OUTCOMES.held).label,
+    `${r.rooms} × ${r.room_type || "Room"}`,
+    `${day(r.check_in)} to ${day(r.check_out)} (${r.nights} night${r.nights !== 1 ? "s" : ""})`,
+    r.total === null || r.total === undefined ? "" : money(r.total),
+    r.on_duty || "No one clocked in",
+    attendedText(r),
+    r.special_requests || "",
+  ]);
+}
+
 function downloadCsv(view) {
   const quote = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [BOOKING_COLUMNS, ...bookingRows(view)];
@@ -160,12 +182,16 @@ function BookingsSection() {
   }, []);
 
   // The report sheet loads every booking in the range, as the CSV does.
+  // Named for the days it covers (owner, 2026-11-22).
+  const sheetFrom = data?.from || from;
+  const sheetTo = data?.to || to;
   const sheetReport = {
-    title: "Every Website Booking",
+    title: `Website Booking Attendance for ${sheetFrom === sheetTo ? day(sheetFrom) : `${day(sheetFrom)} - ${day(sheetTo)}`}`,
+    named: true,
     load: async () => ({
-      columns: BOOKING_COLUMNS,
-      rows: bookingRows(await fetchWebBookingsExport({ from, to, branch_id: branch || undefined }), (v) => (v === null || v === undefined ? "" : money(v))),
-      right: ["Rooms", "Nights", "Value"],
+      columns: SHEET_COLUMNS,
+      rows: sheetRows(await fetchWebBookingsExport({ from, to, branch_id: branch || undefined })),
+      right: ["Value"],
     }),
   };
 

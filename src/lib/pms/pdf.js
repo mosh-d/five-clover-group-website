@@ -135,6 +135,20 @@ export async function htmlToPdf(html) {
     await doc.fonts?.ready;
 
     const body = doc.body;
+    // A sheet wider than the page (a report with many columns) is laid out
+    // as wide as it needs and drawn smaller, so nothing is cut off at the
+    // right (owner, 2026-11-22: the Status column fell off Every Website
+    // Booking). A printer shrinks it to fit the same way.
+    let layoutWidth = widthPx;
+    for (let i = 0; i < 3; i += 1) {
+      const needed = Math.ceil(Math.max(doc.documentElement.scrollWidth, body.scrollWidth));
+      if (needed <= layoutWidth + 1) break;
+      layoutWidth = needed;
+      frame.style.width = `${layoutWidth}px`;
+    }
+    // Page height and mm per px in the layout's own px.
+    const pageHeight = pageHeightPx * (layoutWidth / widthPx);
+    const mmPerPx = contentW / layoutWidth;
     const docTables = [...body.querySelectorAll("table")];
     // Each table's columns are pinned to the widths they have, so taking rows
     // out while a page is drawn (below) can't change them.
@@ -172,7 +186,7 @@ export async function htmlToPdf(html) {
     const heads = docTables
       .filter((table) => table.tHead)
       .map((table) => ({ ...box(table.tHead), end: box(table).bottom }));
-    const pages = pageBreaks(total, pageHeightPx, ends, rows, heads);
+    const pages = pageBreaks(total, pageHeight, ends, rows, heads);
     // Each table's body rows, for slimming the document while a page is drawn.
     const tables = docTables.map((table, i) => ({
       span: pinned[i],
@@ -181,7 +195,8 @@ export async function htmlToPdf(html) {
 
     const pdf = new jsPDF({ orientation: landscape ? "landscape" : "portrait", unit: "mm", format: "a4", compress: true });
     const foot = footerText(html);
-    const scale = Math.min(2, window.devicePixelRatio > 1 ? 2 : 1.5);
+    // Sharp, but never a canvas wider than a phone can draw well.
+    const scale = Math.min(window.devicePixelRatio > 1 ? 2 : 1.5, 3000 / layoutWidth);
     // Drawing costs time for every element in the document, however little
     // of it is drawn: a 400-row report took over a minute. So each page is
     // drawn with only its own rows in the document - those above it become
@@ -234,9 +249,9 @@ export async function htmlToPdf(html) {
           logging: false,
           x: 0,
           y,
-          width: widthPx,
+          width: layoutWidth,
           height: Math.max(1, Math.ceil(height)),
-          windowWidth: widthPx,
+          windowWidth: layoutWidth,
           windowHeight: Math.ceil(total),
           scrollX: 0,
           scrollY: 0,
@@ -253,16 +268,16 @@ export async function htmlToPdf(html) {
       const h = head >= 0 ? heads[head] : null;
       const headHeight = h ? h.bottom - h.top : 0;
       // A page that took in the last sliver is drawn a little smaller to fit.
-      const k = Math.min(1, pageHeightPx / (to - from + headHeight));
+      const k = Math.min(1, pageHeight / (to - from + headHeight));
       const width = contentW * k;
       const x = MARGIN.side + (contentW - width) / 2;
       let y = MARGIN.top;
       if (h) {
         if (!headImages.has(head)) headImages.set(head, await draw(h.top, headHeight));
-        pdf.addImage(headImages.get(head), "JPEG", x, y, width, headHeight * MM_PER_PX * k, undefined, "FAST");
-        y += headHeight * MM_PER_PX * k;
+        pdf.addImage(headImages.get(head), "JPEG", x, y, width, headHeight * mmPerPx * k, undefined, "FAST");
+        y += headHeight * mmPerPx * k;
       }
-      pdf.addImage(await draw(from, to - from), "JPEG", x, y, width, (to - from) * MM_PER_PX * k, undefined, "FAST");
+      pdf.addImage(await draw(from, to - from), "JPEG", x, y, width, (to - from) * mmPerPx * k, undefined, "FAST");
       if (foot || pages.length > 1) {
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(7.5);

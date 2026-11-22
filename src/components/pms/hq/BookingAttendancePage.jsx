@@ -203,7 +203,8 @@ export default function BookingAttendancePage() {
                 head={[["Branch", "bookingAttendance.today.branch"], ["Clocked In", "bookingAttendance.today.status"], ["Receptionist"], ["At", "bookingAttendance.today.at"], ["Recorded By", "bookingAttendance.col.recordedBy"]]}
                 count={(data.today || []).length}
                 empty="No branches."
-                report="Today at Every Branch"
+                // Named for the day it covers (owner, 2026-11-22).
+                report={{ title: `Clock In Report for ${formatDate(`${String(data.today?.[0]?.business_date || today).slice(0, 10)}T12:00:00Z`)}`, named: true }}
               >
                 {(data.today || []).map((t) => (
                   <tr key={t.branch_id} className={table.row}>

@@ -32,6 +32,9 @@ const OUTCOMES = {
   cancelled: { label: "Cancelled", className: "bg-red-100 text-red-700" },
   no_show: { label: "No-Show", className: "bg-red-100 text-red-700" },
   expired: { label: "Expired", className: "bg-gray-100 text-gray-600" },
+  // A hold that lapsed after the front desk ticked it as attended, at a
+  // branch not yet on the PMS - kept, not lost (owner, 2026-11-23).
+  attended: { label: "Attended", className: "bg-green-100 text-green-700" },
 };
 
 // Whether the front desk attended to it (Booking Attendance, owner

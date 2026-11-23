@@ -11,7 +11,7 @@
 // (lib/pms/pdf.js) is handed to the phone's own share menu - Print, Save to
 // Files, WhatsApp - or opened, from a small box that says when it is ready.
 
-import { htmlToPdf, whenLoaded } from "./pdf";
+import { htmlToPdf, isLandscape, whenLoaded } from "./pdf";
 
 const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -134,6 +134,23 @@ export async function offerPdf(html) {
 
 // ---- Printing ---------------------------------------------------------------
 
+// The width of an A4 page inside the sheet's margins (12mm each side), in
+// CSS px.
+const pageWidthPx = (html) => Math.round(((isLandscape(html) ? 297 : 210) - 24) / (25.4 / 96));
+
+/**
+ * Shrinks a document wider than the page to the page's width (owner,
+ * 2026-11-23: a wide table ran off the right of the page). Browsers don't
+ * all do it for a print, so the sheet does it itself.
+ */
+export function fitToWidth(doc, width) {
+  const needed = Math.max(doc.documentElement.scrollWidth, doc.body?.scrollWidth || 0);
+  if (!doc.body || needed <= width + 1) return 1;
+  const k = width / needed;
+  doc.body.style.zoom = String(k);
+  return k;
+}
+
 // Prints a whole HTML document (a statement of account builds its own).
 export function printDocument(html) {
   if (printsAsPdf()) {
@@ -143,13 +160,17 @@ export function printDocument(html) {
   const frame = document.createElement("iframe");
   frame.setAttribute("aria-hidden", "true");
   frame.setAttribute("data-print-frame", "");
-  Object.assign(frame.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
+  frame.tabIndex = -1;
+  // Off the screen at the page's width, so its layout can be measured.
+  const width = pageWidthPx(html);
+  Object.assign(frame.style, { position: "fixed", left: "-20000px", top: "0", width: `${width}px`, height: "1000px", border: "0" });
   document.body.appendChild(frame);
   const doc = frame.contentWindow.document;
   doc.open();
   doc.write(html);
   doc.close();
   whenLoaded(doc).then(() => {
+    fitToWidth(doc, width);
     frame.contentWindow.focus();
     frame.contentWindow.print();
     // Gone once the print dialog has had it.

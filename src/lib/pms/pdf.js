@@ -6,11 +6,11 @@
 //
 // The document is laid out at the width of an A4 page inside a hidden frame,
 // drawn page by page (html2canvas-pro), and each page is placed on an A4 page
-// of the PDF (jspdf). A sheet laid out landscape (@page size: A4 landscape -
-// the wide reports) gets landscape pages, so it opens the right way up
-// instead of turned on its side (owner, 2026-11-21). Pages break between
-// table rows and blocks, never through one. Both libraries load only when a
-// PDF is made.
+// of the PDF (jspdf). Report sheets are portrait (owner, 2026-11-23: a
+// landscape page read sideways on a phone); one wider than the page is drawn
+// smaller to fit. A document that does ask for landscape (@page size: A4
+// landscape) still gets landscape pages. Pages break between table rows and
+// blocks, never through one. Both libraries load only when a PDF is made.
 
 const MM_PER_PX = 25.4 / 96;
 // The report sheet's own @page margins (lib/pms/reportSheet.js), in mm.

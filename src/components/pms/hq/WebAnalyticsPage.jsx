@@ -94,6 +94,13 @@ function bookingRows(view, value = (v) => v ?? "") {
 // page. The CSV keeps every column.
 const SHEET_COLUMNS = ["Booked", "Reference", "Branch", "Guest", "Status", "Room", "Stay", "Value", "On Duty", "Attended", "Special Requests"];
 const day = (iso) => formatDate(`${String(iso).slice(0, 10)}T12:00:00Z`);
+// "Dec 28 - Dec 30, 2026": the year once when both days share it.
+const stayDates = (a, b) => {
+  const from = day(a);
+  const to = day(b);
+  const year = String(a).slice(0, 4);
+  return year === String(b).slice(0, 4) && from.endsWith(`, ${year}`) ? `${from.slice(0, -6)} - ${to}` : `${from} - ${to}`;
+};
 
 function sheetRows(view) {
   return view.rows.map((r) => [
@@ -103,7 +110,7 @@ function sheetRows(view) {
     r.guest_name,
     (OUTCOMES[r.outcome] || OUTCOMES.held).label,
     `${r.rooms} × ${r.room_type || "Room"}`,
-    `${day(r.check_in)} to ${day(r.check_out)} (${r.nights} night${r.nights !== 1 ? "s" : ""})`,
+    `${stayDates(r.check_in, r.check_out)} (${r.nights} night${r.nights !== 1 ? "s" : ""})`,
     r.total === null || r.total === undefined ? "" : money(r.total),
     r.on_duty || "No one clocked in",
     attendedText(r),
@@ -339,6 +346,7 @@ function BookingsSection() {
       <section className="w-full flex flex-col gap-4">
         <TableCard
           report={sheetReport}
+          optional="Every Website Booking"
           heading={
             <div className="flex flex-col gap-2">
               <h2 className={page.sectionTitle}>

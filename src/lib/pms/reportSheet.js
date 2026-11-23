@@ -10,7 +10,7 @@
 //     key figures, the tables, and the group's three marks at the foot.
 // The document is printed through lib/pms/print.js, where "Save as PDF" in
 // the print window makes the file - and on a phone, lib/pms/pdf.js makes the
-// PDF itself (landscape pages for a landscape sheet).
+// PDF itself.
 
 const escapeHtml = (v) =>
   String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -148,10 +148,13 @@ function readSection(el) {
  * Everything to put on the sheet from `root`, in the page's order: each
  * ReportSection in it, and each table that isn't in one.
  */
-export function readSections(root) {
+// `leaveOut`: the optional tables (TableCard `optional`, marked
+// data-report-optional) the person chose not to print with the full report.
+export function readSections(root, leaveOut = []) {
   if (root.matches("[data-report-section]")) return readSection(root);
+  const left = (n) => leaveOut.includes(n.closest("[data-report-optional]")?.getAttribute("data-report-optional"));
   return [...root.querySelectorAll("[data-report-section], table")]
-    .filter((n) => !n.parentElement.closest("[data-report-section]") && !(n.tagName === "TABLE" && n.parentElement.closest("table")))
+    .filter((n) => !n.parentElement.closest("[data-report-section]") && !(n.tagName === "TABLE" && n.parentElement.closest("table")) && !left(n))
     .flatMap((n) => (n.tagName === "TABLE" ? [{ heading: headingFor(n, root), ...readTable(n), totals: [], note: "", figures: [] }] : readSection(n)));
 }
 
@@ -214,8 +217,12 @@ function tableHtml(section) {
 export function buildReportSheet({ brand, logo, marks = [], place, report, title, subtitle, period, preparedBy, generatedAt, figures = [], sections = [], named = false }) {
   const hue = brand.hue;
   const widest = Math.max(0, ...sections.map((s) => s.columns.length));
-  const landscape = widest > 6;
-  const dense = widest > 9;
+  // Always portrait (owner, 2026-11-23): a landscape sheet read sideways on
+  // a phone held upright. A wide table takes the smaller type instead, and
+  // is shrunk to the page's width if it still doesn't fit (lib/pms/pdf.js on
+  // a phone; the browser's print does the same).
+  const landscape = false;
+  const dense = widest > 6;
   const docTitle = named ? title : [report, title !== report ? title : null, place, period].filter(Boolean).join(" - ");
   const many = sections.length > 1;
 
@@ -279,7 +286,7 @@ tr.strong td { font-weight: 700; background: hsl(${hue}, 38%, 95%) !important; b
 .red { color: #b42318; }
 .nw { white-space: nowrap; }
 td.none { font-weight: 400 !important; color: hsl(${hue}, 10%, 46%); text-align: center; padding: 12px 8px; }
-td { overflow-wrap: anywhere; }
+td { overflow-wrap: break-word; }
 .empty { margin: 0; padding: 12px; border: 1px dashed hsl(${hue}, 26%, 82%); border-radius: 6px; color: hsl(${hue}, 10%, 46%); }
 .note { margin: 8px 0 0; padding: 10px 12px; border: 1px solid hsl(${hue}, 26%, 88%); border-radius: 6px; line-height: 1.6; }
 .totals { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 0; padding: 8px 10px; border-radius: 6px; background: hsl(${hue}, 38%, 96%); break-inside: avoid; }

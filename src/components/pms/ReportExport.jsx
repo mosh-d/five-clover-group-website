@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { IoChevronDown, IoPrintOutline } from "react-icons/io5";
-import { btn, table } from "@/components/pms/ui";
+import Modal from "@/components/pms/Modal";
+import { btn, field, table } from "@/components/pms/ui";
 import { getStoredBranch, getStoredStaffUsername } from "@/lib/pms/auth";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
 import { printDocument } from "@/lib/pms/print";
@@ -68,14 +69,15 @@ function useReportExport({ target, title, subtitle, figures = false, named = fal
   const scope = useContext(ScopeContext);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(null);
-  const run = async () => {
+  // `leaveOut`: optional tables left off this time (a full report's choice).
+  const run = async ({ leaveOut = [] } = {}) => {
     const root = target?.current;
     if (!root) return;
     // Every paged list shows all its rows for this one render.
     let sections;
     flushSync(() => setShowAllRows(true));
     try {
-      sections = readSections(root);
+      sections = readSections(root, leaveOut);
     } finally {
       flushSync(() => setShowAllRows(false));
     }
@@ -153,10 +155,23 @@ export function ExportActions({ actions = [], report, full = false, className = 
     return () => document.removeEventListener("mousedown", outside);
   }, [open]);
 
+  // Print Full Report asks first when the report has optional tables
+  // (owner, 2026-11-23: Every Website Booking on Web Analytics, a long list
+  // not always wanted with the rest). All start ticked.
+  const [choosing, setChoosing] = useState(null);
+  const printFull = () => {
+    const labels = [...new Set([...(scope?.ref.current?.querySelectorAll("[data-report-optional]") || [])].map((n) => n.getAttribute("data-report-optional")))];
+    if (!labels.length) {
+      all.run();
+      return;
+    }
+    setChoosing(labels.map((label) => ({ label, on: true })));
+  };
+
   const list = [
     ...actions.filter(Boolean),
     ...(report ? [{ label: one.busy ? "Preparing..." : "Print Report", onClick: one.run, disabled: one.busy, sheet: true }] : []),
-    ...(full && scope ? [{ label: all.busy ? "Preparing..." : "Print Full Report", onClick: all.run, disabled: all.busy, sheet: true }] : []),
+    ...(full && scope ? [{ label: all.busy ? "Preparing..." : "Print Full Report", onClick: printFull, disabled: all.busy, sheet: true }] : []),
   ];
   const failed = one.failed || all.failed;
   if (!list.length) return null;
@@ -213,6 +228,46 @@ export function ExportActions({ actions = [], report, full = false, className = 
           {failed}
         </span>
       )}
+      {choosing && (
+        <Modal
+          onClose={() => setChoosing(null)}
+          title="Print Full Report"
+          size="sm"
+          footer={
+            <>
+              <button type="button" onClick={() => setChoosing(null)} className={btn.secondary}>
+                Back
+              </button>
+              <button
+                type="button"
+                className={btn.primary}
+                onClick={() => {
+                  const leaveOut = choosing.filter((c) => !c.on).map((c) => c.label);
+                  setChoosing(null);
+                  all.run({ leaveOut });
+                }}
+              >
+                Print
+              </button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-4">
+            <p className={field.label}>Include with the report:</p>
+            {choosing.map((c) => (
+              <label key={c.label} className="flex items-center gap-3 text-xl cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-6 h-6 cursor-pointer"
+                  checked={c.on}
+                  onChange={() => setChoosing((list) => list.map((x) => (x.label === c.label ? { ...x, on: !x.on } : x)))}
+                />
+                {c.label}
+              </label>
+            ))}
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -248,7 +303,9 @@ export const reportProps = (report) => {
  * Print Report button; `heading` (the table's title) and `actions` (its other
  * downloads) share that one row with it, the buttons on the right.
  */
-export function TableCard({ report, heading, actions, className = "", children }) {
+// `optional`: a name for the table (e.g. "Every Website Booking") - Print
+// Full Report then asks whether to include it.
+export function TableCard({ report, heading, actions, optional, className = "", children }) {
   const ref = useRef(null);
   const id = useId();
   const load = report && typeof report === "object" ? report.load : null;
@@ -259,7 +316,7 @@ export function TableCard({ report, heading, actions, className = "", children }
     return () => loaders.delete(id);
   }, [id, load]);
   const card = (
-    <div ref={ref} data-report-load={load ? id : undefined} className={`${table.card} ${className}`}>
+    <div ref={ref} data-report-load={load ? id : undefined} data-report-optional={optional || undefined} className={`${table.card} ${className}`}>
       <div className={table.scroll}>{children}</div>
     </div>
   );

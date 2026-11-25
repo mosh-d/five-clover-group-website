@@ -5,7 +5,7 @@
 import Toast from "@/components/pms/Toast";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "@/lib/pms/router";
-import { IoClose, IoReceiptOutline } from "react-icons/io5";
+import { IoClose, IoReceiptOutline, IoTimeOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
 import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
@@ -104,8 +104,8 @@ export default function AdminFoliosPage() {
   const navigate = useNavigate();
   const linesOpenTrail = canOpen(staffRole, "audit-trail");
   const [trailNote, setTrailNote] = useState(null);
-  const openLineInTrail = async (type, id, e) => {
-    if (!linesOpenTrail || e?.target?.closest?.("button, a, input, select")) return;
+  const openLineInTrail = async (type, id) => {
+    if (!linesOpenTrail) return;
     setTrailNote(null);
     try {
       const found = await fetchAuditEntryForLine(type, id);
@@ -115,16 +115,22 @@ export default function AdminFoliosPage() {
       setTrailNote(err.message || "Could not open the Audit Trail.");
     }
   };
-  const lineProps = (type, id) =>
-    linesOpenTrail
-      ? {
-          role: "link",
-          tabIndex: 0,
-          title: "Open this line in the Audit Trail",
-          onClick: (e) => openLineInTrail(type, id, e),
-          onKeyDown: (e) => e.key === "Enter" && openLineInTrail(type, id, e),
-        }
-      : {};
+  // Its own small button, never the whole line (owner, 2026-11-25: "I'm
+  // looking at a folio, and all of a sudden, the screen switches to another
+  // page" - a tap on a line while scrolling looked the entry up and then
+  // jumped to the Audit Trail a moment later).
+  const trailButton = (type, id) =>
+    linesOpenTrail ? (
+      <button
+        type="button"
+        onClick={() => openLineInTrail(type, id)}
+        title="Open this line in the Audit Trail"
+        aria-label="Open this line in the Audit Trail"
+        className="shrink-0 p-1.5 rounded-md text-(--text-color)/55 hover:text-(--emphasis) hover:bg-black/5 cursor-pointer"
+      >
+        <IoTimeOutline size={20} aria-hidden="true" />
+      </button>
+    ) : null;
 
   const [subTab, setSubTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState(isWaitstaffSession ? "open" : "all");
@@ -1314,8 +1320,7 @@ export default function AdminFoliosPage() {
                     {selectedFolio.items.map((item) => (
                       <div
                         key={item.id}
-                        {...lineProps("charge", item.id)}
-                        className={`flex justify-between items-start gap-4 bg-[color:var(--text-color)]/3 rounded-lg px-5 py-3 text-xl ${linesOpenTrail ? "cursor-pointer hover:ring-1 hover:ring-(--emphasis)/40" : ""}`}
+                        className="flex justify-between items-start gap-4 bg-[color:var(--text-color)]/3 rounded-lg px-5 py-3 text-xl"
                       >
                         <span className="capitalize min-w-0 break-words">
                           {item.description}
@@ -1329,6 +1334,7 @@ export default function AdminFoliosPage() {
                         <span className="flex items-center gap-3 shrink-0">
                           <StatusBadge status={chargeSettlement.get(item.id)} />
                           <span className="font-bold whitespace-nowrap">{money(item.total)}</span>
+                          {trailButton("charge", item.id)}
                         </span>
                       </div>
                     ))}
@@ -1429,8 +1435,7 @@ export default function AdminFoliosPage() {
                         <div
                           key={p.id}
                           ref={isHighlighted ? highlightedPaymentRef : null}
-                          {...lineProps("payment", p.id)}
-                          className={`flex justify-between items-center gap-4 rounded-lg px-5 py-3 text-xl ${linesOpenTrail ? "cursor-pointer hover:ring-1 hover:ring-(--emphasis)/40 " : ""}${
+                          className={`flex justify-between items-center gap-4 rounded-lg px-5 py-3 text-xl ${
                             isHighlighted
                               ? "bg-[color:var(--emphasis)]/5 ring-1 ring-[color:var(--emphasis)]/50"
                               : "bg-[color:var(--text-color)]/3"
@@ -1445,8 +1450,11 @@ export default function AdminFoliosPage() {
                               {p.receipt_number && <>· Receipt #{p.receipt_number}</>} · {formatDate(p.payment_date)}
                             </span>
                           </div>
-                          <span className={`font-bold whitespace-nowrap ${isRefund ? "text-red-600" : "text-green-700"}`}>
-                            {isRefund ? "−" : ""}{money(p.amount)}
+                          <span className="flex items-center gap-3 shrink-0">
+                            <span className={`font-bold whitespace-nowrap ${isRefund ? "text-red-600" : "text-green-700"}`}>
+                              {isRefund ? "−" : ""}{money(p.amount)}
+                            </span>
+                            {trailButton("payment", p.id)}
                           </span>
                         </div>
                       );

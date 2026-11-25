@@ -8,24 +8,23 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Modal from "@/components/pms/Modal";
 import Toast from "@/components/pms/Toast";
-import ManagerOnlyTag from "@/components/pms/ManagerOnlyTag";
-import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import { Tip } from "@/components/pms/Tip";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime, formatTime } from "@/lib/pms/format";
-import { getStoredBranch, getStoredStaffUsername, isManager } from "@/lib/pms/auth";
+import { getStoredBranch, getStoredStaffUsername } from "@/lib/pms/auth";
 import { printDocument } from "@/lib/pms/print";
 import { buildReportSheet, dataTable } from "@/lib/pms/reportSheet";
 import { BRANDS, GROUP_BRAND, brandForBranch, logoForBranch } from "@/components/pms/theme/brands";
-import { confirmChecklist, createChecklist, fetchChecklists, updateChecklist } from "@/lib/pms/api/daily-checklist-api";
+import { createChecklist, fetchChecklists, updateChecklist } from "@/lib/pms/api/daily-checklist-api";
 
 // Daily checklists (owner, 2026-11-19; backend phase-102): the front desk's
 // (GSA) and the porters'. One per person, per shift, per business day.
 // Whoever is on shift fills it in - a tick and a remark per task - and can
-// come back to tick more until the manager confirms it as supervisor,
-// ticking the tasks they saw done. Porters fill theirs in on the front desk
-// computer, in the receptionist's sign-in, for now. Every change is a dialog.
+// come back to change it until the next business day starts (6am). There is
+// no manager's confirmation any more (owner, 2026-11-25). Porters fill theirs
+// in on the front desk computer, in the receptionist's sign-in, for now.
+// Every change is a dialog.
 
 const TABS = [
   { key: "front_desk", label: "Front Desk (GSA)" },
@@ -34,18 +33,17 @@ const TABS = [
 const MAX_REMARKS = 500;
 const dayLabel = (day) => formatDate(`${String(day).slice(0, 10)}T12:00:00Z`);
 const doneCount = (items) => (items || []).filter((i) => i.done).length;
-const confirmedCount = (items) => (items || []).filter((i) => i.confirmed).length;
 const absolute = (img) => (img ? new URL(typeof img === "string" ? img : img.src, window.location.href).href : "");
 
 /**
- * A confirmed checklist on the branded report sheet, laid out like the paper
- * one - S/N, task, responsible staff, completed, supervisor's confirmation,
- * remarks - for the receptionist to hand to HR (owner, 2026-11-19).
+ * A checklist on the branded report sheet, laid out like the paper one -
+ * S/N, task, responsible staff, completed, remarks - for the receptionist to
+ * hand to HR (owner, 2026-11-19).
  */
 export function printChecklist(data, c) {
   const byN = new Map((c.items || []).map((i) => [Number(i.n), i]));
   const frontDesk = data.kind === "front_desk";
-  const columns = ["S/N", "Tasks", ...(frontDesk ? ["Responsible Staff"] : []), "Completed", "Supervisor's Confirmation", "Remarks"];
+  const columns = ["S/N", "Tasks", ...(frontDesk ? ["Responsible Staff"] : []), "Completed", "Remarks"];
   const rows = data.tasks.map((t) => {
     const i = byN.get(t.n) || {};
     return [
@@ -53,7 +51,6 @@ export function printChecklist(data, c) {
       t.task,
       ...(frontDesk ? [t.responsible || ""] : []),
       t.notApplicable ? "N/A" : i.done ? "✓" : "",
-      t.notApplicable ? "N/A" : i.confirmed ? "✓" : "",
       i.remarks || "",
     ];
   });
@@ -77,7 +74,6 @@ export function printChecklist(data, c) {
         { label: "Shift", value: c.shift },
         { label: "Staff Name", value: c.staff_name },
         { label: "Completed", value: `${doneCount(c.items)} of ${applicable}` },
-        { label: "Supervisor", value: c.confirmed_by_name || "-", sub: c.confirmed_at ? `Confirmed ${formatDateTime(c.confirmed_at)}` : "Not confirmed" },
       ],
       sections: [
         {
@@ -85,7 +81,7 @@ export function printChecklist(data, c) {
           ...dataTable({ columns, rows }),
           totals: [],
           figures: [],
-          note: c.supervisor_note ? `Supervisor's remarks: ${c.supervisor_note}` : "",
+          note: "",
         },
       ],
     }),
@@ -93,8 +89,8 @@ export function printChecklist(data, c) {
 }
 
 /**
- * One checklist in a dialog. mode: "new" (fill one in), "edit" (tick more
- * during the shift), "confirm" (the manager's supervisor ticks) or "view".
+ * One checklist in a dialog. mode: "new" (fill one in), "edit" (change it
+ * until the next business day starts) or "view".
  */
 export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
   const tasks = data.tasks;
@@ -104,30 +100,14 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
   const [items, setItems] = useState(() =>
     Object.fromEntries(tasks.map((t) => [t.n, { done: Boolean(byN.get(t.n)?.done), remarks: byN.get(t.n)?.remarks || "" }])),
   );
-  const [confirmed, setConfirmed] = useState(() => new Set(tasks.filter((t) => byN.get(t.n)?.done).map((t) => t.n)));
-  const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const filling = mode === "new" || mode === "edit";
-  const supervising = mode === "confirm";
-  // The manager's confirmation is asked twice (owner, 2026-11-19: "double
-  // opt in"): Confirm Checklist, then a second Yes - each saying it can't be
-  // edited afterwards. The ticks are frozen on the second step.
-  const [sure, setSure] = useState(false);
-  const showSupervisor = supervising || Boolean(checklist?.confirmed_at);
   const setItem = (n, patch) => {
     setError(null);
     setItems((cur) => ({ ...cur, [n]: { ...cur[n], ...patch } }));
   };
-  const toggleConfirmed = (n, on) =>
-    setConfirmed((cur) => {
-      const next = new Set(cur);
-      if (on) next.add(n);
-      else next.delete(n);
-      return next;
-    });
   const done = Object.values(items).filter((i) => i.done).length;
-  const ticked = tasks.filter((t) => byN.get(t.n)?.done);
 
   const save = async () => {
     const problem =
@@ -143,12 +123,9 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
       if (mode === "new") {
         await createChecklist({ kind: data.kind, shift, staff_name: staffName.trim(), items: payload });
         onDone(`${staffName.trim()}'s ${shift} checklist is saved.`);
-      } else if (mode === "edit") {
+      } else {
         await updateChecklist(checklist.id, payload);
         onDone(`${checklist.staff_name}'s checklist is updated.`);
-      } else {
-        await confirmChecklist(checklist.id, [...confirmed], note.trim() || undefined);
-        onDone(`${checklist.staff_name}'s checklist is confirmed.`);
       }
     } catch (err) {
       setError(err.message || "That didn't go through.");
@@ -227,23 +204,6 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
                     ) : (
                       <span className={`text-lg font-semibold ${saved?.done ? "text-green-700" : page.muted}`}>{saved?.done ? "✓ Done" : "Not done"}</span>
                     )}
-                    {showSupervisor && !t.notApplicable && (
-                      supervising ? (
-                        <label className={`inline-flex items-center gap-2 text-lg ${saved?.done ? "cursor-pointer" : "opacity-40"}`}>
-                          <input
-                            type="checkbox"
-                            checked={confirmed.has(t.n)}
-                            onChange={(e) => toggleConfirmed(t.n, e.target.checked)}
-                            disabled={busy || sure || !saved?.done}
-                            className="w-6 h-6 cursor-pointer accent-(--emphasis)"
-                            aria-label={`Confirm task ${t.n}`}
-                          />
-                          Confirmed
-                        </label>
-                      ) : (
-                        <span className={`text-lg font-semibold ${saved?.confirmed ? "text-green-700" : page.muted}`}>{saved?.confirmed ? "✓ Confirmed" : "Not confirmed"}</span>
-                      )
-                    )}
                   </div>
                 </div>
                 {!t.notApplicable &&
@@ -270,25 +230,11 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
           })}
         </ol>
 
+        {/* Confirmed before the manager's step was removed: kept as history. */}
         {checklist?.confirmed_at && (
-          <p className="text-lg">
+          <p className={`text-lg ${page.muted}`}>
             Confirmed by {checklist.confirmed_by_name || "the manager"} at {formatTime(checklist.confirmed_at)}
             {checklist.supervisor_note ? ` - "${checklist.supervisor_note}"` : ""}
-          </p>
-        )}
-
-        {supervising && (
-          <div className="flex flex-col gap-2">
-            <label htmlFor="checklist-note" className={field.label}>
-              Supervisor&apos;s Remarks (optional)<Tip id="checklist.supervisorNote" />
-            </label>
-            <AutoGrowTextarea id="checklist-note" value={note} onChange={(e) => setNote(e.target.value)} className={field.textarea} maxLength={MAX_REMARKS} disabled={busy || sure} />
-          </div>
-        )}
-
-        {supervising && (
-          <p role="note" className="text-lg font-semibold text-amber-900 bg-amber-50 border border-amber-300 rounded-lg px-4 py-3">
-            Once you confirm, this checklist can&apos;t be edited - not by the front desk, and not by you.
           </p>
         )}
 
@@ -297,19 +243,8 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
             <button type="button" onClick={onClose} className={btn.secondary}>
               Close
             </button>
-            {checklist.confirmed_at && (
-              <button type="button" onClick={() => printChecklist(data, checklist)} className={btn.primary}>
-                Print Checklist
-              </button>
-            )}
-          </div>
-        ) : supervising && !sure ? (
-          <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={onClose} className={btn.secondary}>
-              Back
-            </button>
-            <button type="button" onClick={() => setSure(true)} className={btn.primary}>
-              Confirm Checklist
+            <button type="button" onClick={() => printChecklist(data, checklist)} className={btn.primary}>
+              Print Checklist
             </button>
           </div>
         ) : (
@@ -317,20 +252,14 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
             question={
               mode === "new"
                 ? `Save this checklist, ${done} of ${tasks.filter((t) => !t.notApplicable).length} done?`
-                : mode === "edit"
-                  ? `Save the changes, ${done} of ${tasks.filter((t) => !t.notApplicable).length} done?`
-                  : `Are you sure? Confirm ${confirmed.size} of ${ticked.length} ticked tasks as supervisor?`
+                : `Save the changes, ${done} of ${tasks.filter((t) => !t.notApplicable).length} done?`
             }
-            details={
-              supervising
-                ? ["After this, the checklist can't be edited by anyone.", "Your name and the time are kept, in the Audit Trail too."]
-                : ["You can come back and tick more during the shift, until the manager confirms it.", "It is recorded in the Audit Trail."]
-            }
-            confirmLabel={supervising ? "Yes, confirm it" : "Yes, save it"}
+            details={["You can come back and change it until the next business day starts (6am).", "It is recorded in the Audit Trail."]}
+            confirmLabel="Yes, save it"
             busyLabel="Saving..."
             busy={busy}
             error={error}
-            onBack={supervising ? () => setSure(false) : onClose}
+            onBack={onClose}
             onConfirm={save}
           />
         )}
@@ -340,7 +269,6 @@ export function ChecklistDialog({ mode, data, checklist, onClose, onDone }) {
 }
 
 export default function DailyChecklistPage() {
-  const manager = isManager();
   const [kind, setKind] = useState("front_desk");
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -379,7 +307,7 @@ export default function DailyChecklistPage() {
         icon={IoCheckboxOutline}
         tipId="checklist.page"
         title="Daily Checklist"
-        description="Each person on shift fills in their checklist - tick each task as it is done, with remarks where needed. Porters fill in theirs here too. The manager confirms each one as supervisor."
+        description="Each person on shift fills in their checklist - tick each task as it is done, with remarks where needed. Porters fill in theirs here too. Each can be changed until the next business day starts (6am)."
         actions={
           <button type="button" onClick={() => shown && setDialog({ mode: "new" })} disabled={!shown} className={btn.primary}>
             New Checklist
@@ -406,14 +334,13 @@ export default function DailyChecklistPage() {
                     <th className={table.th}>Date<Tip id="checklist.col.date" /></th>
                     <th className={table.th}>Shift<Tip id="checklist.col.shift" /></th>
                     <th className={table.th}>Done<Tip id="checklist.col.done" /></th>
-                    <th className={table.th}>Supervisor<Tip id="checklist.col.supervisor" /></th>
                     <th className={table.th}>Actions<Tip id="checklist.col.actions" /></th>
                   </tr>
                 </thead>
                 <tbody>
                   {shown.checklists.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className={table.empty}>
+                      <td colSpan={5} className={table.empty}>
                         No {kind === "porter" ? "porter" : "front desk"} checklists in the last 30 days. Fill in the first one with New Checklist.
                       </td>
                     </tr>
@@ -429,38 +356,19 @@ export default function DailyChecklistPage() {
                             {doneCount(c.items)} of {applicable}
                           </td>
                           <td className={table.td}>
-                            {c.confirmed_at ? (
-                              <span className="text-green-700 font-semibold">
-                                ✓ {c.confirmed_by_name || "Confirmed"} ({confirmedCount(c.items)} of {doneCount(c.items)})
-                              </span>
-                            ) : (
-                              <span className={page.muted}>Not yet</span>
-                            )}
-                          </td>
-                          <td className={table.td}>
                             <div className={table.actions}>
                               <button type="button" onClick={() => setDialog({ mode: "view", checklist: c })} className={btn.rowSecondary}>
                                 View
                               </button>
-                              {/* Confirmed: printed on the branded sheet for HR. */}
-                              {c.confirmed_at && (
-                                <button type="button" onClick={() => printChecklist(shown, c)} className={btn.rowPrimary}>
-                                  Print Checklist
-                                </button>
-                              )}
-                              {today && !c.confirmed_at && (
+                              {today && (
                                 <button type="button" onClick={() => setDialog({ mode: "edit", checklist: c })} className={btn.rowSecondary}>
                                   Update
                                 </button>
                               )}
-                              {manager && !c.confirmed_at && (
-                                <span className="inline-flex items-center gap-2">
-                                  <button type="button" onClick={() => setDialog({ mode: "confirm", checklist: c })} className={btn.rowPrimary}>
-                                    Confirm
-                                  </button>
-                                  <ManagerOnlyTag />
-                                </span>
-                              )}
+                              {/* Printed on the branded sheet for HR. */}
+                              <button type="button" onClick={() => printChecklist(shown, c)} className={btn.rowPrimary}>
+                                Print Checklist
+                              </button>
                             </div>
                           </td>
                         </tr>

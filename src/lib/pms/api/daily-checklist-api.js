@@ -9,4 +9,3 @@ export const createChecklist = async (body) => (await http.post(`/api/daily-chec
 
 export const updateChecklist = async (id, items) => (await http.put(`/api/daily-checklists/${id}`, { items })).data;
 
-export const confirmChecklist = async (id, confirmed, note) => (await http.post(`/api/daily-checklists/${id}/confirm`, { confirmed, note })).data;

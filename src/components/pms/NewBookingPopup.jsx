@@ -49,10 +49,12 @@ export default function NewBookingPopup({ enabled }) {
           exit={{ opacity: 0, x: 80, transition: { duration: 0.2 } }}
           transition={{ type: "spring", stiffness: 380, damping: 28 }}
         >
+          {/* Only its Open button opens the booking (owner, 2026-11-25: the
+              screen switched pages by itself - a tap that landed on the card
+              as it slid in under the finger opened Reservations). */}
           <div
-            onClick={open}
-            role="button"
-            className="bg-(--card) border border-(--accent-2) border-l-4 border-l-(--emphasis) shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-6 rounded-lg flex items-center gap-6 min-w-[32rem] cursor-pointer hover:shadow-[0_25px_60px_rgba(0,0,0,0.2)] transition-shadow"
+            role="status"
+            className="bg-(--card) border border-(--accent-2) border-l-4 border-l-(--emphasis) shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-6 rounded-lg flex items-center gap-6 min-w-[min(32rem,calc(100vw-3rem))] max-w-[calc(100vw-3rem)]"
           >
             <div className="bg-(--emphasis)/10 p-3 rounded-full">
               <span className="text-3xl">🔔</span>
@@ -60,12 +62,12 @@ export default function NewBookingPopup({ enabled }) {
             <div className="flex-1">
               <h4 className="text-xl font-bold text-(--black) leading-tight">New Online Booking</h4>
               <p className="text-lg text-(--text-color)/76">A guest just booked on the website</p>
+              <button type="button" onClick={open} className="mt-2 text-lg font-bold text-(--emphasis) hover:underline cursor-pointer">
+                Open booking
+              </button>
             </div>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setBookingId(null);
-              }}
+              onClick={() => setBookingId(null)}
               aria-label="Dismiss"
               className="text-(--text-color)/40 hover:text-(--emphasis) transition-colors p-1"
             >

@@ -8,14 +8,14 @@ import DateInput from "@/components/pms/DateInput";
 import { Tip } from "@/components/pms/Tip";
 import { StatTile, StatRow } from "@/components/pms/hq/metrics/parts";
 import { btn, field, page, table } from "@/components/pms/ui";
-import { formatDate, formatDateTime } from "@/lib/pms/format";
+import { formatDate } from "@/lib/pms/format";
 import { http } from "@/lib/pms/http";
 import { ReportScope, ExportActions, TableCard } from "@/components/pms/ReportExport";
 import { ChecklistDialog, printChecklist } from "@/components/pms/checklist/DailyChecklistPage";
 
 // Daily Checklists at Head Office (owner, 2026-11-19): every branch's front
 // desk and porter checklists over a range of business days - how many each
-// branch filled in and the manager confirmed, how complete they were, and the
+// branch filled in, how complete they were, and the
 // days with no front desk checklist at all - with each one to view and print.
 // Head HR's and HR's, and the developer's. Read only.
 
@@ -65,7 +65,6 @@ export default function ChecklistReportPage() {
   }, [from, to, branch, kind]);
 
   const rows = data?.checklists || [];
-  const confirmed = rows.filter((c) => c.confirmed_at).length;
   const done = rows.reduce((n, c) => n + c.done, 0);
   const total = rows.reduce((n, c) => n + c.total, 0);
   const gaps = (data?.summary || []).reduce((n, s) => n + (s.days_without_front_desk || 0), 0);
@@ -76,7 +75,7 @@ export default function ChecklistReportPage() {
         icon={IoCheckboxOutline}
         tipId="hqChecklists.page"
         title="Daily Checklists"
-        description="Every branch's front desk and porter checklists: how many were filled in and confirmed by the manager, how complete they were, and the days a branch's front desk filled in none. Open any one to see it or print it."
+        description="Every branch's front desk and porter checklists: how many were filled in, how complete they were, and the days a branch's front desk filled in none. Open any one to see it or print it."
       />
       {error && <p className={`${field.error} w-full`}>{error}</p>}
 
@@ -130,7 +129,6 @@ export default function ChecklistReportPage() {
 
             <StatRow>
               <StatTile label="Checklists" tip="hqChecklists.total" value={rows.length.toLocaleString()} sub={data.from === data.to ? dayLabel(data.from) : `${dayLabel(data.from)} to ${dayLabel(data.to)}`} />
-              <StatTile label="Confirmed" tip="hqChecklists.confirmed" value={confirmed.toLocaleString()} sub={`${(rows.length - confirmed).toLocaleString()} not confirmed yet`} />
               <StatTile label="Tasks Done" tip="hqChecklists.completion" value={total ? `${Math.round((done / total) * 100)}%` : "—"} sub="Of every task on them" />
               {kind !== "porter" && <StatTile label="Days With No Front Desk Checklist" tip="hqChecklists.gaps" value={gaps.toLocaleString()} sub="Across the branches shown" />}
             </StatRow>
@@ -149,8 +147,8 @@ export default function ChecklistReportPage() {
                   onClick: () =>
                     csv(
                       `checklists_by_branch_${data.from}_${data.to}.csv`,
-                      ["Branch", "Front Desk", "Porter", "Confirmed", "Not Confirmed", "Tasks Done %", "Days With No Front Desk Checklist"],
-                      data.summary.map((s) => [s.branch_name, s.front_desk, s.porter, s.confirmed, s.not_confirmed, s.completion ?? "", s.days_without_front_desk ?? ""]),
+                      ["Branch", "Front Desk", "Porter", "Tasks Done %", "Days With No Front Desk Checklist"],
+                      data.summary.map((s) => [s.branch_name, s.front_desk, s.porter, s.completion ?? "", s.days_without_front_desk ?? ""]),
                     ),
                 },
               ]}
@@ -161,8 +159,6 @@ export default function ChecklistReportPage() {
                     <th className={`${table.th} ${table.stickyTh}`}>Branch</th>
                     <th className={table.th}>Front Desk</th>
                     <th className={table.th}>Porter</th>
-                    <th className={table.th}>Confirmed</th>
-                    <th className={table.th}>Not Confirmed</th>
                     <th className={table.th}>Tasks Done</th>
                     {kind !== "porter" && <th className={table.th}>Days With None<Tip id="hqChecklists.gaps" /></th>}
                   </tr>
@@ -173,8 +169,6 @@ export default function ChecklistReportPage() {
                       <td className={`${table.td} ${table.stickyTd} font-medium`}>{s.branch_name}</td>
                       <td className={table.td}>{s.front_desk}</td>
                       <td className={table.td}>{s.porter}</td>
-                      <td className={table.td}>{s.confirmed}</td>
-                      <td className={table.td}>{s.not_confirmed}</td>
                       <td className={table.td}>{s.completion === null ? "—" : `${s.completion}%`}</td>
                       {kind !== "porter" && <td className={`${table.td} ${s.days_without_front_desk ? "text-red-700 font-semibold" : ""}`}>{s.days_without_front_desk}</td>}
                     </tr>
@@ -197,8 +191,8 @@ export default function ChecklistReportPage() {
                   onClick: () =>
                     csv(
                       `checklists_${data.from}_${data.to}.csv`,
-                      ["Date", "Branch", "Checklist", "Shift", "Staff", "Done", "Of", "Confirmed By", "Confirmed At", "Tasks Confirmed", "Supervisor's Remarks"],
-                      rows.map((c) => [String(c.business_date).slice(0, 10), c.branch_name, KIND_NAMES[c.kind], c.shift, c.staff_name, c.done, c.total, c.confirmed_by_name || "", c.confirmed_at ? formatDateTime(c.confirmed_at) : "", c.confirmed_at ? c.confirmed : "", c.supervisor_note || ""]),
+                      ["Date", "Branch", "Checklist", "Shift", "Staff", "Done", "Of"],
+                      rows.map((c) => [String(c.business_date).slice(0, 10), c.branch_name, KIND_NAMES[c.kind], c.shift, c.staff_name, c.done, c.total]),
                     ),
                 },
               ]}
@@ -212,14 +206,13 @@ export default function ChecklistReportPage() {
                     <th className={table.th}>Checklist</th>
                     <th className={table.th}>Shift</th>
                     <th className={table.th}>Done</th>
-                    <th className={table.th}>Supervisor</th>
                     <th className={table.th}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className={table.empty}>
+                      <td colSpan={7} className={table.empty}>
                         No checklists for these dates.
                       </td>
                     </tr>
@@ -235,24 +228,13 @@ export default function ChecklistReportPage() {
                           {c.done} of {c.total}
                         </td>
                         <td className={table.td}>
-                          {c.confirmed_at ? (
-                            <span className="text-green-700 font-semibold">
-                              ✓ {c.confirmed_by_name || "Confirmed"} ({c.confirmed} of {c.done})
-                            </span>
-                          ) : (
-                            <span className={page.muted}>Not yet</span>
-                          )}
-                        </td>
-                        <td className={table.td}>
                           <div className={table.actions}>
                             <button type="button" onClick={() => setViewing(c)} className={btn.rowSecondary}>
                               View
                             </button>
-                            {c.confirmed_at && (
-                              <button type="button" onClick={() => printChecklist(kindData(data, c.kind), c)} className={btn.rowPrimary}>
-                                Print Checklist
-                              </button>
-                            )}
+                            <button type="button" onClick={() => printChecklist(kindData(data, c.kind), c)} className={btn.rowPrimary}>
+                              Print Checklist
+                            </button>
                           </div>
                         </td>
                       </tr>

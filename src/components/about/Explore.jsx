@@ -146,7 +146,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://abijogra.fivecloverhotels.com/"
+              href="https://abijo.fivecloverhotels.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="block touch-manipulation"
@@ -165,7 +165,7 @@ export default function Explore() {
                 </div>
                 <div className="flex flex-col gap-[1.8rem]">
                   <h3 className={`${FONTS.context}`}>Five Clover Hotel</h3>
-                  <h4 className={`${FONTS.heading}`}>Abijo</h4>
+                  <h4 className={`${FONTS.heading}`}>Abijo GRA</h4>
                   <p className={`${FONTS.body}`}>
                     Our commitment to ensuring a memorable stay is evident in
                     the exceptional elements that set us apart.
@@ -174,7 +174,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://ringrubyvaluecounty.fivecloverhotels.com/"
+              href="https://valuecounty.ringrubyhotel.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="block touch-manipulation"
@@ -203,7 +203,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://ringrubyhotelesoikejagra.com/"
+              href="https://eso.ringrubyhotel.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="block touch-manipulation"
@@ -232,7 +232,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://ringrubyhoteloduduwaikejagra.com/"
+              href="https://oduduwa.ringrubyhotel.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="block touch-manipulation"
@@ -260,7 +260,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://ringrubyhotelsangotedo.com/"
+              href="https://unitedestate.ringrubyhotel.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="block touch-manipulation"
@@ -289,7 +289,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://www.caritasinnlekkihotel.com/"
+              href="https://lekki.caritasinn.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="block touch-manipulation"
@@ -318,7 +318,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://www.caritasinnilasanhotel.com/"
+              href="https://ilasan.caritasinn.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="block touch-manipulation"
@@ -347,7 +347,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://www.caritasinnigbobihotel.com/"
+              href="https://igbobi.caritasinn.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="block touch-manipulation"
@@ -376,7 +376,7 @@ export default function Explore() {
               </div>
             </a>
             <a
-              href="https://www.caritasinnyabahotel.com/"
+              href="https://yaba.caritasinn.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="block touch-manipulation"

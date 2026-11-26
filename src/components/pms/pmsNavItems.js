@@ -31,6 +31,7 @@ import {
   IoCheckmarkDoneOutline,
   IoBookOutline,
   IoCheckboxOutline,
+  IoShieldCheckmarkOutline,
 } from "react-icons/io5";
 import { readPmsSession } from "@/lib/pms/session";
 
@@ -66,6 +67,10 @@ const MARKETING = ["head_marketer"];
 const AUDIT = ["auditor"];
 
 export const PMS_NAV_ITEMS = [
+  // The PMS Rules (owner, 2026-11-26): every role's, at a branch and at Head
+  // Office - first in every sidebar and highlighted (`pinned`), but never
+  // where signing in lands (landingPath skips it).
+  { slug: "rules", label: "PMS RULES", icon: IoShieldCheckmarkOutline, roles: EVERY_ROLE, hq: [...HEAD_OFFICE, ...MARKETING, ...AUDIT], pinned: true },
   // Head Office, in the order its sidebar lists them; Critical is where
   // signing in lands (owner, 2026-10-01).
   { slug: "critical", label: "CRITICAL", icon: IoWarningOutline, hq: HEAD_OFFICE },
@@ -162,7 +167,7 @@ export const opensOnlyIn = (item, scope) => Boolean(item) && !rolesIn(item, scop
 
 // Where a session lands after signing in: the first page of its own sidebar,
 // so no role can land somewhere it may not open.
-export const landingPath = (role, scope = "branch") => visibleNavItems(role, scope)[0]?.href || "/pms/account";
+export const landingPath = (role, scope = "branch") => visibleNavItems(role, scope).find((item) => !item.pinned)?.href || "/pms/account";
 
 // Where signing in goes on to: the page that sent someone to sign in (?next=,
 // e.g. /pms/reservations?reservation_id=12 from a branch PMS's "moved" card

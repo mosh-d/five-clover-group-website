@@ -24,7 +24,7 @@ function NavItems({ pathname, role, scope, branch, onNavigate }) {
   };
   return (
     <ul className="flex flex-col gap-2">
-      {visibleNavItems(role, scope, branch).map(({ href, label, icon: Icon, badge }) => {
+      {visibleNavItems(role, scope, branch).map(({ href, label, icon: Icon, badge, pinned }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
         const count = badge ? badges[badge].count : 0;
         return (
@@ -33,7 +33,12 @@ function NavItems({ pathname, role, scope, branch, onNavigate }) {
               href={href}
               onClick={onNavigate}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xl font-bold tracking-wide transition-colors ${
-                isActive ? "bg-(--emphasis) text-white shadow-md" : "text-(--text-color) hover:bg-white/60"
+                isActive
+                  ? "bg-(--emphasis) text-white shadow-md"
+                  : pinned
+                    ? // The PMS Rules stand out (owner, 2026-11-26).
+                      "border-2 border-(--emphasis) bg-(--emphasis)/10 text-(--emphasis) hover:bg-(--emphasis)/20"
+                    : "text-(--text-color) hover:bg-white/60"
               }`}
             >
               <Icon size={20} className="shrink-0" />

@@ -265,6 +265,7 @@ export const TIPS = {
   "account.notifications": "Pop-ups on this device when something needs you - even with the PMS closed. What you get follows your role.",
   "account.install": "The PMS as an app: its own icon and window, no browser bar.",
   "account.page": "Your own sign-in: change your password.",
+  "rules.page": "The rules everyone follows so the PMS stays true. Every report is built from what is recorded, when it is recorded.",
   "help.page": "How each page works, and the day's workflow from check-in to night audit.",
   "critical.page": "Every room out of order across all branches, longest out first, live.",
   "decisionSupport.page": "What to fix first across the branches, worked out from their own records, with a suggestion for each.",

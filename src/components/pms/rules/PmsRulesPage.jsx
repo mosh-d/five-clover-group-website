@@ -16,7 +16,7 @@ const RULES = [
     title: "1. The PMS is the record",
     rules: [
       "If it is not in the PMS, it did not happen. Reports, bills, stock and the night audit are built only from what is recorded.",
-      "Record it when it happens, not later. Every report is taken automatically at its time (the evening report at 7:00 PM, the morning report at 7:00 AM). Anything recorded after that time is not on it.",
+      "Record it when it happens, not later. The PMS dates everything when it is entered. The PMS Report is taken at exactly 7:00 PM and 7:00 AM, and every other report covers the business day (6:00 AM to 6:00 AM). Something entered late misses its report, or lands on the wrong day.",
       "Use your own sign-in, every time. Never share a password or work on someone else's sign-in. Every action carries your name and the time in the Audit Trail.",
       "Record your shift when you start. A report is credited to the shift on record.",
     ],

@@ -193,7 +193,9 @@ export function StaffActivitySection({ activity, money }) {
           const cells = [...(dated ? ["Date"] : []), "Staff", g.unit, ...(g.amount ? ["Amount"] : []), ...(showAudit ? ["Action"] : [])];
           return (
             <div key={g.key} className="flex flex-col gap-2">
-              <h3 className="text-2xl font-bold text-[color:var(--black)]">{g.label}<Tip id={g.tip} /></h3>
+              {/* Pinned while its table scrolls sideways (owner, 2026-11-26:
+                  the headings slid away under the left edge). */}
+              <h3 className="sticky left-0 w-fit text-2xl font-bold text-[color:var(--black)]">{g.label}<Tip id={g.tip} /></h3>
               <table className="w-full text-xl">
                 <TableHead cells={cells} rightAlign={g.amount ? ["Amount"] : []} tips={STAFF_COLUMN_TIPS} />
                 <tbody>

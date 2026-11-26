@@ -15,7 +15,6 @@ import {
   fetchReportsDashboard,
   downloadReportsExport,
   // emailReportsDashboard, // parked with the Email Report button below
-  fetchManifest,
   fetchPaymentsAnalysis,
   fetchPmsReport,
   fetchAccommodationReport,
@@ -25,7 +24,6 @@ import {
   downloadDrinkSalesReportExport,
   fetchBarStockReport,
   downloadBarStockReportExport,
-  downloadManifestExport,
   downloadAnalysisExport,
   downloadPmsReportExport,
   downloadAccommodationReportExport,
@@ -45,6 +43,7 @@ import { money, pct, formatDate, formatDateTime, formatPaymentMethod } from "@/l
 import { canViewAuditTrail } from "@/components/pms/pmsNavItems";
 import { page, table } from "@/components/pms/ui";
 import { ReportScope, ReportExportAll, ExportActions } from "@/components/pms/ReportExport";
+import ReportSignOff from "@/components/pms/signoff/ReportSignOff";
 import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBadge, StaffActivitySection, MoneyKindTag } from "@/components/pms/reportUi";
 
 import DateInput from "@/components/pms/DateInput";
@@ -70,7 +69,8 @@ const ALL_TABS = [
   // is the per-room house register, which they call the Manifest. Renaming
   // the keys would mean renaming the API routes and every activeTab branch
   // below for a wording change, so only the display labels moved.
-  { key: "manifest", label: "Accommodation" },
+  // The Accommodation report (key "manifest") was taken out (owner,
+  // 2026-11-26): "the manifest covers what we need for that".
   { key: "analysis", label: "Analysis" },
   { key: "pms", label: "PMS Report" },
   { key: "accommodation", label: "Manifest" },
@@ -147,12 +147,10 @@ export default function AdminReportsPage() {
         description={
           activeTab === "dashboard"
             ? "Revenue, occupancy, and stay totals for a custom date range."
-            : activeTab === "manifest"
-            ? "Arrivals and departures for a date range, with room price, receipt numbers, and deposits — the daily front-desk arrivals and departures sheet, digitized."
             : activeTab === "analysis"
             ? "Every naira taken and paid back in a date range — guest payments, non-guest sales, refunds and credit refunds — by room, receipt number, and method. Net Total matches the Overview's Collected for the same dates."
             : activeTab === "pms"
-            ? "A shift-handoff snapshot: room status (vacant/occupied/out-of-order/reserved/complementary) plus arrivals and departures — pick Evening for end-of-day or Morning to see the previous night's audit."
+            ? "The room occupancy report as on paper: every room as at 7:00 PM (Evening) or 7:00 AM (Morning) - occupied with its code, vacant, out of order and why - with the day's arrivals and departures."
             : activeTab === "accommodation"
             ? "The day's room sales: one row per room occupied that night — guest, room, tariff, payment, and whether they checked in today or stayed over from yesterday. Guests who checked out during the day are left off, and complementary and manager's rooms are listed separately under Non-Revenue Rooms."
             : activeTab === "food-sales"
@@ -189,7 +187,6 @@ export default function AdminReportsPage() {
 
       <MotionDiv key={activeTab} className="w-full flex flex-col items-start gap-[3rem]" {...tabEnter}>
       {activeTab === "dashboard" && <DashboardTab />}
-      {activeTab === "manifest" && <ManifestTab />}
       {activeTab === "analysis" && <AnalysisTab />}
       {activeTab === "pms" && <PmsReportTab />}
       {activeTab === "accommodation" && <AccommodationReportTab shift={shift} />}
@@ -386,6 +383,7 @@ function DashboardTab() {
                 <strong className="text-[color:var(--black)]">{period.to}</strong> ({period.days} business day{period.days !== 1 ? "s" : ""}, 6am to 6am)
               </p>
             )}
+            <ReportSignOff reportKey="dashboard" from={period?.from || from} to={period?.to || to} />
             <ReportExportAll />
           </div>
 
@@ -535,161 +533,18 @@ function TotalLine({ label, amount, note, emphasis = false, tip }) {
   );
 }
 
-// Room revenue only: breakfast is excluded because these reports are read
-// for room revenue and breakfast is accounted for separately, and
-// complementary rooms are excluded because their price was waived (which is
-// why both tables render it struck through). The figure is computed by the
-// backend's sumRoomRevenue so the screen and the Excel export can't drift.
-function RoomRevenueTotal({ amount }) {
-  return <TotalLine label="Total Room Revenue (excluding breakfast)" amount={amount} tip="reports.roomRevenueTotal" />;
+function analysisGroups(payments = []) {
+  const groups = [
+    { key: "room", title: "Room Sales", tip: "reports.analysis.room", rows: [] },
+    { key: "fnb", title: "F&B Sales", tip: "reports.analysis.fnb", rows: [] },
+    { key: "laundry", title: "Laundry Sales", tip: "reports.analysis.laundry", rows: [] },
+    { key: "old", title: "Guest Bills (before accounts)", tip: "reports.analysis.oldWay", rows: [] },
+  ];
+  for (const p of payments) (groups.find((g) => g.key === p.paid_for) || groups[3]).rows.push(p);
+  return groups
+    .filter((g) => g.key !== "old" || g.rows.length > 0)
+    .map((g) => ({ ...g, net: g.rows.reduce((sum, p) => sum + (p.status === "refunded" ? -1 : 1) * Number(p.amount || 0), 0) }));
 }
-
-// ─── Manifest ─────────────────────────────────────────────────────────────────
-
-function ManifestTab() {
-  const showAudit = canViewAuditTrail();
-  const [date, setDate] = useState(businessDateISO);
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState(null);
-
-  const load = useCallback(async () => {
-    if (!date) return;
-    try {
-      setLoading(true);
-      setError(null);
-      setData(await fetchManifest(date));
-    } catch (err) {
-      setError((err.response?.data?.message || "Failed to load manifest.") + " Please refresh the page.");
-    } finally {
-      setLoading(false);
-    }
-  }, [date]);
-
-  const handleExport = async () => {
-    if (!date) return;
-    try {
-      setExporting(true);
-      setExportError(null);
-      await downloadManifestExport(date);
-    } catch (err) {
-      setExportError(err.response?.data?.message || "Failed to export manifest.");
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const renderRow = (r) => (
-    <tr key={r.id} className={table.row}>
-      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
-      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.room_numbers || "Unassigned"}</td>
-      <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(r.room_price)}</td>
-      <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(r.breakfast_price)}</td>
-      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.receipt_numbers || "—"}</td>
-      <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(r.amount_deposited)}</td>
-      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatDateTime(r.actual_check_in || r.check_in)}</td>
-      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatDateTime(r.actual_check_out || r.check_out)}</td>
-      {/* Already cased for reading ("OTA, Walk-in"), so no capitalize —
-          it would turn "Walk-in" into "Walk-In". */}
-      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.source_label || r.source || "—"}</td>
-      {showAudit && <td className="px-6 py-4"><AuditLink audit={r.audit} /></td>}
-    </tr>
-  );
-
-  const headers = ["Guest", "Room", "Room Price", "Breakfast Price", "Receipt No.", "Res. Credit", "Arrival", "Check-Out", "Source", ...(showAudit ? ["Action"] : [])];
-  const headerTips = {
-    Guest: "reports.manifest.col.guest",
-    Room: "reports.manifest.col.room",
-    "Room Price": "reports.manifest.col.roomPrice",
-    "Breakfast Price": "reports.manifest.col.breakfast",
-    "Receipt No.": "reports.manifest.col.receipt",
-    "Res. Credit": "reports.manifest.col.resCredit",
-    Arrival: "reports.manifest.col.arrival",
-    "Check-Out": "reports.manifest.col.checkOut",
-    Source: "reports.manifest.col.source",
-  };
-
-  return (
-    <div className="w-full flex flex-col items-start gap-[2.5rem]">
-      <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
-        <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
-          <DateInput
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          />
-        </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
-      </div>
-
-      {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
-      {exportError && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{exportError}</div>}
-      {loading && <div className="flex justify-center py-20 w-full"><LoadingSpinner size="lg" /></div>}
-
-      {!loading && data && (
-        <ReportScope date={data.report_date}>
-        <div className="w-full flex flex-col gap-[2.5rem]">
-          <div className="w-full flex flex-wrap items-center justify-between gap-4">
-            <p className="text-2xl text-[color:var(--text-color)]/76">
-              Accommodation report for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
-            </p>
-            <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting }]} />
-          </div>
-
-          <ReportSection
-            report
-            title="Check-Ins"
-            subtitle="Everyone due to arrive this business day"
-            tip="reports.manifest.checkIns"
-            footer={<RoomRevenueTotal amount={data.check_ins_room_total} />}
-          >
-            {data.check_ins.length === 0 ? (
-              <EmptyRow />
-            ) : (
-              <table className="w-full text-xl">
-                <TableHead cells={headers} tips={headerTips} />
-                <tbody>{data.check_ins.map(renderRow)}</tbody>
-              </table>
-            )}
-          </ReportSection>
-
-          <ReportSection
-            report
-            title="Check-Outs"
-            subtitle="Everyone due to depart this business day"
-            tip="reports.manifest.checkOuts"
-            footer={<RoomRevenueTotal amount={data.check_outs_room_total} />}
-          >
-            {data.check_outs.length === 0 ? (
-              <EmptyRow />
-            ) : (
-              <table className="w-full text-xl">
-                <TableHead cells={headers} tips={headerTips} />
-                <tbody>{data.check_outs.map(renderRow)}</tbody>
-              </table>
-            )}
-          </ReportSection>
-
-          <StaffActivitySection activity={data.staff_activity} money={money} />
-        </div>
-        </ReportScope>
-      )}
-
-      {!loading && !data && !error && (
-        <div className="text-center py-20 text-[color:var(--text-color)]/60 text-2xl w-full">
-          Pick a date, then click <strong>Generate Report</strong>.
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Analysis ─────────────────────────────────────────────────────────────────
 
 function AnalysisTab() {
   const showAudit = canViewAuditTrail();
@@ -739,6 +594,7 @@ function AnalysisTab() {
       {!loading && data && (
         <ReportScope from={from} to={to}>
         <div className="w-full flex flex-col gap-[2.5rem]">
+          <ReportSignOff reportKey="analysis" from={from} to={to} />
           <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting }]} />
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 w-full">
@@ -747,47 +603,52 @@ function AnalysisTab() {
             <SummaryCard label="Net Total" tip="reports.analysis.net" value={money(data.net_total)} sub="collected minus refunded" />
           </div>
 
-          <ReportSection
-            report
-            title="All Payments"
-            tip="reports.analysis.all"
-            subtitle={`${data.payments.length} transaction(s)`}
-            footer={data.payments.length > 0 && <TotalLine label="Net Total" amount={data.net_total} tip="reports.netTotal" />}
-          >
-            {data.payments.length === 0 ? (
-              <EmptyRow />
-            ) : (
-              <table className="w-full text-xl">
-                <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "For", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} tips={{ Room: "reports.analysis.col.room", "Receipt No.": "reports.analysis.col.receipt", Reference: "reports.analysis.col.reference", Guest: "reports.analysis.col.guest", Method: "reports.analysis.col.method", For: "reports.analysis.col.for", Date: "reports.analysis.col.date", Amount: "reports.analysis.col.amount" }} />
-                <tbody>
-                  {/* row_key: rows come from several tables (guest payments,
-                      non-guest sales, credit refunds), so their ids can repeat. */}
-                  {data.payments.map((p) => (
-                    <tr key={p.row_key || p.id} className={table.row}>
-                      <td className={`px-6 py-4 text-[color:var(--text-color)]/84 ${table.stickyTd}`}>{p.room_numbers || "—"}</td>
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{p.receipt_number || "—"}</td>
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/68 font-mono text-lg">{p.payment_reference}</td>
-                      <td className="px-6 py-4 font-medium text-[color:var(--black)]">
-                        <span className="flex items-center gap-2 flex-wrap">
-                          <GuestName name={p.guest_name} tags={p.guest_tags} />
-                          <MoneyKindTag row={p} />
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(p.payment_method)}</td>
-                      {/* What it paid for (folio accounts, backend phase-103); a
-                          dash for a bill settled the old way, as one. */}
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{ACCOUNT_LABELS[p.paid_for] || "—"}</td>
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatDateTime(p.payment_date)}</td>
-                      <td className={`px-6 py-4 text-right font-semibold ${p.status === "refunded" ? "text-red-600" : "text-[color:var(--black)]"}`}>
-                        {p.status === "refunded" ? "−" : ""}{money(p.amount)}
-                      </td>
-                      {showAudit && <td className="px-6 py-4"><AuditLink audit={p.audit} /></td>}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </ReportSection>
+          {/* Room, F&B and Laundry apart (owner, 2026-11-26), each with its
+              own total; a payment that settled a bill the old way, as one,
+              is listed on its own while any are in the range. */}
+          {analysisGroups(data.payments).map((g) => (
+            <ReportSection
+              key={g.key}
+              report
+              title={g.title}
+              tip={g.tip}
+              subtitle={`${g.rows.length} transaction(s)`}
+              footer={g.rows.length > 0 && <TotalLine label={`${g.title} Total`} amount={g.net} tip="reports.netTotal" />}
+            >
+              {g.rows.length === 0 ? (
+                <EmptyRow />
+              ) : (
+                <table className="w-full text-xl">
+                  <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} tips={{ Room: "reports.analysis.col.room", "Receipt No.": "reports.analysis.col.receipt", Reference: "reports.analysis.col.reference", Guest: "reports.analysis.col.guest", Method: "reports.analysis.col.method", Date: "reports.analysis.col.date", Amount: "reports.analysis.col.amount" }} />
+                  <tbody>
+                    {/* row_key: rows come from several tables (guest payments,
+                        non-guest sales, credit refunds), so their ids can repeat. */}
+                    {g.rows.map((p) => (
+                      <tr key={p.row_key || p.id} className={table.row}>
+                        <td className={`px-6 py-4 text-[color:var(--text-color)]/84 ${table.stickyTd}`}>{p.room_numbers || "—"}</td>
+                        <td className="px-6 py-4 text-[color:var(--text-color)]/84">{p.receipt_number || "—"}</td>
+                        <td className="px-6 py-4 text-[color:var(--text-color)]/68 font-mono text-lg">{p.payment_reference}</td>
+                        <td className="px-6 py-4 font-medium text-[color:var(--black)]">
+                          <span className="flex items-center gap-2 flex-wrap">
+                            <GuestName name={p.guest_name} tags={p.guest_tags} />
+                            <MoneyKindTag row={p} />
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(p.payment_method)}</td>
+                        {/* On one line (owner, 2026-11-26: it wrapped onto five). */}
+                        <td className="px-6 py-4 text-[color:var(--text-color)]/84 whitespace-nowrap">{formatDateTime(p.payment_date)}</td>
+                        <td className={`px-6 py-4 text-right font-semibold whitespace-nowrap ${p.status === "refunded" ? "text-red-600" : "text-[color:var(--black)]"}`}>
+                          {p.status === "refunded" ? "−" : ""}{money(p.amount)}
+                        </td>
+                        {showAudit && <td className="px-6 py-4"><AuditLink audit={p.audit} /></td>}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </ReportSection>
+          ))}
+          <TotalLine label="Net Total (all of the above)" amount={data.net_total} tip="reports.netTotal" />
 
           <StaffActivitySection activity={data.staff_activity} money={money} />
         </div>
@@ -840,7 +701,18 @@ function PmsReportTab() {
     }
   };
 
-  const roomNumberList = (rooms) => (rooms.length === 0 ? "—" : rooms.map((r) => r.room_number).join(", "));
+  // The report as the message the front desk sends (owner, 2026-11-26: the
+  // paper report is a WhatsApp message), ready to paste.
+  const [copied, setCopied] = useState(false);
+  const copyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(pmsMessage(data));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setExportError("Could not copy - your browser blocked it.");
+    }
+  };
 
   return (
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
@@ -860,8 +732,8 @@ function PmsReportTab() {
             onChange={(e) => setVariant(e.target.value)}
             className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
           >
-            <option value="evening">Evening (~7pm)</option>
-            <option value="morning">Morning (~7am)</option>
+            <option value="evening">Evening (7:00 PM)</option>
+            <option value="morning">Morning (7:00 AM)</option>
           </select>
         </div>
         <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
@@ -877,11 +749,24 @@ function PmsReportTab() {
         <ReportScope date={data.report_date}>
         <div className="w-full flex flex-col gap-[2.5rem]">
           <div className="w-full flex flex-wrap items-center justify-between gap-4">
-            <p className="text-2xl text-[color:var(--text-color)]/76">
-              {data.variant === "evening" ? "Evening" : "Morning"} report for{" "}
-              <strong className="text-[color:var(--black)]">{data.report_date}</strong>
-            </p>
-            <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting }]} />
+            <div className="flex flex-col gap-1">
+              <p className="text-2xl font-bold text-[color:var(--black)]">
+                Room Occupancy Report ({data.variant === "evening" ? "Evening" : "Morning"})<Tip id="reports.pms.occupancy" />
+              </p>
+              <p className="text-xl text-[color:var(--text-color)]/76">
+                Date: <strong className="text-[color:var(--black)]">{formatDate(`${data.report_date}T12:00:00Z`)}</strong> · Time:{" "}
+                <strong className="text-[color:var(--black)]">{data.report_time}</strong>
+                {data.live && <> · as at now, {formatDateTime(data.as_at)} (its time has not come yet)</>}
+              </p>
+            </div>
+            <ReportSignOff reportKey="pms" from={data.report_date} to={data.report_date} />
+            <ExportActions
+              full
+              actions={[
+                { label: copied ? "Copied" : "Copy as Message", onClick: copyMessage },
+                { label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting },
+              ]}
+            />
           </div>
 
           {data.previous_night_audit !== undefined && (
@@ -892,22 +777,66 @@ function PmsReportTab() {
             </div>
           )}
 
-          <ReportSection report title="Stay-Overs" subtitle="Currently in-house, not arriving or departing today" tip="reports.pms.stayOvers">
-            {data.stay_overs.length === 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+            <SummaryCard label="Occupied Rooms" tip="reports.pms.occupied" value={data.counts.occupied} accent />
+            <SummaryCard label="Vacant (VCLI)" tip="reports.pms.vacant" value={data.counts.vacant} />
+            <SummaryCard label="Out of Order" tip="reports.pms.ooo" value={data.counts.out_of_order} warn={data.counts.out_of_order > 0} />
+            <SummaryCard label="Total Rooms" tip="reports.pms.total" value={data.counts.total} sub="in the building" />
+          </div>
+
+          <ReportSection report title={`Occupied Rooms (${data.counts.occupied})`} tip="reports.pms.occupiedList">
+            {data.occupied.length === 0 ? (
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Guest", "Check-In", "Check-Out"]} tips={{ Guest: "reports.pms.col.guest", "Check-In": "reports.pms.col.checkIn", "Check-Out": "reports.pms.col.checkOut" }} />
+                <TableHead cells={["No.", "Room", "Status", "Guest"]} tips={{ Status: "reports.pms.col.status", Guest: "reports.pms.col.guest" }} />
                 <tbody>
-                  {data.stay_overs.map((r) => (
-                    <tr key={r.id} className={table.row}>
-                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
-                      {/* A stay-over is already checked in (that's what makes them a stay-over,
-                          not an arrival) but hasn't checked out yet — actual_check_in is a real
-                          timestamp worth showing with a time; check_out is still just a scheduled
-                          calendar date until it actually happens, so it gets no fake time attached. */}
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatDateTime(r.actual_check_in)}</td>
-                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatDate(r.check_out)}</td>
+                  {data.occupied.map((r, i) => (
+                    <tr key={`${r.room_type_name}-${r.room_number}`} className={table.row}>
+                      <td className={`px-6 py-4 text-[color:var(--text-color)]/68 ${table.stickyTd}`}>{i + 1}</td>
+                      <td className="px-6 py-4 font-semibold text-[color:var(--black)]">{r.room_number}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[color:var(--text-color)]/84">
+                        Occupied ({r.code}) <strong className="text-[color:var(--black)]">{PMS_TAG_LABELS[r.tag] || r.tag}</strong>
+                      </td>
+                      <td className="px-6 py-4 font-medium text-[color:var(--black)]">{r.guest_name ? <GuestName name={r.guest_name} tags={r.guest_tags} /> : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </ReportSection>
+
+          <ReportSection report title={`Vacant Rooms (${data.counts.vacant})`} tip="reports.pms.vacantList">
+            {data.vacant.length === 0 ? (
+              <EmptyRow />
+            ) : (
+              <table className="w-full text-xl">
+                <TableHead cells={["No.", "Room", "Status"]} tips={{ Status: "reports.pms.col.vacantStatus" }} />
+                <tbody>
+                  {data.vacant.map((r, i) => (
+                    <tr key={`${r.room_type_name}-${r.room_number}`} className={table.row}>
+                      <td className={`px-6 py-4 text-[color:var(--text-color)]/68 ${table.stickyTd}`}>{i + 1}</td>
+                      <td className="px-6 py-4 font-semibold text-[color:var(--black)]">{r.room_number}</td>
+                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.code}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </ReportSection>
+
+          <ReportSection report title={`Out of Order and Reason (${data.counts.out_of_order})`} tip="reports.pms.oooList">
+            {data.out_of_order.length === 0 ? (
+              <EmptyRow />
+            ) : (
+              <table className="w-full text-xl">
+                <TableHead cells={["No.", "Room", "Reason"]} />
+                <tbody>
+                  {data.out_of_order.map((r, i) => (
+                    <tr key={`${r.room_type_name}-${r.room_number}`} className={table.row}>
+                      <td className={`px-6 py-4 text-[color:var(--text-color)]/68 ${table.stickyTd}`}>{i + 1}</td>
+                      <td className="px-6 py-4 font-semibold text-[color:var(--black)]">{r.room_number}</td>
+                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.reason || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -920,11 +849,12 @@ function PmsReportTab() {
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Guest", "Status"]} tips={{ Guest: "reports.pms.col.guest", Status: "reports.pms.arrivals.status" }} />
+                <TableHead cells={["Room", "Guest", "Status"]} tips={{ Room: "reports.pms.col.room", Guest: "reports.pms.col.guest", Status: "reports.pms.arrivals.status" }} />
                 <tbody>
                   {data.arrivals.map((r) => (
                     <tr key={r.id} className={table.row}>
-                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
+                      <td className={`px-6 py-4 font-semibold text-[color:var(--black)] ${table.stickyTd}`}>{r.room_numbers || "—"}</td>
+                      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-lg font-bold ${r.arrived ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
                           {r.arrived ? "Arrived" : "Still Expected"}
@@ -942,11 +872,12 @@ function PmsReportTab() {
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Guest", "Status"]} tips={{ Guest: "reports.pms.col.guest", Status: "reports.pms.departures.status" }} />
+                <TableHead cells={["Room", "Guest", "Status"]} tips={{ Room: "reports.pms.col.room", Guest: "reports.pms.col.guest", Status: "reports.pms.departures.status" }} />
                 <tbody>
                   {data.departures.map((r) => (
                     <tr key={r.id} className={table.row}>
-                      <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
+                      <td className={`px-6 py-4 font-semibold text-[color:var(--black)] ${table.stickyTd}`}>{r.room_numbers || "—"}</td>
+                      <td className="px-6 py-4 font-medium text-[color:var(--black)]"><GuestName name={r.guest_name} tags={r.guest_tags} /></td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-lg font-bold ${r.departed ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
                           {r.departed ? "Departed" : "Still In-House"}
@@ -957,17 +888,6 @@ function PmsReportTab() {
                 </tbody>
               </table>
             )}
-          </ReportSection>
-
-          <ReportSection report title="Room Status" tip="reports.pms.roomStatus">
-            <div className="flex flex-col gap-4 p-6">
-              <RoomStatusLine label="Vacant" tip="reports.pms.vacant" count={data.room_status.vacant.length} rooms={roomNumberList(data.room_status.vacant)} />
-              <RoomStatusLine label="Occupied" tip="reports.pms.occupied" count={data.room_status.occupied.length} rooms={roomNumberList(data.room_status.occupied)} />
-              <RoomStatusLine label="Out of Order" tip="reports.pms.ooo" count={data.room_status.out_of_order.length} rooms={roomNumberList(data.room_status.out_of_order)} />
-              <RoomStatusLine label="Reserved" tip="reports.pms.reserved" count={data.room_status.reserved.length} rooms={roomNumberList(data.room_status.reserved)} />
-              {/* Complementary always last, per the manual report's convention */}
-              <RoomStatusLine label="Complementary" tip="reports.pms.complementary" count={data.room_status.complementary.length} rooms={roomNumberList(data.room_status.complementary)} />
-            </div>
           </ReportSection>
 
           <StaffActivitySection activity={data.staff_activity} money={money} />
@@ -1054,6 +974,7 @@ function AccommodationReportTab({ shift }) {
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Manifest for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
+            <ReportSignOff reportKey="manifest" from={data.report_date} to={data.report_date} />
             <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting || (shiftRequired && !shift), title: shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined }]} />
           </div>
 
@@ -1097,7 +1018,7 @@ function AccommodationReportTab({ shift }) {
                     Arrival and checkout each give a date and a time from the same
                     real moment; Checkout Time is blank until the guest has left
                     (owner, 2026-09-18). */}
-                <TableHead cells={["Guest", "Room Type", "Room No.", "Arrival Date", "Arrival Time", "Checkout Date", "Checkout Time", "Room Tariff", "Payment Mode", "Payment Status", "Receipt No.", "Paid Today", "Counted in Total", "Refund", "Guest Status", "Remarks", ...(showAudit ? ["Action"] : [])]} tips={{ "Guest": "reports.acc.col.guest", "Room Type": "reports.acc.col.roomType", "Room No.": "reports.acc.col.roomNo", "Arrival Date": "reports.acc.col.arrivalDate", "Arrival Time": "reports.acc.col.arrivalTime", "Checkout Date": "reports.acc.col.checkoutDate", "Checkout Time": "reports.acc.col.checkoutTime", "Room Tariff": "reports.acc.col.tariff", "Payment Mode": "reports.acc.col.paymentMode", "Payment Status": "reports.acc.col.paymentStatus", "Receipt No.": "reports.acc.col.receipt", "Paid Today": "reports.acc.col.paidToday", "Counted in Total": "reports.acc.col.counted", "Refund": "reports.acc.col.refund", "Guest Status": "reports.acc.col.guestStatus", "Remarks": "reports.acc.col.remarks" }} />
+                <TableHead cells={["Guest", "Room Type", "Room No.", "Arrival Date", "Arrival Time", "Checkout Date", "Checkout Time", "Room Tariff", "Late C/O", "Early C/I", "Payment Mode", "Payment Status", "Receipt No.", "Paid Today", "Counted in Total", "Refund", "Guest Status", "Remarks", ...(showAudit ? ["Action"] : [])]} tips={{ "Guest": "reports.acc.col.guest", "Room Type": "reports.acc.col.roomType", "Room No.": "reports.acc.col.roomNo", "Arrival Date": "reports.acc.col.arrivalDate", "Arrival Time": "reports.acc.col.arrivalTime", "Checkout Date": "reports.acc.col.checkoutDate", "Checkout Time": "reports.acc.col.checkoutTime", "Room Tariff": "reports.acc.col.tariff", "Late C/O": "reports.acc.col.lateCheckout", "Early C/I": "reports.acc.col.earlyCheckin", "Payment Mode": "reports.acc.col.paymentMode", "Payment Status": "reports.acc.col.paymentStatus", "Receipt No.": "reports.acc.col.receipt", "Paid Today": "reports.acc.col.paidToday", "Counted in Total": "reports.acc.col.counted", "Refund": "reports.acc.col.refund", "Guest Status": "reports.acc.col.guestStatus", "Remarks": "reports.acc.col.remarks" }} />
                 <tbody>
                   {data.rows.map((r, i) => (
                     <tr key={`${r.reservation_id}-${r.room_number}-${i}`} className={table.row}>
@@ -1111,6 +1032,10 @@ function AccommodationReportTab({ shift }) {
                       {/* Complementary rooms are listed under Non-Revenue Rooms below, so
                           every row here is a room that was sold. */}
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{money(r.room_price)}</td>
+                      {/* Late check-out and early check-in fees posted for this
+                          room that day (owner, 2026-11-26). */}
+                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{Number(r.late_checkout) ? money(r.late_checkout) : "—"}</td>
+                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{Number(r.early_checkin) ? money(r.early_checkin) : "—"}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(r.payment_mode)}</td>
                       <td className="px-6 py-4">
                         <StatusBadge status={r.payment_status} />
@@ -1296,6 +1221,34 @@ function AccommodationReportTab({ shift }) {
               food and drink — laundry, penalties, adjustments, corrections —
               with the description and remark it was posted with, followed by
               the guests' own notes (owner's ask, 2026-09-14). */}
+          {/* Laundry sales that day, guest and non-guest (owner, 2026-11-26). */}
+          <ReportSection
+            report
+            title="Laundry Sales"
+            tip="reports.acc.laundry"
+            footer={(data.laundry_sales || []).length > 0 && <TotalLine label="Laundry Sales Total" amount={data.laundry_sales_total} tip="reports.acc.laundryTotal" />}
+          >
+            {(data.laundry_sales || []).length === 0 ? (
+              <EmptyRow />
+            ) : (
+              <table className="w-full text-xl">
+                <TableHead cells={["Customer", "Item", "Qty", "Amount", "Status", "Payment Method"]} rightAlign={["Amount"]} />
+                <tbody>
+                  {data.laundry_sales.map((l, i) => (
+                    <tr key={`${l.source}-${i}`} className={table.row}>
+                      <td className={`px-6 py-4 text-[color:var(--text-color)]/84 ${table.stickyTd}`}>{l.customer}</td>
+                      <td className="px-6 py-4 capitalize text-[color:var(--text-color)]/84">{l.description}</td>
+                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{l.quantity}</td>
+                      <td className="px-6 py-4 text-right text-[color:var(--text-color)]/84">{money(Number(l.amount) + Number(l.service_charge || 0))}</td>
+                      <td className="px-6 py-4"><StatusBadge status={salesStatus(l.status)} /></td>
+                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(l.payment_method)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </ReportSection>
+
           <ReportSection report title="Notes" tip="reports.acc.notes">
             {(data.other_charges || []).length === 0 && data.notes.length === 0 ? (
               <p className="text-2xl text-[color:var(--text-color)]/68 px-6 py-8">No other charges or guest notes for this business day.</p>
@@ -1428,8 +1381,11 @@ const salesStatus = (status) => (status === "room" ? "charged to room" : status)
 function SalesNotes({ data }) {
   const rows = data.rows || [];
   const lineTotal = (r) => Number(r.amount) + Number(r.service_charge);
-  const pbTotal = rows.filter((r) => r.status === "PB").reduce((s, r) => s + lineTotal(r), 0);
-  const owingTotal = rows.filter((r) => r.status === "owing").reduce((s, r) => s + lineTotal(r), 0);
+  // Breakfast's paid-or-owing is the room bill's, not F&B's: it is in Total
+  // Sold (as on the paper report), but not F&B's own PB or debt.
+  const ownRows = rows.filter((r) => r.source !== "breakfast");
+  const pbTotal = ownRows.filter((r) => r.status === "PB").reduce((s, r) => s + lineTotal(r), 0);
+  const owingTotal = ownRows.filter((r) => r.status === "owing").reduce((s, r) => s + lineTotal(r), 0);
   const roomTotal = rows.filter((r) => r.status === "room").reduce((s, r) => s + lineTotal(r), 0);
   const totalSold = rows.reduce((s, r) => s + lineTotal(r), 0);
   const totalServiceCharge = rows.reduce((s, r) => s + Number(r.service_charge), 0);
@@ -1450,6 +1406,11 @@ function SalesNotes({ data }) {
         <li>Debt (Owing): <strong className="text-[color:var(--black)]">{money(owingTotal)}</strong></li>
         {roomTotal > 0 && <li>Charged to Room: <strong className="text-[color:var(--black)]">{money(roomTotal)}</strong></li>}
         <li>Total Sold: <strong className="text-[color:var(--black)]">{money(totalSold)}</strong></li>
+        {/* Breakfast that came with the rooms (owner, 2026-11-26) - in Total
+            Sold, as on the paper report; its money is taken with the room. */}
+        {Number(data.breakfast_total) > 0 && (
+          <li>of which Breakfast (with rooms): <strong className="text-[color:var(--black)]">{money(data.breakfast_total)}</strong></li>
+        )}
         <li>Total Service Charge: <strong className="text-[color:var(--black)]">{money(totalServiceCharge)}</strong></li>
         {/* Advance credit is spendable at reception OR the restaurant, so it
             shows here — but it is money taken for LATER use, so it is never
@@ -1527,6 +1488,7 @@ function FoodSalesReportTab({ shift }) {
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Food sales for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
+            <ReportSignOff reportKey="food-sales" from={data.report_date} to={data.report_date} />
             <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting || (shiftRequired && !shift), title: shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined }]} />
           </div>
 
@@ -1637,6 +1599,7 @@ function DrinkSalesReportTab({ shift }) {
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Drink sales for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
+            <ReportSignOff reportKey="drink-sales" from={data.report_date} to={data.report_date} />
             <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting || (shiftRequired && !shift), title: shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined }]} />
           </div>
 
@@ -1753,6 +1716,7 @@ function BarStockReportTab({ shift }) {
             <p className="text-2xl text-[color:var(--text-color)]/76">
               Bar stock for <strong className="text-[color:var(--black)]">{data.report_date}</strong>
             </p>
+            <ReportSignOff reportKey="bar-stock" from={data.report_date} to={data.report_date} />
             <ExportActions full actions={[{ label: exporting ? "Exporting..." : "Export Excel", onClick: handleExport, disabled: exporting || (shiftRequired && !shift), title: shiftRequired && !shift ? "Select a shift at the top of the page first" : undefined }]} />
           </div>
 
@@ -1823,13 +1787,38 @@ function BarStockReportTab({ shift }) {
   );
 }
 
-function RoomStatusLine({ label, count, rooms, tip }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <p className="text-xl font-bold text-[color:var(--black)]">{label} ({count}){tip && <Tip id={tip} />}</p>
-      <p className="text-xl text-[color:var(--text-color)]/76">{rooms}</p>
-    </div>
-  );
+// What each occupied room's tag means, as the paper report spells it.
+const PMS_TAG_LABELS = { JCI: "(JCI) Just Checked In", DO: "(DO) Due Out", "Stay Over": "Stay Over", Overstay: "Overstay (past due out)" };
+
+// The PMS Report as the front desk's message, laid out like theirs.
+function pmsMessage(d) {
+  const evening = d.variant === "evening";
+  const [y, m, dd] = d.report_date.split("-");
+  const lines = [
+    `Good ${evening ? "evening" : "morning"} sir/ma`,
+    ...(d.branch_name ? [d.branch_name] : []),
+    `Room occupancy report ${evening ? "PM" : "AM"}`,
+    `Date: ${dd}/${m}/${y}`,
+    `Time: ${d.report_time}`,
+    "",
+    `Occupied Rooms: ${d.counts.occupied}`,
+    ...d.occupied.map((r, i) =>
+      r.tag === "Complimentary" || r.tag === "Manager's complimentary" ? `${i + 1}. ${r.room_number}- ${r.tag} (${r.code})` : `${i + 1}. ${r.room_number}- Occupied (${r.code}) ${PMS_TAG_LABELS[r.tag] || r.tag}`,
+    ),
+    "",
+    `Vacant Rooms (VCLI): ${d.counts.vacant} Rooms`,
+    ...d.vacant.map((r, i) => `${i + 1}. ${r.room_number}- ${r.code}`),
+    "",
+    `Out of Order and Reason (${d.counts.out_of_order} Rooms)`,
+    ...d.out_of_order.map((r, i) => `${i + 1}. ${r.room_number}- ${r.reason || "No reason given"}`),
+    "",
+    "ROOM DISCREPANCIES AND ANALYSIS",
+    `OUT OF ORDER ROOMS: ${d.counts.out_of_order} Rooms`,
+    `OCCUPIED ROOMS: ${d.counts.occupied} Rooms`,
+    `VCLI: ${d.counts.vacant} Rooms`,
+    `TOTAL ROOMS IN THE BUILDING: ${d.counts.total} Rooms`,
+  ];
+  return lines.join("\n");
 }
 
 // ─── Shared bits ────────────────────────────────────────────────────────────

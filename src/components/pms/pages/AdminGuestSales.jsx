@@ -25,7 +25,14 @@ import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
 
 const emptyRow = { item_kind: "food", reference_id: "", quantity: "1", is_complementary: false };
-const emptyOrder = { reservation_id: "", bill_no: "", rows: [{ ...emptyRow }] };
+// charge_to_room: the waitron's "Charge to room" tick (backend phase-103),
+// off unless ticked - the order then goes on the guest's Room account, to
+// be paid with the room bill, instead of F&B's.
+// What F&B is owed on a guest's bill (backend phase-103): its own account,
+// never the room bill; the whole balance on an old-way folio.
+const fnbDue = (folio) => Number(folio?.fnb_due ?? folio?.balance ?? 0);
+
+const emptyOrder = { reservation_id: "", bill_no: "", charge_to_room: false, rows: [{ ...emptyRow }] };
 // Deliberately no tax_mode/tax/discount_mode/discount fields, unlike
 // AdminFolios.jsx's own payment form — this panel is scoped to "record what
 // the guest paid," not the fuller adjustment/refund/closing workflow that
@@ -72,7 +79,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
   const [folioTab, setFolioTab] = useState("in-house");
   // 10 rows a page (2026-09-28). Owing first, highest balance first - who
   // staff need to take a payment from; the most recently checked out first.
-  const inHousePage = usePagedRows([...fnbGuests].sort((a, b) => Number(b.folio?.balance || 0) - Number(a.folio?.balance || 0)));
+  const inHousePage = usePagedRows([...fnbGuests].sort((a, b) => fnbDue(b.folio) - fnbDue(a.folio)));
   const checkedOutPage = usePagedRows(
     [...checkedOutFolios].sort((a, b) => new Date(b.reservation?.actual_check_out || 0) - new Date(a.reservation?.actual_check_out || 0)),
   );
@@ -207,6 +214,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
       setError(null);
       const result = await addFolioItemsBatch(selectedGuest.folio.id, {
         bill_no: order.bill_no.trim() || undefined,
+        charge_to_room: order.charge_to_room || undefined,
         items: postableRows.map((row) => ({
           item_type: row.item_kind === "food" ? "food_charge" : "drink_charge",
           reference_id: Number(row.reference_id),
@@ -248,8 +256,10 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
     try {
       setRecordingPayment(true);
       setPaymentError(null);
+      // F&B money settles F&B only (backend phase-103).
       const result = await recordPayment({
         folio_id: folioDetail.id,
+        account: "fnb",
         payments: paymentForm.splits.map((s) => ({ amount: Number(s.amount), payment_method: s.payment_method })),
         receipt_number: paymentForm.receipt_number.trim() || undefined,
         notes: paymentForm.notes.trim() || undefined,
@@ -323,6 +333,16 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
         <p className="text-lg text-[color:var(--text-color)]/60">
           One bill number covers the whole order — leave it blank and the system fills one in.
         </p>
+        <label className="inline-flex items-center gap-3 text-xl cursor-pointer self-start">
+          <input
+            type="checkbox"
+            checked={order.charge_to_room}
+            onChange={(e) => setOrder({ ...order, charge_to_room: e.target.checked })}
+            className="w-6 h-6 cursor-pointer accent-(--emphasis)"
+          />
+          Charge to room
+          <Tip id="guestSales.chargeToRoom" />
+        </label>
 
         <OrderItemRows
           rows={order.rows}
@@ -395,7 +415,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
                   // from; a settled or credit folio can sit further down.
                   inHousePage.rows.map((r) => {
                       const isSelected = String(r.folio.id) === String(selectedFolioMeta?.folioId);
-                      const balance = Number(r.folio?.balance || 0);
+                      const balance = fnbDue(r.folio);
                       return (
                         <tr key={r.id} className={`${table.row} ${isSelected ? "bg-[color:var(--emphasis)]/5" : ""}`}>
                           {/* Selected-row tint matched explicitly (2026-09-16
@@ -456,7 +476,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
                           <td className={table.td}><GuestName name={guestName} tags={f.guest_tags || f.reservation?.guest_tags} /></td>
                           <td className={table.td}>{f.folio_number}</td>
                           <td className={table.td}>{formatDate(f.reservation?.actual_check_out)}</td>
-                          <td className={`${table.td} font-bold text-red-500`}>{money(f.balance)}</td>
+                          <td className={`${table.td} font-bold text-red-500`}>{money(fnbDue(f))}</td>
                           <td className={table.td}>
                             <button
                               onClick={() => setSelectedFolioMeta({ folioId: f.id, guestName, roomNumber: null })}
@@ -482,6 +502,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
 
       {selectedFolioMeta && (
         <FolioBalanceModal
+          account="fnb"
           meta={selectedFolioMeta}
           folioDetail={folioDetail}
           loading={loadingFolio}

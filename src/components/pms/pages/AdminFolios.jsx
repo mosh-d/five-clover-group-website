@@ -10,7 +10,7 @@ import Modal from "@/components/pms/Modal";
 import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import StatusBadge from "@/components/pms/StatusBadge";
-import { CHARGE_TYPE_LABELS, settlementByCharge } from "@/components/pms/folioCharges";
+import { ACCOUNTS, ACCOUNT_LABELS, CHARGE_TYPE_LABELS, chargedToRoom, settlementByAccount } from "@/components/pms/folioCharges";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import { btn, field, page as pageUi, table } from "@/components/pms/ui";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
@@ -70,7 +70,9 @@ const allowedChargeTypesForRole = (role) => {
 
 // Both tax and discount can be either a percentage of the charge amount or
 // a flat figure, picked via tax_mode/discount_mode.
-const emptyItemForm = { description: "", amount: "", tax: "0", tax_mode: "fixed", discount: "0", discount_mode: "percentage", item_type: "", notes: "", date: "" };
+// account: which folio account an adjustment or correction is for (backend
+// phase-103) - asked only on a folio that settles by account.
+const emptyItemForm = { description: "", amount: "", tax: "0", tax_mode: "fixed", discount: "0", discount_mode: "percentage", item_type: "", notes: "", date: "", account: "" };
 // tax_mode/tax and discount_mode/discount mirror the Add-a-Charge item form
 // above — posted together as one 'adjustment' folio item (the same
 // mechanism already used to discount/correct an already-posted charge, see
@@ -80,13 +82,20 @@ const emptyItemForm = { description: "", amount: "", tax: "0", tax_mode: "fixed"
 const emptyPaymentForm = {
   splits: [{ amount: "", payment_method: "transfer" }], receipt_number: "", notes: "",
   tax_mode: "fixed", tax: "", discount_mode: "percentage", discount: "",
+  // What it pays for - Room, F&B or Laundry (backend phase-103).
+  account: "",
 };
-const emptyRefundForm = { amount: "", payment_method: "transfer", receipt_number: "", notes: "" };
+const emptyRefundForm = { amount: "", payment_method: "transfer", receipt_number: "", notes: "", account: "" };
 
 // id set means the form is adjusting that settlement's nights rather than
 // adding a range. touched means someone has actually moved the nights, which
 // is what allows the amount to be re-quoted (see the preview effect).
 const EMPTY_OTA_FORM = { open: false, id: null, start: "", end: "", breakfast: false, amount: "", touched: false };
+
+// A list row's balance: what is owed on any account on a folio that settles
+// by account (backend phase-103) - room credit never nets off unpaid F&B -
+// and its balance on an old-way folio.
+const rowBalance = (f) => (f.settles_by_account && f.owing != null && Number(f.owing) > 0 ? Number(f.owing) : Number(f.balance));
 
 export default function AdminFoliosPage() {
   // Waitstaff only ever posts charges to a folio still open for business
@@ -314,6 +323,11 @@ export default function AdminFoliosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // A folio that settles by account (backend phase-103).
+  const byAccount = Boolean(selectedFolio?.accounts);
+  // An adjustment or correction on a folio that settles by account says
+  // which account it changes (owner, 2026-11-25: picked each time).
+  const chargeNeedsAccount = byAccount && (itemForm.item_type === "adjustment" || itemForm.item_type === "correction");
   const handleAddItem = async () => {
     if (!selectedFolio || !itemForm.item_type || !itemForm.description || !itemForm.amount) return;
     try {
@@ -335,6 +349,7 @@ export default function AdminFoliosPage() {
         tax: taxAmount,
         discount: discountAmount,
         item_type: itemForm.item_type,
+        account: chargeNeedsAccount ? itemForm.account : undefined,
         notes: itemForm.notes.trim() || undefined,
         date: itemForm.date || undefined,
       });
@@ -348,7 +363,12 @@ export default function AdminFoliosPage() {
     }
   };
 
-  const hasValidPaymentSplits = paymentForm.splits.length > 0 && paymentForm.splits.every((s) => Number(s.amount) > 0);
+  // On a folio that settles by account a payment must say what it is for.
+  const paymentAccountMissing = byAccount && !paymentForm.account;
+  const hasValidPaymentSplits = paymentForm.splits.length > 0 && paymentForm.splits.every((s) => Number(s.amount) > 0) && !paymentAccountMissing;
+  // What a % tax or discount at payment is a share of: the chosen account's
+  // balance on a folio that settles by account, the folio's otherwise.
+  const paymentBase = byAccount ? Number(selectedFolio.accounts[paymentForm.account]?.balance || 0) : Number(selectedFolio?.balance || 0);
   const paymentAdjustmentProblem = adjustmentProblem("Tax", paymentForm.tax, paymentForm.tax_mode)
     || adjustmentProblem("Discount", paymentForm.discount, paymentForm.discount_mode);
   // Both computed against the folio's current balance (already on screen) —
@@ -356,12 +376,12 @@ export default function AdminFoliosPage() {
   // new charge being posted, these adjust what's already owed overall.
   const paymentTaxAmount = selectedFolio
     ? paymentForm.tax_mode === "percentage"
-      ? Number(selectedFolio.balance) * (Number(paymentForm.tax || 0) / 100)
+      ? paymentBase * (Number(paymentForm.tax || 0) / 100)
       : Number(paymentForm.tax || 0)
     : 0;
   const paymentDiscountAmount = selectedFolio
     ? paymentForm.discount_mode === "percentage"
-      ? Number(selectedFolio.balance) * (Number(paymentForm.discount || 0) / 100)
+      ? paymentBase * (Number(paymentForm.discount || 0) / 100)
       : Number(paymentForm.discount || 0)
     : 0;
 
@@ -500,10 +520,12 @@ export default function AdminFoliosPage() {
           tax: paymentTaxAmount,
           discount: paymentDiscountAmount,
           item_type: "adjustment",
+          account: byAccount ? paymentForm.account : undefined,
         });
       }
       const result = await recordPayment({
         folio_id: selectedFolio.id,
+        account: byAccount ? paymentForm.account : undefined,
         payments: paymentForm.splits.map((s) => ({ amount: Number(s.amount), payment_method: s.payment_method })),
         receipt_number: paymentForm.receipt_number || undefined,
         notes: paymentForm.notes || undefined,
@@ -612,6 +634,7 @@ export default function AdminFoliosPage() {
       setRecordingRefund(true);
       const result = await recordRefund({
         folio_id: selectedFolio.id,
+        account: byAccount ? refundForm.account : undefined,
         amount: Number(refundForm.amount),
         payment_method: refundForm.payment_method,
         receipt_number: refundForm.receipt_number || undefined,
@@ -657,7 +680,7 @@ export default function AdminFoliosPage() {
   // actual_check_out (the guest never arrived at all).
   const canCloseFolio =
     selectedFolio &&
-    Number(selectedFolio.balance) <= 0 &&
+    (selectedFolio.accounts ? Number(selectedFolio.owing || 0) <= 0 : Number(selectedFolio.balance) <= 0) &&
     (Boolean(selectedFolio.reservation?.actual_check_out) || Boolean(selectedFolio.reservation?.is_no_show));
   // What the money received has settled, charge by charge (display only -
   // see settlementByCharge).
@@ -669,19 +692,22 @@ export default function AdminFoliosPage() {
   // Its tax and discount, unlike the amount, are never negative.
   const chargeAdjustmentProblem = adjustmentProblem("Tax", itemForm.tax, itemForm.tax_mode)
     || adjustmentProblem("Discount", itemForm.discount, itemForm.discount_mode);
-  const chargeReady = Boolean(itemForm.item_type) && chargeDescriptionEntered && chargeAmountEntered && !chargeAdjustmentProblem;
-  const chargeBlockReason = chargeAdjustmentProblem ? chargeAdjustmentProblem : !chargeDescriptionEntered && !chargeAmountEntered
+  const chargeAccountMissing = chargeNeedsAccount && !itemForm.account;
+  const chargeReady = Boolean(itemForm.item_type) && chargeDescriptionEntered && chargeAmountEntered && !chargeAdjustmentProblem && !chargeAccountMissing;
+  const chargeBlockReason = chargeAdjustmentProblem ? chargeAdjustmentProblem : chargeAccountMissing ? "Choose which account this adjustment is for." : !chargeDescriptionEntered && !chargeAmountEntered
     ? "Enter a description and an amount to post this charge."
     : !chargeDescriptionEntered
       ? "Enter a description — it appears on the guest's bill, so it can't be blank."
       : "Enter an amount for this charge.";
 
-  const chargeSettlement = settlementByCharge(
-    selectedFolio?.items || [],
-    selectedFolio?.total_received ?? selectedFolio?.amount_paid ?? 0,
-  );
-  const hasOutstandingBalance = selectedFolio && Number(selectedFolio.balance) > 0;
-  const hasCreditBalance = selectedFolio && Number(selectedFolio.balance) < 0;
+  // A folio that settles by account (backend phase-103): Room, F&B and
+  // Laundry each owe, and are paid, separately - room credit never settles
+  // food. `owing` adds up their debts. An old-way folio is one balance.
+  const chargeSettlement = settlementByAccount(selectedFolio);
+  const owing = byAccount ? Number(selectedFolio.owing || 0) : Number(selectedFolio?.balance || 0);
+  const accountCredit = (a) => (byAccount ? Math.max(0, -Number(selectedFolio.accounts[a]?.balance || 0)) : 0);
+  const hasOutstandingBalance = selectedFolio && owing > 0;
+  const hasCreditBalance = selectedFolio && (byAccount ? ACCOUNTS.some((a) => accountCredit(a) > 0) : Number(selectedFolio.balance) < 0);
   // Guest Status (Guest Ledger / City Ledger) is shown on every tab now,
   // not just Outstanding Balance/Overdue — "All" mixes settled and owing
   // folios together same as a search does, and there's no good reason to
@@ -834,7 +860,7 @@ export default function AdminFoliosPage() {
                               Ledger/Still In-House only mean anything for an
                               actual receivable, so check the row's own
                               balance rather than trusting the tab. */}
-                          {Number(f.balance) <= 0 ? (
+                          {rowBalance(f) <= 0 ? (
                             <span className="text-lg text-[color:var(--text-color)]/40">—</span>
                           ) : f.reservation?.actual_check_out ? (
                             <span
@@ -858,8 +884,8 @@ export default function AdminFoliosPage() {
                       )}
                       <td className={table.td}>{money(f.total_amount)}</td>
                       <td className={table.td}>{money(f.total_received ?? f.amount_paid)}</td>
-                      <td className={`${table.td} font-bold ${Number(f.balance) > 0 ? "text-red-500" : Number(f.balance) < 0 ? "text-green-600" : ""}`}>
-                        {Number(f.balance) < 0 ? `Credit: ${money(Math.abs(Number(f.balance)))}` : money(f.balance)}
+                      <td className={`${table.td} font-bold ${rowBalance(f) > 0 ? "text-red-500" : rowBalance(f) < 0 ? "text-green-600" : ""}`}>
+                        {rowBalance(f) < 0 ? `Credit: ${money(Math.abs(rowBalance(f)))}` : money(rowBalance(f))}
                         {/* A ₦0 balance still hides credit the hotel is
                             holding — surface it so the row isn't misread as
                             fully closed out. */}
@@ -903,7 +929,7 @@ export default function AdminFoliosPage() {
                   className={btn.primary}
                   title={
                     !canCloseFolio
-                      ? Number(selectedFolio.balance) > 0
+                      ? owing > 0
                         ? "Settle full balance before closing folio"
                         : "Guest must check out (or be marked no-show) before the folio can be closed"
                       : ""
@@ -963,10 +989,29 @@ export default function AdminFoliosPage() {
                 <SummaryStat
                   label="Balance Due"
                   tip="folios.sum.balance"
-                  value={hasOutstandingBalance ? money(selectedFolio.balance) : "Settled"}
+                  value={hasOutstandingBalance ? money(owing) : "Settled"}
                   tone={hasOutstandingBalance ? "danger" : "success"}
                 />
               </div>
+              {/* Each account apart (backend phase-103): what Room, F&B and
+                  Laundry are owed, or hold in credit. Paid only by their own
+                  money, so room credit beside an F&B debt is not settled. */}
+              {byAccount && (
+                <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-1">
+                  {ACCOUNTS.map((a) => {
+                    const bal = Number(selectedFolio.accounts[a]?.balance || 0);
+                    return (
+                      <SummaryStat
+                        key={a}
+                        label={`${ACCOUNT_LABELS[a]} Account`}
+                        tip={`folios.account.${a}`}
+                        value={bal > 0 ? `Owes ${money(bal)}` : bal < 0 ? `Credit ${money(-bal)}` : "Settled"}
+                        tone={bal > 0 ? "danger" : "success"}
+                      />
+                    );
+                  })}
+                </div>
+              )}
               {/* Nights an OTA is paying for, not the guest. They are charged on
                   this folio like any others — so Balance Due above stays owing
                   until the money lands — but the desk must never ask the guest
@@ -1161,7 +1206,7 @@ export default function AdminFoliosPage() {
               {hasCreditBalance && (
                 <div className="bg-green-50 border border-green-200 rounded-lg px-5 py-4 flex items-center justify-between">
                   <span className="text-green-700 font-bold text-xl">Credit Due to Guest:<Tip id="folios.creditDue" /></span>
-                  <span className="text-green-700 font-bold text-2xl">{money(Math.abs(Number(selectedFolio.balance)))}</span>
+                  <span className="text-green-700 font-bold text-2xl">{money(byAccount ? ACCOUNTS.reduce((sum, a) => sum + accountCredit(a), 0) : Math.abs(Number(selectedFolio.balance)))}</span>
                 </div>
               )}
               {/* Money the hotel is holding for this guest that isn't
@@ -1324,7 +1369,7 @@ export default function AdminFoliosPage() {
                       >
                         <span className="capitalize min-w-0 break-words">
                           {item.description}
-                          <span className="text-[color:var(--text-color)]/68 ml-2">({CHARGE_TYPE_LABELS[item.item_type] || item.item_type})</span>
+                          <span className="text-[color:var(--text-color)]/68 ml-2">({CHARGE_TYPE_LABELS[item.item_type] || item.item_type}{chargedToRoom(item) ? ", charged to room" : byAccount && (item.item_type === "adjustment" || item.item_type === "correction") ? `, ${ACCOUNT_LABELS[item.account] || "Room"}` : ""})</span>
                           {item.bill_no && <span className="text-[color:var(--text-color)]/68 ml-2">· Bill No {item.bill_no}</span>}
                           {Number(item.service_charge) > 0 && <span className="text-[color:var(--text-color)]/68 ml-2">· Service Charge {money(item.service_charge)}</span>}
                           {(item.is_manager || item.is_complementary) && (
@@ -1355,6 +1400,15 @@ export default function AdminFoliosPage() {
                           {allowedChargeTypes.map((t) => <option key={t} value={t}>{CHARGE_TYPE_LABELS[t]}</option>)}
                         </select>
                       </div>
+                      {chargeNeedsAccount && (
+                        <div className="flex flex-col gap-2">
+                          <label className={field.label}>Account *<Tip id="folios.chargeAccount" /></label>
+                          <select value={itemForm.account} onChange={(e) => setItemForm({ ...itemForm, account: e.target.value })} className={field.select}>
+                            <option value="">Choose...</option>
+                            {ACCOUNTS.map((a) => <option key={a} value={a}>{ACCOUNT_LABELS[a]}</option>)}
+                          </select>
+                        </div>
+                      )}
                       <div className="flex flex-col gap-2">
                         <label className={field.label}>Amount (₦) *<Tip id="folios.amount" /></label>
                         <input
@@ -1467,9 +1521,26 @@ export default function AdminFoliosPage() {
                     {paymentError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{paymentError}</p>}
                     <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">
                       Record a payment
-                      {" "}— {hasOutstandingBalance ? `balance due: ${money(selectedFolio.balance)}` : hasCreditBalance ? `credit on account: ${money(Math.abs(Number(selectedFolio.balance)))}` : "balance settled"}
+                      {" "}— {byAccount
+                        ? paymentForm.account
+                          ? `${ACCOUNT_LABELS[paymentForm.account]} due: ${money(Math.max(0, Number(selectedFolio.accounts[paymentForm.account]?.guest_due || 0)))}`
+                          : `total due: ${money(owing)}`
+                        : hasOutstandingBalance ? `balance due: ${money(selectedFolio.balance)}` : hasCreditBalance ? `credit on account: ${money(Math.abs(Number(selectedFolio.balance)))}` : "balance settled"}
                       <Tip id="folios.recordPayment" />
                     </p>
+                    {byAccount && (
+                      <div className="flex flex-col gap-2 max-w-[32rem]">
+                        <label className={field.label}>Paying For *<Tip id="folios.payingFor" /></label>
+                        <select value={paymentForm.account} onChange={(e) => setPaymentForm({ ...paymentForm, account: e.target.value })} className={field.select}>
+                          <option value="">Choose...</option>
+                          {ACCOUNTS.map((a) => (
+                            <option key={a} value={a}>
+                              {ACCOUNT_LABELS[a]} - owes {money(Math.max(0, Number(selectedFolio.accounts[a]?.guest_due || 0)))}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <PaymentSplitRows splits={paymentForm.splits} setSplits={(splits) => setPaymentForm({ ...paymentForm, splits })} />
                     {hasOutstandingBalance && (
                       <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
@@ -1517,7 +1588,7 @@ export default function AdminFoliosPage() {
                         </div>
                         {(paymentTaxAmount > 0 || paymentDiscountAmount > 0) && (
                           <p className="text-lg text-[color:var(--text-color)]/68 col-span-2 max-sm:col-span-1">
-                            → balance after tax/discount: <strong>{money(Math.max(Number(selectedFolio.balance) + paymentTaxAmount - paymentDiscountAmount, 0))}</strong>
+                            → balance after tax/discount: <strong>{money(Math.max(paymentBase + paymentTaxAmount - paymentDiscountAmount, 0))}</strong>
                           </p>
                         )}
                       </div>
@@ -1559,12 +1630,25 @@ export default function AdminFoliosPage() {
                   <div className="flex flex-col gap-4 mt-2 border-t border-(--accent-2) pt-6">
                     {refundError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{refundError}</p>}
                     <p className="text-lg font-semibold uppercase tracking-wide text-red-600">Record a refund to the guest<Tip id="folios.refund" /></p>
+                    {byAccount && (
+                      <div className="flex flex-col gap-2 max-w-[32rem]">
+                        <label className={field.label}>Refund From *<Tip id="folios.refundFrom" /></label>
+                        <select value={refundForm.account} onChange={(e) => setRefundForm({ ...refundForm, account: e.target.value })} className={field.select}>
+                          <option value="">Choose...</option>
+                          {ACCOUNTS.filter((a) => accountCredit(a) > 0).map((a) => (
+                            <option key={a} value={a}>
+                              {ACCOUNT_LABELS[a]} - credit {money(accountCredit(a))}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                       <div className="flex flex-col gap-2">
                         <label className={field.label}>Amount (₦) *<Tip id="folios.refundAmount" /></label>
                         <input
                           type="number"
-                          placeholder={`Credit on account: ${money(Math.abs(Number(selectedFolio.balance)))}`}
+                          placeholder={`Credit on account: ${money(byAccount ? accountCredit(refundForm.account) : Math.abs(Number(selectedFolio.balance)))}`}
                           value={refundForm.amount}
                           onChange={(e) => setRefundForm({ ...refundForm, amount: e.target.value })}
                           className={field.input}
@@ -1596,7 +1680,7 @@ export default function AdminFoliosPage() {
                         />
                       </div>
                     </div>
-                    <button onClick={handleRecordRefund} disabled={recordingRefund || !refundForm.amount} className={`${btn.dangerSolid} self-start`}>
+                    <button onClick={handleRecordRefund} disabled={recordingRefund || !refundForm.amount || (byAccount && !refundForm.account)} className={`${btn.dangerSolid} self-start`}>
                       {recordingRefund ? "Recording..." : "Record Refund"}
                     </button>
                   </div>

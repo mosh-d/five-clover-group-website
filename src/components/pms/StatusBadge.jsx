@@ -31,6 +31,8 @@ const STYLES = {
   "part paid": "bg-amber-100 text-amber-800",
   pb: "bg-blue-100 text-blue-700",
   complementary: "bg-purple-100 text-purple-700",
+  // F&B put on the room bill (folio accounts, backend phase-103).
+  "charged to room": "bg-sky-100 text-sky-800",
   reserved: "bg-indigo-100 text-indigo-700",
   "checked in": "bg-blue-100 text-blue-700",
   "checked out": "bg-gray-100 text-gray-600",

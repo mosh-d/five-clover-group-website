@@ -498,10 +498,13 @@ export default function AdminCheckInsPage() {
               tax: walkInPaymentTaxAmount,
               discount: walkInPaymentDiscountAmount,
               item_type: "adjustment",
+              account: "room",
             });
           }
+          // Paid for the room (folio accounts, backend phase-103).
           const result = await recordPayment({
             folio_id: folioId,
+            account: "room",
             payments: validPaymentSplits.map((s) => ({ amount: Number(s.amount), payment_method: s.payment_method })),
             receipt_number: walkIn.paymentReceiptNumber || undefined,
             notes: walkIn.paymentNotes || undefined,

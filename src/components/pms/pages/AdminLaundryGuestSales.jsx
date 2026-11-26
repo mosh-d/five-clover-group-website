@@ -23,6 +23,9 @@ import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
 
+// What Laundry is owed on a guest's bill (backend phase-103): its own
+// account, never the room bill; the whole balance on an old-way folio.
+const laundryDue = (folio) => Number(folio?.laundry_due ?? folio?.balance ?? 0);
 const emptyRow = { reference_id: "", laundry_service_type: "wash_and_iron", quantity: "1" };
 const emptyOrder = { reservation_id: "", bill_no: "", rows: [{ ...emptyRow }] };
 const emptyPaymentForm = { splits: [{ amount: "", payment_method: "transfer" }], receipt_number: "", notes: "" };
@@ -54,7 +57,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
   const [laundryGuests, setLaundryGuests] = useState([]);
   const [loadingLaundryGuests, setLoadingLaundryGuests] = useState(true);
   // 10 rows a page (2026-09-28), owing first - who to take a payment from.
-  const inHousePage = usePagedRows([...laundryGuests].sort((a, b) => Number(b.folio?.balance || 0) - Number(a.folio?.balance || 0)));
+  const inHousePage = usePagedRows([...laundryGuests].sort((a, b) => laundryDue(b.folio) - laundryDue(a.folio)));
   const [order, setOrder] = useState(emptyOrder);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -196,8 +199,10 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
     try {
       setRecordingPayment(true);
       setPaymentError(null);
+      // Laundry money settles Laundry only (backend phase-103).
       const result = await recordPayment({
         folio_id: folioDetail.id,
+        account: "laundry",
         payments: paymentForm.splits.map((s) => ({ amount: Number(s.amount), payment_method: s.payment_method })),
         receipt_number: paymentForm.receipt_number.trim() || undefined,
         notes: paymentForm.notes.trim() || undefined,
@@ -363,7 +368,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
                 // actually need to take a payment from.
                 inHousePage.rows.map((r) => {
                     const isSelected = String(r.folio.id) === String(selectedFolioMeta?.folioId);
-                    const balance = Number(r.folio?.balance || 0);
+                    const balance = laundryDue(r.folio);
                     return (
                       <tr key={r.id} className={`${table.row} ${isSelected ? "bg-[color:var(--emphasis)]/5" : ""}`}>
                         {/* The sticky cell carries its own opaque background,
@@ -395,6 +400,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
 
       {selectedFolioMeta && (
         <FolioBalanceModal
+          account="laundry"
           meta={selectedFolioMeta}
           folioDetail={folioDetail}
           loading={loadingFolio}

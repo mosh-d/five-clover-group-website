@@ -72,3 +72,43 @@ export function settlementByCharge(items = [], amountPaid = 0) {
   }
   return state;
 }
+
+// ---- Folio accounts (backend phase-103) ------------------------------------
+// A folio that settles by account (folio.accounts present) keeps Room, F&B
+// and Laundry apart: each is paid only by its own money (owner, 2026-11-25).
+// An old-way folio (no folio.accounts) is one pool, as before.
+
+export const ACCOUNT_LABELS = { room: "Room", fnb: "F&B", laundry: "Laundry" };
+export const ACCOUNTS = ["room", "fnb", "laundry"];
+
+// True for food or drink the waitron put on the room bill ("Charge to room").
+export const chargedToRoom = (item) => (item?.item_type === "food_charge" || item?.item_type === "drink_charge") && item?.account === "room";
+
+// The badge for each line, account by account: an account's lines read
+// against that account's own money (what was paid into it, plus its credit
+// still on file). An old-way folio: the whole folio's money, as before.
+export function settlementByAccount(folio) {
+  if (!folio) return new Map();
+  if (!folio.accounts) return settlementByCharge(folio.items || [], folio.total_received ?? folio.amount_paid ?? 0);
+  const out = new Map();
+  for (const account of ACCOUNTS) {
+    const a = folio.accounts[account] || {};
+    const lines = (folio.items || []).filter((i) => (i.account || "room") === account);
+    const money = Number(a.amount_paid || 0) + Number(a.credit || 0);
+    for (const [id, status] of settlementByCharge(lines, money)) out.set(id, status);
+  }
+  return out;
+}
+
+// What one account shows: owed, charged, paid (and credit held), for the
+// F&B and Laundry pages' folio dialog. Null on an old-way folio.
+export function accountSummary(folio, account) {
+  const a = folio?.accounts?.[account];
+  if (!a) return null;
+  return {
+    balance: Number(a.balance || 0),
+    charged: Number(a.total_amount || 0),
+    paid: Number(a.amount_paid || 0) + Number(a.credit || 0),
+    credit: Number(a.credit || 0),
+  };
+}

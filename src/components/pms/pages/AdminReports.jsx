@@ -10,6 +10,7 @@ import Button from "@/components/pms/Button";
 import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import StatusBadge from "@/components/pms/StatusBadge";
+import { ACCOUNT_LABELS } from "@/components/pms/folioCharges";
 import {
   fetchReportsDashboard,
   downloadReportsExport,
@@ -757,7 +758,7 @@ function AnalysisTab() {
               <EmptyRow />
             ) : (
               <table className="w-full text-xl">
-                <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} tips={{ Room: "reports.analysis.col.room", "Receipt No.": "reports.analysis.col.receipt", Reference: "reports.analysis.col.reference", Guest: "reports.analysis.col.guest", Method: "reports.analysis.col.method", Date: "reports.analysis.col.date", Amount: "reports.analysis.col.amount" }} />
+                <TableHead cells={["Room", "Receipt No.", "Reference", "Guest", "Method", "For", "Date", "Amount", ...(showAudit ? ["Action"] : [])]} rightAlign={["Amount"]} tips={{ Room: "reports.analysis.col.room", "Receipt No.": "reports.analysis.col.receipt", Reference: "reports.analysis.col.reference", Guest: "reports.analysis.col.guest", Method: "reports.analysis.col.method", For: "reports.analysis.col.for", Date: "reports.analysis.col.date", Amount: "reports.analysis.col.amount" }} />
                 <tbody>
                   {/* row_key: rows come from several tables (guest payments,
                       non-guest sales, credit refunds), so their ids can repeat. */}
@@ -773,6 +774,9 @@ function AnalysisTab() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(p.payment_method)}</td>
+                      {/* What it paid for (folio accounts, backend phase-103); a
+                          dash for a bill settled the old way, as one. */}
+                      <td className="px-6 py-4 text-[color:var(--text-color)]/84">{ACCOUNT_LABELS[p.paid_for] || "—"}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatDateTime(p.payment_date)}</td>
                       <td className={`px-6 py-4 text-right font-semibold ${p.status === "refunded" ? "text-red-600" : "text-[color:var(--black)]"}`}>
                         {p.status === "refunded" ? "−" : ""}{money(p.amount)}
@@ -1417,11 +1421,16 @@ const SALES_COLUMN_TIPS = {
   Remarks: "reports.sales.col.remarks",
 };
 
+// "room": an order the waitron charged to the guest's room (folio accounts,
+// backend phase-103) - reception collects it with the room bill.
+const salesStatus = (status) => (status === "room" ? "charged to room" : status);
+
 function SalesNotes({ data }) {
   const rows = data.rows || [];
   const lineTotal = (r) => Number(r.amount) + Number(r.service_charge);
   const pbTotal = rows.filter((r) => r.status === "PB").reduce((s, r) => s + lineTotal(r), 0);
   const owingTotal = rows.filter((r) => r.status === "owing").reduce((s, r) => s + lineTotal(r), 0);
+  const roomTotal = rows.filter((r) => r.status === "room").reduce((s, r) => s + lineTotal(r), 0);
   const totalSold = rows.reduce((s, r) => s + lineTotal(r), 0);
   const totalServiceCharge = rows.reduce((s, r) => s + Number(r.service_charge), 0);
 
@@ -1439,6 +1448,7 @@ function SalesNotes({ data }) {
         </li>
         <li>Paid Before (PB): <strong className="text-[color:var(--black)]">{money(pbTotal)}</strong></li>
         <li>Debt (Owing): <strong className="text-[color:var(--black)]">{money(owingTotal)}</strong></li>
+        {roomTotal > 0 && <li>Charged to Room: <strong className="text-[color:var(--black)]">{money(roomTotal)}</strong></li>}
         <li>Total Sold: <strong className="text-[color:var(--black)]">{money(totalSold)}</strong></li>
         <li>Total Service Charge: <strong className="text-[color:var(--black)]">{money(totalServiceCharge)}</strong></li>
         {/* Advance credit is spendable at reception OR the restaurant, so it
@@ -1537,7 +1547,7 @@ function FoodSalesReportTab({ shift }) {
                       <td className="px-6 py-4 capitalize text-[color:var(--text-color)]/84">{r.description}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{money(r.amount)}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{money(r.service_charge)}</td>
-                      <td className="px-6 py-4"><StatusBadge status={r.status} /></td>
+                      <td className="px-6 py-4"><StatusBadge status={salesStatus(r.status)} /></td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(r.payment_method)}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/76">{r.notes || "—"}</td>
                       {showAudit && <td className="px-6 py-4"><AuditLink audit={r.audit} /></td>}
@@ -1647,7 +1657,7 @@ function DrinkSalesReportTab({ shift }) {
                       <td className="px-6 py-4 capitalize text-[color:var(--text-color)]/84">{r.description}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{money(r.amount)}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{money(r.service_charge)}</td>
-                      <td className="px-6 py-4"><StatusBadge status={r.status} /></td>
+                      <td className="px-6 py-4"><StatusBadge status={salesStatus(r.status)} /></td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{formatPaymentMethod(r.payment_method)}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/76">{r.notes || "—"}</td>
                       {showAudit && <td className="px-6 py-4"><AuditLink audit={r.audit} /></td>}

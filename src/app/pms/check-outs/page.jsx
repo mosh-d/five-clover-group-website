@@ -129,7 +129,13 @@ export default function PmsCheckOutsPage() {
     }
   };
 
-  const balanceDue = folio && Number(folio.balance) > 0;
+  // What is owed on any account (folio accounts, backend phase-103): room
+  // credit never hides unpaid F&B. The balance on an old-way folio.
+  const folioDue = folio ? (folio.settles_by_account ? Number(folio.owing || 0) : Number(folio.balance)) : 0;
+  const balanceDue = folio && folioDue > 0;
+  const owingAccounts = folio?.settles_by_account
+    ? [["Room", folio.room_due], ["F&B", folio.fnb_due], ["Laundry", folio.laundry_due]].filter(([, due]) => Number(due) > 0)
+    : [];
   const selectedDepartsEarly = selected && departsEarly(selected, todayISO());
 
   return (
@@ -230,7 +236,12 @@ export default function PmsCheckOutsPage() {
               }`}
             >
               <span className="font-bold">Folio Balance<Tip id="checkOuts.balance" /></span>
-              <span className="font-bold text-2xl">{money(folio.balance)}</span>
+              <span className="font-bold text-2xl text-right">
+                {money(folioDue)}
+                {owingAccounts.length > 0 && (
+                  <span className="block text-base font-semibold">{owingAccounts.map(([label, due]) => `${label} ${money(due)}`).join(" · ")}</span>
+                )}
+              </span>
             </div>
           ) : (
             <p className={`text-xl ${page.muted}`}>No folio found for this reservation.</p>

@@ -7,7 +7,7 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import StatusBadge from "@/components/pms/StatusBadge";
 import PaymentSplitRows from "@/components/pms/PaymentSplitRows";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
-import { chargeTypeLabel, settlementByCharge } from "@/components/pms/folioCharges";
+import { ACCOUNT_LABELS, accountSummary, chargeTypeLabel, chargedToRoom, settlementByAccount } from "@/components/pms/folioCharges";
 import { formatDateTime, money } from "@/lib/pms/format";
 import { btn, field } from "@/components/pms/ui";
 import { Tip } from "@/components/pms/Tip";
@@ -23,16 +23,25 @@ import { Tip } from "@/components/pms/Tip";
 // same guest folio, the same balance, the same payment - two copies would
 // have been two places for a money-handling panel to drift apart. The state
 // it renders still belongs to whichever page opened it; this only draws it.
-export default function FolioBalanceModal({ meta, folioDetail, loading, error, paymentForm, setPaymentForm, hasValidPaymentSplits, recordingPayment, paymentError, onRecordPayment, onClose }) {
-  const balance = folioDetail ? Number(folioDetail.balance) : 0;
+// `account` ("fnb" or "laundry"): the page's own account (backend
+// phase-103). On a folio that settles by account the dialog is about that
+// account alone - what it is owed, its lines, and a payment that settles only
+// it - plus, on F&B, the orders charged to the room, marked as such. On an
+// old-way folio it is the whole bill, as before.
+export default function FolioBalanceModal({ meta, folioDetail, loading, error, paymentForm, setPaymentForm, hasValidPaymentSplits, recordingPayment, paymentError, onRecordPayment, onClose, account }) {
+  const summary = account ? accountSummary(folioDetail, account) : null;
+  const balance = folioDetail ? (summary ? summary.balance : Number(folioDetail.balance)) : 0;
   const isOutstanding = folioDetail && balance > 0;
   const isCredit = folioDetail && balance < 0;
+  const charged = summary ? summary.charged : folioDetail?.total_amount;
+  const paid = summary ? summary.paid : folioDetail?.total_received ?? folioDetail?.amount_paid;
   // What the money received has settled, charge by charge (display only -
-  // see settlementByCharge).
-  const chargeSettlement = settlementByCharge(
-    folioDetail?.items || [],
-    folioDetail?.total_received ?? folioDetail?.amount_paid ?? 0,
+  // see settlementByAccount).
+  const chargeSettlement = settlementByAccount(folioDetail);
+  const items = (folioDetail?.items || []).filter(
+    (i) => !summary || (i.account || "room") === account || (account === "fnb" && chargedToRoom(i)),
   );
+  const label = summary ? ACCOUNT_LABELS[account] : null;
 
   return (
     <Modal
@@ -49,9 +58,9 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
       ) : folioDetail && (
         <>
           <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-1">
-            <FolioStat label="Balance" tip="folioModal.balance" value={isOutstanding ? money(folioDetail.balance) : isCredit ? `Credit: ${money(Math.abs(balance))}` : "Settled"} tone={isOutstanding ? "danger" : isCredit ? "success" : "default"} />
-            <FolioStat label="Total Charged" tip="folioModal.charged" value={money(folioDetail.total_amount)} />
-            <FolioStat label="Total Paid" tip="folioModal.paid" value={money(folioDetail.total_received ?? folioDetail.amount_paid)} />
+            <FolioStat label={label ? `${label} Balance` : "Balance"} tip="folioModal.balance" value={isOutstanding ? money(balance) : isCredit ? `Credit: ${money(Math.abs(balance))}` : "Settled"} tone={isOutstanding ? "danger" : isCredit ? "success" : "default"} />
+            <FolioStat label={label ? `${label} Charged` : "Total Charged"} tip="folioModal.charged" value={money(charged)} />
+            <FolioStat label={label ? `${label} Paid` : "Total Paid"} tip="folioModal.paid" value={money(paid)} />
           </div>
 
           {/* The full charge list, same treatment as AdminNonGuestSales'
@@ -60,11 +69,11 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
               visible rows unable to account for the Total Charged above. */}
           <div className="flex flex-col gap-3 pt-4 border-t border-(--accent-2)">
             <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Charges<Tip id="folioModal.charges" /></p>
-            {!folioDetail.items?.length ? (
+            {!items.length ? (
               <p className="text-xl text-[color:var(--text-color)]/76">No charges yet.</p>
             ) : (
               <div className="flex flex-col gap-2">
-                {folioDetail.items.map((item) => (
+                {items.map((item) => (
                   <div key={item.id} className="flex justify-between items-start gap-4 bg-[color:var(--text-color)]/3 rounded-lg px-5 py-3 text-xl">
                     <span className="capitalize min-w-0 break-words">
                       {/* Unlike a non-guest folio line, an F&B charge here
@@ -87,7 +96,8 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
                       )}
                     </span>
                     <span className="flex items-center gap-3 shrink-0">
-                      <StatusBadge status={chargeSettlement.get(item.id)} />
+                      {/* On the room bill: reception collects it, not F&B. */}
+                      {summary && chargedToRoom(item) ? <StatusBadge status="charged to room" /> : <StatusBadge status={chargeSettlement.get(item.id)} />}
                       <span className="font-bold whitespace-nowrap">{money(Number(item.amount) + Number(item.service_charge))}</span>
                     </span>
                   </div>
@@ -97,7 +107,7 @@ export default function FolioBalanceModal({ meta, folioDetail, loading, error, p
           </div>
 
           <div className="flex flex-col gap-4 pt-4 border-t border-(--accent-2)">
-            <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">Record Payment<Tip id="folioModal.recordPayment" /></p>
+            <p className="text-lg font-semibold uppercase tracking-wide text-[color:var(--text-color)]/68">{label ? `Record ${label} Payment` : "Record Payment"}<Tip id="folioModal.recordPayment" /></p>
             {paymentError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3 w-full">{paymentError}</p>}
             <PaymentSplitRows splits={paymentForm.splits} setSplits={(splits) => setPaymentForm({ ...paymentForm, splits })} />
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">

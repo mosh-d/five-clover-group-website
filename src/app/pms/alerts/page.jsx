@@ -229,7 +229,8 @@ export default function PmsAlertsPage() {
         { head: "Guest", cell: (f) => guestCell(f.reservation?.guest_name || "N/A", f.reservation?.guest_tags, f.reservation?.booking_reference) },
         { head: "Folio #", wide: true, cell: (f) => f.folio_number },
         { head: "Checked Out", wide: true, cell: (f) => formatDate(f.reservation?.check_out) },
-        { head: "Balance Due", cell: (f) => <span className="font-bold text-red-600">{money(f.balance)}</span> },
+        // What is owed on any account (folio accounts, backend phase-103).
+        { head: "Balance Due", cell: (f) => <span className="font-bold text-red-600">{money(f.owing ?? f.balance)}</span> },
         { head: "Actions", cell: (f) => <div className={table.actions}>{view("Go to Folio", `/pms/folios?folio_id=${f.id}`, { kind: "balances", id: f.id, about: `${f.reservation?.guest_name || `folio ${f.folio_number}`}'s unpaid balance` })}</div> },
       ],
     },

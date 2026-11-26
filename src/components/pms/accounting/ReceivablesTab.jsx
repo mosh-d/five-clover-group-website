@@ -188,6 +188,21 @@ function downloadCsv(view) {
   URL.revokeObjectURL(url);
 }
 
+// Where a debt comes from (folio accounts, backend phase-103; owner,
+// 2026-11-25: "accumulated debt without knowing where exactly it's coming
+// from"): each account that owes, under the total. Nothing on an old-way
+// folio, which has one balance.
+function DebtByAccount({ accounts }) {
+  if (!accounts) return null;
+  const parts = [["Room", accounts.room], ["F&B", accounts.fnb], ["Laundry", accounts.laundry]].filter(([, v]) => Number(v) > 0);
+  if (!parts.length) return null;
+  return (
+    <span className="block text-base font-normal text-(--text-color)/68 whitespace-nowrap">
+      {parts.map(([label, v]) => `${label} ${money(v)}`).join(" · ")}
+    </span>
+  );
+}
+
 export default function ReceivablesTab() {
   const router = useRouter();
   const [view, setView] = useState(null);
@@ -349,7 +364,10 @@ export default function ReceivablesTab() {
                             <div>{formatDate(`${c.owed_since}T12:00:00Z`)}</div>
                             <div className={`text-lg ${c.days > 30 ? "text-red-600 font-semibold" : page.muted}`}>{ago(c.days)}</div>
                           </td>
-                          <td className={`${table.td} text-right! font-bold text-red-600`}>{money(c.guest_due)}</td>
+                          <td className={`${table.td} text-right! font-bold text-red-600`}>
+                            {money(c.guest_due)}
+                            <DebtByAccount accounts={c.accounts} />
+                          </td>
                           <td className={`${table.td} hidden md:table-cell`}><LastPayment payment={c.last_payment} /></td>
                           <td className={`${table.td} hidden lg:table-cell`}><LatestNote note={c.latest_note} /></td>
                           <td className={table.td}>{actions(c)}</td>
@@ -388,7 +406,10 @@ export default function ReceivablesTab() {
                           <td className={`${table.td} ${table.stickyTd}`}>{guestCell(g)}</td>
                           <td className={`${table.td} hidden md:table-cell`}>{g.rooms || "-"}</td>
                           <td className={`${table.td} hidden md:table-cell`}>{formatDate(g.check_out)}</td>
-                          <td className={`${table.td} text-right! font-bold text-red-600`}>{money(g.guest_due)}</td>
+                          <td className={`${table.td} text-right! font-bold text-red-600`}>
+                            {money(g.guest_due)}
+                            <DebtByAccount accounts={g.accounts} />
+                          </td>
                           <td className={`${table.td} hidden lg:table-cell`}><LatestNote note={g.latest_note} /></td>
                           <td className={table.td}>{actions(g)}</td>
                         </tr>

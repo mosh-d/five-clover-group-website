@@ -61,11 +61,15 @@ const HEAD_OFFICE = ["head_hr", "hr"];
 // The Head Digital Marketer (backend phase-96): a Head Office account with its
 // own page, Web Analytics, and Account - none of Head HR's pages.
 const MARKETING = ["head_marketer"];
+// The Auditor (backend phase-104): Head Office's, with one page - every
+// report the branches' accountants sign off - where signing in lands.
+const AUDIT = ["auditor"];
 
 export const PMS_NAV_ITEMS = [
   // Head Office, in the order its sidebar lists them; Critical is where
   // signing in lands (owner, 2026-10-01).
   { slug: "critical", label: "CRITICAL", icon: IoWarningOutline, hq: HEAD_OFFICE },
+  { slug: "signed-reports", label: "SIGNED REPORTS", icon: IoDocumentTextOutline, hq: AUDIT },
   { slug: "decision-support", label: "DECISION SUPPORT", icon: IoBulbOutline, hq: HEAD_OFFICE },
   { slug: "metrics", label: "METRICS", icon: IoStatsChartOutline, hq: HEAD_OFFICE },
   { slug: "staff-accounts", label: "STAFF ACCOUNTS", icon: IoPeopleOutline, hq: HEAD_OFFICE },
@@ -78,6 +82,8 @@ export const PMS_NAV_ITEMS = [
   { slug: "booking-attendance", label: "BOOKING ATTENDANCE", icon: IoCheckmarkDoneOutline, hq: HEAD_OFFICE },
   // Every branch's daily checklists (owner, 2026-11-19; backend phase-102).
   { slug: "checklists", label: "DAILY CHECKLISTS", icon: IoCheckboxOutline, hq: HEAD_OFFICE },
+  // Every branch's front desk log book, for HR (owner, 2026-11-26).
+  { slug: "receptionist-logs", label: "RECEPTIONIST LOGS", icon: IoBookOutline, hq: HEAD_OFFICE },
   // A branch.
   { slug: "overview", label: "OVERVIEW", icon: IoGridOutline, roles: OVERSIGHT },
   // The accountant's own page, and where an accountant lands (docs/ACCOUNTING-PLAN.md, 2026-10-08).

@@ -15,8 +15,9 @@ import { ChecklistDialog, printChecklist } from "@/components/pms/checklist/Dail
 
 // Daily Checklists at Head Office (owner, 2026-11-19): every branch's front
 // desk and porter checklists over a range of business days - how many each
-// branch filled in, how complete they were, and the
-// days with no front desk checklist at all - with each one to view and print.
+// branch filled in and how complete they were - with each one to view and
+// print. The From/To dates filter it (owner, 2026-11-26: no "days with
+// none" column).
 // Head HR's and HR's, and the developer's. Read only.
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -67,7 +68,6 @@ export default function ChecklistReportPage() {
   const rows = data?.checklists || [];
   const done = rows.reduce((n, c) => n + c.done, 0);
   const total = rows.reduce((n, c) => n + c.total, 0);
-  const gaps = (data?.summary || []).reduce((n, s) => n + (s.days_without_front_desk || 0), 0);
 
   return (
     <div className={`${page.wrap} gap-[3rem]!`}>
@@ -75,7 +75,7 @@ export default function ChecklistReportPage() {
         icon={IoCheckboxOutline}
         tipId="hqChecklists.page"
         title="Daily Checklists"
-        description="Every branch's front desk and porter checklists: how many were filled in, how complete they were, and the days a branch's front desk filled in none. Open any one to see it or print it."
+        description="Every branch's front desk and porter checklists: how many were filled in, how complete they were, Open any one to see it or print it."
       />
       {error && <p className={`${field.error} w-full`}>{error}</p>}
 
@@ -130,7 +130,6 @@ export default function ChecklistReportPage() {
             <StatRow>
               <StatTile label="Checklists" tip="hqChecklists.total" value={rows.length.toLocaleString()} sub={data.from === data.to ? dayLabel(data.from) : `${dayLabel(data.from)} to ${dayLabel(data.to)}`} />
               <StatTile label="Tasks Done" tip="hqChecklists.completion" value={total ? `${Math.round((done / total) * 100)}%` : "—"} sub="Of every task on them" />
-              {kind !== "porter" && <StatTile label="Days With No Front Desk Checklist" tip="hqChecklists.gaps" value={gaps.toLocaleString()} sub="Across the branches shown" />}
             </StatRow>
 
             <TableCard
@@ -147,8 +146,8 @@ export default function ChecklistReportPage() {
                   onClick: () =>
                     csv(
                       `checklists_by_branch_${data.from}_${data.to}.csv`,
-                      ["Branch", "Front Desk", "Porter", "Tasks Done %", "Days With No Front Desk Checklist"],
-                      data.summary.map((s) => [s.branch_name, s.front_desk, s.porter, s.completion ?? "", s.days_without_front_desk ?? ""]),
+                      ["Branch", "Front Desk", "Porter", "Tasks Done %"],
+                      data.summary.map((s) => [s.branch_name, s.front_desk, s.porter, s.completion ?? ""]),
                     ),
                 },
               ]}
@@ -160,7 +159,6 @@ export default function ChecklistReportPage() {
                     <th className={table.th}>Front Desk</th>
                     <th className={table.th}>Porter</th>
                     <th className={table.th}>Tasks Done</th>
-                    {kind !== "porter" && <th className={table.th}>Days With None<Tip id="hqChecklists.gaps" /></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -170,7 +168,6 @@ export default function ChecklistReportPage() {
                       <td className={table.td}>{s.front_desk}</td>
                       <td className={table.td}>{s.porter}</td>
                       <td className={table.td}>{s.completion === null ? "—" : `${s.completion}%`}</td>
-                      {kind !== "porter" && <td className={`${table.td} ${s.days_without_front_desk ? "text-red-700 font-semibold" : ""}`}>{s.days_without_front_desk}</td>}
                     </tr>
                   ))}
                 </tbody>

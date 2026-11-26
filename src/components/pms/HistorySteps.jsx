@@ -63,7 +63,7 @@ export default function HistorySteps({ children }) {
   const canForward = steps.includes("forward");
 
   return (
-    <div className="shrink-0 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap border-b border-(--accent-2) px-14 max-sm:px-2 py-1.5 print:hidden">
+    <div className="shrink-0 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap border-b border-(--accent-2) px-14 max-sm:px-2 py-3.5 print:hidden">
     <nav aria-label="Page history" className="flex items-center gap-1">
       <button type="button" aria-label="Go back" title="Go back" disabled={!canBack} onClick={() => router.back()} className={STEP_BUTTON}>
         <IoChevronBack size={22} aria-hidden="true" />

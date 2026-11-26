@@ -138,7 +138,9 @@ export const PMS_NAV_ITEMS = [
   // supervisor and housekeepers (Housekeeping, Laundry), maintenance
   // (Maintenance) and the manager (any department).
   { slug: "store-requests", label: "STORE REQUESTS", icon: IoBasketOutline, roles: ["waitron", "receptionist", "housekeeping_supervisor", "housekeeper", "maintenance", "manager"] },
-  { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE, hq: [...HEAD_OFFICE, ...MARKETING] },
+  // The Auditor's too (owner, 2026-11-26: it was missing) - their password
+  // and this device's notifications.
+  { slug: "account", label: "ACCOUNT", icon: IoKeyOutline, roles: EVERY_ROLE, hq: [...HEAD_OFFICE, ...MARKETING, ...AUDIT] },
   { slug: "help", label: "HELP", icon: IoHelpCircleOutline, roles: EVERY_ROLE },
 ].map((item) => ({ ...item, href: `/pms/${item.slug}` }));
 

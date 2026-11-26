@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "@/lib/pms/router";
 import { IoClose, IoLogInOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
+import StayFeeDialog from "@/components/pms/StayFeeDialog";
 import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import StatusBadge from "@/components/pms/StatusBadge";
@@ -94,6 +95,8 @@ export default function AdminCheckInsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  // An early check-in fee for an arriving guest (owner, 2026-11-26).
+  const [earlyFeeFor, setEarlyFeeFor] = useState(null);
   const [selected, setSelected] = useState(null);
   const [roomNumbers, setRoomNumbers] = useState([]);
   const [processing, setProcessing] = useState(false);
@@ -649,6 +652,17 @@ export default function AdminCheckInsPage() {
   return (
     <>
       <Toast message={successMessage} onClose={() => setSuccessMessage("")} />
+      {earlyFeeFor && (
+        <StayFeeDialog
+          kind="early_checkin"
+          reservation={earlyFeeFor}
+          onClose={() => setEarlyFeeFor(null)}
+          onDone={(message) => {
+            setEarlyFeeFor(null);
+            setSuccessMessage(message);
+          }}
+        />
+      )}
 
       <div data-component="AdminCheckIns" className="flex flex-col items-start gap-[3rem]">
         <PageHeader
@@ -736,6 +750,12 @@ export default function AdminCheckInsPage() {
                               >
                                 Check In
                               </button>
+                              {/* A confirmed booking has its folio, so a fee can go on it. */}
+                              {r.status === "confirmed" && (
+                                <button type="button" onClick={() => setEarlyFeeFor(r)} className={btn.rowSecondary}>
+                                  Early Check-In Fee
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

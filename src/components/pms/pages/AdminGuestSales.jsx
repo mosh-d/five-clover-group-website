@@ -80,8 +80,13 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
   // 10 rows a page (2026-09-28). Owing first, highest balance first - who
   // staff need to take a payment from; the most recently checked out first.
   const inHousePage = usePagedRows([...fnbGuests].sort((a, b) => fnbDue(b.folio) - fnbDue(a.folio)));
+  // Owing first, then the most recently checked out.
   const checkedOutPage = usePagedRows(
-    [...checkedOutFolios].sort((a, b) => new Date(b.reservation?.actual_check_out || 0) - new Date(a.reservation?.actual_check_out || 0)),
+    [...checkedOutFolios].sort(
+      (a, b) =>
+        Number(fnbDue(b) > 0) - Number(fnbDue(a) > 0) ||
+        new Date(b.reservation?.actual_check_out || 0) - new Date(a.reservation?.actual_check_out || 0),
+    ),
   );
   // The order form's guest picker offers every in-house guest - a first
   // order has to be postable. The lists underneath show only guests who
@@ -98,7 +103,9 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
       .then((list) => setFnbGuests(list.filter((r) => r.folio)))
       .catch(() => setFnbGuests([]))
       .finally(() => setLoadingFnbGuests(false)),
-    fetchPendingFolios({ with_sales: "fnb" })
+    // Paid ones too (owner, 2026-11-26): every guest who left in the last 30
+    // days having bought F&B, owing or settled.
+    fetchPendingFolios({ with_sales: "fnb", include_settled: "1" })
       .then((list) => setCheckedOutFolios((list || []).filter((f) => f.reservation?.actual_check_out)))
       .catch(() => setCheckedOutFolios([]))
       .finally(() => setLoadingCheckedOut(false)),
@@ -378,7 +385,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
         <div className="px-8 py-4 border-b border-(--accent-2) flex gap-3 flex-wrap">
           {[
             { key: "in-house", label: "In-House" },
-            { key: "checked-out", label: "Checked-Out (Owing)" },
+            { key: "checked-out", label: "Checked-Out" },
           ].map((t) => (
             <button
               key={t.key}
@@ -455,14 +462,15 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
                   <th className={table.th}>Folio #<Tip id="guestSales.col.folio" /></th>
                   <th className={table.th}>Checked Out<Tip id="guestSales.col.checkedOut" /></th>
                   <th className={table.th}>Balance<Tip id="guestSales.col.balance" /></th>
+                  <th className={table.th}>Status</th>
                   <th className={table.th}>Actions<Tip id="guestSales.col.actions" /></th>
                 </tr>
               </thead>
               <tbody>
                 {loadingCheckedOut ? (
-                  <tr><td colSpan={5} className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
+                  <tr><td colSpan={6} className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
                 ) : checkedOutFolios.length === 0 ? (
-                  <tr><td colSpan={5} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No checked-out guests owing F&amp;B right now.</td></tr>
+                  <tr><td colSpan={6} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No guest who bought F&amp;B has checked out in the last 30 days.</td></tr>
                 ) : (
                   // Most recently checked out first — that's the receivable
                   // most likely to still be fresh in a guest's memory (or to
@@ -476,7 +484,8 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
                           <td className={table.td}><GuestName name={guestName} tags={f.guest_tags || f.reservation?.guest_tags} /></td>
                           <td className={table.td}>{f.folio_number}</td>
                           <td className={table.td}>{formatDate(f.reservation?.actual_check_out)}</td>
-                          <td className={`${table.td} font-bold text-red-500`}>{money(fnbDue(f))}</td>
+                          <td className={`${table.td} font-bold ${fnbDue(f) > 0 ? "text-red-500" : ""}`}>{money(Math.max(fnbDue(f), 0))}</td>
+                          <td className={table.td}><StatusBadge status={fnbDue(f) > 0 ? "owing" : "paid"} /></td>
                           <td className={table.td}>
                             <button
                               onClick={() => setSelectedFolioMeta({ folioId: f.id, guestName, roomNumber: null })}

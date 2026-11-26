@@ -8,6 +8,7 @@ import Modal from "@/components/pms/Modal";
 import DateInput from "@/components/pms/DateInput";
 import GuestName from "@/components/pms/GuestName";
 import Toast from "@/components/pms/Toast";
+import StayFeeDialog from "@/components/pms/StayFeeDialog";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, field, page, table } from "@/components/pms/ui";
 import { fetchFolios } from "@/lib/pms/api/folios-api";
@@ -55,6 +56,8 @@ export default function PmsCheckOutsPage() {
   const clearToast = useCallback(() => setToast(""), []);
 
   const [selected, setSelected] = useState(null);
+  // A late check-out fee for the guest being checked out (owner, 2026-11-26).
+  const [lateFee, setLateFee] = useState(false);
   const [folio, setFolio] = useState(null);
   const [folioLoading, setFolioLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -246,6 +249,11 @@ export default function PmsCheckOutsPage() {
           ) : (
             <p className={`text-xl ${page.muted}`}>No folio found for this reservation.</p>
           )}
+          {folio && (
+            <button type="button" onClick={() => setLateFee(true)} className={`${btn.secondary} self-start`}>
+              Add Late Check-Out Fee
+            </button>
+          )}
           {balanceDue && (
             <div className="flex flex-col gap-3">
               <p className="text-xl text-orange-600 bg-orange-50 border border-orange-200 rounded-lg px-5 py-4">
@@ -257,6 +265,18 @@ export default function PmsCheckOutsPage() {
             </div>
           )}
         </Modal>
+      )}
+      {lateFee && selected && (
+        <StayFeeDialog
+          kind="late_checkout"
+          reservation={selected}
+          onClose={() => setLateFee(false)}
+          onDone={(message) => {
+            setLateFee(false);
+            setToast(message);
+            openCheckOut(selected);
+          }}
+        />
       )}
     </>
   );

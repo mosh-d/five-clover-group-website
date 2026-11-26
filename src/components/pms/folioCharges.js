@@ -11,6 +11,8 @@ export const CHARGE_TYPE_LABELS = {
   food_charge: "F&B",
   drink_charge: "F&B",
   laundry_charge: "Laundry Charge",
+  late_checkout: "Late Check-Out",
+  early_checkin: "Early Check-In",
   penalty: "Penalty",
   adjustment: "Adjustment",
   // For fixing an accommodation charge after the fact. Kept distinct from

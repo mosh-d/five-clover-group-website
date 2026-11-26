@@ -52,7 +52,9 @@ import { Tip } from "@/components/pms/Tip";
 // No laundry: it is posted from Laundry Sales, a garment at a time and
 // priced from the laundry list, and the server refuses a laundry charge
 // with no garment (owner, 2026-09-28).
-const CHARGE_TYPES = ["room_charge", "penalty", "adjustment", "correction"];
+// Late Check-Out and Early Check-In (owner, 2026-11-26): fees with their own
+// Manifest columns, on the Room account.
+const CHARGE_TYPES = ["room_charge", "late_checkout", "early_checkin", "penalty", "adjustment", "correction"];
 
 // Food/drink moved to the dedicated Guest Sales page (AdminGuestSales.jsx —
 // a guest picker plus the printed receipt, instead of hunting for a folio
@@ -1001,12 +1003,11 @@ export default function AdminFoliosPage() {
                   {ACCOUNTS.map((a) => {
                     const bal = Number(selectedFolio.accounts[a]?.balance || 0);
                     return (
-                      <SummaryStat
+                      <AccountStat
                         key={a}
-                        label={`${ACCOUNT_LABELS[a]} Account`}
-                        tip={`folios.account.${a}`}
+                        account={a}
                         value={bal > 0 ? `Owes ${money(bal)}` : bal < 0 ? `Credit ${money(-bal)}` : "Settled"}
-                        tone={bal > 0 ? "danger" : "success"}
+                        owes={bal > 0}
                       />
                     );
                   })}
@@ -1717,6 +1718,27 @@ export default function AdminFoliosPage() {
 }
 
 // `note`: a red line under the value (an early checkout).
+// Each account in its own colour, so Room, F&B and Laundry stand apart at a
+// glance (owner, 2026-11-26): a tint, a coloured edge and label. The amount
+// stays red when the account owes and green when it is settled or in credit.
+const ACCOUNT_COLOURS = {
+  room: { box: "bg-indigo-50 border-indigo-200 border-l-indigo-500", label: "text-indigo-800" },
+  fnb: { box: "bg-amber-50 border-amber-200 border-l-amber-500", label: "text-amber-800" },
+  laundry: { box: "bg-teal-50 border-teal-200 border-l-teal-500", label: "text-teal-800" },
+};
+
+function AccountStat({ account, value, owes }) {
+  const c = ACCOUNT_COLOURS[account];
+  return (
+    <div className={`border border-l-4 rounded-lg px-5 py-4 ${c.box}`}>
+      <p className={`text-lg font-semibold uppercase tracking-wide mb-1 ${c.label}`}>
+        {ACCOUNT_LABELS[account]} Account<Tip id={`folios.account.${account}`} />
+      </p>
+      <p className={`text-2xl font-bold truncate ${owes ? "text-red-600" : "text-green-700"}`}>{value}</p>
+    </div>
+  );
+}
+
 function SummaryStat({ label, value, tone, tip, note, noteTitle }) {
   const valueColor =
     tone === "danger" ? "text-red-600" : tone === "success" ? "text-green-700" : "text-[color:var(--black)]";

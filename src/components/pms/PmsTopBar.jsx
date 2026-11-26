@@ -54,12 +54,11 @@ function ShiftRow({ shift }) {
 // Office, the group's logo and "Head Office".
 // On a phone the menu button is part of the bar, at its right, so it can
 // never drift from it (owner, 2026-10-02; it used to float over the page).
+// Only the shift and Sign out (and an app update, when there is one) sit on
+// it (owner, 2026-11-26); who is signed in and a developer's branch and
+// "view as" are on the navigation row below (SessionControls).
 export default function PmsTopBar({ shifts = [], onOpenMenu }) {
-  const { user, branch, branches, scope, role, realRole, roleOverride, switchBranch, setRoleOverride, signOut } = usePmsSession();
-  const [picking, setPicking] = useState(false);
-  const isDeveloper = realRole === "developer";
-  const placeName = branch?.name || "Head Office";
-  const viewAsRoles = scope === "hq" ? SIMULATABLE_HQ_ROLES : SIMULATABLE_ROLES;
+  const { branch, scope, role, signOut } = usePmsSession();
 
   return (
     <header
@@ -91,45 +90,6 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
         ) : (
           shifts.map((shift) => <ShiftRow key={shift.key} shift={shift} />)
         )}
-        <div className="text-right hidden sm:block">
-          {/* The real account, never the "view as" role - this line states who
-              is actually signed in. */}
-          <div className="text-lg font-semibold text-white">{user?.username}</div>
-          <div className="text-base text-white/60">{ROLE_LABELS[realRole] || realRole}<Tip id="topBar.user" light /></div>
-        </div>
-
-        {isDeveloper && (
-          <>
-            <button
-              type="button"
-              onClick={() => setPicking(true)}
-              className="flex items-center gap-2 min-w-0 max-w-full rounded-lg px-3 py-1.5 text-base font-medium border-2 border-white/30 text-white cursor-pointer hover:bg-white/10 transition-colors"
-              title="Open Head Office or another branch"
-            >
-              <IoSwapHorizontalOutline size={16} />
-              <span className="max-w-60 truncate">{placeName}</span>
-            </button>
-            {/* "View as" previews a role of the place the session is in -
-                a branch's roles in a branch, Head Office's at Head Office. */}
-            <label className="flex items-center gap-2 text-base text-white/60 min-w-0 max-w-full">
-              <span className="hidden lg:block">Viewing as</span>
-              <select
-                value={roleOverride || ""}
-                onChange={(e) => setRoleOverride(e.target.value || null)}
-                className={`min-w-0 max-w-full rounded-lg px-3 py-1.5 text-base font-medium border-2 cursor-pointer focus:outline-none bg-(--text-color) text-white ${
-                  roleOverride ? "border-amber-400" : "border-white/30"
-                }`}
-              >
-                <option value="" className="text-black">Developer (all access)</option>
-                {viewAsRoles.map((r) => (
-                  <option key={r} value={r} className="text-black">{ROLE_LABELS[r]}</option>
-                ))}
-              </select>
-              <Tip id="topBar.viewAs" light />
-            </label>
-          </>
-        )}
-
         <UpdateButton />
 
         <button
@@ -150,6 +110,60 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
         <FiMenu size={22} />
       </button>
 
+    </header>
+  );
+}
+
+// Who is signed in, and for a developer the branch switch and "view as" -
+// on the navigation row under the top bar (HistorySteps), not on the bar.
+export function SessionControls() {
+  const { user, branch, branches, scope, realRole, roleOverride, switchBranch, setRoleOverride } = usePmsSession();
+  const [picking, setPicking] = useState(false);
+  const isDeveloper = realRole === "developer";
+  const placeName = branch?.name || "Head Office";
+  const viewAsRoles = scope === "hq" ? SIMULATABLE_HQ_ROLES : SIMULATABLE_ROLES;
+
+  return (
+    <>
+      <div className="text-right hidden sm:block leading-tight">
+        {/* The real account, never the "view as" role - this line states who
+            is actually signed in. */}
+        <div className="text-base font-semibold text-(--black)">{user?.username}</div>
+        <div className="text-sm text-(--text-color)/70">{ROLE_LABELS[realRole] || realRole}<Tip id="topBar.user" /></div>
+      </div>
+
+      {isDeveloper && (
+        <>
+          <button
+            type="button"
+            onClick={() => setPicking(true)}
+            className="flex items-center gap-2 min-w-0 max-w-full rounded-lg px-3 py-1.5 text-base font-medium border border-(--text-color)/25 text-(--black) cursor-pointer hover:bg-black/5 transition-colors"
+            title="Open Head Office or another branch"
+          >
+            <IoSwapHorizontalOutline size={16} />
+            <span className="max-w-60 truncate">{placeName}</span>
+          </button>
+          {/* "View as" previews a role of the place the session is in -
+              a branch's roles in a branch, Head Office's at Head Office. */}
+          <label className="flex items-center gap-2 text-base text-(--text-color)/70 min-w-0 max-w-full">
+            <span className="hidden lg:block">Viewing as</span>
+            <select
+              value={roleOverride || ""}
+              onChange={(e) => setRoleOverride(e.target.value || null)}
+              className={`min-w-0 max-w-full rounded-lg px-3 py-1.5 text-base font-medium border cursor-pointer focus:outline-none bg-(--card) text-(--black) ${
+                roleOverride ? "border-amber-500 border-2" : "border-(--text-color)/25"
+              }`}
+            >
+              <option value="">Developer (all access)</option>
+              {viewAsRoles.map((r) => (
+                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+              ))}
+            </select>
+            <Tip id="topBar.viewAs" />
+          </label>
+        </>
+      )}
+
       {picking && (
         <BranchPicker
           branches={branches}
@@ -163,6 +177,6 @@ export default function PmsTopBar({ shifts = [], onOpenMenu }) {
           onClose={() => setPicking(false)}
         />
       )}
-    </header>
+    </>
   );
 }

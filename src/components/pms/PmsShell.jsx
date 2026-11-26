@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { MotionConfig } from "motion/react";
 import { IoLockClosedOutline } from "react-icons/io5";
 import { PmsSessionContext, usePmsSession } from "./PmsSessionContext";
-import PmsTopBar from "./PmsTopBar";
+import PmsTopBar, { SessionControls } from "./PmsTopBar";
 import PmsSidebar from "./PmsSidebar";
 import HistorySteps from "./HistorySteps";
 import ShiftGate from "./ShiftGate";
@@ -327,7 +327,9 @@ function Frame({ pathname, shifts, banner, extras, children }) {
         <PullToRefresh scrollerRef={mainRef} />
         {/* Back and forward above every page, not scrolling with it (HistorySteps). */}
         <div className="flex-1 min-w-0 flex flex-col min-h-0">
-          <HistorySteps />
+          <HistorySteps>
+            <SessionControls />
+          </HistorySteps>
           <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-16 max-sm:px-4 py-16" style={{ paddingBottom: "max(4rem, calc(var(--pms-safe-bottom) + 2rem))" }}>{refused ? <Refused item={item} /> : children}</main>
         </div>
       </div>

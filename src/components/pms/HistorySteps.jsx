@@ -53,14 +53,18 @@ function availableSteps() {
 const STEP_BUTTON =
   "inline-flex items-center justify-center rounded-lg p-2 text-(--text-color) transition-colors enabled:hover:bg-black/5 enabled:cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--emphasis)";
 
-export default function HistorySteps() {
+// `children`: what shares the row, at its right - who is signed in, and a
+// developer's branch and "view as" (owner, 2026-11-26: moved off the top bar
+// to declutter it; PmsShell's Frame passes SessionControls).
+export default function HistorySteps({ children }) {
   const router = useRouter();
   const steps = useSyncExternalStore(subscribe, availableSteps, () => "");
   const canBack = steps.includes("back");
   const canForward = steps.includes("forward");
 
   return (
-    <nav aria-label="Page history" className="shrink-0 flex items-center gap-1 border-b border-(--accent-2) px-14 max-sm:px-2 py-1.5 print:hidden">
+    <div className="shrink-0 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap border-b border-(--accent-2) px-14 max-sm:px-2 py-1.5 print:hidden">
+    <nav aria-label="Page history" className="flex items-center gap-1">
       <button type="button" aria-label="Go back" title="Go back" disabled={!canBack} onClick={() => router.back()} className={STEP_BUTTON}>
         <IoChevronBack size={22} aria-hidden="true" />
       </button>
@@ -68,5 +72,7 @@ export default function HistorySteps() {
         <IoChevronForward size={22} aria-hidden="true" />
       </button>
     </nav>
+    {children && <div className="flex items-center gap-4 flex-wrap justify-end min-w-0 ml-auto">{children}</div>}
+    </div>
   );
 }

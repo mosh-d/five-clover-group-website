@@ -9,6 +9,8 @@ const WIDTHS = {
   md: "max-w-2xl",
   lg: "max-w-3xl",
   xl: "max-w-5xl",
+  // A whole report under review (report sign-off, backend phase-104).
+  full: "max-w-[110rem]",
 };
 
 // The PMS's dialog - the branch PMS's Modal, on the brand's card colour: a

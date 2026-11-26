@@ -34,7 +34,7 @@ const BRANCH_ASSIGNABLE_ROLES = ["manager", "receptionist", "accountant", "waitr
 // The roles creatable/assignable at Head Office - developer/head_hr stay
 // CLI-only (see manage-staff-account.ts), never offered here. The Head
 // Digital Marketer is a Head Office account too (phase-96).
-const HEAD_OFFICE_ASSIGNABLE_ROLES = ["hr", "head_marketer"];
+const HEAD_OFFICE_ASSIGNABLE_ROLES = ["hr", "head_marketer", "auditor"];
 // developer/head_hr accounts are listed at Head Office and can be managed
 // here (reset password, deactivate, reactivate) - the page is already gated
 // to Head Office. Their ROLE stays fixed (the backend refuses a change), so
@@ -53,6 +53,7 @@ const ROLE_LABELS = {
   hr: "HR",
   head_hr: "Head HR",
   head_marketer: "Head Digital Marketer",
+  auditor: "Auditor",
   developer: "Developer",
 };
 const roleLabel = (role) => ROLE_LABELS[role] || role;

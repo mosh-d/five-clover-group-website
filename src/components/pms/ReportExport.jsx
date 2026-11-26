@@ -70,9 +70,14 @@ function useReportExport({ target, title, subtitle, figures = false, named = fal
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(null);
   // `leaveOut`: optional tables left off this time (a full report's choice).
-  const run = async ({ leaveOut = [] } = {}) => {
+  // The report as the page shows it - every row of every table, a paged
+  // list's other pages and a server-paged table's rows included - as the
+  // sheet model: { name, title, period, place, figures, sections }. What
+  // printing lays out, and what a sign-off review starts from (phase-104).
+  // Null if it couldn't be read (`failed` says why).
+  const collect = async ({ leaveOut = [] } = {}) => {
     const root = target?.current;
-    if (!root) return;
+    if (!root) return null;
     // Every paged list shows all its rows for this one render.
     let sections;
     flushSync(() => setShowAllRows(true));
@@ -89,7 +94,7 @@ function useReportExport({ target, title, subtitle, figures = false, named = fal
         sections = await Promise.all(sections.map(async (s) => (s.loadId && loaders.has(s.loadId) ? { ...s, ...dataTable(await loaders.get(s.loadId)()) } : s)));
       } catch (err) {
         setFailed(err?.message || "Could not load the rows for the report.");
-        return;
+        return null;
       } finally {
         setBusy(false);
       }
@@ -99,26 +104,55 @@ function useReportExport({ target, title, subtitle, figures = false, named = fal
     // The full report is titled by the report itself.
     const whole = scope && root === scope.ref.current;
     const branch = getStoredBranch();
-    const brand = branch ? brandForBranch(branch) : GROUP_BRAND;
-    printDocument(
-      buildReportSheet({
-        brand,
-        logo: absolute(branch ? logoForBranch(branch) : GROUP_BRAND.logo),
-        marks: [BRANDS.fc, BRANDS.ci, BRANDS.rr].map((b) => ({ name: b.name, src: absolute(b.logoOnLight) })),
-        place: branch?.name || "Head Office",
-        report: name,
-        title: whole ? name : heading,
-        subtitle,
-        period: scope?.period || "",
-        preparedBy: getStoredStaffUsername(),
-        generatedAt: formatDateTime(new Date()),
-        figures: figures ? readFigures(scope?.ref.current) : [],
-        sections: sections.length ? sections : [{ heading, columns: [], rows: [], totals: [], note: "" }],
-        named: named && !whole,
-      }),
-    );
+    return {
+      name,
+      title: whole ? name : heading,
+      subtitle,
+      named: named && !whole,
+      period: scope?.period || "",
+      place: branch?.name || "Head Office",
+      figures: figures ? readFigures(scope?.ref.current) : [],
+      sections: sections.length ? sections : [{ heading, columns: [], rows: [], totals: [], note: "" }],
+    };
   };
-  return { run, busy, failed };
+  const run = async (options) => {
+    const sheet = await collect(options);
+    if (!sheet) return;
+    printSheet(sheet);
+  };
+  return { run, collect, busy, failed };
+}
+
+/**
+ * Prints a sheet model (see collect) on the branch's branded report sheet -
+ * or the group's, at Head Office. `branch` overrides the signed-in one: the
+ * auditor prints a branch's signed report under that branch's own brand.
+ */
+export function printSheet(sheet, { branch = getStoredBranch(), preparedBy = getStoredStaffUsername() } = {}) {
+  const brand = branch ? brandForBranch(branch) : GROUP_BRAND;
+  printDocument(
+    buildReportSheet({
+      brand,
+      logo: absolute(branch ? logoForBranch(branch) : GROUP_BRAND.logo),
+      marks: [BRANDS.fc, BRANDS.ci, BRANDS.rr].map((b) => ({ name: b.name, src: absolute(b.logoOnLight) })),
+      place: sheet.place || branch?.name || "Head Office",
+      report: sheet.name,
+      title: sheet.title,
+      subtitle: sheet.subtitle,
+      period: sheet.period || "",
+      preparedBy,
+      generatedAt: formatDateTime(new Date()),
+      figures: sheet.figures || [],
+      sections: sheet.sections,
+      named: Boolean(sheet.named),
+    }),
+  );
+}
+
+/** The whole report in its <ReportScope>, as a sheet model - for a sign-off review. */
+export function useCollectReport() {
+  const scope = useContext(ScopeContext);
+  return useReportExport({ target: scope?.ref, title: scope?.name, figures: true });
 }
 
 const SheetIcon = () => <IoPrintOutline size={20} aria-hidden="true" className="shrink-0" />;

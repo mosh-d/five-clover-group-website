@@ -7,10 +7,27 @@ import { IoRefreshOutline } from "react-icons/io5";
 // installed app has no browser to do it, and the PMS's page area scrolls on
 // its own (Frame's <main>), so it is done here: at the top of the page, a
 // finger pulled down shows the pill, "Release to refresh" past the line, and
-// letting go there reloads the page. Touch only; a mouse or a page that isn't
-// at its top is left alone.
+// letting go there reloads the page. Touch only; a mouse, a page that isn't
+// at its top, and a touch inside a pop-up (see leaveAlone) are left alone.
 const TRIGGER = 80; // px of pull that refreshes
 const MAX = 120;
+
+// A touch that pull-to-refresh must leave alone (owner, 2026-11-26: "I was
+// just looking at a folio, tapped room account, and the pop up closed" - and
+// the screen "switching" before it). A pop-up sits inside the page area, so
+// a finger drawn down inside it - scrolling a folio back up - reached here
+// while the list behind was at its top, and reloaded the whole PMS, which
+// closed the pop-up. So: nothing that starts inside a pop-up, a menu or a
+// drawer, and nothing inside a box that scrolls on its own and isn't at its
+// own top.
+function leaveAlone(target, page) {
+  if (!(target instanceof Element)) return true;
+  if (target.closest('[aria-modal="true"], [role="dialog"], [role="menu"], .pms-overlay')) return true;
+  for (let el = target; el && el !== page; el = el.parentElement) {
+    if (el.scrollTop > 0) return true;
+  }
+  return false;
+}
 
 export default function PullToRefresh({ scrollerRef }) {
   const [pull, setPull] = useState(0);
@@ -22,7 +39,7 @@ export default function PullToRefresh({ scrollerRef }) {
     const el = scrollerRef.current;
     if (!el) return undefined;
     const onStart = (e) => {
-      start.current = el.scrollTop <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null;
+      start.current = el.scrollTop <= 0 && e.touches.length === 1 && !leaveAlone(e.target, el) ? e.touches[0].clientY : null;
     };
     const onMove = (e) => {
       if (start.current === null) return;

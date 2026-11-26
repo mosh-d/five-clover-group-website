@@ -8,6 +8,7 @@ import { IoLockClosedOutline } from "react-icons/io5";
 import { PmsSessionContext, usePmsSession } from "./PmsSessionContext";
 import PmsTopBar from "./PmsTopBar";
 import PmsSidebar from "./PmsSidebar";
+import HistorySteps from "./HistorySteps";
 import ShiftGate from "./ShiftGate";
 import PullToRefresh from "./PullToRefresh";
 import NewBookingPopup from "./NewBookingPopup";
@@ -324,7 +325,11 @@ function Frame({ pathname, shifts, banner, extras, children }) {
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
         <PmsSidebar mobileOpen={menuOpen} onCloseMobile={closeMenu} />
         <PullToRefresh scrollerRef={mainRef} />
-        <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-16 max-sm:px-4 py-16" style={{ paddingBottom: "max(4rem, calc(var(--pms-safe-bottom) + 2rem))" }}>{refused ? <Refused item={item} /> : children}</main>
+        {/* Back and forward above every page, not scrolling with it (HistorySteps). */}
+        <div className="flex-1 min-w-0 flex flex-col min-h-0">
+          <HistorySteps />
+          <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto overscroll-contain px-16 max-sm:px-4 py-16" style={{ paddingBottom: "max(4rem, calc(var(--pms-safe-bottom) + 2rem))" }}>{refused ? <Refused item={item} /> : children}</main>
+        </div>
       </div>
       {extras}
     </div>

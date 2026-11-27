@@ -25,7 +25,7 @@ export const minutesText = (m) => {
   return `${Math.floor(total / 60)} h ${String(total % 60).padStart(2, "0")} min`;
 };
 
-const WHY = { check_out: "Check-out", room_move: "Room move", marked_dirty: "Marked for cleaning", back_in_service: "Back in service" };
+const WHY = { check_out: "Check-out", room_move: "Room move", marked_dirty: "Marked for cleaning", back_in_service: "Back in service", stay_over: "Stay-over" };
 
 function Stat({ label, value, sub, tip }) {
   return (

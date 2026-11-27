@@ -55,9 +55,28 @@ const STATES = {
 };
 const MANUAL = { out_of_order: "Out of order", complementary: "Complimentary", reserved: "Set aside" };
 
-function StatePill({ state }) {
-  const s = STATES[state] || STATES.clean;
-  return <span className={`inline-block px-3 py-1 rounded-full text-lg font-bold whitespace-nowrap ${s.className}`}>{s.label}</span>;
+// A room's condition (owner, 2026-11-27): Vacant or Occupied, and Clean or
+// Dirty. A room being cleaned, or waiting for review, is still dirty - its
+// progress shows beside it. Every room a guest stayed the night in turns
+// Dirty at 6:00 am (backend markStayOvers).
+const CONDITIONS = {
+  vacant_clean: { label: "Vacant Clean", className: "bg-green-100 text-green-800" },
+  vacant_dirty: { label: "Vacant Dirty", className: "bg-red-100 text-red-700" },
+  occupied_clean: { label: "Occupied Clean", className: "bg-blue-100 text-blue-800" },
+  occupied_dirty: { label: "Occupied Dirty", className: "bg-orange-100 text-orange-800" },
+};
+const conditionOf = (room) => `${room.occupied ? "occupied" : "vacant"}_${room.state === "clean" ? "clean" : "dirty"}`;
+const PROGRESS = ["cleaning", "review"];
+
+function StatePill({ room }) {
+  const c = CONDITIONS[conditionOf(room)];
+  const progress = PROGRESS.includes(room.state) ? STATES[room.state] : null;
+  return (
+    <>
+      <span className={`inline-block px-3 py-1 rounded-full text-lg font-bold whitespace-nowrap ${c.className}`}>{c.label}</span>
+      {progress && <span className={`inline-block px-3 py-1 rounded-full text-lg font-bold whitespace-nowrap ${progress.className}`}>{progress.label}</span>}
+    </>
+  );
 }
 
 // "14:05" today, the date and time otherwise.
@@ -68,8 +87,12 @@ const when = (d) => {
 };
 
 const why = (job) =>
-  job.reason === "room_move"
+  job.reason === "stay_over"
+    ? "The guest stayed the night - their daily clean"
+    : job.reason === "room_move"
     ? "The guest moved to another room"
+    : job.reason === "back_in_service"
+    ? "Back in service"
     : job.reason === "marked_dirty"
       ? `Marked for cleaning${job.reason_note ? `: ${job.reason_note}` : ""}`
       : "The guest checked out";
@@ -421,7 +444,7 @@ function RoomCard({ room, children, lines = [] }) {
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-2xl font-bold text-(--black)">{roomName(room)}</span>
           <span className={`text-xl ${page.muted}`}>{room.room_type_name}</span>
-          <StatePill state={room.state} />
+          <StatePill room={room} />
         </div>
         {lines.filter(Boolean).map((line) => (
           <p key={line} className={`text-xl ${page.muted} break-words`}>
@@ -507,7 +530,10 @@ function SupervisorView({ board, onAction }) {
     .sort((a, b) => Number(Boolean(b.job.sent_back_note)) - Number(Boolean(a.job.sent_back_note)) || new Date(a.job.opened_at) - new Date(b.job.opened_at));
   const cleaning = withJob.filter((r) => r.job.status === "cleaning");
   const outOfOrder = board.rooms.filter((r) => r.manual_status === "out_of_order");
-  const counts = Object.keys(STATES).map((s) => [s, board.rooms.filter((r) => r.state === s).length]);
+  const counts = [
+    ...Object.entries(CONDITIONS).map(([k, c]) => [k, c, board.rooms.filter((r) => conditionOf(r) === k).length]),
+    ...PROGRESS.map((s) => [s, STATES[s], board.rooms.filter((r) => r.state === s).length]),
+  ];
   const givenTo = (job) =>
     board.supervisor_only
       ? "Mark it clean when it is"
@@ -519,11 +545,12 @@ function SupervisorView({ board, onAction }) {
   return (
     <>
       <div className="w-full flex flex-wrap gap-3" aria-label="Rooms by state">
-        {counts.map(([s, n]) => (
-          <span key={s} className={`px-4 py-2 rounded-xl text-xl font-bold ${STATES[s].className}`}>
-            {STATES[s].label}: {n}
+        {counts.map(([k, c, n]) => (
+          <span key={k} className={`px-4 py-2 rounded-xl text-xl font-bold ${c.className}`}>
+            {c.label}: {n}
           </span>
         ))}
+        <Tip id="housekeeping.conditions" />
       </div>
 
       <Section id="hk-review" title="For Review" tip="housekeeping.forReview" count={review.length} empty="No rooms waiting for review.">
@@ -686,7 +713,7 @@ export default function HousekeepingPage() {
         icon={IoSparklesOutline}
         tipId="housekeeping.page"
         title="Housekeeping"
-        description="The rooms guests leave: housekeepers clean them and submit them for review, and the supervisor approves them or sends them back."
+        description="The rooms guests leave, and every occupied room daily from 6:00 am: housekeepers clean them and submit them for review, and the supervisor approves them or sends them back."
       >
         {board?.on && !isHousekeeper && (
           <PageTabs

@@ -605,6 +605,8 @@ export const TIPS = {
   "laundryGuest.col.dateTime": "When the guest's folio was opened.",
   "laundryGuest.col.status": "Owing: the folio has money still due. Paid: settled.",
   "laundryGuest.col.actions": "View / Pay: the folio's charges, and a payment form.",
+  "laundryGuest.col.checkedOut": "When the guest checked out.",
+  "laundryGuest.col.balance": "What the guest still owes for laundry.",
   "laundrySales.new": "Record laundry for someone not staying. Pay now or later.",
   "laundrySales.name": "Not needed. Add it if the bill may stay unpaid a while, so it can be traced.",
   "laundrySales.phone": "Not needed. Add it if the bill may stay unpaid a while.",

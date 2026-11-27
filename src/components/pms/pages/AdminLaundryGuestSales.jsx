@@ -12,11 +12,11 @@ import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
 import FolioBalanceModal from "@/components/pms/FolioBalanceModal";
 import { LAUNDRY_SERVICE_TYPES } from "@/components/pms/laundryServices";
 import { btn, field, table } from "@/components/pms/ui";
-import { formatDateTime, money } from "@/lib/pms/format";
+import { formatDate, formatDateTime, money } from "@/lib/pms/format";
 import { getStoredStaffRole } from "@/lib/pms/auth";
 import { fetchLaundryItems } from "@/lib/pms/api/menu-api";
 import { fetchInHouse } from "@/lib/pms/api/front-office-api";
-import { addFolioItemsBatch, fetchFolioById, recordPayment } from "@/lib/pms/api/folios-api";
+import { addFolioItemsBatch, fetchFolioById, fetchPendingFolios, recordPayment } from "@/lib/pms/api/folios-api";
 import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
@@ -40,9 +40,11 @@ const emptyPaymentForm = { splits: [{ amount: "", payment_method: "transfer" }],
  * finding the folio first and typing the price by hand — off the same
  * catalogue the non-guest side prices automatically.
  *
- * Deliberately in-house only, unlike Guest Sales' second "checked-out
- * (owing)" tab: laundry is handed back to someone who is still in the
- * house. A departed guest's laundry is a non-guest sale.
+ * The list below works the same as F&B Guest Sales (owner, 2026-11-27):
+ * In-House, and Checked-Out - every guest who left in the last 30 days having
+ * sent laundry, owing or settled - so a guest's laundry sale stays on record
+ * after they leave instead of vanishing at check-out. New laundry is still
+ * posted only to a guest in the house.
  */
 export default function AdminLaundryGuestSales({ asSection = false, hideTitle = false }) {
   // Laundry is front-desk work (owner's call, 2026-09-14) — the server
@@ -58,6 +60,19 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
   const [loadingLaundryGuests, setLoadingLaundryGuests] = useState(true);
   // 10 rows a page (2026-09-28), owing first - who to take a payment from.
   const inHousePage = usePagedRows([...laundryGuests].sort((a, b) => laundryDue(b.folio) - laundryDue(a.folio)));
+  // Guests who sent laundry and have since checked out (last 30 days, owing
+  // or settled), as on F&B Guest Sales. Owing first, then the most recently
+  // checked out.
+  const [checkedOutFolios, setCheckedOutFolios] = useState([]);
+  const [loadingCheckedOut, setLoadingCheckedOut] = useState(true);
+  const [folioTab, setFolioTab] = useState("in-house");
+  const checkedOutPage = usePagedRows(
+    [...checkedOutFolios].sort(
+      (a, b) =>
+        Number(laundryDue(b) > 0) - Number(laundryDue(a) > 0) ||
+        new Date(b.reservation?.actual_check_out || 0) - new Date(a.reservation?.actual_check_out || 0),
+    ),
+  );
   const [order, setOrder] = useState(emptyOrder);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -75,6 +90,10 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
       .then((list) => setLaundryGuests(list.filter((r) => r.folio)))
       .catch(() => setLaundryGuests([]))
       .finally(() => setLoadingLaundryGuests(false)),
+    fetchPendingFolios({ with_sales: "laundry", include_settled: "1" })
+      .then((list) => setCheckedOutFolios((list || []).filter((f) => f.reservation?.actual_check_out)))
+      .catch(() => setCheckedOutFolios([]))
+      .finally(() => setLoadingCheckedOut(false)),
   ]);
 
   useEffect(() => {
@@ -346,6 +365,23 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
       </div>
 
       <div className={`${table.card} w-full`}>
+        <div className="px-8 py-4 border-b border-(--accent-2) flex gap-3 flex-wrap">
+          {[
+            { key: "in-house", label: "In-House" },
+            { key: "checked-out", label: "Checked-Out" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setFolioTab(t.key)}
+              className={`px-5 py-2.5 rounded-lg text-lg font-bold cursor-pointer transition-all ${
+                folioTab === t.key ? "bg-[color:var(--emphasis)] text-white" : "bg-black/4 text-[color:var(--text-color)] hover:bg-black/8"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {folioTab === "in-house" ? (
         <div className={table.scroll}>
           <table className={table.el}>
             <thead>
@@ -395,7 +431,56 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
             </tbody>
           </table>
         </div>
-        <Pagination page={inHousePage.page} totalPages={inHousePage.totalPages} onPage={inHousePage.setPage} className="my-4" />
+        ) : (
+          <div className={table.scroll}>
+            <table className={table.el}>
+              <thead>
+                <tr className={table.headRow}>
+                  <th className={`${table.th} ${table.stickyTh}`}>Guest<Tip id="laundryGuest.col.guest" /></th>
+                  <th className={table.th}>Folio #<Tip id="laundryGuest.col.folio" /></th>
+                  <th className={table.th}>Checked Out<Tip id="laundryGuest.col.checkedOut" /></th>
+                  <th className={table.th}>Balance<Tip id="laundryGuest.col.balance" /></th>
+                  <th className={table.th}>Status<Tip id="laundryGuest.col.status" /></th>
+                  <th className={table.th}>Actions<Tip id="laundryGuest.col.actions" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingCheckedOut ? (
+                  <tr><td colSpan={6} className="px-8 py-10 text-center text-xl"><LoadingSpinner /></td></tr>
+                ) : checkedOutFolios.length === 0 ? (
+                  <tr><td colSpan={6} className="px-8 py-10 text-center text-xl text-[color:var(--text-color)]/68">No guest who sent laundry has checked out in the last 30 days.</td></tr>
+                ) : (
+                  checkedOutPage.rows.map((f) => {
+                    const isSelected = String(f.id) === String(selectedFolioMeta?.folioId);
+                    const guestName = f.guest ? `${f.guest.first_name} ${f.guest.last_name}` : (f.reservation?.guest_name || "N/A");
+                    return (
+                      <tr key={f.id} className={`${table.row} ${isSelected ? "bg-[color:var(--emphasis)]/5" : ""}`}>
+                        <td className={table.td}><GuestName name={guestName} tags={f.guest_tags || f.reservation?.guest_tags} /></td>
+                        <td className={table.td}>{f.folio_number}</td>
+                        <td className={table.td}>{formatDate(f.reservation?.actual_check_out)}</td>
+                        <td className={`${table.td} font-bold ${laundryDue(f) > 0 ? "text-red-500" : ""}`}>{money(Math.max(laundryDue(f), 0))}</td>
+                        <td className={table.td}><StatusBadge status={laundryDue(f) > 0 ? "owing" : "paid"} /></td>
+                        <td className={table.td}>
+                          <button
+                            onClick={() => setSelectedFolioMeta({ folioId: f.id, guestName, roomNumber: null })}
+                            className={btn.rowPrimary}
+                          >
+                            {isSelected ? "Viewing" : "View / Pay"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {folioTab === "in-house" ? (
+          <Pagination page={inHousePage.page} totalPages={inHousePage.totalPages} onPage={inHousePage.setPage} className="my-4" />
+        ) : (
+          <Pagination page={checkedOutPage.page} totalPages={checkedOutPage.totalPages} onPage={checkedOutPage.setPage} className="my-4" />
+        )}
       </div>
 
       {selectedFolioMeta && (

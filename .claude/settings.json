@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(//**/.env)",
+      "Edit(//**/.env)",
+      "Read(//**/.env.local)",
+      "Edit(//**/.env.local)",
+      "Read(//**/.env.*.local)",
+      "Edit(//**/.env.*.local)",
+      "Read(//**/.env.development)",
+      "Edit(//**/.env.development)",
+      "Read(//**/.env.production)",
+      "Edit(//**/.env.production)",
+      "Read(//**/.env.test)",
+      "Edit(//**/.env.test)",
+      "Read(//**/.dev.vars)",
+      "Edit(//**/.dev.vars)",
+      "Read(//**/*.env)",
+      "Edit(//**/*.env)",
+      "Read(~/project-secrets/**)",
+      "Edit(~/project-secrets/**)",
+      "Read(//**/project-secrets/**)",
+      "Edit(//**/project-secrets/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-secret-files.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -7,7 +7,8 @@ import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
-import { page, field } from "@/components/pms/ui";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
+import { field, filter, page } from "@/components/pms/ui";
 import { fetchBranches, fetchHqMetric } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
 import { METRIC_TABS, findTab, findMetric, tabOfMetric } from "./catalog";
@@ -138,14 +139,14 @@ export default function MetricsPage() {
           </select>
         </div>
 
-        <div className={page.toolbar}>
+        <FilterBar>
           {metric.snapshot ? (
             <p className={`text-xl self-center ${page.muted}`}>
               {metric.key === "top-guests" ? "All time" : "As things stand right now"} - the dates don&apos;t apply to this one.
             </p>
           ) : (
             <>
-              <div role="group" aria-label="Quick dates" className="flex flex-wrap gap-2">
+              <div role="group" aria-label="Quick dates" className="flex flex-wrap items-end gap-2">
                 {RANGE_PRESETS.map((p) => {
                   const r = presetRange(p.key);
                   const active = r.from === from && r.to === to;
@@ -155,7 +156,7 @@ export default function MetricsPage() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => go({ from: r.from, to: r.to })}
-                      className={`rounded-lg border px-4 py-3 text-xl font-semibold cursor-pointer transition-colors text-(--text-color) ${
+                      className={`h-[4.4rem] rounded-lg border px-4 text-xl font-semibold cursor-pointer transition-colors text-(--text-color) ${
                         active ? "border-(--emphasis) bg-[color-mix(in_srgb,var(--emphasis)_14%,var(--card))]" : "border-(--accent-2) bg-(--card) hover:bg-black/5"
                       }`}
                     >
@@ -169,9 +170,8 @@ export default function MetricsPage() {
                   of the row on a phone - never sized by the date fields
                   themselves, which iPhone Safari draws wider than they say
                   (they overlapped each other and Refresh, 2026-10-02). */}
-              <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="metric-from" className={field.label}>From<Tip id="metrics.from" /></label>
+              <div className={filter.pair}>
+                <FilterField label="From" tip="metrics.from" htmlFor="metric-from" className={filter.date}>
                   <DateInput
                     id="metric-from"
                     value={from}
@@ -180,19 +180,18 @@ export default function MetricsPage() {
                       const next = e.target.value;
                       if (ISO_DATE.test(next)) go(next > to ? { from: next, to: next } : { from: next });
                     }}
-                    className={field.input}
+                    className={filter.input}
                   />
-                </div>
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="metric-to" className={field.label}>To<Tip id="metrics.to" /></label>
+                </FilterField>
+                <FilterField label="To" tip="metrics.to" htmlFor="metric-to" className={filter.date}>
                   <DateInput
                     id="metric-to"
                     value={to}
                     min={from}
                     onChange={(e) => ISO_DATE.test(e.target.value) && go({ to: e.target.value })}
-                    className={field.input}
+                    className={filter.input}
                   />
-                </div>
+                </FilterField>
               </div>
             </>
           )}
@@ -203,12 +202,12 @@ export default function MetricsPage() {
             type="button"
             onClick={() => setRefresh((n) => n + 1)}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg border border-(--accent-2) bg-(--card) px-4 py-3 text-xl font-semibold cursor-pointer text-(--text-color) hover:bg-black/5 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={filter.secondary}
           >
             {loading && shown ? <LoadingSpinner size="sm" /> : <IoRefreshOutline aria-hidden="true" />}
             Refresh
           </button>
-        </div>
+        </FilterBar>
       </PageHeader>
 
       {/* The report sheet's name and dates (ReportExport.jsx): a snapshot is

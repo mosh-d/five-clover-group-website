@@ -5,7 +5,7 @@
 import { pct } from "@/lib/pms/format";
 import { Link } from "@/lib/pms/router";
 import { accessDenial, canViewAuditTrail } from "@/components/pms/pmsNavItems";
-import { table } from "@/components/pms/ui";
+import { page, table } from "@/components/pms/ui";
 import { Tip } from "@/components/pms/Tip";
 import { ReportExportButton, reportProps } from "@/components/pms/ReportExport";
 import { useRef } from "react";
@@ -23,7 +23,7 @@ export function ReportSection({ title, subtitle, children, footer, tip, report }
     <div ref={ref} data-report-section data-report-title={typeof title === "string" ? title : undefined} className="bg-(--card) rounded-xl border border-(--accent-2) overflow-hidden w-full">
       <div className="px-6 py-5 border-b border-(--accent-2) flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-[color:var(--black)]">{title}{tip && <Tip id={tip} />}</h2>
+          <h2 className={page.sectionTitle}>{title}{tip && <Tip id={tip} />}</h2>
           {subtitle && <p className="text-xl text-[color:var(--text-color)]/68 mt-1">{subtitle}</p>}
         </div>
         {report && <ReportExportButton target={ref} title={typeof title === "string" ? title : undefined} subtitle={typeof subtitle === "string" ? subtitle : undefined} {...(report === true ? {} : reportProps(report))} />}
@@ -71,12 +71,20 @@ const MONEY_KIND_TAGS = {
   non_guest_sale: { label: "Non-guest sale", className: "text-sky-800 bg-sky-100" },
   credit_refund: { label: "Credit refund", className: "text-orange-800 bg-orange-100" },
   refund: { label: "Refund", className: "text-red-700 bg-red-100" },
+  // The breakfast in a room payment, filed with F&B on Analysis (owner,
+  // 2026-11-27; the backend's splitOutBreakfast).
+  breakfast: { label: "Breakfast", className: "text-amber-800 bg-amber-100" },
 };
 export function MoneyKindTag({ row }) {
-  const key = MONEY_KIND_TAGS[row.kind] ? row.kind : row.status === "refunded" ? "refund" : null;
-  if (!key) return null;
-  const tag = MONEY_KIND_TAGS[key];
-  return <span className={`text-sm font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${tag.className}`}>{tag.label}</span>;
+  const keys = [
+    row.breakfast ? "breakfast" : null,
+    MONEY_KIND_TAGS[row.kind] ? row.kind : row.status === "refunded" ? "refund" : null,
+  ].filter(Boolean);
+  return keys.map((key) => (
+    <span key={key} className={`text-sm font-bold uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap ${MONEY_KIND_TAGS[key].className}`}>
+      {MONEY_KIND_TAGS[key].label}
+    </span>
+  ));
 }
 
 export function EmptyRow() {
@@ -195,7 +203,7 @@ export function StaffActivitySection({ activity, money }) {
             <div key={g.key} className="flex flex-col gap-2">
               {/* Pinned while its table scrolls sideways (owner, 2026-11-26:
                   the headings slid away under the left edge). */}
-              <h3 className="sticky left-0 w-fit text-2xl font-bold text-[color:var(--black)]">{g.label}<Tip id={g.tip} /></h3>
+              <h3 className={`${page.sectionTitle} sticky left-0 w-fit`}>{g.label}<Tip id={g.tip} /></h3>
               <table className="w-full text-xl">
                 <TableHead cells={cells} rightAlign={g.amount ? ["Amount"] : []} tips={STAFF_COLUMN_TIPS} />
                 <tbody>

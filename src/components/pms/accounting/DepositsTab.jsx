@@ -29,7 +29,7 @@ const ago = (days) => (days === 0 ? "today" : days === 1 ? "1 day ago" : `${days
 function GroupTable({ group, today, onRefund, onFolio }) {
   const paged = usePagedRows(group.credits);
   const heading = (
-    <h3 className="text-2xl font-bold text-(--black)">
+    <h3 className={page.sectionTitle}>
       {group.label}
       <span className={`ml-3 text-xl font-semibold ${page.muted}`}>{group.count} · {money(group.amount)}</span>
       <Tip id={`accounting.deposits.group.${group.key}`} />

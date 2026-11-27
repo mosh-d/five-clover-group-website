@@ -38,6 +38,7 @@ import { createOtaSettlement, previewOtaAmount } from "@/lib/pms/api/ota-api";
 import { fetchFolios, recordPayment, addFolioItem } from "@/lib/pms/api/folios-api";
 
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { DateField } from "@/components/pms/FilterBar";
 import { adjustmentProblem, adjustmentMax } from "@/lib/pms/validation";
 import { AbbrLabel } from "@/components/pms/InfoTip";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
@@ -47,6 +48,7 @@ import GuestName from "@/components/pms/GuestName";
 import { GuestTagPills } from "@/components/pms/GuestName";
 import EmailStatusTag from "@/components/pms/EmailStatusTag";
 import { Tip } from "@/components/pms/Tip";
+import { useDraft } from "@/lib/pms/drafts";
 // A Walk-In's check-in is always "right now" — but the reservation it
 // creates must be dated by the hotel's business day (6am Lagos cutover, see
 // date-utils.js), not the raw calendar date, so an arrival before 6am can
@@ -85,7 +87,9 @@ const EMPTY_WALK_IN = {
 
 export default function AdminCheckInsPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState("arrivals");
+  // The tab and the walk-in form are kept as drafts (lib/pms/drafts.js,
+  // owner 2026-11-27): leave mid walk-in and come back to it as it was.
+  const [tab, setTab] = useDraft("check-ins:tab", "arrivals");
 
   // --- Arrivals tab ---
   // The business day: before 6am, last night's late arrivals are the ones
@@ -102,7 +106,7 @@ export default function AdminCheckInsPage() {
   const [processing, setProcessing] = useState(false);
 
   // --- Walk-in tab ---
-  const [walkIn, setWalkIn] = useState(EMPTY_WALK_IN);
+  const [walkIn, setWalkIn] = useDraft("walk-in", EMPTY_WALK_IN);
   const [availability, setAvailability] = useState(null);
   const [availLoading, setAvailLoading] = useState(false);
   const [walkInProcessing, setWalkInProcessing] = useState(false);
@@ -688,16 +692,9 @@ export default function AdminCheckInsPage() {
             onChange={setTab}
           />
           {tab === "arrivals" && (
-            <div className={page.toolbar}>
-              <div className="w-auto flex items-center justify-end">
-                <DateInput
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className={`${field.input} w-auto text-xl!`}
-                />
-                <Tip id="checkIns.arrivals.date" />
-              </div>
-            </div>
+            <FilterBar>
+              <DateField id="arrivals-date" label="Arrival Date" tip="checkIns.arrivals.date" value={date} onChange={setDate} />
+            </FilterBar>
           )}
         </PageHeader>
 
@@ -1528,7 +1525,9 @@ function OtaNightsFields({ value, onChange, minDate, maxDate }) {
 // 2026-11-21: "I should be able to register the same day as a check in
 // date"). The Future Booking tab itself starts tomorrow - today is a Walk-In.
 export function FutureBookingForm({ prefill = null, afterBooked = null, inDialog = false, fromToday = false } = {}) {
-  const [form, setForm] = useState(() => ({ ...EMPTY_FUTURE_BOOKING, ...(prefill || {}) }));
+  // A draft only on the Check-Ins page's own tab - not in a dialog that
+  // arrives with a guest of its own (prefill).
+  const [form, setForm] = useDraft(prefill || inDialog ? null : "future-booking", () => ({ ...EMPTY_FUTURE_BOOKING, ...(prefill || {}) }));
   const [availability, setAvailability] = useState(null);
   const [rooms, setRooms] = useState(null);
   const [checking, setChecking] = useState(false);
@@ -1731,7 +1730,7 @@ export function FutureBookingForm({ prefill = null, afterBooked = null, inDialog
   return (
     <div className={inDialog ? "w-full flex flex-col gap-6" : "w-full bg-(--card) rounded-xl border border-(--accent-2) p-8 flex flex-col gap-6"}>
       <div className={inDialog ? "hidden" : ""}>
-        <h2 className="text-3xl font-bold text-[color:var(--black)]">Future Booking<Tip id="checkIns.future.heading" /></h2>
+        <h2 className={page.sectionTitle}>Future Booking<Tip id="checkIns.future.heading" /></h2>
         <p className={`${page.sectionIntro} mt-1`}>
           For a guest booking a later date in person. A room number is required — it holds a real room for those
           dates, and can be reassigned any time before the guest arrives.

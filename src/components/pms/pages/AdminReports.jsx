@@ -6,7 +6,6 @@ import { useState, useCallback, useEffect } from "react";
 import { IoBarChartOutline, IoDownloadOutline } from "react-icons/io5";
 // IoMailOutline comes back with the Email Report button below, if it does.
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import Button from "@/components/pms/Button";
 import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import StatusBadge from "@/components/pms/StatusBadge";
@@ -41,15 +40,16 @@ import { isAccountant, isReceptionist, isStorekeeper, isWaitron } from "@/lib/pm
 // live here.
 import { money, pct, formatDate, formatDateTime, formatPaymentMethod } from "@/lib/pms/format";
 import { canViewAuditTrail } from "@/components/pms/pmsNavItems";
-import { page, table } from "@/components/pms/ui";
+import { filter, page, table } from "@/components/pms/ui";
 import { ReportScope, ReportExportAll, ExportActions } from "@/components/pms/ReportExport";
 import ReportSignOff from "@/components/pms/signoff/ReportSignOff";
 import { AuditLink, ReportSection, TableHead, EmptyRow, SummaryCard, OccupancyBadge, StaffActivitySection, MoneyKindTag } from "@/components/pms/reportUi";
 
-import DateInput from "@/components/pms/DateInput";
+import FilterBar, { DateField, DateRangeFields, FilterField, GenerateButton } from "@/components/pms/FilterBar";
 import { MotionDiv, tabEnter } from "@/components/pms/motion";
 import GuestName from "@/components/pms/GuestName";
 import { Tip } from "@/components/pms/Tip";
+import { useDraft } from "@/lib/pms/drafts";
 // This business month, first to last day. By the hotel's business day (6am
 // Lagos, server clock): before 6am on the 1st it is still last month. It used
 // to read the device's local calendar and then toISOString(), which in Lagos
@@ -105,7 +105,12 @@ export default function AdminReportsPage() {
   // report under a tab strip where nothing was selected. Lazy initializer
   // because visibleTabs() reads the stored role, and the roster is fixed for
   // the life of a session.
-  const [activeTab, setActiveTab] = useState(() => visibleTabs()[0]?.key ?? "dashboard");
+  // The tab, the shift and each report's dates are kept as drafts
+  // (lib/pms/drafts.js, owner 2026-11-27): back on Reports, the report you
+  // were on, for the dates you picked. A remembered tab this role can't
+  // open falls back to its first.
+  const [savedTab, setActiveTab] = useDraft("reports:tab", () => visibleTabs()[0]?.key ?? "dashboard");
+  const activeTab = visibleTabs().some((t) => t.key === savedTab) ? savedTab : (visibleTabs()[0]?.key ?? "dashboard");
 
   // Report-page-level, not per-tab — one shift selection covers whichever
   // report is currently active, and labels its Excel export with the shift
@@ -116,7 +121,7 @@ export default function AdminReportsPage() {
   const isFnbTab = FNB_TABS.includes(activeTab);
   const [receptionistStaff, setReceptionistStaff] = useState([]);
   const [waitronStaff, setWaitronStaff] = useState([]);
-  const [shift, setShift] = useState("");
+  const [shift, setShift] = useDraft("reports:shift", "");
 
   useEffect(() => {
     fetchStaffAccounts()
@@ -167,21 +172,16 @@ export default function AdminReportsPage() {
             the accountant — meaningless for an accountant's own session,
             since they're not sending anything to themselves. */}
         {!isAccountant() && (
-          <div className={page.toolbar}>
-            <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-col gap-2 w-full max-w-sm">
-              <label className="text-xl font-semibold text-[color:var(--text-color)]/76">{shiftLabel}<Tip id="reports.shift" /></label>
-              <select
-                value={shift}
-                onChange={(e) => setShift(e.target.value)}
-                className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-              >
+          <FilterBar>
+            <FilterField label={shiftLabel} tip="reports.shift" htmlFor="reports-shift">
+              <select id="reports-shift" value={shift} onChange={(e) => setShift(e.target.value)} className={filter.select}>
                 <option value="">-- Select --</option>
                 {shiftRoster.map((s) => (
                   <option key={s.id} value={s.username}>{s.username} ({s.role})</option>
                 ))}
               </select>
-            </div>
-          </div>
+            </FilterField>
+          </FilterBar>
         )}
       </PageHeader>
 
@@ -202,8 +202,8 @@ export default function AdminReportsPage() {
 
 function DashboardTab() {
   const defaultRange = currentMonthRange();
-  const [from, setFrom] = useState(defaultRange.from);
-  const [to, setTo] = useState(defaultRange.to);
+  const [from, setFrom] = useDraft("reports:dashboard:from", defaultRange.from);
+  const [to, setTo] = useDraft("reports:dashboard:to", defaultRange.to);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -276,46 +276,18 @@ function DashboardTab() {
 
   return (
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
-      {/* Date range picker */}
-      <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
-        <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">From<Tip id="reports.from" /></label>
-          <DateInput
-            value={from}
-            onChange={(e) => {
-              const newFrom = e.target.value;
-              setFrom(newFrom);
-              // Keep "to" from ever being pushed before "from" when "from" moves later.
-              if (newFrom && to && newFrom > to) setTo(newFrom);
-            }}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">To<Tip id="reports.to" /></label>
-          <DateInput
-            value={to}
-            min={from || undefined}
-            onChange={(e) => setTo(e.target.value)}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          />
-        </div>
-        <Button
-          onClick={loadReport}
-          disabled={loading}
-          variant="emphasis"
-          className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-        >
-          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
-        <Button
-          onClick={handleExport}
-          disabled={exporting || !from || !to}
-          variant="secondary"
-          className={`text-xl! flex items-center gap-2 rounded-xl ${exporting ? "opacity-50 cursor-not-allowed" : ""}`}
-        >
-          <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
-        </Button>
+      {/* Date range picker (FilterBar, owner 2026-11-27). */}
+      <FilterBar
+        actions={
+          <>
+            <GenerateButton onClick={loadReport} loading={loading} />
+            <button type="button" onClick={handleExport} disabled={exporting || !from || !to} className={filter.secondary}>
+              <IoDownloadOutline size={20} /> {exporting ? "Exporting..." : "Export Excel"}
+            </button>
+          </>
+        }
+      >
+        <DateRangeFields idPrefix="dash" from={from} to={to} onFrom={setFrom} onTo={setTo} fromTip="reports.from" toTip="reports.to" />
         {/* Email Report, parked — see the note by its state above.
         <Button
           onClick={() => setShowEmailForm((v) => !v)}
@@ -326,7 +298,7 @@ function DashboardTab() {
           <IoMailOutline size={20} /> Email Report
         </Button>
         */}
-      </div>
+      </FilterBar>
 
       {/* The Email Report form, parked with its button above.
       {showEmailForm && (
@@ -549,8 +521,8 @@ function analysisGroups(payments = []) {
 function AnalysisTab() {
   const showAudit = canViewAuditTrail();
   const defaultRange = currentMonthRange();
-  const [from, setFrom] = useState(defaultRange.from);
-  const [to, setTo] = useState(defaultRange.to);
+  const [from, setFrom] = useDraft("reports:analysis:from", defaultRange.from);
+  const [to, setTo] = useDraft("reports:analysis:to", defaultRange.to);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -667,8 +639,8 @@ function AnalysisTab() {
 // ─── PMS Report (Evening / Morning) ─────────────────────────────────────────────
 
 function PmsReportTab() {
-  const [date, setDate] = useState(businessDateISO);
-  const [variant, setVariant] = useState("evening");
+  const [date, setDate] = useDraft("reports:pms:date", businessDateISO);
+  const [variant, setVariant] = useDraft("reports:pms:variant", "evening");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -716,30 +688,15 @@ function PmsReportTab() {
 
   return (
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
-      <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
-        <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
-          <DateInput
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Variant<Tip id="reports.pms.variant" /></label>
-          <select
-            value={variant}
-            onChange={(e) => setVariant(e.target.value)}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          >
+      <FilterBar actions={<GenerateButton onClick={load} loading={loading} />}>
+        <DateField id="pms-date" tip="reports.date" value={date} onChange={setDate} />
+        <FilterField label="Variant" tip="reports.pms.variant" htmlFor="pms-variant">
+          <select id="pms-variant" value={variant} onChange={(e) => setVariant(e.target.value)} className={filter.select}>
             <option value="evening">Evening (7:00 PM)</option>
             <option value="morning">Morning (7:00 AM)</option>
           </select>
-        </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
-      </div>
+        </FilterField>
+      </FilterBar>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
       {exportError && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{exportError}</div>}
@@ -908,7 +865,7 @@ function PmsReportTab() {
 
 function AccommodationReportTab({ shift }) {
   const showAudit = canViewAuditTrail();
-  const [date, setDate] = useState(businessDateISO);
+  const [date, setDate] = useDraft("reports:accommodation:date", businessDateISO);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -949,19 +906,9 @@ function AccommodationReportTab({ shift }) {
 
   return (
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
-      <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
-        <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
-          <DateInput
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          />
-        </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
-      </div>
+      <FilterBar actions={<GenerateButton onClick={load} loading={loading} />}>
+        <DateField id="report-date" tip="reports.date" value={date} onChange={setDate} />
+      </FilterBar>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
       {exportError && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{exportError}</div>}
@@ -1377,6 +1324,9 @@ const SALES_COLUMN_TIPS = {
 // "room": an order the waitron charged to the guest's room (folio accounts,
 // backend phase-103) - reception collects it with the room bill.
 const salesStatus = (status) => (status === "room" ? "charged to room" : status);
+// The rows a sales table shows: one per bill (backend groupByBill), or, from
+// an older server, one per line.
+const salesOrders = (data) => data.orders || data.rows;
 
 function SalesNotes({ data }) {
   const rows = data.rows || [];
@@ -1387,8 +1337,11 @@ function SalesNotes({ data }) {
   const pbTotal = ownRows.filter((r) => r.status === "PB").reduce((s, r) => s + lineTotal(r), 0);
   const owingTotal = ownRows.filter((r) => r.status === "owing").reduce((s, r) => s + lineTotal(r), 0);
   const roomTotal = rows.filter((r) => r.status === "room").reduce((s, r) => s + lineTotal(r), 0);
-  const totalSold = rows.reduce((s, r) => s + lineTotal(r), 0);
-  const totalServiceCharge = rows.reduce((s, r) => s + Number(r.service_charge), 0);
+  // A Deposit is tomorrow's breakfast (today's arrivals, owner 2026-11-27):
+  // listed, but never sold today.
+  const soldRows = rows.filter((r) => r.status !== "deposit");
+  const totalSold = soldRows.reduce((s, r) => s + lineTotal(r), 0);
+  const totalServiceCharge = soldRows.reduce((s, r) => s + Number(r.service_charge), 0);
 
   return (
     <div data-report-section data-report-title="Notes" className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-col gap-3 w-full">
@@ -1409,7 +1362,13 @@ function SalesNotes({ data }) {
         {/* Breakfast that came with the rooms (owner, 2026-11-26) - in Total
             Sold, as on the paper report; its money is taken with the room. */}
         {Number(data.breakfast_total) > 0 && (
-          <li>of which Breakfast (with rooms): <strong className="text-[color:var(--black)]">{money(data.breakfast_total)}</strong></li>
+          <li>of which Breakfast served (last night's guests): <strong className="text-[color:var(--black)]">{money(data.breakfast_total)}</strong></li>
+        )}
+        {Number(data.breakfast_deposit_total) > 0 && (
+          <li>
+            Breakfast Deposits (today's arrivals): <strong className="text-[color:var(--black)]">{money(data.breakfast_deposit_total)}</strong>
+            <span className="text-[color:var(--text-color)]/60"> — served tomorrow, so tomorrow's sale</span>
+          </li>
         )}
         <li>Total Service Charge: <strong className="text-[color:var(--black)]">{money(totalServiceCharge)}</strong></li>
         {/* Advance credit is spendable at reception OR the restaurant, so it
@@ -1426,7 +1385,7 @@ function SalesNotes({ data }) {
 
 function FoodSalesReportTab({ shift }) {
   const showAudit = canViewAuditTrail();
-  const [date, setDate] = useState(businessDateISO);
+  const [date, setDate] = useDraft("reports:food:date", businessDateISO);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -1463,19 +1422,9 @@ function FoodSalesReportTab({ shift }) {
 
   return (
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
-      <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
-        <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
-          <DateInput
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          />
-        </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
-      </div>
+      <FilterBar actions={<GenerateButton onClick={load} loading={loading} />}>
+        <DateField id="report-date" tip="reports.date" value={date} onChange={setDate} />
+      </FilterBar>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
       {exportError && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{exportError}</div>}
@@ -1494,6 +1443,7 @@ function FoodSalesReportTab({ shift }) {
 
           <SalesTotals data={data} />
 
+          {/* One row per bill (owner, 2026-11-27): the backend's orders. */}
           <ReportSection report title="Food Orders" tip="reports.sales.food">
             {data.rows.length === 0 ? (
               <EmptyRow />
@@ -1501,7 +1451,7 @@ function FoodSalesReportTab({ shift }) {
               <table className="w-full text-xl">
                 <TableHead cells={["Customer", "Qty", "Bill No", "Description", "Amount", "Service Charge", "Status", "Payment Method", "Remarks", ...(showAudit ? ["Action"] : [])]} tips={SALES_COLUMN_TIPS} />
                 <tbody>
-                  {data.rows.map((r, i) => (
+                  {salesOrders(data).map((r, i) => (
                     <tr key={i} className={table.row}>
                       <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>{r.customer}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.quantity}</td>
@@ -1537,7 +1487,7 @@ function FoodSalesReportTab({ shift }) {
 
 function DrinkSalesReportTab({ shift }) {
   const showAudit = canViewAuditTrail();
-  const [date, setDate] = useState(businessDateISO);
+  const [date, setDate] = useDraft("reports:drink:date", businessDateISO);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -1574,19 +1524,9 @@ function DrinkSalesReportTab({ shift }) {
 
   return (
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
-      <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
-        <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
-          <DateInput
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          />
-        </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
-      </div>
+      <FilterBar actions={<GenerateButton onClick={load} loading={loading} />}>
+        <DateField id="report-date" tip="reports.date" value={date} onChange={setDate} />
+      </FilterBar>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
       {exportError && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{exportError}</div>}
@@ -1605,6 +1545,7 @@ function DrinkSalesReportTab({ shift }) {
 
           <SalesTotals data={data} />
 
+          {/* One row per bill (owner, 2026-11-27): the backend's orders. */}
           <ReportSection report title="Drink Orders" tip="reports.sales.drink">
             {data.rows.length === 0 ? (
               <EmptyRow />
@@ -1612,7 +1553,7 @@ function DrinkSalesReportTab({ shift }) {
               <table className="w-full text-xl">
                 <TableHead cells={["Customer", "Qty", "Bill No", "Description", "Amount", "Service Charge", "Status", "Payment Method", "Remarks", ...(showAudit ? ["Action"] : [])]} tips={SALES_COLUMN_TIPS} />
                 <tbody>
-                  {data.rows.map((r, i) => (
+                  {salesOrders(data).map((r, i) => (
                     <tr key={i} className={table.row}>
                       <td className={`px-6 py-4 font-medium text-[color:var(--black)] ${table.stickyTd}`}>{r.customer}</td>
                       <td className="px-6 py-4 text-[color:var(--text-color)]/84">{r.quantity}</td>
@@ -1651,7 +1592,7 @@ function BarStockReportTab({ shift }) {
   // What a drink cost the hotel isn't the F&B floor's: a waitron's report
   // comes without it (Accounting, Step 12).
   const showCost = !isWaitron();
-  const [date, setDate] = useState(businessDateISO);
+  const [date, setDate] = useDraft("reports:bar-stock:date", businessDateISO);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -1691,19 +1632,9 @@ function BarStockReportTab({ shift }) {
 
   return (
     <div className="w-full flex flex-col items-start gap-[2.5rem]">
-      <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
-        <div className="flex flex-col gap-2">
-          <label className="text-xl font-semibold text-[color:var(--text-color)]/76">Date<Tip id="reports.date" /></label>
-          <DateInput
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-          />
-        </div>
-        <Button onClick={load} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-          <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-        </Button>
-      </div>
+      <FilterBar actions={<GenerateButton onClick={load} loading={loading} />}>
+        <DateField id="report-date" tip="reports.date" value={date} onChange={setDate} />
+      </FilterBar>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{error}</div>}
       {exportError && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xl w-full">{exportError}</div>}
@@ -1825,32 +1756,9 @@ function pmsMessage(d) {
 
 function RangePicker({ from, to, setFrom, setTo, onGenerate, loading }) {
   return (
-    <div className="bg-(--card) rounded-xl border border-(--accent-2) p-6 flex flex-wrap gap-4 items-end w-full">
-      <div className="flex flex-col gap-2">
-        <label className="text-xl font-semibold text-[color:var(--text-color)]/76">From<Tip id="reports.from" /></label>
-        <DateInput
-          value={from}
-          onChange={(e) => {
-            const newFrom = e.target.value;
-            setFrom(newFrom);
-            if (newFrom && to && newFrom > to) setTo(newFrom);
-          }}
-          className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-xl font-semibold text-[color:var(--text-color)]/76">To<Tip id="reports.to" /></label>
-        <DateInput
-          value={to}
-          min={from || undefined}
-          onChange={(e) => setTo(e.target.value)}
-          className="border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]"
-        />
-      </div>
-      <Button onClick={onGenerate} disabled={loading} variant="emphasis" className={`text-xl! pb-5 pt-4.5 rounded-xl ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
-        <span className="inline-flex items-center gap-2">{loading && <LoadingSpinner size="sm" light />}Generate Report</span>
-      </Button>
-    </div>
+    <FilterBar actions={<GenerateButton onClick={onGenerate} loading={loading} />}>
+      <DateRangeFields idPrefix="report" from={from} to={to} onFrom={setFrom} onTo={setTo} fromTip="reports.from" toTip="reports.to" />
+    </FilterBar>
   );
 }
 

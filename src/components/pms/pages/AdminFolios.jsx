@@ -12,7 +12,7 @@ import PageTabs from "@/components/pms/PageTabs";
 import StatusBadge from "@/components/pms/StatusBadge";
 import { ACCOUNTS, ACCOUNT_LABELS, CHARGE_TYPE_LABELS, chargedToRoom, settlementByAccount } from "@/components/pms/folioCharges";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { btn, field, page as pageUi, table } from "@/components/pms/ui";
+import { btn, field, filter, page as pageUi, sectionTitle, table } from "@/components/pms/ui";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
 import RefundCreditModal from "@/components/pms/RefundCreditModal";
@@ -48,6 +48,7 @@ import GuestName from "@/components/pms/GuestName";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import { Tip } from "@/components/pms/Tip";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 
 // No laundry: it is posted from Laundry Sales, a garment at a time and
 // priced from the laundry list, and the server refuses a laundry charge
@@ -766,48 +767,42 @@ export default function AdminFoliosPage() {
             />
           )}
 
-          <div className={`${pageUi.toolbar} text-xl items-center!`}>
+          <FilterBar>
             {!isWaitstaffSession && subTab === "all" && !searchTerm && (
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className={`${field.select} w-auto text-xl!`}
-              >
-                <option value="all">All Statuses</option>
-                <option value="open">Open</option>
-                <option value="pending">Pending</option>
-                <option value="closed">Closed</option>
-              </select>
-            )}
-            {!isWaitstaffSession && subTab === "all" && !searchTerm && (
-              <Tip id="folios.statusFilter" />
+              <FilterField label="Status" tip="folios.statusFilter" htmlFor="folios-status">
+                <select id="folios-status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filter.select}>
+                  <option value="all">All Statuses</option>
+                  <option value="open">Open</option>
+                  <option value="pending">Pending</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </FilterField>
             )}
 
             <form
               onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); }}
               // Starts at the left with the other filters, and takes the rest of
               // the row (all of it on a phone) - owner, 2026-11-06.
-              className="flex gap-2 items-center flex-1 min-w-[min(100%,32rem)]"
+              className="flex flex-wrap gap-2 items-end flex-1 min-w-[min(100%,32rem)]"
             >
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by folio #, guest name, payment reference or receipt number (e.g. FOL-D7931B, PAY-3F9A2B)"
-                className={`${field.input} flex-1 min-w-0 text-xl!`}
-              />
-              <button type="submit" className={btn.secondary}>Search</button>
+              <FilterField label="Search" htmlFor="folios-search" className="flex-1 min-w-[min(100%,24rem)]">
+                <input
+                  id="folios-search"
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Folio #, guest name, payment reference or receipt number (e.g. FOL-D7931B, PAY-3F9A2B)"
+                  className={filter.input}
+                />
+              </FilterField>
+              <button type="submit" className={filter.secondary}>Search</button>
               {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => { setSearchInput(""); setSearchTerm(""); }}
-                  className={btn.rowSecondary}
-                >
+                <button type="button" onClick={() => { setSearchInput(""); setSearchTerm(""); }} className={filter.secondary}>
                   Clear
                 </button>
               )}
             </form>
-          </div>
+          </FilterBar>
         </PageHeader>
         {readOnly && (
           <p className="text-xl text-(--text-color)/68">
@@ -1326,7 +1321,7 @@ export default function AdminFoliosPage() {
 
               {/* Charges */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges<Tip id="folios.charges" /></h3>
+                <h3 className={sectionTitle}>Charges<Tip id="folios.charges" /></h3>
                 {trailNote && <p className="text-lg text-orange-700">{trailNote}</p>}
                 {/* Surfaced so a missing/short room charge doesn't read as a
                     bug — postStayChargesForDay silently excludes a
@@ -1478,7 +1473,7 @@ export default function AdminFoliosPage() {
 
               {/* Payments */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Payments<Tip id="folios.payments" /></h3>
+                <h3 className={sectionTitle}>Payments<Tip id="folios.payments" /></h3>
                 {(!selectedFolio.payments || selectedFolio.payments.length === 0) ? (
                   <p className="text-xl text-[color:var(--text-color)]/76">No payments recorded yet.</p>
                 ) : (

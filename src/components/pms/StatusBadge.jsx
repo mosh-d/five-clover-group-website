@@ -31,6 +31,8 @@ const STYLES = {
   owing: "bg-red-100 text-red-700",
   "part paid": "bg-amber-100 text-amber-800",
   pb: "bg-blue-100 text-blue-700",
+  // Breakfast for tonight's guests, served tomorrow (Food Sales).
+  deposit: "bg-amber-100 text-amber-800",
   complementary: "bg-purple-100 text-purple-700",
   // F&B put on the room bill (folio accounts, backend phase-103).
   "charged to room": "bg-sky-100 text-sky-800",

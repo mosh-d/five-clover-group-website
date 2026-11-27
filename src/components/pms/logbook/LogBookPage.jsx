@@ -14,6 +14,7 @@ import { btn, card, field, page } from "@/components/pms/ui";
 import { formatDate, formatTime } from "@/lib/pms/format";
 import { getStoredStaffAccountId } from "@/lib/pms/auth";
 import { fetchLogBook, markLogBookNoteRead, writeLogBookNote } from "@/lib/pms/api/log-book-api";
+import { discardDraft, useDraft } from "@/lib/pms/drafts";
 
 // The front desk's log book (owner, 2026-11-18; backend phase-99): notes a
 // receptionist leaves for whoever has the next shift - a wake-up call, a
@@ -26,7 +27,8 @@ const MAX = 2000;
 const ROLE_NAMES = { receptionist: "Receptionist", manager: "Manager", developer: "Developer" };
 
 function WriteDialog({ onClose, onDone }) {
-  const [note, setNote] = useState("");
+  // Kept as a draft until it is saved (lib/pms/drafts.js, owner 2026-11-27).
+  const [note, setNote] = useDraft("log-book-note", "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const text = note.trim();
@@ -35,6 +37,7 @@ function WriteDialog({ onClose, onDone }) {
       setBusy(true);
       setError(null);
       await writeLogBookNote(text);
+      discardDraft("log-book-note");
       onDone("Your note is in the log book.");
     } catch (err) {
       setError(err.message || "That didn't go through.");

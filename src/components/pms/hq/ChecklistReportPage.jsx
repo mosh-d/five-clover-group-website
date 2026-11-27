@@ -5,9 +5,10 @@ import { IoCheckboxOutline } from "react-icons/io5";
 import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import { Tip } from "@/components/pms/Tip";
 import { StatTile, StatRow } from "@/components/pms/hq/metrics/parts";
-import { btn, field, page, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import { formatDate } from "@/lib/pms/format";
 import { http } from "@/lib/pms/http";
 import { ReportScope, ExportActions, TableCard } from "@/components/pms/ReportExport";
@@ -86,26 +87,17 @@ export default function ChecklistReportPage() {
       ) : (
         data && (
           <ReportScope from={data.from} to={data.to}>
-            <div className={page.toolbar}>
-              <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="hc-from" className={field.label}>
-                    From<Tip id="hqChecklists.from" />
-                  </label>
-                  <DateInput id="hc-from" value={from} max={today} onChange={(e) => ISO.test(e.target.value) && (setFrom(e.target.value), e.target.value > to && setTo(e.target.value))} className={field.input} />
-                </div>
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="hc-to" className={field.label}>
-                    To<Tip id="hqChecklists.to" />
-                  </label>
-                  <DateInput id="hc-to" value={to} min={from} max={today} onChange={(e) => ISO.test(e.target.value) && setTo(e.target.value)} className={field.input} />
-                </div>
+            <FilterBar>
+              <div className={filter.pair}>
+                <FilterField label="From" tip="hqChecklists.from" htmlFor="hc-from" className={filter.date}>
+                  <DateInput id="hc-from" value={from} max={today} onChange={(e) => ISO.test(e.target.value) && (setFrom(e.target.value), e.target.value > to && setTo(e.target.value))} className={filter.input} />
+                </FilterField>
+                <FilterField label="To" tip="hqChecklists.to" htmlFor="hc-to" className={filter.date}>
+                  <DateInput id="hc-to" value={to} min={from} max={today} onChange={(e) => ISO.test(e.target.value) && setTo(e.target.value)} className={filter.input} />
+                </FilterField>
               </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="hc-branch" className={field.label}>
-                  Branch<Tip id="hqChecklists.branch" />
-                </label>
-                <select id="hc-branch" value={branch} onChange={(e) => setBranch(e.target.value)} className={field.select}>
+              <FilterField label="Branch" tip="hqChecklists.branch" htmlFor="hc-branch">
+                <select id="hc-branch" value={branch} onChange={(e) => setBranch(e.target.value)} className={filter.select}>
                   <option value="">Every branch</option>
                   {data.branches.map((b) => (
                     <option key={b.id} value={String(b.id)}>
@@ -113,19 +105,16 @@ export default function ChecklistReportPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="hc-kind" className={field.label}>
-                  Checklist<Tip id="hqChecklists.kind" />
-                </label>
-                <select id="hc-kind" value={kind} onChange={(e) => setKind(e.target.value)} className={field.select}>
+              </FilterField>
+              <FilterField label="Checklist" tip="hqChecklists.kind" htmlFor="hc-kind">
+                <select id="hc-kind" value={kind} onChange={(e) => setKind(e.target.value)} className={filter.select}>
                   <option value="">Both</option>
                   <option value="front_desk">Front Desk (GSA)</option>
                   <option value="porter">Porter</option>
                 </select>
-              </div>
-              <ExportActions full className="ml-auto" />
-            </div>
+              </FilterField>
+              <ExportActions full compact className="ml-auto" />
+            </FilterBar>
 
             <StatRow>
               <StatTile label="Checklists" tip="hqChecklists.total" value={rows.length.toLocaleString()} sub={data.from === data.to ? dayLabel(data.from) : `${dayLabel(data.from)} to ${dayLabel(data.to)}`} />

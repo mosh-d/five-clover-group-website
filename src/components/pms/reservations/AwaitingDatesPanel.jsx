@@ -18,6 +18,7 @@ import { formatPhone } from "@/lib/pms/phone-format";
 import { fetchRoomDetails } from "@/lib/pms/api/room-data";
 import { fetchDeposits, recordDeposit, refundDeposit } from "@/lib/pms/api/folios-api";
 import { cancelAwaitingDates, createAwaitingDates, fetchAwaitingDates, markAwaitingDated } from "@/lib/pms/api/awaiting-dates-api";
+import { discardDraft, useDraft } from "@/lib/pms/drafts";
 
 // Bookings awaiting dates (owner, 2026-11-18; backend phase-100,
 // docs/NO-DATE-RESERVATIONS-PLAN.md): a guest pays before they know when
@@ -34,8 +35,9 @@ const splitsTotal = (splits) => splits.reduce((s, x) => s + (Number(x.amount) ||
 const splitsOk = (splits) => splits.length > 0 && splits.every((x) => Number(x.amount) > 0 && x.payment_method);
 
 function NewDialog({ roomTypes, onClose, onDone }) {
-  const [form, setForm] = useState({ first: "", last: "", phone: "", email: "", roomTypeId: "", rooms: 1, note: "", receipt: "" });
-  const [splits, setSplits] = useState(EMPTY_SPLITS);
+  // Kept as a draft until it is saved (lib/pms/drafts.js, owner 2026-11-27).
+  const [form, setForm] = useDraft("no-date-booking", { first: "", last: "", phone: "", email: "", roomTypeId: "", rooms: 1, note: "", receipt: "" });
+  const [splits, setSplits] = useDraft("no-date-booking:money", EMPTY_SPLITS);
   const [step, setStep] = useState("form");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -61,9 +63,13 @@ function NewDialog({ roomTypes, onClose, onDone }) {
           receipt_number: form.receipt.trim() || undefined,
         });
       } catch (err) {
+        discardDraft("no-date-booking");
+        discardDraft("no-date-booking:money");
         onDone(`${name}'s booking (ref ${booking.booking_reference}) is kept, but the payment wasn't saved: ${err.message || "try Add Payment on it"}.`);
         return;
       }
+      discardDraft("no-date-booking");
+      discardDraft("no-date-booking:money");
       onDone(`${name}'s booking (ref ${booking.booking_reference}) is kept with ${money(splitsTotal(splits))} paid. Set its dates when the guest is sure.`);
     } catch (err) {
       setError(err.message || "That didn't go through.");

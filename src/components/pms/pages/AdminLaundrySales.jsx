@@ -13,7 +13,7 @@ import PaymentSplitRows from "@/components/pms/PaymentSplitRows";
 import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
 import PrintReceiptModal from "@/components/pms/PrintReceiptModal";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
-import { btn, field, table } from "@/components/pms/ui";
+import { btn, field, sectionTitle, table } from "@/components/pms/ui";
 import { formatDateTime, money } from "@/lib/pms/format";
 import { settlementByCharge } from "@/components/pms/folioCharges";
 import NonGuestCreditsPanel from "@/components/pms/NonGuestCreditsPanel";
@@ -202,7 +202,7 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
 
       {/* ── New sale ── */}
       <div className="w-full bg-(--card) rounded-xl border border-(--accent-2) p-8 flex flex-col gap-6">
-        <h2 className="text-3xl font-bold text-[color:var(--black)]">New Laundry Sale<Tip id="laundrySales.new" /></h2>
+        <h2 className={sectionTitle}>New Laundry Sale<Tip id="laundrySales.new" /></h2>
 
         <div className="grid grid-cols-3 gap-4 max-sm:grid-cols-1">
           <div className="flex flex-col gap-2">
@@ -273,7 +273,7 @@ export default function AdminLaundrySalesPage({ asSection = false, hideTitle = f
 
       {/* ── Existing folios ── */}
       <div className="w-full flex flex-col gap-4">
-        <h2 className="text-3xl font-bold text-[color:var(--black)]">Laundry Folios<Tip id="laundrySales.folios" /></h2>
+        <h2 className={sectionTitle}>Laundry Folios<Tip id="laundrySales.folios" /></h2>
         {loading ? (
           <LoadingSpinner size="lg" />
         ) : (
@@ -402,7 +402,7 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
             </div>
 
             <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-              <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges<Tip id="laundrySales.charges" /></h3>
+              <h3 className={sectionTitle}>Charges<Tip id="laundrySales.charges" /></h3>
               {(!detail.items || detail.items.length === 0) ? (
                 <p className="text-xl text-[color:var(--text-color)]/76">No charges yet.</p>
               ) : (
@@ -463,7 +463,7 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
             </section>
 
             <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-              <h3 className="text-2xl font-bold text-[color:var(--black)]">Customer<Tip id="laundrySales.customer" /></h3>
+              <h3 className={sectionTitle}>Customer<Tip id="laundrySales.customer" /></h3>
               <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                 <div className="flex flex-col gap-2">
                   <label className={field.label}>Name<Tip id="laundrySales.customer.name" /></label>
@@ -510,7 +510,7 @@ function LaundryFolioModal({ folio, detail, loading, items, credits = [], onAppl
 
             {detail.status !== "closed" && (
               <section className="flex flex-col gap-4 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Record Payment<Tip id="laundrySales.recordPayment" /></h3>
+                <h3 className={sectionTitle}>Record Payment<Tip id="laundrySales.recordPayment" /></h3>
                 <PaymentSplitRows splits={payment.splits} setSplits={(splits) => setPayment({ ...payment, splits })} />
                 <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                   <div className="flex flex-col gap-2">

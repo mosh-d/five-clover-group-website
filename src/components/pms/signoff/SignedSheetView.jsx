@@ -1,7 +1,7 @@
 "use client";
 
 import { IoCreateOutline, IoTrashOutline } from "react-icons/io5";
-import { btn, table } from "@/components/pms/ui";
+import { btn, page, table } from "@/components/pms/ui";
 import { byLine } from "@/lib/pms/signedSheet";
 
 // A report under sign-off, drawn with the accountant's corrections on it
@@ -73,7 +73,7 @@ export default function SignedSheetView({ view, actions }) {
       {view.sections.map((s, si) => (
         <section key={si} className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-2xl font-bold text-(--black)">{s.heading || "Section"}</h3>
+            <h3 className={page.sectionTitle}>{s.heading || "Section"}</h3>
             {actions && (
               <div className="flex flex-wrap gap-2">
                 {s.columns.length > 0 && (

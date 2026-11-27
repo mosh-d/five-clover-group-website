@@ -11,7 +11,7 @@ import {
 } from 'react-icons/io5';
 import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { btn, page } from "@/components/pms/ui";
+import { btn, filter, page } from "@/components/pms/ui";
 import { fetchRoomChart } from "@/lib/pms/api/reservations-pms-api";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
@@ -19,6 +19,7 @@ import CleaningTag from "@/components/pms/CleaningTag";
 import { withGuestTags } from "@/lib/pms/guest-tags";
 import { Tip } from "@/components/pms/Tip";
 import { businessDateISO } from "@/lib/pms/dates";
+import FilterBar, { DateField } from "@/components/pms/FilterBar";
 
 const DAYS_VISIBLE = 14;
 const DAY_MS = 86400000;
@@ -254,41 +255,26 @@ export default function AdminRoomChartPage() {
           </>
         }
       >
-        <div className={page.toolbar}>
-          <div className='flex items-center'>
-            <input
-              type='date'
-              value={isoDate(windowStart)}
-              onChange={(e) =>
-                e.target.value &&
-                setWindowStart(startOfDay(new Date(`${e.target.value}T00:00:00`)))
-              }
-              className='border border-[color:var(--text-color)]/25 rounded-lg px-4 py-3 text-xl focus:outline-none focus:ring-2 focus:ring-[color:var(--emphasis)]'
-              title='Jump to a date — it becomes the leftmost column'
-            />
-            <Tip id="roomChart.date" />
-          </div>
-          <div className='flex items-center gap-3'>
-            <button
-              onClick={() => setWindowStart((d) => addDays(d, -DAYS_VISIBLE))}
-              className={`${btn.secondary} flex items-center gap-1`}
-            >
+        <FilterBar>
+          <DateField
+            id="room-chart-date"
+            label="Jump To"
+            tip="roomChart.date"
+            value={isoDate(windowStart)}
+            onChange={(v) => v && setWindowStart(startOfDay(new Date(`${v}T00:00:00`)))}
+          />
+          <div className='flex flex-wrap items-end gap-3'>
+            <button onClick={() => setWindowStart((d) => addDays(d, -DAYS_VISIBLE))} className={filter.secondary}>
               <IoChevronBack size={18} /> Previous
             </button>
-            <button
-              onClick={() => setWindowStart(businessToday())}
-              className={btn.secondary}
-            >
+            <button onClick={() => setWindowStart(businessToday())} className={filter.secondary}>
               Today
             </button>
-            <button
-              onClick={() => setWindowStart((d) => addDays(d, DAYS_VISIBLE))}
-              className={`${btn.secondary} flex items-center gap-1`}
-            >
+            <button onClick={() => setWindowStart((d) => addDays(d, DAYS_VISIBLE))} className={filter.secondary}>
               Next <IoChevronForward size={18} />
             </button>
           </div>
-        </div>
+        </FilterBar>
       </PageHeader>
 
       <div className='flex items-center gap-6 text-xl'>

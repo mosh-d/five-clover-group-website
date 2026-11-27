@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { IoArrowUp, IoArrowDown, IoRemove, IoAlertCircle, IoCloseCircle, IoTrendingDown } from "react-icons/io5";
-import { card, field, table } from "@/components/pms/ui";
+import { card, filter, page, table } from "@/components/pms/ui";
+import { FilterField } from "@/components/pms/FilterBar";
 import InfoTip, { FloatingTip, tipFor } from "@/components/pms/InfoTip";
 import { Tip } from "@/components/pms/Tip";
 import { tipText } from "@/lib/pms/tips";
@@ -23,7 +24,7 @@ const muted = "text-(--text-color)/68";
 export function SectionTitle({ children, sub, tip }) {
   return (
     <div className="flex flex-col gap-1">
-      <h3 className="text-2xl font-semibold text-(--text-color)">
+      <h3 className={page.sectionTitle}>
         {children}
         {tip && <Tip id={tip} />}
       </h3>
@@ -303,18 +304,15 @@ export function HowCounted({ children }) {
 }
 
 // A choice for the lists that take one (a branch; food or drinks).
+// A dropdown in the Metrics page's FilterBar.
 export function Choice({ label, value, options, onChange, id, tip }) {
   return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={id} className={field.label}>
-        {label}
-        {tip && <Tip id={tip} />}
-      </label>
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className={field.select}>
+    <FilterField label={label} tip={tip} htmlFor={id}>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className={filter.select}>
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-    </div>
+    </FilterField>
   );
 }

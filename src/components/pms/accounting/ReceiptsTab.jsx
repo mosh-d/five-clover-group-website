@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
@@ -10,7 +11,7 @@ import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportEx
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
-import { btn, field, page, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import { formatDateTime, money } from "@/lib/pms/format";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { fetchReceiptsAudit } from "@/lib/pms/api/accounting-api";
@@ -137,17 +138,17 @@ export default function ReceiptsTab() {
 
       {/* The scope starts at the date row, so Print Full Report can sit beside the downloads. */}
       <ReportScope from={view?.from ?? from} to={view?.to ?? to}>
-      <div className="flex flex-wrap items-end gap-6">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="receipts-from" className={field.label}>From<Tip id="accounting.receipts.from" /></label>
-          <DateInput id="receipts-from" value={from} max={to || today} onChange={(e) => setFrom(e.target.value)} />
+      <FilterBar>
+        <div className={filter.pair}>
+        <FilterField label="From" tip="accounting.receipts.from" htmlFor="receipts-from" className={filter.date}>
+          <DateInput id="receipts-from" value={from} max={to || today} onChange={(e) => setFrom(e.target.value)} className={filter.input} />
+        </FilterField>
+        <FilterField label="To" tip="accounting.receipts.to" htmlFor="receipts-to" className={filter.date}>
+          <DateInput id="receipts-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} className={filter.input} />
+        </FilterField>
         </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="receipts-to" className={field.label}>To<Tip id="accounting.receipts.to" /></label>
-          <DateInput id="receipts-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
-        </div>
-        {view && view.transactions > 0 && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(view) }]} />}
-      </div>
+        {view && view.transactions > 0 && <ExportActions full compact className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(view) }]} />}
+      </FilterBar>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
 
@@ -174,7 +175,7 @@ export default function ReceiptsTab() {
 
             {/* ---- Used more than once */}
             <section className="w-full flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-(--black)">Used More Than Once<Tip id="accounting.receipts.duplicates" /></h3>
+              <h3 className={page.sectionTitle}>Used More Than Once<Tip id="accounting.receipts.duplicates" /></h3>
               {view.duplicates.length === 0 ? (
                 <p className={`text-xl ${page.muted}`}>No receipt number was used on more than one transaction.</p>
               ) : (
@@ -187,7 +188,7 @@ export default function ReceiptsTab() {
 
             {/* ---- Missing from a run */}
             <section className="w-full flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-(--black)">Missing From a Receipt Book<Tip id="accounting.receipts.gaps" /></h3>
+              <h3 className={page.sectionTitle}>Missing From a Receipt Book<Tip id="accounting.receipts.gaps" /></h3>
               {view.books.length === 0 ? (
                 <p className={`text-xl ${page.muted}`}>
                   {c.no_receipt === view.transactions
@@ -219,7 +220,7 @@ export default function ReceiptsTab() {
             <section className="w-full flex flex-col gap-4">
               {view.missing_receipt.lines.length === 0 ? (
                 <>
-                  <h3 className="text-2xl font-bold text-(--black)">No Receipt Number<Tip id="accounting.receipts.blank" /></h3>
+                  <h3 className={page.sectionTitle}>No Receipt Number<Tip id="accounting.receipts.blank" /></h3>
                   <p className={`text-xl ${page.muted}`}>Every payment in these days has a receipt number.</p>
                 </>
               ) : (
@@ -228,7 +229,7 @@ export default function ReceiptsTab() {
                     report="No Receipt Number"
                     heading={
                       <div className="flex flex-col gap-4">
-                        <h3 className="text-2xl font-bold text-(--black)">No Receipt Number<Tip id="accounting.receipts.blank" /></h3>
+                        <h3 className={page.sectionTitle}>No Receipt Number<Tip id="accounting.receipts.blank" /></h3>
                         <div className="flex flex-wrap gap-3">
                           {view.missing_receipt.by_staff.map((s) => (
                             <span key={s.taken_by} className="px-4 py-2 rounded-lg text-xl bg-black/5">

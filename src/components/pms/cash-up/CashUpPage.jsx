@@ -13,6 +13,7 @@ import { useLiveRefresh } from "@/components/pms/live/PmsLive";
 import { btn, card, field, page, table } from "@/components/pms/ui";
 import { formatDateTime, formatTime, money } from "@/lib/pms/format";
 import { cancelPaidOut, declareCashUp, fetchMyCashUp, recordPaidOut } from "@/lib/pms/api/cash-up-api";
+import { discardDraft, useDraft } from "@/lib/pms/drafts";
 
 // Cash-Up (Accounting, Step 2; owner, 2026-10-08) - a receptionist's or
 // waitron's own page. They count the cash in their drawer and submit it, for
@@ -145,7 +146,8 @@ function DeclarationCard({ data, onDone }) {
 }
 
 function PaidOutDialog({ categories, onClose, onDone }) {
-  const [form, setForm] = useState({ amount: "", category: "", description: "", voucher_number: "", note: "" });
+  // Kept as a draft until it is saved (lib/pms/drafts.js, owner 2026-11-27).
+  const [form, setForm] = useDraft("paid-out", { amount: "", category: "", description: "", voucher_number: "", note: "" });
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -167,6 +169,7 @@ function PaidOutDialog({ categories, onClose, onDone }) {
         ...(form.voucher_number.trim() ? { voucher_number: form.voucher_number.trim() } : {}),
         ...(form.note.trim() ? { note: form.note.trim() } : {}),
       });
+      discardDraft("paid-out");
       onDone(`Recorded a paid-out of ${money(amount)} (${label}).`);
     } catch (err) {
       setError(err.message || "Could not record the paid-out.");

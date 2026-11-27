@@ -89,7 +89,7 @@ function suggestion(group) {
 function FocusTable({ title, head, rows, tip, headTips = [], report }) {
   return (
     <div className="w-full flex flex-col gap-2">
-      <TableCard report={report} heading={<h3 className="text-2xl font-semibold text-(--text-color)">{title}{tip && <Tip id={tip} />}</h3>}>
+      <TableCard report={report} heading={<h3 className={page.sectionTitle}>{title}{tip && <Tip id={tip} />}</h3>}>
         <table className={table.el}>
           <thead>
             <tr className={table.headRow}>
@@ -235,7 +235,7 @@ export default function DecisionSupportPage() {
 
         {rooms.length > 0 && (
           <div className="w-full flex flex-col gap-2">
-            <TableCard report="Every room out of order, ranked" heading={<h3 className="text-2xl font-semibold text-(--text-color)">Every room out of order, ranked<Tip id="decisionSupport.ranked" /></h3>}>
+            <TableCard report="Every room out of order, ranked" heading={<h3 className={page.sectionTitle}>Every room out of order, ranked<Tip id="decisionSupport.ranked" /></h3>}>
               <table className={table.el}>
                 <thead>
                   <tr className={table.headRow}>

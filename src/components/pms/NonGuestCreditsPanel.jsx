@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { canRefundCredit, creditOwnerLabel, creditServiceLabel } from "@/components/pms/nonGuestCredits";
 import { formatDateTime, formatPaymentMethod, money } from "@/lib/pms/format";
-import { btn, table } from "@/components/pms/ui";
+import { btn, page, table } from "@/components/pms/ui";
 import RefundCreditModal from "@/components/pms/RefundCreditModal";
 import { getStoredStaffRole } from "@/lib/pms/auth";
 import Pagination from "@/components/pms/Pagination";
@@ -58,7 +58,7 @@ export default function NonGuestCreditsPanel({ credits = [], loading = false, on
   return (
     <div className="w-full flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-4 flex-wrap">
-        <h3 className="text-3xl font-bold text-[color:var(--black)]">Unclaimed Credit<Tip id="credits.unclaimed" /></h3>
+        <h3 className={page.sectionTitle}>Unclaimed Credit<Tip id="credits.unclaimed" /></h3>
         {pending.length > 0 && (
           <span className="text-xl font-bold text-blue-700">{money(total)} on file</span>
         )}

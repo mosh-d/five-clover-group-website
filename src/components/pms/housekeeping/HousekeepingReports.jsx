@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import { Tip } from "@/components/pms/Tip";
 import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
-import { btn, card, field, page, table } from "@/components/pms/ui";
+import { btn, card, field, filter, page, table } from "@/components/pms/ui";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { formatDateTime } from "@/lib/pms/format";
 import { fetchHousekeepingReport } from "@/lib/pms/api/housekeeping-api";
@@ -139,21 +140,17 @@ export default function HousekeepingReports() {
     // The branded report sheet (ReportExport.jsx): the dates the report covers.
     <ReportScope from={report?.from ?? from} to={report?.to ?? to}>
     <div className="w-full flex flex-col gap-8">
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="hk-report-from" className={field.label}>
-            From<Tip id="housekeeping.reports.range" />
-          </label>
-          <DateInput id="hk-report-from" value={from} max={to} onChange={(e) => setFrom(e.target.value)} />
+      <FilterBar>
+        <div className={filter.pair}>
+        <FilterField label="From" tip="housekeeping.reports.range" htmlFor="hk-report-from" className={filter.date}>
+          <DateInput id="hk-report-from" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className={filter.input} />
+        </FilterField>
+        <FilterField label="To" htmlFor="hk-report-to" className={filter.date}>
+          <DateInput id="hk-report-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} className={filter.input} />
+        </FilterField>
         </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="hk-report-to" className={field.label}>
-            To
-          </label>
-          <DateInput id="hk-report-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
-        </div>
-        {report && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(report) }]} />}
-      </div>
+        {report && <ExportActions full compact className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(report) }]} />}
+      </FilterBar>
 
       {error && <p className={field.error}>{error}</p>}
       {!report && !error ? (

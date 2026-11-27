@@ -5,11 +5,12 @@ import { IoBookOutline } from "react-icons/io5";
 import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
 import { ReportScope, TableCard } from "@/components/pms/ReportExport";
-import { field, page, table } from "@/components/pms/ui";
+import { field, filter, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
 import { http } from "@/lib/pms/http";
 
@@ -64,26 +65,17 @@ export default function ReceptionistLogsPage() {
       ) : (
         data && (
           <ReportScope name="Receptionist Logs" from={data.from} to={data.to}>
-            <div className={page.toolbar}>
-              <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="hl-from" className={field.label}>
-                    From<Tip id="hqLogs.from" />
-                  </label>
-                  <DateInput id="hl-from" value={from} max={data.today} onChange={(e) => ISO.test(e.target.value) && (setFrom(e.target.value), e.target.value > to && setTo(e.target.value))} className={field.input} />
-                </div>
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="hl-to" className={field.label}>
-                    To
-                  </label>
-                  <DateInput id="hl-to" value={to} min={from} max={data.today} onChange={(e) => ISO.test(e.target.value) && setTo(e.target.value)} className={field.input} />
-                </div>
+            <FilterBar>
+              <div className={filter.pair}>
+                <FilterField label="From" tip="hqLogs.from" htmlFor="hl-from" className={filter.date}>
+                  <DateInput id="hl-from" value={from} max={data.today} onChange={(e) => ISO.test(e.target.value) && (setFrom(e.target.value), e.target.value > to && setTo(e.target.value))} className={filter.input} />
+                </FilterField>
+                <FilterField label="To" htmlFor="hl-to" className={filter.date}>
+                  <DateInput id="hl-to" value={to} min={from} max={data.today} onChange={(e) => ISO.test(e.target.value) && setTo(e.target.value)} className={filter.input} />
+                </FilterField>
               </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="hl-branch" className={field.label}>
-                  Branch<Tip id="hqLogs.branch" />
-                </label>
-                <select id="hl-branch" value={branch} onChange={(e) => setBranch(e.target.value)} className={field.select}>
+              <FilterField label="Branch" tip="hqLogs.branch" htmlFor="hl-branch">
+                <select id="hl-branch" value={branch} onChange={(e) => setBranch(e.target.value)} className={filter.select}>
                   <option value="">Every branch</option>
                   {data.branches.map((b) => (
                     <option key={b.id} value={String(b.id)}>
@@ -91,8 +83,8 @@ export default function ReceptionistLogsPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-            </div>
+              </FilterField>
+            </FilterBar>
 
             <TableCard
               report="Receptionist Logs"

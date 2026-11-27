@@ -121,11 +121,11 @@ export default function StatementDialog({ folioId, onClose }) {
             </p>
           </div>
           <section className="flex flex-col">
-            <h3 className="text-2xl font-bold text-(--black) mb-2">Charges</h3>
+            <h3 className={`${page.sectionTitle} mb-2`}>Charges</h3>
             {s.charges.length ? s.charges.map(line) : <p className={`text-xl ${page.muted}`}>None.</p>}
           </section>
           <section className="flex flex-col">
-            <h3 className="text-2xl font-bold text-(--black) mb-2">Payments</h3>
+            <h3 className={`${page.sectionTitle} mb-2`}>Payments</h3>
             {s.payments.length || s.credit_line
               ? [...s.payments, ...(s.credit_line ? [{ description: s.credit_line.description, amount: s.credit_line.amount }] : [])].map(line)
               : <p className={`text-xl ${page.muted}`}>None.</p>}

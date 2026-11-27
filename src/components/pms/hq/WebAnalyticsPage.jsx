@@ -6,10 +6,11 @@ import PageHeader from "@/components/pms/PageHeader";
 import PageTabs from "@/components/pms/PageTabs";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import Pagination from "@/components/pms/Pagination";
 import { Tip } from "@/components/pms/Tip";
 import { StatTile, StatRow } from "@/components/pms/hq/metrics/parts";
-import { btn, field, page, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime, money } from "@/lib/pms/format";
 import { fetchBranches, fetchWebBookings, fetchWebBookingsExport } from "@/lib/pms/api/hq-api";
 import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
@@ -236,12 +237,9 @@ function BookingsSection() {
   return (
     <div className="w-full flex flex-col gap-8">
       <ReportScope from={data?.from || from} to={data?.to || to}>
-      <div className={page.toolbar}>
-        <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
-          <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-            <label htmlFor="wa-from" className={field.label}>
-              Booked From<Tip id="webAnalytics.from" />
-            </label>
+      <FilterBar>
+        <div className={filter.pair}>
+          <FilterField label="Booked From" tip="webAnalytics.from" htmlFor="wa-from" className={filter.date}>
             <DateInput
               id="wa-from"
               value={from}
@@ -250,20 +248,14 @@ function BookingsSection() {
                 const next = e.target.value;
                 if (ISO_DATE.test(next)) changeRange(next > to ? { from: next, to: next } : { from: next });
               }}
-              className={field.input}
+              className={filter.input}
             />
-          </div>
-          <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-            <label htmlFor="wa-to" className={field.label}>
-              To<Tip id="webAnalytics.to" />
-            </label>
-            <DateInput id="wa-to" value={to} min={from} max={today} onChange={(e) => ISO_DATE.test(e.target.value) && changeRange({ to: e.target.value })} className={field.input} />
-          </div>
+          </FilterField>
+          <FilterField label="To" tip="webAnalytics.to" htmlFor="wa-to" className={filter.date}>
+            <DateInput id="wa-to" value={to} min={from} max={today} onChange={(e) => ISO_DATE.test(e.target.value) && changeRange({ to: e.target.value })} className={filter.input} />
+          </FilterField>
         </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="wa-branch" className={field.label}>
-            Branch<Tip id="webAnalytics.branch" />
-          </label>
+        <FilterField label="Branch" tip="webAnalytics.branch" htmlFor="wa-branch">
           <select
             id="wa-branch"
             value={branch}
@@ -271,7 +263,7 @@ function BookingsSection() {
               setBranch(e.target.value);
               setPageNo(1);
             }}
-            className={field.select}
+            className={filter.select}
           >
             <option value="">All branches</option>
             {branches.map((b) => (
@@ -280,7 +272,7 @@ function BookingsSection() {
               </option>
             ))}
           </select>
-        </div>
+        </FilterField>
         <div className="flex flex-col gap-2 flex-1 min-w-[min(100%,24rem)]">
           <label htmlFor="wa-search" className={field.label}>
             Search<Tip id="webAnalytics.search" />
@@ -288,7 +280,7 @@ function BookingsSection() {
           <input id="wa-search" type="search" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Guest name or reference" className={field.input} />
         </div>
         <ExportActions full={Boolean(data)} className="ml-auto" actions={[{ label: exporting ? "Preparing..." : "Download CSV", onClick: exportCsv, disabled: exporting || !data?.total }]} />
-      </div>
+      </FilterBar>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
 

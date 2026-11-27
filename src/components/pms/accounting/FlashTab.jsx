@@ -4,13 +4,14 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import { Tip } from "@/components/pms/Tip";
 import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AbbrLabel } from "@/components/pms/InfoTip";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
-import { btn, field, page, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import { formatDateTime, money, pct } from "@/lib/pms/format";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { downloadFlashReport, fetchFlashReport } from "@/lib/pms/api/accounting-api";
@@ -56,7 +57,7 @@ function Snapshot({ title, tip, rows, total, counts, tab, linkText }) {
     // A section of the full report sheet of its own (ReportExport.jsx).
     <div data-report-section data-report-title={title} className={table.card}>
       <div className="flex flex-wrap items-center justify-between gap-3 px-8 py-4 border-b border-(--accent-2) bg-(--text-color)/3">
-        <h3 className="text-2xl font-bold text-(--black)">{title}<Tip id={tip} /></h3>
+        <h3 className={page.sectionTitle}>{title}<Tip id={tip} /></h3>
         <button type="button" className={btn.link} onClick={() => router.replace(`/pms/accounting?tab=${tab}`, { scroll: false })}>
           {linkText}
         </button>
@@ -155,13 +156,12 @@ export default function FlashTab() {
 
       {/* The scope starts at the date row, so Print Full Report can sit beside the downloads. */}
       <ReportScope date={view?.date ?? day}>
-      <div className="flex flex-wrap items-end gap-6">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="flash-day" className={field.label}>Day<Tip id="accounting.flash.day" /></label>
-          <DateInput id="flash-day" value={day} min={rf || undefined} max={today} onChange={(e) => setDay(e.target.value)} />
-        </div>
-        {shown && <ExportActions full className="ml-auto" actions={[{ label: downloading ? "Downloading..." : "Download Excel", onClick: download, disabled: downloading }]} />}
-      </div>
+      <FilterBar>
+        <FilterField label="Day" tip="accounting.flash.day" htmlFor="flash-day" className={filter.date}>
+          <DateInput id="flash-day" value={day} min={rf || undefined} max={today} onChange={(e) => setDay(e.target.value)} className={filter.input} />
+        </FilterField>
+        {shown && <ExportActions full compact className="ml-auto" actions={[{ label: downloading ? "Downloading..." : "Download Excel", onClick: download, disabled: downloading }]} />}
+      </FilterBar>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
       {downloadError && <p className={`${field.error} w-full`}>{downloadError}</p>}

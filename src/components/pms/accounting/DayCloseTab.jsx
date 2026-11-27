@@ -54,7 +54,7 @@ function Figures({ lines }) {
         const rows = lines.filter((l) => l.section === s.key);
         return (
           <section key={s.key} className="flex flex-col gap-2">
-            <h3 className="text-2xl font-bold text-(--black)">
+            <h3 className={page.sectionTitle}>
               {s.title}
               <Tip id={s.tip} />
             </h3>
@@ -227,7 +227,7 @@ function DayDialog({ date, onClose, onSignedOff }) {
 
           {day.history.length > 1 && (
             <section className="flex flex-col gap-2">
-              <h3 className="text-2xl font-bold text-(--black)">
+              <h3 className={page.sectionTitle}>
                 Earlier sign-offs
                 <Tip id="accounting.day.history" />
               </h3>

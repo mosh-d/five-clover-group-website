@@ -12,7 +12,7 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import RoomAssignmentPicker from "@/components/pms/RoomAssignmentPicker";
 import { NotCleanWarning, roomOptionText } from "@/components/pms/CleaningTag";
 import ContactRow from "@/components/pms/ContactRow";
-import { btn, field, page, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import { fetchInHouse, fetchInHouseById } from "@/lib/pms/api/front-office-api";
 import {
   checkOutReservation,
@@ -36,6 +36,7 @@ import DateInput from "@/components/pms/DateInput";
 import { money, formatDate } from "@/lib/pms/format";
 import GuestName from "@/components/pms/GuestName";
 import { Tip } from "@/components/pms/Tip";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 const roomStatusKey = (roomTypeId, roomNumber) => `${roomTypeId}::${roomNumber}`;
 
 const isOverdue = (checkOut) => checkOut && hasPassedNoonCutoff(checkOut);
@@ -382,18 +383,16 @@ export default function AdminInHousePage() {
 
       <div data-component="AdminInHouse" className="flex flex-col items-start gap-[3rem]">
         <PageHeader icon={IoHomeOutline} tipId="inHouse.page" title="In-House Guests">
-          <div className={page.toolbar}>
-            <select
-              value={roomTypeFilter}
-              onChange={(e) => setRoomTypeFilter(e.target.value)}
-              className={`${field.select} w-auto text-xl!`}
-            >
-              <option value="all">All Room Categories</option>
-              {roomTypeOptions.map((rt) => (
-                <option key={rt.id} value={rt.id}>{rt.name}</option>
-              ))}
-            </select>
-          </div>
+          <FilterBar>
+            <FilterField label="Room Category" htmlFor="inhouse-room-type">
+              <select id="inhouse-room-type" value={roomTypeFilter} onChange={(e) => setRoomTypeFilter(e.target.value)} className={filter.select}>
+                <option value="all">All Room Categories</option>
+                {roomTypeOptions.map((rt) => (
+                  <option key={rt.id} value={rt.id}>{rt.name}</option>
+                ))}
+              </select>
+            </FilterField>
+          </FilterBar>
         </PageHeader>
 
         <div className={table.card}>
@@ -526,7 +525,7 @@ export default function AdminInHousePage() {
               )}
 
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Notes<Tip id="inHouse.notes" /></h3>
+                <h3 className={page.sectionTitle}>Notes<Tip id="inHouse.notes" /></h3>
                 <p className="text-lg text-[color:var(--text-color)]/60 -mt-2">
                   Notes for this stay (e.g. "Arriving late") — shows up in the Manifest report's Notes section. Separate from Special Requests on the Reservations page.
                 </p>
@@ -574,7 +573,7 @@ export default function AdminInHousePage() {
               </section>
 
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Room Assignments<Tip id="inHouse.roomAssignments" /></h3>
+                <h3 className={page.sectionTitle}>Room Assignments<Tip id="inHouse.roomAssignments" /></h3>
                 <RoomAssignmentPicker
                   reservationId={selected.id}
                   roomTypeId={selected.room_type_id}
@@ -588,7 +587,7 @@ export default function AdminInHousePage() {
               </section>
 
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Change Room Type<Tip id="inHouse.changeRoomType" /></h3>
+                <h3 className={page.sectionTitle}>Change Room Type<Tip id="inHouse.changeRoomType" /></h3>
                 <p className="text-lg text-[color:var(--text-color)]/68">
                   Currently {selected.room_type?.name || "—"}. Switching moves the guest to a different room type — any
                   nights already billed keep their original rate; every night from here on bills at the new type's rate.
@@ -673,7 +672,7 @@ export default function AdminInHousePage() {
               </section>
 
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Extend Stay<Tip id="inHouse.extendStay" /></h3>
+                <h3 className={page.sectionTitle}>Extend Stay<Tip id="inHouse.extendStay" /></h3>
                 <div className="flex gap-3 flex-nowrap items-center">
                   <DateInput
                     value={newCheckOutDate}

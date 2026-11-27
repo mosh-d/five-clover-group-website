@@ -22,6 +22,7 @@ import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
+import { useDraft } from "@/lib/pms/drafts";
 
 // What Laundry is owed on a guest's bill (backend phase-103): its own
 // account, never the room bill; the whole balance on an old-way folio.
@@ -73,7 +74,8 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
         new Date(b.reservation?.actual_check_out || 0) - new Date(a.reservation?.actual_check_out || 0),
     ),
   );
-  const [order, setOrder] = useState(emptyOrder);
+  // Kept as a draft until it is posted (lib/pms/drafts.js, owner 2026-11-27).
+  const [order, setOrder] = useDraft("laundry-guest-order", emptyOrder);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [printReceipt, setPrintReceipt] = useState(null);
@@ -414,7 +416,7 @@ export default function AdminLaundryGuestSales({ asSection = false, hideTitle = 
                         <td className={table.td}>{r.room_assignments?.[0]?.room_number || "—"}</td>
                         <td className={table.td}>{r.folio.folio_number}</td>
                         {/* When this guest's bill was opened. */}
-                        <td className={`${table.td} whitespace-nowrap`}>{formatDateTime(r.folio.created_at)}</td>
+                        <td className={`${table.td} whitespace-nowrap`}>{formatDateTime(r.folio.last_sale_at || r.folio.created_at)}</td>
                         <td className={table.td}><StatusBadge status={balance > 0 ? "owing" : "paid"} /></td>
                         <td className={table.td}>
                           <button

@@ -20,7 +20,7 @@ import TransactionReceiptModal from "@/components/pms/TransactionReceiptModal";
 import RefundCreditModal from "@/components/pms/RefundCreditModal";
 import PaymentSplitRows from "@/components/pms/PaymentSplitRows";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
-import { btn, field, table } from "@/components/pms/ui";
+import { btn, field, sectionTitle, table } from "@/components/pms/ui";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import {
   fetchReservations,
@@ -1275,7 +1275,7 @@ export default function AdminReservationsPage() {
                   changed from In-House (Extend Stay / Early Checkout). */}
               {canChangeDates && (
                 <section className="flex flex-col gap-4">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Stay Dates<Tip id="reservations.stayDates" /></h3>
+                  <h3 className={sectionTitle}>Stay Dates<Tip id="reservations.stayDates" /></h3>
                   {arrivalAhead && res.status === "confirmed" && (
                     <div className="text-xl text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 flex flex-col gap-3 items-start">
                       <p>
@@ -1351,7 +1351,7 @@ export default function AdminReservationsPage() {
 
               {/* Editable fields */}
               <section className="flex flex-col gap-4">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Details<Tip id="reservations.details" /></h3>
+                <h3 className={sectionTitle}>Details<Tip id="reservations.details" /></h3>
                 <div className="flex flex-col gap-2">
                   <label className={field.label}>Special Requests<Tip id="reservations.specialRequests" /></label>
                   <AutoGrowTextarea
@@ -1442,7 +1442,7 @@ export default function AdminReservationsPage() {
 
               {/* Folio */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Folio<Tip id="reservations.folio" /></h3>
+                <h3 className={sectionTitle}>Folio<Tip id="reservations.folio" /></h3>
                 {reservationFolio ? (
                   <div className="flex justify-between items-center bg-[color:var(--text-color)]/3 border-1 border-gray-200 rounded-lg px-5 py-4 text-xl">
                     <span className="font-medium">
@@ -1467,7 +1467,7 @@ export default function AdminReservationsPage() {
                   here instead of only on the stay that originally paid it. */}
               {guestCredit.length > 0 && (
                 <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Credit from a Previous Stay<Tip id="reservations.previousCredit" /></h3>
+                  <h3 className={sectionTitle}>Credit from a Previous Stay<Tip id="reservations.previousCredit" /></h3>
                   <div className="flex flex-col gap-2">
                     {guestCredit.map((c) => (
                       <div key={c.id} className="flex items-center justify-between bg-[color:var(--text-color)]/3 rounded-lg px-5 py-4 gap-4">
@@ -1496,7 +1496,7 @@ export default function AdminReservationsPage() {
 
               {/* Deposits */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Reservation (Credit)<Tip id="reservations.credit" /></h3>
+                <h3 className={sectionTitle}>Reservation (Credit)<Tip id="reservations.credit" /></h3>
                 {deposits.length > 0 && (
                   <div className="flex flex-col gap-2">
                     {deposits.map((dep) => (
@@ -1609,7 +1609,7 @@ export default function AdminReservationsPage() {
               {/* Room Assignments */}
               {canModify && (
                 <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Room Assignments<Tip id="reservations.roomAssignments" /></h3>
+                  <h3 className={sectionTitle}>Room Assignments<Tip id="reservations.roomAssignments" /></h3>
                   <RoomAssignmentPicker
                     reservationId={res.id}
                     roomTypeId={res.room_type_id}
@@ -1627,7 +1627,7 @@ export default function AdminReservationsPage() {
               {/* Change Room Type */}
               {canModify && (
                 <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Change Room Type<Tip id="reservations.changeRoomType" /></h3>
+                  <h3 className={sectionTitle}>Change Room Type<Tip id="reservations.changeRoomType" /></h3>
                   <p className="text-lg text-[color:var(--text-color)]/68">
                     Currently {res.room_type?.name || "—"}. Switching moves the guest to a different room type — any
                     nights already billed keep their original rate; every night from here on bills at the new type's rate.
@@ -1717,7 +1717,7 @@ export default function AdminReservationsPage() {
               {/* Extend Stay */}
               {res.actual_check_in && !res.actual_check_out && (
                 <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                  <h3 className="text-2xl font-bold text-[color:var(--black)]">Extend Stay<Tip id="reservations.extendStay" /></h3>
+                  <h3 className={sectionTitle}>Extend Stay<Tip id="reservations.extendStay" /></h3>
                   <div className="flex gap-3 flex-nowrap items-center">
                     <DateInput value={newCheckOutDate} min={extendMin} aria-label="New check-out date" onChange={(e) => setNewCheckOutDate(e.target.value)} className={field.input} />
                     <button

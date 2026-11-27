@@ -10,7 +10,12 @@
 export const page = {
   // A page's own padding and vertical rhythm, inside the shell's <main>.
   wrap: "w-full flex flex-col items-start gap-[4.5rem]",
-  sectionTitle: "text-3xl font-bold text-(--black)",
+  // Every section and subsection heading - a report's "Food Orders", a
+  // dialog's "Charges" - the same (owner, 2026-11-27: "a consistent large
+  // bold and brand colored font... twice the size it is now"): 30px on a
+  // laptop, a step smaller on a phone, in the brand's own colour. Dialog
+  // titles (Modal) are not sections and keep their own.
+  sectionTitle: "text-4xl md:text-5xl font-bold leading-tight text-(--emphasis)",
   muted: "text-(--text-color)/68",
   // The top of every page (PageHeader, owner 2026-11-06): title, what the
   // page is for, its section switches and filters - grouped together, and
@@ -65,8 +70,28 @@ export const field = {
     "w-full border border-(--accent-2) rounded-lg px-4 py-3 text-2xl bg-white text-(--text-color) placeholder:text-(--text-color)/30 focus:outline-none focus:ring-2 focus:ring-(--emphasis) focus:border-transparent transition-shadow resize-none overflow-hidden",
 };
 
-// A heading inside a dialog or a card.
-export const sectionTitle = "text-2xl font-bold text-(--black)";
+// The filter row at the top of a page or report (FilterBar.jsx, owner
+// 2026-11-27): one compact look everywhere. Every control in it is the same
+// height (h), and every label too, (i) or not, so the fields line up.
+const FILTER_H = "h-[4.4rem]";
+export const filter = {
+  bar: "w-full flex flex-wrap items-end gap-x-4 gap-y-4 rounded-xl border border-(--accent-2) bg-(--card) px-5 py-4",
+  field: "flex flex-col gap-1.5 min-w-0",
+  // A search or a long dropdown.
+  wide: "w-full sm:w-[28rem]",
+  // A date: half the row on a phone (From and To side by side), its own width above.
+  date: "w-full sm:w-[17rem]",
+  pair: "grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto",
+  label: "h-[2.2rem] flex items-center whitespace-nowrap text-lg font-semibold uppercase tracking-wide text-(--text-color)/68",
+  input: `${FILTER_H} w-full border border-(--accent-2) rounded-lg px-4 text-2xl bg-white text-(--text-color) placeholder:text-(--text-color)/30 focus:outline-none focus:ring-2 focus:ring-(--emphasis) focus:border-transparent transition-shadow`,
+  select: `${FILTER_H} w-full sm:w-auto border border-(--accent-2) rounded-lg px-4 text-2xl bg-white text-(--text-color) focus:outline-none focus:ring-2 focus:ring-(--emphasis) focus:border-transparent transition-shadow cursor-pointer`,
+  actions: "flex flex-wrap items-end gap-3 ml-auto",
+  primary: `${FILTER_H} inline-flex items-center justify-center gap-2 px-6 rounded-lg bg-(--emphasis) text-white text-xl font-bold tracking-wide whitespace-nowrap cursor-pointer transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed`,
+  secondary: `${FILTER_H} inline-flex items-center justify-center gap-2 px-6 rounded-lg border border-(--accent-2) bg-white text-(--text-color) text-xl font-semibold tracking-wide whitespace-nowrap cursor-pointer transition-all hover:bg-black/5 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed`,
+};
+
+// A heading inside a dialog or a card: the same as a page's sections.
+export const sectionTitle = page.sectionTitle;
 
 export const card = {
   surface: "rounded-xl border border-(--accent-2) bg-(--card)",

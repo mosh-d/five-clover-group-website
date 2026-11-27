@@ -11,7 +11,7 @@ import Modal from "@/components/pms/Modal";
 import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
-import { btn, field, table } from "@/components/pms/ui";
+import { btn, field, page, table } from "@/components/pms/ui";
 import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import { canManageRooms } from "@/lib/pms/auth";
 import RoomStatusTag from "@/components/pms/RoomStatusTag";
@@ -658,7 +658,7 @@ function ViewRoomModal({
 
       <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
         <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-bold text-[color:var(--black)]">Summary, Amenities & Capacity<Tip id="rooms.view.details" /></h3>
+          <h3 className={page.sectionTitle}>Summary, Amenities & Capacity<Tip id="rooms.view.details" /></h3>
           {!canManage ? (
             <ManagerOnlyTag />
           ) : !editingDetails && (
@@ -760,7 +760,7 @@ function ViewRoomModal({
           onClick={() => setPhysicalRoomsExpanded((v) => !v)}
           className="flex items-center justify-between flex-1 cursor-pointer"
         >
-          <h3 className="text-2xl font-bold text-[color:var(--black)]">
+          <h3 className={page.sectionTitle}>
             Individual Rooms {physicalRooms && <span className="text-lg font-normal text-[color:var(--text-color)]/60">({physicalRooms.length + unnumberedRooms.length})</span>}
           </h3>
           <span className="text-lg text-[color:var(--text-color)]/60">{physicalRoomsExpanded ? "Hide ▲" : "Show ▼"}</span>
@@ -849,7 +849,7 @@ function ViewRoomModal({
       {/* Editable: Base Price + Breakfast Price */}
       <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
         <div className="flex justify-between items-center gap-3">
-          <h3 className="text-2xl font-bold text-[color:var(--black)]">Base Price (₦)<Tip id="rooms.view.basePrice" /></h3>
+          <h3 className={page.sectionTitle}>Base Price (₦)<Tip id="rooms.view.basePrice" /></h3>
           {!canManage && <ManagerOnlyTag />}
         </div>
         {canManage ? (
@@ -892,7 +892,7 @@ function ViewRoomModal({
       {/* Editable: Max Capacity (physical rooms) */}
       <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
         <div className="flex justify-between items-center gap-3">
-          <h3 className="text-2xl font-bold text-[color:var(--black)]">Max Capacity (individual rooms)<Tip id="rooms.view.capacity" /></h3>
+          <h3 className={page.sectionTitle}>Max Capacity (individual rooms)<Tip id="rooms.view.capacity" /></h3>
           {!canManage && <ManagerOnlyTag />}
         </div>
         {!canManage ? (

@@ -18,7 +18,7 @@ import PrintReceiptModal from "@/components/pms/PrintReceiptModal";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import PhoneInput from "@/components/pms/PhoneInput";
 import OrderItemRows from "@/components/pms/OrderItemRows";
-import { btn, field, table } from "@/components/pms/ui";
+import { btn, field, sectionTitle, table } from "@/components/pms/ui";
 import { getStoredStaffRole } from "@/lib/pms/auth";
 import { fetchFoodItems, fetchDrinkItems } from "@/lib/pms/api/menu-api";
 import { formatPaymentMethod, formatDateTime, money } from "@/lib/pms/format";
@@ -646,7 +646,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
                   traced back to a person: an unpaid balance, or a credit
                   from an overpayment. */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Guest Info (optional)<Tip id="nonGuestSales.guestInfo" /></h3>
+                <h3 className={sectionTitle}>Guest Info (optional)<Tip id="nonGuestSales.guestInfo" /></h3>
                 {guestInfoError && <p className="text-red-600 text-xl bg-red-50 border border-red-200 rounded-lg px-4 py-3">{guestInfoError}</p>}
                 <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                   <div className="flex flex-col gap-2">
@@ -679,7 +679,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
 
               {/* Charges */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Charges<Tip id="nonGuestSales.charges" /></h3>
+                <h3 className={sectionTitle}>Charges<Tip id="nonGuestSales.charges" /></h3>
                 {(!selectedFolio.items || selectedFolio.items.length === 0) ? (
                   <p className="text-xl text-[color:var(--text-color)]/76">No charges yet.</p>
                 ) : (
@@ -777,7 +777,7 @@ export default function AdminNonGuestSalesPage({ asSection = false, hideTitle = 
 
               {/* Payments */}
               <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
-                <h3 className="text-2xl font-bold text-[color:var(--black)]">Payments<Tip id="nonGuestSales.payments" /></h3>
+                <h3 className={sectionTitle}>Payments<Tip id="nonGuestSales.payments" /></h3>
                 {(!selectedFolio.payments || selectedFolio.payments.length === 0) ? (
                   <p className="text-xl text-[color:var(--text-color)]/76">No payments recorded yet.</p>
                 ) : (

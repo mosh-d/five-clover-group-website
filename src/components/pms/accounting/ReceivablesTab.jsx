@@ -113,7 +113,7 @@ function NotesDialog({ debt, onClose, onAdded }) {
             />
           )}
           <section className="flex flex-col gap-2">
-            <h3 className="text-2xl font-bold text-(--black)">Earlier Notes<Tip id="accounting.receivables.notes" /></h3>
+            <h3 className={page.sectionTitle}>Earlier Notes<Tip id="accounting.receivables.notes" /></h3>
             {data.notes.length === 0 ? (
               <p className={`text-xl ${page.muted}`}>No notes yet.</p>
             ) : (
@@ -266,14 +266,14 @@ export default function ReceivablesTab() {
   // when it has rows, above "nobody owes" when it hasn't.
   const cityHeading = view && (
     <div className="flex flex-col gap-4">
-      <h3 className="text-2xl font-bold text-(--black)">Left Owing<Tip id="accounting.receivables.city" /></h3>
+      <h3 className={page.sectionTitle}>Left Owing<Tip id="accounting.receivables.city" /></h3>
       <BucketChips buckets={view.city_buckets} active={bucket} onPick={(b) => { setBucket(b); cityPage.setPage(1); }} />
     </div>
   );
-  const houseHeading = <h3 className="text-2xl font-bold text-(--black)">In House<Tip id="accounting.receivables.house" /></h3>;
+  const houseHeading = <h3 className={page.sectionTitle}>In House<Tip id="accounting.receivables.house" /></h3>;
   const ngHeading = view && (
     <div className="flex flex-col gap-4">
-      <h3 className="text-2xl font-bold text-(--black)">Non-Guest Bills<Tip id="accounting.receivables.nonGuest" /></h3>
+      <h3 className={page.sectionTitle}>Non-Guest Bills<Tip id="accounting.receivables.nonGuest" /></h3>
       <BucketChips buckets={view.non_guest_buckets} active={ngBucket} onPick={(b) => { setNgBucket(b); ngPage.setPage(1); }} />
     </div>
   );

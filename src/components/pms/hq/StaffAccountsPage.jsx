@@ -10,7 +10,7 @@ import PasswordField from "@/components/pms/PasswordField";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Notice from "@/components/pms/Notice";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import { page, btn, field, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import {
   fetchBranches,
   fetchHqStaff,
@@ -22,6 +22,7 @@ import {
 } from "@/lib/pms/api/hq-api";
 import { PmsApiError } from "@/lib/pms/client";
 import { Tip } from "@/components/pms/Tip";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 
 // Staff Accounts (Head Office): every branch's staff, and Head Office's own.
 //
@@ -317,13 +318,12 @@ export default function StaffAccountsPage() {
           </button>
         }
       >
-        <div className={page.toolbar}>
-          <div className="flex flex-col gap-2 min-w-[24rem]">
-            <label htmlFor="staff-branch" className={field.label}>Branch<Tip id="staffAccounts.branch" /></label>
+        <FilterBar>
+          <FilterField label="Branch" tip="staffAccounts.branch" htmlFor="staff-branch">
             {loadingBranches ? (
               <LoadingSpinner />
             ) : (
-              <select id="staff-branch" value={selectedBranchId} onChange={(e) => setSelectedBranchId(e.target.value)} className={field.select}>
+              <select id="staff-branch" value={selectedBranchId} onChange={(e) => setSelectedBranchId(e.target.value)} className={filter.select}>
                 <option value="">-- Select a branch --</option>
                 <option value={HEAD_OFFICE}>Head Office</option>
                 {branches.map((b) => (
@@ -331,8 +331,8 @@ export default function StaffAccountsPage() {
                 ))}
               </select>
             )}
-          </div>
-        </div>
+          </FilterField>
+        </FilterBar>
       </PageHeader>
 
       <Notice message={notice} onDismiss={() => setNotice(null)} />

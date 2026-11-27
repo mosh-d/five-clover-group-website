@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import SearchField, { matchesSearch } from "@/components/pms/SearchField";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import { Tip } from "@/components/pms/Tip";
 import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
-import { btn, card, field, page, table } from "@/components/pms/ui";
+import { btn, card, field, filter, page, table } from "@/components/pms/ui";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { money } from "@/lib/pms/format";
 import { fetchInventoryReport } from "@/lib/pms/api/inventory-api";
@@ -134,21 +135,17 @@ export default function InventoryReports() {
     // The branded report sheet (ReportExport.jsx): the dates the report covers.
     <ReportScope from={report?.from ?? from} to={report?.to ?? to}>
     <div className="w-full flex flex-col gap-8">
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="inv-report-from" className={field.label}>
-            From<Tip id="inventory.reports.range" />
-          </label>
-          <DateInput id="inv-report-from" value={from} max={to} onChange={(e) => setFrom(e.target.value)} />
+      <FilterBar>
+        <div className={filter.pair}>
+        <FilterField label="From" tip="inventory.reports.range" htmlFor="inv-report-from" className={filter.date}>
+          <DateInput id="inv-report-from" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className={filter.input} />
+        </FilterField>
+        <FilterField label="To" htmlFor="inv-report-to" className={filter.date}>
+          <DateInput id="inv-report-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} className={filter.input} />
+        </FilterField>
         </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="inv-report-to" className={field.label}>
-            To
-          </label>
-          <DateInput id="inv-report-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
-        </div>
-        {report && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(report) }]} />}
-      </div>
+        {report && <ExportActions full compact className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(report) }]} />}
+      </FilterBar>
 
       {error && <p className={field.error}>{error}</p>}
       {!report && !error ? (

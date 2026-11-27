@@ -5,12 +5,13 @@ import { IoCheckmarkDoneOutline } from "react-icons/io5";
 import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import Modal from "@/components/pms/Modal";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Notice from "@/components/pms/Notice";
 import { Tip } from "@/components/pms/Tip";
 import { StatTile, StatRow } from "@/components/pms/hq/metrics/parts";
-import { btn, card, field, page, table } from "@/components/pms/ui";
+import { btn, card, field, filter, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
 import { http } from "@/lib/pms/http";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
@@ -225,26 +226,19 @@ export default function BookingAttendancePage() {
             </section>
             </ReportScope>
 
-            <div className={page.toolbar}>
-              <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="ba-from" className={field.label}>
-                    From<Tip id="bookingAttendance.from" />
-                  </label>
-                  <DateInput id="ba-from" value={from} max={today} onChange={(e) => ISO.test(e.target.value) && (setFrom(e.target.value), e.target.value > to && setTo(e.target.value))} className={field.input} />
-                </div>
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="ba-to" className={field.label}>
-                    To<Tip id="bookingAttendance.to" />
-                  </label>
-                  <DateInput id="ba-to" value={to} min={from} max={today} onChange={(e) => ISO.test(e.target.value) && setTo(e.target.value)} className={field.input} />
+            <FilterBar>
+              <div className={filter.pair}>
+                <div className={filter.pair}>
+                <FilterField label="From" tip="bookingAttendance.from" htmlFor="ba-from" className={filter.date}>
+                  <DateInput id="ba-from" value={from} max={today} onChange={(e) => ISO.test(e.target.value) && (setFrom(e.target.value), e.target.value > to && setTo(e.target.value))} className={filter.input} />
+                </FilterField>
+                <FilterField label="To" tip="bookingAttendance.to" htmlFor="ba-to" className={filter.date}>
+                  <DateInput id="ba-to" value={to} min={from} max={today} onChange={(e) => ISO.test(e.target.value) && setTo(e.target.value)} className={filter.input} />
+                </FilterField>
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="ba-branch" className={field.label}>
-                  Branch<Tip id="bookingAttendance.branch" />
-                </label>
-                <select id="ba-branch" value={branch} onChange={(e) => setBranch(e.target.value)} className={field.select}>
+              <FilterField label="Branch" tip="bookingAttendance.branch" htmlFor="ba-branch">
+                <select id="ba-branch" value={branch} onChange={(e) => setBranch(e.target.value)} className={filter.select}>
                   <option value="">Every branch that ticks</option>
                   {data.branches.map((b) => (
                     <option key={b.id} value={String(b.id)}>
@@ -252,9 +246,9 @@ export default function BookingAttendancePage() {
                     </option>
                   ))}
                 </select>
-              </div>
-              <ExportActions full className="ml-auto" />
-            </div>
+              </FilterField>
+              <ExportActions full compact className="ml-auto" />
+            </FilterBar>
 
             <StatRow>
               <StatTile label="Website Bookings" tip="bookingAttendance.total" value={s.bookings.toLocaleString()} sub={`${data.from === data.to ? formatDate(`${data.from}T12:00:00Z`) : `${formatDate(`${data.from}T12:00:00Z`)} to ${formatDate(`${data.to}T12:00:00Z`)}`}`} />
@@ -298,24 +292,20 @@ export default function BookingAttendancePage() {
                     <h2 className={page.sectionTitle}>
                       Receptionist Clock-Ins<Tip id="bookingAttendance.clockIns" />
                     </h2>
-                    <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
-                      <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                        <label htmlFor="ba-clock-from" className={field.label}>
-                          From<Tip id="bookingAttendance.clockIns.range" />
-                        </label>
+                    <div className={filter.pair}>
+                      <div className={filter.pair}>
+                      <FilterField label="From" tip="bookingAttendance.clockIns.range" htmlFor="ba-clock-from" className={filter.date}>
                         <DateInput
                           id="ba-clock-from"
                           value={clockFrom}
                           max={today}
                           onChange={(e) => ISO.test(e.target.value) && (setClockFrom(e.target.value), e.target.value > clockTo && setClockTo(e.target.value))}
-                          className={field.input}
+                          className={filter.input}
                         />
-                      </div>
-                      <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                        <label htmlFor="ba-clock-to" className={field.label}>
-                          To
-                        </label>
-                        <DateInput id="ba-clock-to" value={clockTo} min={clockFrom} max={today} onChange={(e) => ISO.test(e.target.value) && setClockTo(e.target.value)} className={field.input} />
+                      </FilterField>
+                      <FilterField label="To" htmlFor="ba-clock-to" className={filter.date}>
+                        <DateInput id="ba-clock-to" value={clockTo} min={clockFrom} max={today} onChange={(e) => ISO.test(e.target.value) && setClockTo(e.target.value)} className={filter.input} />
+                      </FilterField>
                       </div>
                     </div>
                   </div>

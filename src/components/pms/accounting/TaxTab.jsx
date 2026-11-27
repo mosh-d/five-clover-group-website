@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import { Tip } from "@/components/pms/Tip";
 import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
-import { btn, field, page, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import { money } from "@/lib/pms/format";
 import { businessDateISO } from "@/lib/pms/dates";
 import { fetchTaxAndService } from "@/lib/pms/api/accounting-api";
@@ -110,17 +111,17 @@ export default function TaxTab() {
 
       {/* The scope starts at the date row, so Print Full Report can sit beside the downloads. */}
       <ReportScope from={shown?.from ?? from} to={shown?.to ?? to}>
-      <div className="flex flex-wrap items-end gap-6">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="tax-from" className={field.label}>From<Tip id="accounting.tax.from" /></label>
-          <DateInput id="tax-from" value={from} max={to || today} onChange={(e) => setFrom(e.target.value)} />
+      <FilterBar>
+        <div className={filter.pair}>
+        <FilterField label="From" tip="accounting.tax.from" htmlFor="tax-from" className={filter.date}>
+          <DateInput id="tax-from" value={from} max={to || today} onChange={(e) => setFrom(e.target.value)} className={filter.input} />
+        </FilterField>
+        <FilterField label="To" tip="accounting.tax.to" htmlFor="tax-to" className={filter.date}>
+          <DateInput id="tax-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} className={filter.input} />
+        </FilterField>
         </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="tax-to" className={field.label}>To<Tip id="accounting.tax.to" /></label>
-          <DateInput id="tax-to" value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} />
-        </div>
-        {shown && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(shown) }]} />}
-      </div>
+        {shown && <ExportActions full compact className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(shown) }]} />}
+      </FilterBar>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
 
@@ -144,7 +145,7 @@ export default function TaxTab() {
 
             {/* ---- By day */}
             <section className="w-full flex flex-col gap-4">
-              <TableCard report="By Day" heading={<h3 className="text-2xl font-bold text-(--black)">By Day<Tip id="accounting.tax.daily" /></h3>}>
+              <TableCard report="By Day" heading={<h3 className={page.sectionTitle}>By Day<Tip id="accounting.tax.daily" /></h3>}>
                 <table className={table.el}>
                   <thead>
                     <tr className={table.headRow}>
@@ -190,7 +191,7 @@ export default function TaxTab() {
             <section className="w-full flex flex-col gap-4">
               {shown.tax_lines.length === 0 ? (
                 <>
-                <h3 className="text-2xl font-bold text-(--black)">Charges With Tax<Tip id="accounting.tax.tax" /></h3>
+                <h3 className={page.sectionTitle}>Charges With Tax<Tip id="accounting.tax.tax" /></h3>
                 <p className={`text-xl ${page.muted}`}>
                   No tax was typed on any charge in these days. The PMS adds no tax itself: tax is only what staff type on a charge.
                 </p>
@@ -201,7 +202,7 @@ export default function TaxTab() {
                     report="Charges With Tax"
                     heading={
                       <div className="flex flex-col gap-4">
-                        <h3 className="text-2xl font-bold text-(--black)">Charges With Tax<Tip id="accounting.tax.tax" /></h3>
+                        <h3 className={page.sectionTitle}>Charges With Tax<Tip id="accounting.tax.tax" /></h3>
                         <div className="flex flex-wrap items-center gap-3">
                           {shown.tax_by_type.map((t) => (
                             <span key={t.type} className="px-4 py-2 rounded-lg text-xl bg-black/5">

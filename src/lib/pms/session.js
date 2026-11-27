@@ -60,9 +60,24 @@ export function startIdleClock() {
   localStorage.setItem(KEYS.lastActivity, String(Date.now()));
 }
 
+// Where useDraft (lib/pms/drafts.js) keeps half-finished forms.
+export const DRAFT_PREFIX = "pms_draft:";
+
 export function clearPmsSession() {
   if (!hasStorage()) return;
   Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+  // Every draft goes with the session (owner, 2026-11-27): a front-desk PC
+  // is shared, and a draft can hold a guest's details.
+  try {
+    const drafts = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(DRAFT_PREFIX)) drafts.push(key);
+    }
+    drafts.forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // Storage unavailable: nothing was kept.
+  }
 }
 
 // Whether the person is still here - not merely whether a session exists.

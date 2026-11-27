@@ -7,13 +7,14 @@ import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import Pagination from "@/components/pms/Pagination";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
 import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
-import { btn, field, page, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import { formatDateTime, formatTime, money } from "@/lib/pms/format";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { fetchExceptions, reviewExceptions } from "@/lib/pms/api/accounting-api";
@@ -230,27 +231,26 @@ export default function ExceptionsTab() {
 
       {/* The scope starts at the date row, so Print Full Report can sit beside Download CSV. */}
       <ReportScope from={view?.from} to={view?.to}>
-      <div className="flex flex-wrap items-end gap-6">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="exceptions-from" className={field.label}>From<Tip id="accounting.exceptions.from" /></label>
-          <DateInput id="exceptions-from" value={from} max={to || today} onChange={(e) => { setFrom(e.target.value); reset(); }} />
+      <FilterBar>
+        <div className={filter.pair}>
+        <FilterField label="From" tip="accounting.exceptions.from" htmlFor="exceptions-from" className={filter.date}>
+          <DateInput id="exceptions-from" value={from} max={to || today} onChange={(e) => { setFrom(e.target.value); reset(); }} className={filter.input} />
+        </FilterField>
+        <FilterField label="To" tip="accounting.exceptions.to" htmlFor="exceptions-to" className={filter.date}>
+          <DateInput id="exceptions-to" value={to} min={from} max={today} onChange={(e) => { setTo(e.target.value); reset(); }} className={filter.input} />
+        </FilterField>
         </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="exceptions-to" className={field.label}>To<Tip id="accounting.exceptions.to" /></label>
-          <DateInput id="exceptions-to" value={to} min={from} max={today} onChange={(e) => { setTo(e.target.value); reset(); }} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="exceptions-show" className={field.label}>Show<Tip id="accounting.exceptions.show" /></label>
-          <select id="exceptions-show" value={show} onChange={(e) => { setShow(e.target.value); reset(); }} className={field.select}>
+        <FilterField label="Show" tip="accounting.exceptions.show" htmlFor="exceptions-show">
+          <select id="exceptions-show" value={show} onChange={(e) => { setShow(e.target.value); reset(); }} className={filter.select}>
             {SHOW.map((s) => (
               <option key={s.key} value={s.key}>
                 {s.label}{view ? ` (${view.counts[s.key]})` : ""}
               </option>
             ))}
           </select>
-        </div>
-        {view && lines.length > 0 && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(view) }]} />}
-      </div>
+        </FilterField>
+        {view && lines.length > 0 && <ExportActions full compact className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(view) }]} />}
+      </FilterBar>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
 

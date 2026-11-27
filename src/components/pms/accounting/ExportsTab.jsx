@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import Notice from "@/components/pms/Notice";
 import { Tip } from "@/components/pms/Tip";
@@ -10,7 +11,7 @@ import { ExportActions, ReportScope, TableCard } from "@/components/pms/ReportEx
 import { AuditLink } from "@/components/pms/reportUi";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
-import { btn, field, page, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import { money } from "@/lib/pms/format";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { downloadJournal, fetchAccounts, fetchJournal, saveAccounts } from "@/lib/pms/api/accounting-api";
@@ -97,7 +98,7 @@ function AccountCodes({ onSaved }) {
   return (
     <section className="w-full flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <h3 className="text-2xl font-bold text-(--black)">Account Codes<Tip id="accounting.exports.accounts" /></h3>
+        <h3 className={page.sectionTitle}>Account Codes<Tip id="accounting.exports.accounts" /></h3>
         <p className={`text-xl ${page.muted}`}>
           The code and name each one has in your books. Set them once; an account with no code still downloads, with the code left empty.
         </p>
@@ -282,23 +283,23 @@ export default function ExportsTab() {
 
       {/* ---- The journal */}
       <section className="w-full flex flex-col gap-4">
-        <h3 className="text-2xl font-bold text-(--black)">Journal<Tip id="accounting.exports.journal" /></h3>
+        <h3 className={page.sectionTitle}>Journal<Tip id="accounting.exports.journal" /></h3>
         <ReportScope name="Journal" from={shown?.from ?? from} to={shown?.to ?? to}>
-        <div className="flex flex-wrap items-end gap-6">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="journal-from" className={field.label}>From<Tip id="accounting.exports.from" /></label>
-            <DateInput id="journal-from" value={from} max={to || today} onChange={(e) => pick(e.target.value, to)} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="journal-to" className={field.label}>To<Tip id="accounting.exports.to" /></label>
-            <DateInput id="journal-to" value={to} min={from} max={today} onChange={(e) => pick(from, e.target.value)} />
+        <FilterBar>
+          <div className={filter.pair}>
+          <FilterField label="From" tip="accounting.exports.from" htmlFor="journal-from" className={filter.date}>
+            <DateInput id="journal-from" value={from} max={to || today} onChange={(e) => pick(e.target.value, to)} className={filter.input} />
+          </FilterField>
+          <FilterField label="To" tip="accounting.exports.to" htmlFor="journal-to" className={filter.date}>
+            <DateInput id="journal-to" value={to} min={from} max={today} onChange={(e) => pick(from, e.target.value)} className={filter.input} />
+          </FilterField>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={() => pick(addDaysISO(today, -1), addDaysISO(today, -1))} className={btn.secondary}>Yesterday</button>
-            <button type="button" onClick={() => pick(`${today.slice(0, 7)}-01`, today)} className={btn.secondary}>This Month</button>
-            <button type="button" onClick={() => pick(`${lastMonthEnd.slice(0, 7)}-01`, lastMonthEnd)} className={btn.secondary}>Last Month</button>
+            <button type="button" onClick={() => pick(addDaysISO(today, -1), addDaysISO(today, -1))} className={filter.secondary}>Yesterday</button>
+            <button type="button" onClick={() => pick(`${today.slice(0, 7)}-01`, today)} className={filter.secondary}>This Month</button>
+            <button type="button" onClick={() => pick(`${lastMonthEnd.slice(0, 7)}-01`, lastMonthEnd)} className={filter.secondary}>Last Month</button>
           </div>
-        </div>
+        </FilterBar>
 
         {error && <p className={`${field.error} w-full`}>{error}</p>}
         {downloadError && <p className={`${field.error} w-full`}>{downloadError}</p>}

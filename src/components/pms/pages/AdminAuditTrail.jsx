@@ -6,10 +6,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "@/lib/pms/router";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
-import Button from "@/components/pms/Button";
 import PageHeader from "@/components/pms/PageHeader";
 import StatusBadge from "@/components/pms/StatusBadge";
-import { table, field, page as pageUi } from "@/components/pms/ui";
+import { filter, table } from "@/components/pms/ui";
 import { accessDenial } from "@/components/pms/pmsNavItems";
 import { fetchAuditActionLabels, fetchAuditLogHistory, fetchAuditStaffOptions } from "@/lib/pms/api/audit-log-api";
 import { fetchBranches, fetchHqAuditLogs, fetchHqAuditStaffOptions, fetchHqAuditActionLabels } from "@/lib/pms/api/hq-api";
@@ -18,6 +17,7 @@ import { useWebSocketContext } from "@/components/pms/live/PmsLive";
 import { usePmsSession } from "@/components/pms/PmsSessionContext";
 
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import Pagination from "@/components/pms/Pagination";
 import { Tip } from "@/components/pms/Tip";
 // Maps a Phase-2 rich entry's entity_type to the deep link that opens it.
@@ -315,39 +315,36 @@ export default function AdminAuditTrail() {
         }
       >
         {isHeadOffice && (
-          <div className={pageUi.toolbar}>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="audit-place" className={field.label}>Branch<Tip id="auditTrail.branch" /></label>
-              <select id="audit-place" value={place} onChange={(e) => choosePlace(e.target.value)} className={field.select}>
+          <FilterBar>
+            <FilterField label="Branch" tip="auditTrail.branch" htmlFor="audit-place">
+              <select id="audit-place" value={place} onChange={(e) => choosePlace(e.target.value)} className={filter.select}>
                 <option value="">-- Select a branch --</option>
                 <option value={HEAD_OFFICE}>Head Office</option>
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
               </select>
-            </div>
-          </div>
+            </FilterField>
+          </FilterBar>
         )}
 
         {!waitingForPlace && (
-          <div className={pageUi.toolbar}>
-            <div className="flex flex-col gap-2 flex-1 min-w-64">
-              <label className={field.label}>Search<Tip id="auditTrail.search" /></label>
+          <FilterBar>
+            <FilterField label="Search" tip="auditTrail.search" wide>
               <input
                 type="text"
                 placeholder="Guest name, staff, action…"
                 value={filterSearch}
                 onChange={(e) => setFilterSearch(e.target.value)}
-                className={field.input}
+                className={filter.input}
               />
-            </div>
+            </FilterField>
 
-            <div className="flex flex-col gap-2">
-              <label className={field.label}>Staff<Tip id="auditTrail.staff" /></label>
+            <FilterField label="Staff" tip="auditTrail.staff">
               <select
                 value={filterStaffId}
                 onChange={(e) => applyFilters({ staffId: e.target.value })}
-                className={field.select}
+                className={filter.select}
               >
                 <option value="">All staff</option>
                 {/* The PMS has no staff account; its empty value would read as
@@ -356,38 +353,36 @@ export default function AdminAuditTrail() {
                   <option key={s.staff_account_id} value={s.staff_account_id}>{s.username}</option>
                 ))}
               </select>
-            </div>
+            </FilterField>
 
-            <div className="flex flex-col gap-2">
-              <label className={field.label}>Role<Tip id="auditTrail.role" /></label>
+            <FilterField label="Role" tip="auditTrail.role">
               <select
                 value={filterRole}
                 onChange={(e) => applyFilters({ role: e.target.value })}
-                className={field.select}
+                className={filter.select}
               >
                 <option value="">All roles</option>
                 {Object.entries(roleLabels).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-            </div>
+            </FilterField>
 
-            <div className="flex flex-col gap-2">
-              <label className={field.label}>Action<Tip id="auditTrail.action" /></label>
+            <FilterField label="Action" tip="auditTrail.action">
               <select
                 value={filterAction}
                 onChange={(e) => applyFilters({ action: e.target.value })}
-                className={field.select}
+                className={filter.select}
               >
                 <option value="">All actions</option>
                 {Object.entries(actionLabels).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-            </div>
+            </FilterField>
 
-            <div className="flex flex-col gap-2">
-              <label className={field.label}>From<Tip id="auditTrail.from" /></label>
+            <div className={filter.pair}>
+            <FilterField label="From" tip="auditTrail.from" className={filter.date}>
               <DateInput
                 value={filterFrom}
                 onChange={(e) => {
@@ -395,24 +390,24 @@ export default function AdminAuditTrail() {
                   const from = e.target.value;
                   applyFilters(from && filterTo && from > filterTo ? { from, to: from } : { from });
                 }}
-                className={field.input}
+                className={filter.input}
               />
-            </div>
+            </FilterField>
 
-            <div className="flex flex-col gap-2">
-              <label className={field.label}>To<Tip id="auditTrail.to" /></label>
+            <FilterField label="To" tip="auditTrail.to" className={filter.date}>
               <DateInput
                 value={filterTo}
                 min={filterFrom || undefined}
                 onChange={(e) => applyFilters({ to: e.target.value })}
-                className={field.input}
+                className={filter.input}
               />
+            </FilterField>
             </div>
 
             {hasFilters && (
-              <Button variant="light-gray" onClick={clearFilters}>Clear filters</Button>
+              <button type="button" onClick={clearFilters} className={filter.secondary}>Clear filters</button>
             )}
-          </div>
+          </FilterBar>
         )}
       </PageHeader>
 

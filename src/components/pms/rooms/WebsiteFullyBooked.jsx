@@ -5,6 +5,7 @@ import Modal from "@/components/pms/Modal";
 import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import { Tip } from "@/components/pms/Tip";
 import { http } from "@/lib/pms/http";
+import { page } from "@/components/pms/ui";
 
 // "Fully Booked" for the website (owner, 2026-11-27; backend phase-106): the
 // manager or a receptionist closes a room type to website bookings - the
@@ -46,7 +47,7 @@ export default function WebsiteFullyBooked({ room, onChanged, onError }) {
   return (
     <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h3 className="text-2xl font-bold text-[color:var(--black)]">
+        <h3 className={page.sectionTitle}>
           Fully Booked<Tip id="rooms.view.fullyBooked" />
         </h3>
         <button

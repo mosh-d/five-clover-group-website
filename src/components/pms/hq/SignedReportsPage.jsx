@@ -6,12 +6,13 @@ import PageHeader from "@/components/pms/PageHeader";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import Modal from "@/components/pms/Modal";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
 import SignedSheetView from "@/components/pms/signoff/SignedSheetView";
 import { printSheet } from "@/components/pms/ReportExport";
-import { btn, field, page, table } from "@/components/pms/ui";
+import { btn, field, filter, page, table } from "@/components/pms/ui";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
 import { applyCorrections, printableSheet } from "@/lib/pms/signedSheet";
 import { fetchSignedReport, fetchSignedReports } from "@/lib/pms/api/report-signoffs-api";
@@ -107,12 +108,9 @@ export default function SignedReportsPage() {
       ) : (
         data && (
           <>
-            <div className={page.toolbar}>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="sr-branch" className={field.label}>
-                  Branch<Tip id="signedReports.branch" />
-                </label>
-                <select id="sr-branch" value={branch} onChange={(e) => setBranch(e.target.value)} className={field.select}>
+            <FilterBar>
+              <FilterField label="Branch" tip="signedReports.branch" htmlFor="sr-branch">
+                <select id="sr-branch" value={branch} onChange={(e) => setBranch(e.target.value)} className={filter.select}>
                   <option value="">Every branch</option>
                   {data.branches.map((b) => (
                     <option key={b.id} value={String(b.id)}>
@@ -120,12 +118,9 @@ export default function SignedReportsPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="sr-report" className={field.label}>
-                  Report<Tip id="signedReports.report" />
-                </label>
-                <select id="sr-report" value={reportKey} onChange={(e) => setReportKey(e.target.value)} className={field.select}>
+              </FilterField>
+              <FilterField label="Report" tip="signedReports.report" htmlFor="sr-report">
+                <select id="sr-report" value={reportKey} onChange={(e) => setReportKey(e.target.value)} className={filter.select}>
                   <option value="">Every report</option>
                   {data.reports.map((r) => (
                     <option key={r.key} value={r.key}>
@@ -133,22 +128,16 @@ export default function SignedReportsPage() {
                     </option>
                   ))}
                 </select>
+              </FilterField>
+              <div className={filter.pair}>
+                <FilterField label="From" tip="signedReports.from" htmlFor="sr-from" className={filter.date}>
+                  <DateInput id="sr-from" value={from} onChange={(e) => (ISO.test(e.target.value) || !e.target.value) && setFrom(e.target.value)} className={filter.input} />
+                </FilterField>
+                <FilterField label="To" htmlFor="sr-to" className={filter.date}>
+                  <DateInput id="sr-to" value={to} min={from || undefined} onChange={(e) => (ISO.test(e.target.value) || !e.target.value) && setTo(e.target.value)} className={filter.input} />
+                </FilterField>
               </div>
-              <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="sr-from" className={field.label}>
-                    From<Tip id="signedReports.from" />
-                  </label>
-                  <DateInput id="sr-from" value={from} onChange={(e) => (ISO.test(e.target.value) || !e.target.value) && setFrom(e.target.value)} className={field.input} />
-                </div>
-                <div className="flex flex-col gap-2 min-w-0 sm:w-[20rem]">
-                  <label htmlFor="sr-to" className={field.label}>
-                    To
-                  </label>
-                  <DateInput id="sr-to" value={to} min={from || undefined} onChange={(e) => (ISO.test(e.target.value) || !e.target.value) && setTo(e.target.value)} className={field.input} />
-                </div>
-              </div>
-            </div>
+            </FilterBar>
 
             <div className={table.card}>
               <div className={table.scroll}>

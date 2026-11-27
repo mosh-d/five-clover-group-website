@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, u
 import { flushSync } from "react-dom";
 import { IoChevronDown, IoPrintOutline } from "react-icons/io5";
 import Modal from "@/components/pms/Modal";
-import { btn, field, table } from "@/components/pms/ui";
+import { btn, field, filter, table } from "@/components/pms/ui";
 import { getStoredBranch, getStoredStaffUsername } from "@/lib/pms/auth";
 import { formatDate, formatDateTime } from "@/lib/pms/format";
 import { printDocument } from "@/lib/pms/print";
@@ -164,7 +164,9 @@ const SheetIcon = () => <IoPrintOutline size={20} aria-hidden="true" className="
  *   report:  { target, title, subtitle, figures } - adds Print Report;
  *   full:    adds Print Full Report (the whole <ReportScope> it is in).
  */
-export function ExportActions({ actions = [], report, full = false, className = "" }) {
+// `compact`: sized to a FilterBar's fields, when it sits in one.
+export function ExportActions({ actions = [], report, full = false, className = "", compact = false }) {
+  const look = compact ? filter.secondary : btn.secondary;
   const scope = useContext(ScopeContext);
   const one = useReportExport(report || {});
   const all = useReportExport({ target: scope?.ref, title: scope?.name, figures: true });
@@ -211,7 +213,7 @@ export function ExportActions({ actions = [], report, full = false, className = 
   if (!list.length) return null;
 
   const button = (a, extra = "") => (
-    <button key={a.label} type="button" onClick={a.onClick} disabled={a.disabled} title={a.title} className={`${btn.secondary} inline-flex items-center justify-center gap-2 whitespace-nowrap ${extra}`}>
+    <button key={a.label} type="button" onClick={a.onClick} disabled={a.disabled} title={a.title} className={`${look} inline-flex items-center justify-center gap-2 whitespace-nowrap ${extra}`}>
       {a.sheet && <SheetIcon />}
       {a.label}
     </button>
@@ -229,7 +231,7 @@ export function ExportActions({ actions = [], report, full = false, className = 
             aria-haspopup="menu"
             aria-expanded={open}
             onClick={() => setOpen((o) => !o)}
-            className={`${btn.secondary} inline-flex items-center gap-2`}
+            className={`${look} inline-flex items-center gap-2`}
           >
             Export
             <IoChevronDown size={18} aria-hidden="true" className={`transition-transform ${open ? "rotate-180" : ""}`} />

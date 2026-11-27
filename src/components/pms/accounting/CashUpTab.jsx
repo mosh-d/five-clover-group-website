@@ -7,12 +7,13 @@ import ConfirmPanel from "@/components/pms/ConfirmPanel";
 import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import DateInput from "@/components/pms/DateInput";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
 import { Tip } from "@/components/pms/Tip";
 import { AuditLink } from "@/components/pms/reportUi";
 import { ExportActions, ReportScope } from "@/components/pms/ReportExport";
 import { auditFor } from "./audit";
 import { useLiveRefresh } from "@/components/pms/live/PmsLive";
-import { btn, card, field, page, table } from "@/components/pms/ui";
+import { btn, card, field, filter, page, table } from "@/components/pms/ui";
 import { formatDateTime, money } from "@/lib/pms/format";
 import { addDaysISO, businessDateISO } from "@/lib/pms/dates";
 import { fetchCashUpDay, verifyCashUp } from "@/lib/pms/api/cash-up-api";
@@ -133,7 +134,7 @@ function PersonCard({ person, date, onVerify }) {
     <section aria-labelledby={`cashup-person-${person.staff_id}`} className={`w-full ${card.surface} p-6 md:p-8 flex flex-col gap-5`}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
-          <h3 id={`cashup-person-${person.staff_id}`} className="text-2xl font-bold text-(--black)">{person.name}</h3>
+          <h3 id={`cashup-person-${person.staff_id}`} className={page.sectionTitle}>{person.name}</h3>
           {person.role && <span className={`text-xl capitalize ${page.muted}`}>{person.role}</span>}
           <StatusPill person={person} />
         </div>
@@ -270,13 +271,12 @@ export default function CashUpTab() {
 
       {/* The scope starts at the date row, so Print Full Report can sit beside Download CSV. */}
       <ReportScope date={shown?.date}>
-      <div className="flex flex-wrap items-end gap-6">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="cashup-date" className={field.label}>Business Day<Tip id="accounting.cashUp.day" /></label>
-          <DateInput id="cashup-date" value={date} max={today} onChange={(e) => setDate(e.target.value)} />
-        </div>
-        {shown && shown.people.length > 0 && <ExportActions full className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(shown) }]} />}
-      </div>
+      <FilterBar>
+        <FilterField label="Business Day" tip="accounting.cashUp.day" htmlFor="cashup-date" className={filter.date}>
+          <DateInput id="cashup-date" value={date} max={today} onChange={(e) => setDate(e.target.value)} className={filter.input} />
+        </FilterField>
+        {shown && shown.people.length > 0 && <ExportActions full compact className="ml-auto" actions={[{ label: "Download CSV", onClick: () => downloadCsv(shown) }]} />}
+      </FilterBar>
 
       {error && <p className={`${field.error} w-full`}>{error}</p>}
 

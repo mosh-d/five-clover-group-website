@@ -14,7 +14,7 @@ import LoadingSpinner from "@/components/pms/LoadingSpinner";
 import AutoGrowTextarea from "@/components/pms/AutoGrowTextarea";
 import PhoneInput from "@/components/pms/PhoneInput";
 import { formatPhone } from "@/lib/pms/phone-format";
-import { btn, field, page as pageUi, table } from "@/components/pms/ui";
+import { btn, field, filter, page as pageUi, table } from "@/components/pms/ui";
 import {
   fetchGuests,
   fetchGuestReservations,
@@ -32,6 +32,8 @@ import { GuestTagPills } from "@/components/pms/GuestName";
 import { GUEST_TYPES, guestTagLabel } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import { Tip } from "@/components/pms/Tip";
+import FilterBar, { FilterField } from "@/components/pms/FilterBar";
+import { useDraft } from "@/lib/pms/drafts";
 
 const RESERVATIONS_PAGE_SIZE = 5;
 
@@ -118,7 +120,8 @@ export default function AdminGuestsPage() {
   const [notesError, setNotesError] = useState('');
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState(emptyGuestForm);
+  // Kept as a draft until it is saved (lib/pms/drafts.js, owner 2026-11-27).
+  const [createForm, setCreateForm] = useDraft("new-guest", emptyGuestForm);
   const [creating, setCreating] = useState(false);
 
   const loadGuests = useCallback(async () => {
@@ -346,18 +349,18 @@ export default function AdminGuestsPage() {
             </>
           }
         >
-          <div className={pageUi.toolbar}>
-            <div className='flex items-center max-sm:w-full'>
+          <FilterBar>
+            <FilterField label="Search" tip="guests.search" htmlFor="guests-search" wide>
               <input
+                id="guests-search"
                 type='text'
-                placeholder='Search by name (partial), or full email/phone...'
+                placeholder='Name (partial), or full email/phone...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`${field.input} text-xl! w-72 max-sm:w-full`}
+                className={filter.input}
               />
-              <Tip id="guests.search" />
-            </div>
-          </div>
+            </FilterField>
+          </FilterBar>
         </PageHeader>
 
         <div className={table.card}>

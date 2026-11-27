@@ -23,6 +23,7 @@ import { withGuestTags } from "@/lib/pms/guest-tags";
 import Pagination from "@/components/pms/Pagination";
 import usePagedRows from "@/components/pms/usePagedRows";
 import { Tip } from "@/components/pms/Tip";
+import { useDraft } from "@/lib/pms/drafts";
 
 const emptyRow = { item_kind: "food", reference_id: "", quantity: "1", is_complementary: false };
 // charge_to_room: the waitron's "Charge to room" tick (backend phase-103),
@@ -136,7 +137,8 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
     return menuServiceCharge(item, Number(row.quantity) || 0);
   };
 
-  const [order, setOrder] = useState(emptyOrder);
+  // Kept as a draft until it is posted (lib/pms/drafts.js, owner 2026-11-27).
+  const [order, setOrder] = useDraft("fnb-order", emptyOrder);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [printReceipt, setPrintReceipt] = useState(null);
@@ -434,7 +436,7 @@ export default function AdminGuestSalesPage({ asSection = false, hideTitle = fal
                           <td className={table.td}>{r.room_assignments?.[0]?.room_number || "—"}</td>
                           <td className={table.td}>{r.folio.folio_number}</td>
                           {/* When this guest's bill was opened. */}
-                          <td className={`${table.td} whitespace-nowrap`}>{formatDateTime(r.folio.created_at)}</td>
+                          <td className={`${table.td} whitespace-nowrap`}>{formatDateTime(r.folio.last_sale_at || r.folio.created_at)}</td>
                           <td className={table.td}>
                             <StatusBadge status={balance > 0 ? "owing" : "paid"} />
                           </td>

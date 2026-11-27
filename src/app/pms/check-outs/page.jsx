@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { IoLogOutOutline } from "react-icons/io5";
 import PageHeader from "@/components/pms/PageHeader";
 import Modal from "@/components/pms/Modal";
-import DateInput from "@/components/pms/DateInput";
+import FilterBar, { DateField } from "@/components/pms/FilterBar";
 import GuestName from "@/components/pms/GuestName";
 import Toast from "@/components/pms/Toast";
 import StayFeeDialog from "@/components/pms/StayFeeDialog";
@@ -147,12 +147,9 @@ export default function PmsCheckOutsPage() {
 
       <div className={`${page.wrap} gap-[3rem]!`}>
         <PageHeader icon={IoLogOutOutline} tipId="checkOuts.page" title="Check-Out List">
-          <div className={page.toolbar}>
-            <div className="flex items-center">
-              <DateInput value={date} onChange={(e) => setDate(e.target.value)} className={`${field.input} w-auto! text-xl!`} aria-label="Departure date" />
-              <Tip id="checkOuts.date" />
-            </div>
-          </div>
+          <FilterBar>
+            <DateField id="checkouts-date" label="Departure Date" tip="checkOuts.date" value={date} onChange={setDate} />
+          </FilterBar>
         </PageHeader>
 
         <div className={table.card}>

@@ -1,0 +1,39 @@
+# The automatic check on every push to main and every pull request
+# (AUD-W05): the tests, the static build, and known security holes in the
+# packages that ship. Runs on GitHub's machines with no secrets.
+#
+# Lint joins once the 70 existing React Compiler errors are fixed (see
+# docs/audit-2026-11.md); until then it would fail every run.
+
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Tests
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: No high or critical advisories in what ships
+        run: npm audit --omit=dev --audit-level=high

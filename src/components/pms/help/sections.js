@@ -71,13 +71,13 @@ export const HELP_SECTIONS = [
     label: "Rooms",
     summary: "Manage room TYPES (Deluxe, Standard, etc.) — pricing, capacity, amenities — and the individual numbered rooms (inventory) within each type.",
     workflow: [
-      "Each physical room has one manual status, set from its room type's Physical Rooms list: Available, Out of Order, Complementary, or Reserved (set aside for a branch/zonal manager).",
+      "Each individual room has one manual status, set from its room type's Individual Rooms list: Available, Out of Order, Complementary, or Reserved (set aside for a branch/zonal manager).",
       "Out of Order and Reserved both hide the room from every availability count and booking picker right away. Complementary is different — the room stays fully bookable and visible; only the bill changes.",
       "Marking a room Complementary automatically lowers the bill from that point on — you never need to add a manual discount yourself. If the guest hasn't checked in yet, the first night is already billed correctly. If they're already checked in, tonight's Night Audit will bill only the non-complementary rooms from now on.",
       "The one thing it won't do: fix nights that were already charged before you marked the room Complementary — those stay billed as they were. The one exception is if every room on that reservation ends up Complementary — then the system automatically wipes every night already charged for that stay.",
       "A room can also show \"Occupied\" — a real guest is assigned there right now. This is worked out automatically and can never be set by hand.",
-      "The Physical Rooms list inside a room type's detail view is collapsible — useful once a room type has a lot of numbered rooms.",
-      "Reducing a room type's physical room count can delete rows — you'll be asked to confirm first, and it's refused outright if any of the rooms being removed are currently occupied or have a future booking.",
+      "The Individual Rooms list inside a room type's detail view is open by default, and can be collapsed — useful once a room type has a lot of numbered rooms.",
+      "Reducing a room type's number of individual rooms can delete rooms — you'll be asked to confirm first, and it's refused outright if any of the rooms being removed are currently occupied or have a future booking.",
     ],
   },
   {

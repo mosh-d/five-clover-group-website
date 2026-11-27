@@ -52,7 +52,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   // One number per room, in order (owner, 2026-11-04); any left blank can be
-  // set later from the room type's Physical Rooms.
+  // set later from the room type's Individual Rooms.
   const [roomNumbers, setRoomNumbers] = useState([]);
   const roomCount = Math.min(Math.max(Number(form.max_capacity) || 0, 0), 100);
 
@@ -234,7 +234,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={field.label}>Max Capacity (no. of physical rooms) *<Tip id="rooms.add.capacity" /></label>
+          <label className={field.label}>Max Capacity (no. of individual rooms) *<Tip id="rooms.add.capacity" /></label>
           <input
             type="number"
             name="max_capacity"
@@ -267,7 +267,7 @@ function AddRoomModal({ onClose, onSuccess, onError }) {
                 />
               ))}
             </div>
-            <p className={field.hint}>Optional - any left blank can be numbered later from the room type&apos;s Physical Rooms.</p>
+            <p className={field.hint}>Optional - any left blank can be numbered later from the room type&apos;s Individual Rooms.</p>
           </div>
         )}
 
@@ -288,7 +288,6 @@ function ViewRoomModal({
   onRoomDeleted,
   onRefreshRoom,
   canManage,
-  initiallyExpandPhysicalRooms,
   highlightRoomInventoryId,
 }) {
   const [priceInput, setPriceInput] = useState(String(room.base_rate ?? ""));
@@ -322,18 +321,16 @@ function ViewRoomModal({
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
   const [confirmStatusChange, setConfirmStatusChange] = useState(null); // { roomInventoryId, roomNumber, newStatus }
-  // Collapsed by default — a room type with many physical rooms otherwise
-  // makes this modal scroll a long way before reaching Delete/Close. Deep
-  // links from the Overview page's status banners force it open instead.
-  const [physicalRoomsExpanded, setPhysicalRoomsExpanded] = useState(!!initiallyExpandPhysicalRooms);
+  // Open by default (owner, 2026-11-27: it used to start collapsed); it
+  // can still be collapsed for a room type with many rooms. The Overview's
+  // status banners deep-link here with it open too.
+  const [physicalRoomsExpanded, setPhysicalRoomsExpanded] = useState(true);
 
   // Only shows the spinner on the true first load — a websocket-triggered
   // refresh (below) updates the list silently in the background instead of
   // flashing back to "loading" every time.
   const hasLoadedRoomStatusRef = useRef(false);
-  // Scrolls the deep-linked room into view once its row exists in the DOM
-  // (Physical Rooms is collapsed by default, so this only ever fires when
-  // initiallyExpandPhysicalRooms forced it open).
+  // Scrolls the deep-linked room into view once its row exists in the DOM.
   const highlightedRoomRef = useRef(null);
   useEffect(() => {
     if (highlightRoomInventoryId && highlightedRoomRef.current) {
@@ -746,7 +743,7 @@ function ViewRoomModal({
         )}
       </section>
 
-      {/* Physical Rooms — persistent status per numbered room. Occupied is
+      {/* Individual Rooms (owner, 2026-11-27: was "Physical Rooms") — persistent status per numbered room. Occupied is
           always live-derived (never a manual flag) so it can't drift from
           reality; Out of Order / Complementary are the manual flags staff
           set here. */}
@@ -758,7 +755,7 @@ function ViewRoomModal({
           className="flex items-center justify-between flex-1 cursor-pointer"
         >
           <h3 className="text-2xl font-bold text-[color:var(--black)]">
-            Physical Rooms {physicalRooms && <span className="text-lg font-normal text-[color:var(--text-color)]/60">({physicalRooms.length + unnumberedRooms.length})</span>}
+            Individual Rooms {physicalRooms && <span className="text-lg font-normal text-[color:var(--text-color)]/60">({physicalRooms.length + unnumberedRooms.length})</span>}
           </h3>
           <span className="text-lg text-[color:var(--text-color)]/60">{physicalRoomsExpanded ? "Hide ▲" : "Show ▼"}</span>
         </button>
@@ -889,7 +886,7 @@ function ViewRoomModal({
       {/* Editable: Max Capacity (physical rooms) */}
       <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
         <div className="flex justify-between items-center gap-3">
-          <h3 className="text-2xl font-bold text-[color:var(--black)]">Max Capacity (physical rooms)<Tip id="rooms.view.capacity" /></h3>
+          <h3 className="text-2xl font-bold text-[color:var(--black)]">Max Capacity (individual rooms)<Tip id="rooms.view.capacity" /></h3>
           {!canManage && <ManagerOnlyTag />}
         </div>
         {!canManage ? (
@@ -929,7 +926,7 @@ function ViewRoomModal({
               <h3 className="text-3xl font-bold text-[color:var(--text-color)] tracking-wide mb-2">Reduce Room Count?</h3>
               <p className="text-xl text-[color:var(--text-color)]/84 leading-relaxed">
                 Reducing capacity from <span className="font-bold">{room.max_capacity}</span> to{" "}
-                <span className="font-bold">{capacityInput}</span> can permanently delete physical room rows (never
+                <span className="font-bold">{capacityInput}</span> can permanently delete individual rooms (never
                 one a guest is currently in or has booked). This cannot be undone.
               </p>
             </div>
@@ -1267,7 +1264,6 @@ export default function AdminRoomsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   // Deep link from the Overview page's out-of-order/complementary/reserved banners
   // (?room_type_id=&room_id= from the Overview banners)
-  const [modalExpandPhysicalRooms, setModalExpandPhysicalRooms] = useState(false);
   const [modalHighlightRoomInventoryId, setModalHighlightRoomInventoryId] = useState(null);
   const appliedDeepLinkRef = useRef(false);
 
@@ -1394,7 +1390,6 @@ export default function AdminRoomsPage() {
     const match = rooms.find((r) => Number(r.room_type_id) === targetTypeId);
     if (match) {
       setSelectedRoom(match);
-      setModalExpandPhysicalRooms(true);
       setModalHighlightRoomInventoryId(Number(searchParams.get("room_id")) || null);
     }
     setSearchParams({}, { replace: true });
@@ -1686,7 +1681,6 @@ export default function AdminRoomsPage() {
           }}
           onRefreshRoom={fetchRoomById}
           canManage={canManage}
-          initiallyExpandPhysicalRooms={modalExpandPhysicalRooms}
           highlightRoomInventoryId={modalHighlightRoomInventoryId}
         />
       )}

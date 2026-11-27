@@ -28,19 +28,20 @@ export function useAttendanceTicks(enabled) {
   return enabled && on;
 }
 
-// A booking that comes in overnight - 10pm to 6am, Lagos - stays tickable
-// until 9am that morning, even once its hold has run out (owner, 2026-11-18:
-// so the receptionist can sleep and still tick it). The 9am, or null for one
-// made in the day. Mirrors the backend's overnightTickUntil.
+// A booking that comes in overnight - 10pm to 8am, Lagos - stays tickable
+// until 10am that morning, even once its hold has run out (owner, 2026-11-18,
+// widened 2026-11-27 from 10pm-6am/9am: so the receptionist can sleep and
+// still tick it). The 10am, or null for one made in the day. Mirrors the
+// backend's overnightTickUntil.
 const HOUR = 60 * 60 * 1000;
 export function overnightTickUntil(createdAt) {
   const t = new Date(createdAt).getTime();
   if (!Number.isFinite(t)) return null;
   const local = new Date(t + HOUR);
   const hour = local.getUTCHours();
-  if (hour >= 6 && hour < 22) return null;
+  if (hour >= 8 && hour < 22) return null;
   const day = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()) + (hour >= 22 ? 24 * HOUR : 0);
-  return new Date(day + 9 * HOUR - HOUR);
+  return new Date(day + 10 * HOUR - HOUR);
 }
 const inOvernightGrace = (r) => {
   const until = r?.is_expired_hold ? overnightTickUntil(r.created_at) : null;

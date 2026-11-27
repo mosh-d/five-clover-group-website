@@ -374,6 +374,7 @@ export const TIPS = {
   "rooms.view.amenities": "What the room has, separated by commas.",
   "rooms.view.adultsField": "How many adults one room sleeps.",
   "rooms.view.childrenField": "How many children one room sleeps.",
+  "rooms.view.fullyBooked": "For website bookings only. On: the website shows this room type as unavailable and takes no new bookings for it. The front desk can still book it, and every room keeps its own status, so the reports stay true. The manager or a receptionist can switch it.",
   "rooms.view.physical": "Every room of this type and its status: Available, Out of Order (needs fixing, not sold), Complementary (free to its guest) or Reserved (set aside for a manager). Occupied shows by itself while a guest is in. Where housekeeping runs, a room that isn't clean says so: Dirty, Cleaning or For review.",
   "rooms.add.roomNumbers": "The number on each room's door, as guests and staff know it. Each number can be used once at this branch.",
   "rooms.view.roomNumber": "The number on the room's door. Each number can be used once at this branch; a room with a booking or a guest on it keeps its number.",

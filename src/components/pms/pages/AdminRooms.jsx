@@ -21,6 +21,7 @@ import { makeRoomReady } from "@/lib/pms/api/housekeeping-api";
 import ManagerOnlyTag from "@/components/pms/ManagerOnlyTag";
 import { currentBranchId } from "@/lib/pms/session";
 import { Tip } from "@/components/pms/Tip";
+import WebsiteFullyBooked, { FullyBookedTag } from "@/components/pms/rooms/WebsiteFullyBooked";
 
 // ─── API Setup ────────────────────────────────────────────────────────────────
 
@@ -289,6 +290,7 @@ function ViewRoomModal({
   onRefreshRoom,
   canManage,
   highlightRoomInventoryId,
+  onWebsiteFullyBooked,
 }) {
   const [priceInput, setPriceInput] = useState(String(room.base_rate ?? ""));
   const [breakfastPriceInput, setBreakfastPriceInput] = useState(String(room.breakfast_rate ?? "0"));
@@ -649,6 +651,10 @@ function ViewRoomModal({
         <StatCard label="Adult Capacity" tip="rooms.view.adults" value={editingDetails ? "—" : room.adult_capacity ?? "N/A"} />
         <StatCard label="Child Capacity" tip="rooms.view.children" value={editingDetails ? "—" : room.child_capacity ?? "N/A"} />
       </div>
+
+      {/* Fully Booked for the website - the manager's and the receptionists'
+          (owner, 2026-11-27), so not behind canManage. */}
+      <WebsiteFullyBooked room={room} onChanged={(on) => onWebsiteFullyBooked(room.room_type_id, on)} onError={onError} />
 
       <section className="flex flex-col gap-3 border-t border-(--accent-2) pt-6">
         <div className="flex justify-between items-center">
@@ -1582,6 +1588,7 @@ export default function AdminRoomsPage() {
                       {/* Room Type Name */}
                       <td className={`${table.td} ${table.stickyTd} font-medium`}>
                         {room.room_type_name}
+                        {room.website_fully_booked && <FullyBookedTag className="mt-2 block w-fit" />}
                       </td>
 
                       {/* Desktop: Inline price input + Update button */}
@@ -1682,6 +1689,11 @@ export default function AdminRoomsPage() {
           onRefreshRoom={fetchRoomById}
           canManage={canManage}
           highlightRoomInventoryId={modalHighlightRoomInventoryId}
+          onWebsiteFullyBooked={(id, on) => {
+            setRooms((prev) => prev.map((r) => (r.room_type_id === id ? { ...r, website_fully_booked: on } : r)));
+            setSelectedRoom((prev) => (prev && prev.room_type_id === id ? { ...prev, website_fully_booked: on } : prev));
+            showSuccess(on ? `${selectedRoom.room_type_name} is now fully booked on the website.` : `${selectedRoom.room_type_name} is open to website bookings again.`);
+          }}
         />
       )}
 
